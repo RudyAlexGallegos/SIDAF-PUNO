@@ -1,3 +1,5 @@
+HEAD
+
 # Sistema de Designación de Árbitros de Fútbol
 
 Un sistema inteligente para la gestión y designación de árbitros de fútbol que considera la categoría, nivel de preparación, experiencia y asistencia a entrenamientos.
@@ -5,11 +7,13 @@ Un sistema inteligente para la gestión y designación de árbitros de fútbol q
 ## Características Principales
 
 ### 🏆 Gestión de Árbitros
+
 - Registro completo de árbitros con categorías (FIFA, Nacional, Regional, Provincial)
 - Seguimiento del nivel de preparación y experiencia
 - Control de disponibilidad y especialidades
 
 ### 📅 Control de Asistencia
+
 - Registro de asistencia para días específicos:
   - **Lunes, Martes, Jueves**: Preparación Física
   - **Viernes**: Entrenamientos Técnicos
@@ -17,6 +21,7 @@ Un sistema inteligente para la gestión y designación de árbitros de fútbol q
 - Calendario visual de asistencia
 
 ### 🎯 Designación Inteligente
+
 - **Algoritmo automático** que considera:
   - Categoría del árbitro
   - Nivel de preparación
@@ -27,6 +32,7 @@ Un sistema inteligente para la gestión y designación de árbitros de fútbol q
 - Evaluación de calidad de designaciones
 
 ### 📊 Dashboard y Estadísticas
+
 - Vista general del sistema
 - Métricas de asistencia en tiempo real
 - Análisis por categorías de árbitros
@@ -35,31 +41,32 @@ Un sistema inteligente para la gestión y designación de árbitros de fútbol q
 ## Instalación y Configuración
 
 ### Requisitos Previos
-- Node.js 18+ 
+
+- Node.js 18+
 - Visual Studio Code (recomendado)
 
 ### Instalación
 
 1. **Clonar o descargar el proyecto**
-\`\`\`bash
-git clone [url-del-repositorio]
-cd sistema-arbitros-futbol
-\`\`\`
+   \`\`\`bash
+   git clone [url-del-repositorio]
+   cd sistema-arbitros-futbol
+   \`\`\`
 
 2. **Instalar dependencias**
-\`\`\`bash
-npm install
-\`\`\`
+   \`\`\`bash
+   npm install
+   \`\`\`
 
 3. **Ejecutar en modo desarrollo**
-\`\`\`bash
-npm run dev
-\`\`\`
+   \`\`\`bash
+   npm run dev
+   \`\`\`
 
 4. **Abrir en el navegador**
-\`\`\`
-http://localhost:3000
-\`\`\`
+   \`\`\`
+   http://localhost:3000
+   \`\`\`
 
 ### Configuración para Visual Studio Code
 
@@ -74,27 +81,29 @@ El proyecto incluye configuración optimizada para VS Code:
 
 ### Scripts Disponibles
 
-\`\`\`bash
-npm run dev      # Servidor de desarrollo
-npm run build    # Compilar para producción
-npm run start    # Servidor de producción
-npm run lint     # Verificar código
+bash
+npm run dev # Servidor de desarrollo
+npm run build # Compilar para producción
+npm run start # Servidor de producción
+npm run lint # Verificar código
 npm run type-check # Verificar tipos TypeScript
-\`\`\`
 
 ## Uso del Sistema
 
 ### 1. Gestión de Árbitros
+
 - Navegar a **"Ver Todos los Árbitros"**
 - Agregar nuevos árbitros con su información completa
 - Actualizar nivel de preparación y disponibilidad
 
 ### 2. Control de Asistencia
+
 - Ir a la sección **"Asistencia"**
 - Registrar asistencia diaria para los días activos
 - Revisar estadísticas y tendencias
 
 ### 3. Designación de Partidos
+
 - Crear **"Nueva Designación"**
 - Elegir entre modo automático o manual
 - El sistema recomendará los mejores árbitros según:
@@ -103,6 +112,7 @@ npm run type-check # Verificar tipos TypeScript
   - Experiencia y categoría (30%)
 
 ### 4. Seguimiento y Análisis
+
 - Dashboard principal para vista general
 - Estadísticas detalladas de asistencia
 - Evaluación de eficiencia del sistema
@@ -112,11 +122,13 @@ npm run type-check # Verificar tipos TypeScript
 ### Factores Considerados (por orden de importancia):
 
 1. **Asistencia (40%)**
+
    - Asistencia a preparación física (L, M, J)
    - Asistencia a entrenamientos (V)
    - Consistencia en las últimas 4 semanas
 
 2. **Nivel de Preparación (30%)**
+
    - Porcentaje de preparación actual
    - Evaluaciones técnicas
 
@@ -126,11 +138,11 @@ npm run type-check # Verificar tipos TypeScript
 
 ### Requisitos por Nivel de Dificultad:
 
-| Nivel | Asistencia Mín. | Preparación Mín. | Categorías Permitidas |
-|-------|----------------|------------------|----------------------|
-| Alto  | 75%            | 85%              | FIFA, Nacional       |
-| Medio | 60%            | 70%              | FIFA, Nacional, Regional |
-| Bajo  | 40%            | 50%              | Todas                |
+| Nivel | Asistencia Mín. | Preparación Mín. | Categorías Permitidas    |
+| ----- | --------------- | ---------------- | ------------------------ |
+| Alto  | 75%             | 85%              | FIFA, Nacional           |
+| Medio | 60%             | 70%              | FIFA, Nacional, Regional |
+| Bajo  | 40%             | 50%              | Todas                    |
 
 ## Persistencia de Datos
 
@@ -140,21 +152,19 @@ npm run type-check # Verificar tipos TypeScript
 
 ## Estructura del Proyecto
 
-\`\`\`
 sistema-arbitros-futbol/
-├── app/                    # Páginas de la aplicación
-│   ├── page.tsx           # Dashboard principal
-│   ├── asistencia/        # Módulo de asistencia
-│   ├── arbitros/          # Gestión de árbitros
-│   └── campeonatos/       # Gestión de campeonatos
-├── components/            # Componentes reutilizables
-│   ├── ui/               # Componentes base (shadcn/ui)
-│   └── [componentes-especificos]
-├── lib/                  # Lógica de negocio
-│   ├── data-store.ts     # Gestión de estado y persistencia
-│   └── algoritmo-designacion-mejorado.ts
-└── .vscode/              # Configuración VS Code
-\`\`\`
+├── app/ # Páginas de la aplicación
+│ ├── page.tsx # Dashboard principal
+│ ├── asistencia/ # Módulo de asistencia
+│ ├── arbitros/ # Gestión de árbitros
+│ └── campeonatos/ # Gestión de campeonatos
+├── components/ # Componentes reutilizables
+│ ├── ui/ # Componentes base (shadcn/ui)
+│ └── [componentes-especificos]
+├── lib/ # Lógica de negocio
+│ ├── data-store.ts # Gestión de estado y persistencia
+│ └── algoritmo-designacion-mejorado.ts
+└── .vscode/ # Configuración VS Code
 
 ## Tecnologías Utilizadas
 
@@ -177,11 +187,16 @@ sistema-arbitros-futbol/
 ## Soporte
 
 Para soporte técnico o consultas:
+
 - Crear issue en el repositorio
 - Documentación en `/docs`
 - Ejemplos en `/examples`
 
----
-
 **Versión**: 1.0.0  
 **Última actualización**: Enero 2025
+
+# SIDAF-PUNO
+
+Sistema de designación Inteligente
+
+c748bbaccef202fe394730fac6da54228419fe09
