@@ -61,9 +61,10 @@ export function designarArbitrosMejorado(
 
   // Filtrar árbitros que cumplen requisitos básicos
   const arbitrosCalificados = arbitrosFiltered.filter((arbitro) => {
-    const cumpleNivelPreparacion = arbitro.nivelPreparacion >= requisitosNivelPreparacion[campeonato.nivelDificultad]
-    const cumpleExperiencia = arbitro.experiencia >= requisitosExperiencia[campeonato.nivelDificultad]
-    const cumpleCategoria = requisitosCategoriaArbitro[campeonato.nivelDificultad].includes(arbitro.categoria)
+    const nivel = (campeonato.nivelDificultad || "Bajo") as "Alto" | "Medio" | "Bajo"
+    const cumpleNivelPreparacion = (arbitro.nivelPreparacion || 0) >= requisitosNivelPreparacion[nivel]
+    const cumpleExperiencia = arbitro.experiencia >= requisitosExperiencia[nivel]
+    const cumpleCategoria = requisitosCategoriaArbitro[nivel].includes(arbitro.categoria)
 
     // Requisito mínimo de asistencia según dificultad
     const puntajeAsistencia = calcularPuntajeAsistencia(arbitro.id)
@@ -83,7 +84,7 @@ export function designarArbitrosMejorado(
 
   // Calcular puntaje total para cada árbitro
   const arbitrosConPuntaje = arbitrosCalificados.map((arbitro) => {
-    const puntajePreparacion = arbitro.nivelPreparacion * 0.3
+    const puntajePreparacion = (arbitro.nivelPreparacion || 0) * 0.3
     const puntajeExperiencia = Math.min(arbitro.experiencia * 5, 50) * 0.2
     const puntajeAsistencia = calcularPuntajeAsistencia(arbitro.id) * 0.4
 
@@ -179,7 +180,7 @@ export function evaluarCalidadDesignacionMejorada(
   else puntaje += 10
 
   // Nivel de preparación del principal
-  puntaje += (principal.nivelPreparacion / 100) * 15
+  puntaje += ((principal.nivelPreparacion || 0) / 100) * 15
 
   // Evaluar asistentes (30% del puntaje)
   const puntajeAsistentes = [asistente1, asistente2].reduce((total, asistente) => {

@@ -9,9 +9,8 @@ interface Toast {
 export function toast({ title, description, variant = "default" }: Toast) {
   // Crear elemento de toast
   const toastElement = document.createElement("div")
-  toastElement.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 ${
-    variant === "destructive" ? "bg-red-500 text-white" : "bg-green-500 text-white"
-  }`
+  toastElement.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 ${variant === "destructive" ? "bg-red-500 text-white" : "bg-green-500 text-white"
+    }`
 
   toastElement.innerHTML = `
     <div class="font-semibold">${title}</div>
@@ -37,5 +36,7 @@ export function toast({ title, description, variant = "default" }: Toast) {
 }
 
 export function useToast() {
-  return { toast }
+  // keep a lightweight in-memory list for compatibility with Toaster component
+  const toasts: Array<{ id: string; title: string; description?: string; action?: any }> = []
+  return { toast, toasts }
 }

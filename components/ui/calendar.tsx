@@ -31,6 +31,21 @@ function Calendar({
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",\
-        row: "flex w
+        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+        row: "flex w-full mt-2",
+        cell: "text-sm p-0 relative",
+        day: cn(
+          buttonVariants({ variant: "ghost" }),
+          "h-9 w-9 p-0 font-normal bg-transparent rounded-full hover:bg-muted"
+        ),
+        day_selected: "bg-primary text-primary-foreground",
+        day_outside: "text-muted-foreground opacity-50",
+        day_today: "relative bg-muted/20",
+        day_disabled: "opacity-50",
+      }}
+      {...props}
+    />
+  )
+}
+
+export default Calendar
