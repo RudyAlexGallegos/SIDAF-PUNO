@@ -1,0 +1,6 @@
+# Excluir archivos innecesarios del build
+.git
+.gitignore
+*.md
+*.zip
+Dockerfile
