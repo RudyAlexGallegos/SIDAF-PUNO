@@ -4,14 +4,14 @@ FROM eclipse-temurin:17-jdk-alpine AS build
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos necesarios para Maven (desde backend/ en el contexto de build)
-COPY backend/pom.xml .
-COPY backend/mvnw .
-COPY backend/mvnw.cmd .
-COPY backend/.mvn .mvn
+# Copiar pom.xml y wrapper
+COPY pom.xml .
+COPY mvnw .
+COPY mvnw.cmd .
+COPY .mvn .mvn
 
 # Copiar el código fuente
-COPY backend/src ./src
+COPY src ./src
 
 # Dar permisos de ejecución al Maven wrapper
 RUN chmod +x mvnw
