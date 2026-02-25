@@ -1,12 +1,11 @@
+# Usar imagen de Java
 FROM eclipse-temurin:17-jdk-alpine AS build
 
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos del proyecto (desde la raíz del proyecto)
-COPY pom.xml .
-COPY src ./src
-COPY mvnw .
+# Copiar todos los archivos del proyecto (desde la raíz del contexto de build)
+COPY . .
 
 # Dar permisos de ejecución al Maven wrapper
 RUN chmod +x mvnw
