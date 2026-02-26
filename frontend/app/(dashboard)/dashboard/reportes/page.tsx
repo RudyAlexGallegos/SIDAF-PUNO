@@ -198,27 +198,27 @@ export default function ReportesPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Estadísticas rápidas */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3 mb-6 sm:mb-8">
-          <Card className="bg-white shadow-md">
+          <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="text-center p-4 sm:p-6">
               <Users className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-2" />
               <div className="text-2xl sm:text-3xl font-bold text-blue-600">{totalAsistencias}</div>
-              <p className="text-sm sm:text-base text-gray-600 font-medium">Total Asistencias</p>
+              <p className="text-sm sm:text-base text-slate-600 font-medium">Total Asistencias</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white shadow-md">
+          <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="text-center p-4 sm:p-6">
-              <Trophy className="h-8 w-8 sm:h-12 sm:w-12 text-purple-600 mx-auto mb-2" />
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">{totalDesignaciones}</div>
-              <p className="text-sm sm:text-base text-gray-600 font-medium">Total Designaciones</p>
+              <Trophy className="h-8 w-8 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-2" />
+              <div className="text-2xl sm:text-3xl font-bold text-indigo-600">{totalDesignaciones}</div>
+              <p className="text-sm sm:text-base text-slate-600 font-medium">Total Designaciones</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white shadow-md">
+          <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="text-center p-4 sm:p-6">
-              <Calendar className="h-8 w-8 sm:h-12 sm:w-12 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl sm:text-3xl font-bold text-green-600">{asistenciasUltimaSemana}</div>
-              <p className="text-sm sm:text-base text-gray-600 font-medium">Esta Semana</p>
+              <Calendar className="h-8 w-8 sm:h-12 sm:w-12 text-emerald-600 mx-auto mb-2" />
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{asistenciasUltimaSemana}</div>
+              <p className="text-sm sm:text-base text-slate-600 font-medium">Esta Semana</p>
             </CardContent>
           </Card>
         </div>

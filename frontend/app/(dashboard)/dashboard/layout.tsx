@@ -417,7 +417,7 @@ export default function DashboardLayout({
     const sidebarWidth = isMobile ? (mobileMenuOpen ? "w-72" : "w-0") : (isOpen ? "w-64" : "w-20")
 
     return (
-        <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
             {/* Mobile menu backdrop */}
             {mobileMenuOpen && isMobile && (
                 <div 
