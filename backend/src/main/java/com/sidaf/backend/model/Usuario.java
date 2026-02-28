@@ -65,11 +65,24 @@ public class Usuario {
     @Column(name = "telefono", length = 20)
     private String telefono;
     
+    // Indicador si el usuario ha completado su perfil
+    @Column(name = "perfil_completo")
+    private Boolean perfilCompleto = false;
+    
+    // Cargo en CODAR (para usuarios CODAR)
+    @Column(name = "cargo_codar", length = 100)
+    private String cargoCodar;
+    
+    // Área de trabajo en CODAR
+    @Column(name = "area_codar", length = 100)
+    private String areaCodar;
+    
     // Enum para roles jerárquicos
     public enum RolUsuario {
-        ADMIN,           // Administrador del sistema (ROOT)
-        PRESIDENTE_SIDAF, // Presidente de una unidad organizacional
-        USUARIO_TECNICO  // Usuario de unidad técnica (árbitro, preparador, etc.)
+        ADMIN,                    // Administrador del sistema (ROOT) - Acceso total
+        PRESIDENCIA_CODAR,       // Presidencia CODAR - Gestiona permisos de CODAR
+        CODAR,                   // Usuario CODAR - Acceso según permisos asignados
+        USUARIO_TECNICO          // Usuario de unidad técnica (árbitro, preparador, etc.)
     }
     
     // Getters y Setters
@@ -120,6 +133,15 @@ public class Usuario {
     
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
+    
+    public Boolean getPerfilCompleto() { return perfilCompleto; }
+    public void setPerfilCompleto(Boolean perfilCompleto) { this.perfilCompleto = perfilCompleto; }
+    
+    public String getCargoCodar() { return cargoCodar; }
+    public void setCargoCodar(String cargoCodar) { this.cargoCodar = cargoCodar; }
+    
+    public String getAreaCodar() { return areaCodar; }
+    public void setAreaCodar(String areaCodar) { this.areaCodar = areaCodar; }
     
     // Método auxiliar para verificar permisos
     public boolean tienePermiso(String permiso) {
