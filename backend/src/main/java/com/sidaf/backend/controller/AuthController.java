@@ -93,7 +93,6 @@ public class AuthController {
         String apellido = datos.get("apellido");
         String email = datos.get("email");
         String password = datos.get("password");
-        String codigoSecreto = datos.get("codigoSecreto");
         String unidadOrganizacional = datos.get("unidadOrganizacional");
 
         // Validaciones
@@ -115,37 +114,13 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Ya existe un usuario con este email"));
         }
 
-        // Determinar rol basado en código secreto
-        Usuario.RolUsuario rol;
-        String estado;
+        // Todos los usuarios nuevos quedan en PENDING - el Admin asignará el rol
+        Usuario.RolUsuario rol = Usuario.RolUsuario.USUARIO_TECNICO;
+        String estado = "PENDING";
         String permisos = "[]";
         
-        // NOTA: Nadie puede auto-asignarse rol de ADMIN o PRESIDENTE
-        // Todos quedan PENDING y el Admin debe aprobar
-        // EXCEPCIÓN: Código especial 333COPITO para crear Admin directamente
-        if ("333COPITO".equals(codigoSecreto)) {
-            // Código especial para Admin - solo para el fundador del sistema
-            rol = Usuario.RolUsuario.ADMIN;
-            estado = "ACTIVO";
-            permisos = "[\"TODOS\"]";
-            if (unidadOrganizacional == null || unidadOrganizacional.isEmpty()) {
-                unidadOrganizacional = "SISTEMA";
-            }
-        } else if ("PRESI2024".equals(codigoSecreto)) {
-            // Presidente también queda PENDING - el Admin debe aprobar
-            rol = Usuario.RolUsuario.PRESIDENTE_SIDAF;
-            estado = "PENDING";
-            permisos = "[]"; // Sin permisos hasta que el admin approve
-            if (unidadOrganizacional == null || unidadOrganizacional.isEmpty()) {
-                unidadOrganizacional = "SIDAF PUNO";
-            }
-        } else {
-            // Usuario técnico (árbitro, etc.) - queda pendiente
-            rol = Usuario.RolUsuario.USUARIO_TECNICO;
-            estado = "PENDING";
-            if (unidadOrganizacional == null || unidadOrganizacional.isEmpty()) {
-                unidadOrganizacional = "SIDAF PUNO";
-            }
+        if (unidadOrganizacional == null || unidadOrganizacional.isEmpty()) {
+            unidadOrganizacional = "SIDAF PUNO";
         }
 
         // Crear usuario

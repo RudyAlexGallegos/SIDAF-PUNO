@@ -22,6 +22,7 @@ export default function RegistroPage() {
 
     const [dni, setDni] = useState("")
     const [nombre, setNombre] = useState("")
+    const [apellido, setApellido] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -29,7 +30,6 @@ export default function RegistroPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
     const [registroExitoso, setRegistroExitoso] = useState(false)
-    const [codigoSecreto, setCodigoSecreto] = useState("")
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -68,10 +68,9 @@ export default function RegistroPage() {
             await registro({
                 dni,
                 nombre,
-                apellido: "", // Apellido no requerido en el formulario
+                apellido: nombre.split(' ').length > 1 ? nombre.split(' ').slice(1).join(' ') : '',
                 email,
-                password,
-                codigoSecreto: codigoSecreto // Código para roles especiales (ADMIN2024, PRESI2024)
+                password
             })
 
             setRegistroExitoso(true)
@@ -104,7 +103,8 @@ export default function RegistroPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="text-sm text-slate-600 text-center bg-slate-50 rounded-lg p-4">
-                            <p>Ahora puede iniciar sesión con su DNI y contraseña</p>
+                            <p className="font-medium">Su cuenta está pendiente de aprobación</p>
+                            <p className="mt-2 text-sm">Un administrador revisará su solicitud y le asignará un rol. Por favor, espere ser contactado.</p>
                         </div>
                         <Link href="/login">
                             <Button className="w-full">
@@ -169,6 +169,18 @@ export default function RegistroPage() {
                         </div>
 
                         <div className="space-y-1">
+                            <Label htmlFor="apellido">Apellido</Label>
+                            <Input
+                                id="apellido"
+                                type="text"
+                                value={apellido}
+                                onChange={(e) => setApellido(e.target.value)}
+                                placeholder="Ingrese sus apellidos"
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-1">
                             <Label htmlFor="email">Correo Electrónico</Label>
                             <Input
                                 id="email"
@@ -215,20 +227,6 @@ export default function RegistroPage() {
                                 placeholder="Repita su contraseña"
                                 required
                             />
-                        </div>
-
-                        <div className="space-y-1">
-                            <Label htmlFor="codigoSecreto">Código Secreto (Opcional)</Label>
-                            <Input
-                                id="codigoSecreto"
-                                type="text"
-                                value={codigoSecreto}
-                                onChange={(e) => setCodigoSecreto(e.target.value)}
-                                placeholder="Ingrese código para rol especial"
-                            />
-                            <p className="text-xs text-slate-500">
-                                Use 333COPITO para Administrador o PRESI2024 para Presidente
-                            </p>
                         </div>
 
                         {error && (
