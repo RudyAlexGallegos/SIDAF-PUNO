@@ -75,6 +75,12 @@ public class AuthController {
         response.put("estado", usuario.getEstado());
         response.put("unidadOrganizacional", usuario.getUnidadOrganizacional());
         response.put("permisosEspecificos", usuario.getPermisosEspecificos());
+        
+        // Agregar información de perfil
+        Boolean perfilCompleto = usuario.getPerfilCompleto();
+        response.put("perfilCompleto", perfilCompleto != null && perfilCompleto);
+        response.put("cargoCodar", usuario.getCargoCodar());
+        response.put("areaCodar", usuario.getAreaCodar());
 
         return ResponseEntity.ok(response);
     }
@@ -184,6 +190,52 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("existe", existe));
     }
 
+    // Completar perfil de usuario (para usuarios CODAR que inician por primera vez)
+    @PostMapping("/completar-perfil")
+    public ResponseEntity<?> completarPerfil(@RequestBody Map<String, String> datos) {
+        String dni = datos.get("dni");
+        String telefono = datos.get("telefono");
+        String cargoCodar = datos.get("cargoCodar");
+        String areaCodar = datos.get("areaCodar");
+        
+        if (dni == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "DNI requerido"));
+        }
+        
+        Usuario usuario = usuarioRepository.findByDni(dni).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        // Actualizar datos del perfil
+        if (telefono != null) {
+            usuario.setTelefono(telefono);
+        }
+        if (cargoCodar != null) {
+            usuario.setCargoCodar(cargoCodar);
+        }
+        if (areaCodar != null) {
+            usuario.setAreaCodar(areaCodar);
+        }
+        
+        // Marcar perfil como completo
+        usuario.setPerfilCompleto(true);
+        
+        // Si estaba en PENDING, cambiar a ACTIVO
+        if ("PENDING".equals(usuario.getEstado())) {
+            usuario.setEstado("ACTIVO");
+        }
+        
+        usuarioRepository.save(usuario);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Perfil completado exitosamente");
+        response.put("perfilCompleto", true);
+        response.put("estado", usuario.getEstado());
+        
+        return ResponseEntity.ok(response);
+    }
+
     // ==================== GESTIÓN DE USUARIOS (Solo Presidentes y Admin) ====================
     
     // Listar usuarios pendientes de aprobación
@@ -268,6 +320,43 @@ public class AuthController {
         usuarioRepository.save(usuario);
         
         return ResponseEntity.ok(Map.of("mensaje", "Usuario aprobado exitosamente", "usuario", usuarioToMap(usuario)));
+    }
+
+    // Listar usuarios CODAR (para PRESIDENCIA_CODAR)
+    @GetMapping("/usuarios/codar")
+    public ResponseEntity<?> listarUsuariosCODAR(@RequestHeader("Authorization") String authHeader) {
+        try {
+            Usuario usuarioActual = verificarAuth(authHeader);
+            if (usuarioActual == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
+            }
+            
+            // Solo ADMIN y PRESIDENCIA_CODAR pueden ver usuarios CODAR
+            if (usuarioActual.getRol() != Usuario.RolUsuario.ADMIN && 
+                usuarioActual.getRol() != Usuario.RolUsuario.PRESIDENCIA_CODAR) {
+                return ResponseEntity.status(403).body(Map.of("error", "No tienes permisos"));
+            }
+            
+            List<Usuario> usuariosCODAR;
+            if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN) {
+                // Admin ve todos los CODAR
+                usuariosCODAR = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getRol() == Usuario.RolUsuario.CODAR)
+                    .collect(Collectors.toList());
+            } else {
+                // PRESIDENCIA_CODAR ve solo los de su unidad
+                usuariosCODAR = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getRol() == Usuario.RolUsuario.CODAR)
+                    .filter(u -> u.getUnidadOrganizacional() != null && 
+                               u.getUnidadOrganizacional().equals(usuarioActual.getUnidadOrganizacional()))
+                    .collect(Collectors.toList());
+            }
+            
+            return ResponseEntity.ok(usuariosCODAR.stream().map(this::usuarioToMap).collect(Collectors.toList()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Error interno: " + e.getMessage()));
+        }
     }
 
     // Asignar permisos a usuario
@@ -418,8 +507,10 @@ public class AuthController {
     private boolean puedeGestionarUsuarios(Usuario usuario) {
         if (usuario == null) return false;
         // ADMIN y PRESIDENTE_SIDAF pueden gestionar usuarios
+        // PRESIDENCIA_CODAR también puede gestionar usuarios CODAR
         return usuario.getRol() == Usuario.RolUsuario.ADMIN || 
-               usuario.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF;
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF ||
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
     }
     
     private Map<String, Object> usuarioToMap(Usuario usuario) {
@@ -434,6 +525,10 @@ public class AuthController {
         map.put("unidadOrganizacional", usuario.getUnidadOrganizacional());
         map.put("permisosEspecificos", usuario.getPermisosEspecificos());
         map.put("fechaRegistro", usuario.getFechaRegistro());
+        map.put("perfilCompleto", usuario.getPerfilCompleto() != null && usuario.getPerfilCompleto());
+        map.put("cargoCodar", usuario.getCargoCodar());
+        map.put("areaCodar", usuario.getAreaCodar());
+        map.put("telefono", usuario.getTelefono());
         return map;
     }
     
