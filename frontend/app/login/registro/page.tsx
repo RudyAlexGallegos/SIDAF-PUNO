@@ -34,8 +34,25 @@ export default function RegistroPage() {
     const [cargoCodar, setCargoCodar] = useState("")
     const [areaCodar, setAreaCodar] = useState("")
     const [esExArbitro, setEsExArbirto] = useState(false)
-    const [anosExperiencia, setAnosExperiencia] = useState("")
+    const [fechaNacimiento, setFechaNacimiento] = useState("")
+    const [edad, setEdad] = useState<number | null>(null)
     const [especialidad, setEspecialidad] = useState("")
+    
+    // Calcular edad automáticamente cuando cambia la fecha de nacimiento
+    const calcularEdad = (fecha: string) => {
+        if (!fecha) {
+            setEdad(null)
+            return
+        }
+        const hoy = new Date()
+        const nacimiento = new Date(fecha)
+        let edadCalculada = hoy.getFullYear() - nacimiento.getFullYear()
+        const mes = hoy.getMonth() - nacimiento.getMonth()
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edadCalculada--
+        }
+        setEdad(edadCalculada)
+    }
     
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -100,8 +117,8 @@ export default function RegistroPage() {
                 telefono,
                 cargoCodar,
                 areaCodar,
-                esExArbitro: esExArbirto ? "true" : "false",
-                anosExperiencia,
+                esExArbitro: esExArbitro ? "true" : "false",
+                fechaNacimiento,
                 especialidad
             })
 
@@ -300,19 +317,26 @@ export default function RegistroPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="anosExperiencia">Años de Experiencia</Label>
+                                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento</Label>
                                     <div className="relative">
                                         <Award className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                         <Input
-                                            id="anosExperiencia"
-                                            type="number"
-                                            value={anosExperiencia}
-                                            onChange={(e) => setAnosExperiencia(e.target.value)}
-                                            placeholder="Años como árbitro"
+                                            id="fechaNacimiento"
+                                            type="date"
+                                            value={fechaNacimiento}
+                                            onChange={(e) => {
+                                                setFechaNacimiento(e.target.value)
+                                                calcularEdad(e.target.value)
+                                            }}
                                             className="pl-10"
-                                            min="0"
+                                            required
                                         />
                                     </div>
+                                    {edad !== null && (
+                                        <p className="text-sm text-slate-600">
+                                            Edad: <span className="font-medium">{edad} años</span>
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

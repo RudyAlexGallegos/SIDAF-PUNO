@@ -545,6 +545,12 @@ export async function registro(data: {
     rol?: string;
     codigoSecreto?: string;
     unidadOrganizacional?: string;
+    telefono?: string;
+    cargoCodar?: string;
+    areaCodar?: string;
+    esExArbitro?: string;
+    fechaNacimiento?: string;
+    especialidad?: string;
 }): Promise<Usuario> {
     const response = await fetch(buildUrl("/auth/registro"), {
         method: "POST",

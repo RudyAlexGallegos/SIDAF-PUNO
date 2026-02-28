@@ -96,6 +96,9 @@ public class AuthController {
         String telefono = datos.get("telefono");
         String cargoCodar = datos.get("cargoCodar");
         String areaCodar = datos.get("areaCodar");
+        String fechaNacimiento = datos.get("fechaNacimiento");
+        String esExArbitroStr = datos.get("esExArbitro");
+        String especialidad = datos.get("especialidad");
         String unidadOrganizacional = datos.get("unidadOrganizacional");
 
         // Validaciones
@@ -136,6 +139,9 @@ public class AuthController {
         nuevoUsuario.setTelefono(telefono != null ? telefono : "");
         nuevoUsuario.setCargoCodar(cargoCodar != null ? cargoCodar : "");
         nuevoUsuario.setAreaCodar(areaCodar != null ? areaCodar : "");
+        nuevoUsuario.setFechaNacimiento(fechaNacimiento != null ? fechaNacimiento : "");
+        nuevoUsuario.setEsExArbitro("true".equals(esExArbitroStr));
+        nuevoUsuario.setEspecialidad(especialidad != null ? especialidad : "");
         nuevoUsuario.setRol(rol);
         nuevoUsuario.setEstado(estado);
         nuevoUsuario.setUnidadOrganizacional(unidadOrganizacional);

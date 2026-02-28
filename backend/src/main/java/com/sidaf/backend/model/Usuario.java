@@ -77,6 +77,18 @@ public class Usuario {
     @Column(name = "area_codar", length = 100)
     private String areaCodar;
     
+    // Fecha de nacimiento
+    @Column(name = "fecha_nacimiento")
+    private String fechaNacimiento;
+    
+    // Indicador si es ex-árbitro
+    @Column(name = "es_ex_arbitro")
+    private Boolean esExArbitro = false;
+    
+    // Especialidad (para dirigente/ex-árbitro)
+    @Column(name = "especialidad", length = 150)
+    private String especialidad;
+    
     // Enum para roles jerárquicos
     public enum RolUsuario {
         ADMIN,                    // Administrador del sistema (ROOT) - Acceso total
@@ -142,6 +154,15 @@ public class Usuario {
     
     public String getAreaCodar() { return areaCodar; }
     public void setAreaCodar(String areaCodar) { this.areaCodar = areaCodar; }
+    
+    public String getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    
+    public Boolean getEsExArbitro() { return esExArbitro; }
+    public void setEsExArbitro(Boolean esExArbitro) { this.esExArbitro = esExArbitro; }
+    
+    public String getEspecialidad() { return especialidad; }
+    public void setEspecialidad(String especialidad) { this.especialidad = especialidad; }
     
     // Método auxiliar para verificar permisos
     public boolean tienePermiso(String permiso) {
