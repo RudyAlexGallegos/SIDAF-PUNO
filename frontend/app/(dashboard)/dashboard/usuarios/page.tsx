@@ -71,14 +71,25 @@ export default function GestionUsuariosPage() {
     }
 
     const handleAprobar = async (id: number) => {
+        if (!rolSeleccionado) {
+            setError("Por favor selecciona un rol")
+            return
+        }
         try {
-            await aprobarUsuario(id)
+            await aprobarUsuario(id, rolSeleccionado, "[]")
             setSuccess("Usuario aprobado exitosamente")
             setError("")
+            setUsuarioParaAprobar(null)
+            setRolSeleccionado("USUARIO_TECNICO")
             cargarDatos()
         } catch (err: any) {
             setError("Error al aprobar: " + err.message)
         }
+    }
+
+    const abrirAprobarModal = (user: Usuario) => {
+        setUsuarioParaAprobar(user)
+        setRolSeleccionado("USUARIO_TECNICO")
     }
 
     const handleCambiarEstado = async (id: number, estado: string) => {
@@ -240,7 +251,20 @@ export default function GestionUsuariosPage() {
                                                 <p className="text-sm text-gray-600">Email: {user.email}</p>
                                                 <p className="text-sm text-gray-600">Unidad: {user.unidadOrganizacional}</p>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 items-center">
+                                                <select
+                                                    value={rolSeleccionado}
+                                                    onChange={(e) => setRolSeleccionado(e.target.value)}
+                                                    className="border rounded px-2 py-1 text-sm"
+                                                >
+                                                    <option value="USUARIO_TECNICO">Usuario Técnico</option>
+                                                    {usuario?.rol === "ADMIN" && (
+                                                        <>
+                                                            <option value="PRESIDENTE_SIDAF">Presidente</option>
+                                                            <option value="ADMIN">Administrador</option>
+                                                        </>
+                                                    )}
+                                                </select>
                                                 <Button onClick={() => handleAprobar(user.id!)}>
                                                     Aprobar
                                                 </Button>
