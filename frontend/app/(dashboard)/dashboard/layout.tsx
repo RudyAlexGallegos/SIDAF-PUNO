@@ -68,7 +68,11 @@ interface Usuario {
     id?: number
     dni?: string
     nombre?: string
+    apellido?: string
     email?: string
+    telefono?: string
+    cargoCodar?: string
+    areaCodar?: string
     rol?: string
     estado?: string
     permisosEspecificos?: string  // JSON array of permissions
@@ -504,11 +508,16 @@ export default function DashboardLayout({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">
-                                        {usuario.nombre}
+                                        {usuario.nombre} {usuario.apellido}
                                     </p>
                                     <p className="text-xs text-slate-400">
                                         {getRolLabel(usuario.rol)}
                                     </p>
+                                    {usuario.cargoCodar && (
+                                        <p className="text-xs text-blue-400 truncate">
+                                            {usuario.cargoCodar} - {usuario.areaCodar}
+                                        </p>
+                                    )}
                                 </div>
                                 <button
                                     onClick={handleLogout}
