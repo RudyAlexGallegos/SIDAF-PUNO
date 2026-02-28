@@ -32,8 +32,14 @@ export default function LoginPage() {
         setLoading(true)
 
         try {
-            await login(dni, password)
-            router.push("/dashboard")
+            const user = await login(dni, password)
+            
+            // Verificar si el usuario CODAR necesita completar su perfil
+            if (user.rol === "CODAR" && !user.perfilCompleto) {
+                router.push("/dashboard/perfil")
+            } else {
+                router.push("/dashboard")
+            }
         } catch (err: any) {
             setError(err.message || "Error al iniciar sesión")
             setLoading(false)
