@@ -24,9 +24,9 @@ export default function SolicitudesPage() {
             return
         }
 
-        // ADMIN y PRESIDENTE_SIDAF pueden acceder
+        // ADMIN y PRESIDENCIA_CODAR pueden acceder
         const rol = user.rol
-        if (rol !== "ADMIN" && rol !== "PRESIDENTE_SIDAF") {
+        if (rol !== "ADMIN" && rol !== "PRESIDENCIA_CODAR") {
             router.push("/dashboard")
             return
         }
@@ -46,8 +46,8 @@ export default function SolicitudesPage() {
         }
     }
 
-    // ADMIN y PRESIDENTE_SIDAF pueden aprobar permisos
-    const puedeAprobar = usuario?.rol === "ADMIN" || usuario?.rol === "PRESIDENTE_SIDAF"
+    // ADMIN y PRESIDENCIA_CODAR pueden aprobar permisos
+    const puedeAprobar = usuario?.rol === "ADMIN" || usuario?.rol === "PRESIDENCIA_CODAR"
 
     const handleResponder = async (id: number, accion: string) => {
         setProcesando(id)

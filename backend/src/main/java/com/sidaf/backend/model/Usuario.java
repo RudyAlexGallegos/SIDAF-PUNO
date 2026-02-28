@@ -29,7 +29,7 @@ public class Usuario {
     // Roles del sistema
     @Column(name = "rol", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private RolUsuario rol = RolUsuario.USUARIO_TECNICO;
+    private RolUsuario rol = RolUsuario.UNIDAD_TECNICA_CODAR;
     
     // Estados: PENDING, ACTIVO, INACTIVO
     @Column(name = "activo", length = 20)
@@ -82,7 +82,7 @@ public class Usuario {
         ADMIN,                    // Administrador del sistema (ROOT) - Acceso total
         PRESIDENCIA_CODAR,       // Presidencia CODAR - Gestiona permisos de CODAR
         CODAR,                   // Usuario CODAR - Acceso según permisos asignados
-        USUARIO_TECNICO          // Usuario de unidad técnica (árbitro, preparador, etc.)
+        UNIDAD_TECNICA_CODAR     // Unidad Técnica CODAR - Dirigente/Ex-árbitro
     }
     
     // Getters y Setters

@@ -115,7 +115,7 @@ public class AuthController {
         }
 
         // Todos los usuarios nuevos quedan en PENDING - el Admin asignará el rol
-        Usuario.RolUsuario rol = Usuario.RolUsuario.USUARIO_TECNICO;
+        Usuario.RolUsuario rol = Usuario.RolUsuario.UNIDAD_TECNICA_CODAR;
         String estado = "PENDING";
         String permisos = "[]";
         
@@ -211,67 +211,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // Actualizar perfil de usuario
-    @PutMapping("/perfil")
-    public ResponseEntity<?> actualizarPerfil(@RequestBody Map<String, String> datos, @RequestHeader("Authorization") String authHeader) {
-        String dni = datos.get("dni");
-        
-        if (dni == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "DNI requerido"));
-        }
-        
-        Usuario usuario = usuarioRepository.findByDni(dni).orElse(null);
-        if (usuario == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        // Actualizar solo campos permitidos
-        if (datos.get("nombre") != null) {
-            usuario.setNombre(datos.get("nombre"));
-        }
-        if (datos.get("apellido") != null) {
-            usuario.setApellido(datos.get("apellido"));
-        }
-        if (datos.get("email") != null) {
-            usuario.setEmail(datos.get("email"));
-        }
-        if (datos.get("telefono") != null) {
-            usuario.setTelefono(datos.get("telefono"));
-        }
-        
-        usuarioRepository.save(usuario);
-        
-        return ResponseEntity.ok(Map.of("mensaje", "Perfil actualizado correctamente"));
-    }
-
-    // Cambiar contraseña
-    @PostMapping("/cambiar-password")
-    public ResponseEntity<?> cambiarPassword(@RequestBody Map<String, String> datos, @RequestHeader("Authorization") String authHeader) {
-        String dni = datos.get("dni");
-        String passwordActual = datos.get("passwordActual");
-        String passwordNueva = datos.get("passwordNueva");
-        
-        if (dni == null || passwordActual == null || passwordNueva == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Todos los campos son requeridos"));
-        }
-        
-        Usuario usuario = usuarioRepository.findByDni(dni).orElse(null);
-        if (usuario == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        // Verificar contraseña actual
-        if (!usuario.getPassword().equals(passwordActual)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Contraseña actual incorrecta"));
-        }
-        
-        // Actualizar contraseña
-        usuario.setPassword(passwordNueva);
-        usuarioRepository.save(usuario);
-        
-        return ResponseEntity.ok(Map.of("mensaje", "Contraseña cambiada correctamente"));
-    }
-
     // ==================== GESTIÓN DE USUARIOS (Solo Presidentes y Admin) ====================
     
     // Listar usuarios pendientes de aprobación
@@ -346,7 +285,7 @@ public class AuthController {
         // Asignar permisos según el rol
         if (permisos != null && !permisos.isEmpty()) {
             usuario.setPermisosEspecificos(permisos);
-        } else if (usuario.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF) {
+        } else if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
             // Presidentes tienen todos los permisos de su unidad
             usuario.setPermisosEspecificos("[\"GESTION_ARBITROS\",\"GESTION_ASISTENCIA\",\"GESTION_DESIGNACIONES\",\"GESTION_CAMPEONATOS\",\"GESTION_EQUIPOS\",\"VER_REPORTES\"]");
         }
@@ -440,7 +379,7 @@ public class AuthController {
             List<Usuario> usuarios;
             if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN) {
                 usuarios = usuarioRepository.findAll();
-            } else if (usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF) {
+            } else if (usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
                 usuarios = usuarioRepository.findByUnidadOrganizacional(usuarioActual.getUnidadOrganizacional());
             } else {
                 return ResponseEntity.status(403).body(Map.of("error", "No tienes permisos para ver usuarios"));
@@ -545,7 +484,7 @@ public class AuthController {
         // ADMIN y PRESIDENTE_SIDAF pueden gestionar usuarios
         // PRESIDENCIA_CODAR también puede gestionar usuarios CODAR
         return usuario.getRol() == Usuario.RolUsuario.ADMIN || 
-               usuario.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF ||
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR ||
                usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
     }
     
@@ -639,7 +578,7 @@ public class AuthController {
             
             // ADMIN y PRESIDENTE_SIDAF pueden aprobar o rechazar solicitudes
             boolean isAdmin = usuarioActual.getRol() == Usuario.RolUsuario.ADMIN;
-            boolean isPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF;
+            boolean isPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
             
             if (!isAdmin && !isPresidencia) {
                 return ResponseEntity.status(403).body(Map.of("error", "No tienes permisos para gestionar solicitudes"));

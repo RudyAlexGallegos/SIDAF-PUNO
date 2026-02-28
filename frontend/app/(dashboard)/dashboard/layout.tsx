@@ -183,8 +183,8 @@ function getMenuItems(
         ]
     }
 
-    // PRESIDENTE_SIDAF: Puede gestionar solicitudes de permisos
-    if (rol === "PRESIDENTE_SIDAF") {
+    // PRESIDENCIA_CODAR: Puede gestionar solicitudes de permisos
+    if (rol === "PRESIDENCIA_CODAR") {
         return [
             ...menuPrincipal,
             {

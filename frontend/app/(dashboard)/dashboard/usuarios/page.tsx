@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-type Rol = "ADMIN" | "PRESIDENTE_SIDAF" | "USUARIO_TECNICO"
+type Rol = "ADMIN" | "PRESIDENCIA_CODAR" | "UNIDAD_TECNICA_CODAR"
 type Estado = "PENDING" | "ACTIVO" | "INACTIVO"
 
 const PERMISOS_DISPONIBLES = [
@@ -34,7 +34,7 @@ export default function GestionUsuariosPage() {
     const [tabActiva, setTabActiva] = useState<"pendientes" | "todos">("pendientes")
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null)
     const [permisosSeleccionados, setPermisosSeleccionados] = useState<string[]>([])
-    const [rolSeleccionado, setRolSeleccionado] = useState<string>("USUARIO_TECNICO")
+    const [rolSeleccionado, setRolSeleccionado] = useState<string>("UNIDAD_TECNICA_CODAR")
     const [usuarioParaAprobar, setUsuarioParaAprobar] = useState<Usuario | null>(null)
 
     useEffect(() => {
@@ -46,7 +46,7 @@ export default function GestionUsuariosPage() {
         setUsuario(user)
         
         // Verificar que tenga permisos
-        if (user.rol !== "ADMIN" && user.rol !== "PRESIDENTE_SIDAF") {
+        if (user.rol !== "ADMIN" && user.rol !== "PRESIDENCIA_CODAR") {
             setError("No tienes permisos para acceder a esta página")
             setLoading(false)
             return
@@ -80,7 +80,7 @@ export default function GestionUsuariosPage() {
             setSuccess("Usuario aprobado exitosamente")
             setError("")
             setUsuarioParaAprobar(null)
-            setRolSeleccionado("USUARIO_TECNICO")
+            setRolSeleccionado("UNIDAD_TECNICA_CODAR")
             cargarDatos()
         } catch (err: any) {
             setError("Error al aprobar: " + err.message)
@@ -89,7 +89,7 @@ export default function GestionUsuariosPage() {
 
     const abrirAprobarModal = (user: Usuario) => {
         setUsuarioParaAprobar(user)
-        setRolSeleccionado("USUARIO_TECNICO")
+        setRolSeleccionado("UNIDAD_TECNICA_CODAR")
     }
 
     const handleCambiarEstado = async (id: number, estado: string) => {
@@ -163,8 +163,8 @@ export default function GestionUsuariosPage() {
     const getRolLabel = (rol: string) => {
         switch (rol) {
             case "ADMIN": return "Administrador"
-            case "PRESIDENTE_SIDAF": return "Presidente"
-            case "USUARIO_TECNICO": return "Usuario Técnico"
+            case "PRESIDENCIA_CODAR": return "Presidente CODAR"
+            case "UNIDAD_TECNICA_CODAR": return "Unidad Técnica CODAR"
             default: return rol
         }
     }
@@ -257,10 +257,10 @@ export default function GestionUsuariosPage() {
                                                     onChange={(e) => setRolSeleccionado(e.target.value)}
                                                     className="border rounded px-2 py-1 text-sm"
                                                 >
-                                                    <option value="USUARIO_TECNICO">Usuario Técnico</option>
+                                                    <option value="UNIDAD_TECNICA_CODAR">Unidad Técnica CODAR</option>
                                                     {usuario?.rol === "ADMIN" && (
                                                         <>
-                                                            <option value="PRESIDENTE_SIDAF">Presidente</option>
+                                                            <option value="PRESIDENCIA_CODAR">Presidente CODAR</option>
                                                             <option value="ADMIN">Administrador</option>
                                                         </>
                                                     )}
