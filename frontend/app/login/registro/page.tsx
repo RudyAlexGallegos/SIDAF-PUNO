@@ -290,33 +290,6 @@ export default function RegistroPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="areaCodar">Área de Trabajo *</Label>
-                                    <div className="relative">
-                                        <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                                        <Input
-                                            id="areaCodar"
-                                            type="text"
-                                            value={areaCodar}
-                                            onChange={(e) => setAreaCodar(e.target.value)}
-                                            placeholder="Comité de Árbitros, Unidad Técnica, etc."
-                                            className="pl-10"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label htmlFor="especialidad">Especialidad</Label>
-                                    <Input
-                                        id="especialidad"
-                                        type="text"
-                                        value={especialidad}
-                                        onChange={(e) => setEspecialidad(e.target.value)}
-                                        placeholder="Administración, Logística, Técnico Deportivo"
-                                    />
-                                </div>
-
-                                <div className="space-y-1">
                                     <Label htmlFor="fechaNacimiento">Fecha de Nacimiento</Label>
                                     <div className="relative">
                                         <Award className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -338,19 +311,6 @@ export default function RegistroPage() {
                                         </p>
                                     )}
                                 </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                                <input
-                                    id="esExArbitro"
-                                    type="checkbox"
-                                    checked={esExArbitro}
-                                    onChange={(e) => setEsExArbirto(e.target.checked)}
-                                    className="w-4 h-4 text-blue-600"
-                                />
-                                <Label htmlFor="esExArbitro" className="cursor-pointer">
-                                    ¿Es usted ex-árbitro de fútbol?
-                                </Label>
                             </div>
                         </div>
 
