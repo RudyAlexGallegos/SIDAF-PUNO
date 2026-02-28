@@ -729,59 +729,6 @@ export async function getUsuariosCODAR(): Promise<Usuario[]> {
     return await response.json();
 }
 
-// Actualizar perfil de usuario
-export async function actualizarPerfil(data: {
-    nombre?: string;
-    apellido?: string;
-    email?: string;
-    telefono?: string;
-}): Promise<any> {
-    const user = getStoredUser();
-    if (!user || !user.dni) {
-        throw new Error("No hay usuario logueado");
-    }
-    
-    const response = await fetch(buildUrl("/auth/perfil"), {
-        method: "PUT",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}`
-        },
-        body: JSON.stringify({ dni: user.dni, ...data }),
-    });
-    
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al actualizar perfil");
-    }
-    
-    return await response.json();
-}
-
-// Cambiar contraseña
-export async function cambiarPassword(actual: string, nueva: string): Promise<any> {
-    const user = getStoredUser();
-    if (!user || !user.dni) {
-        throw new Error("No hay usuario logueado");
-    }
-    
-    const response = await fetch(buildUrl("/auth/cambiar-password"), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}`
-        },
-        body: JSON.stringify({ dni: user.dni, passwordActual: actual, passwordNueva: nueva }),
-    });
-    
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al cambiar contraseña");
-    }
-    
-    return await response.json();
-}
-
 // ==================== SOLICITUDES DE PERMISOS ====================
 
 export interface SolicitudPermiso {
