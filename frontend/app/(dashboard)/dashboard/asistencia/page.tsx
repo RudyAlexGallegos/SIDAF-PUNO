@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Check } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { getStoredUser } from "@/services/api"
 export default function AsistenciaPage() {
   const { arbitros, loading } = useArbitros()
   const {
@@ -31,8 +32,20 @@ export default function AsistenciaPage() {
   const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
   const [responsable, setResponsable] = React.useState("")
   const [openFinalize, setOpenFinalize] = React.useState(false)
+  const [fechaHoraInicio, setFechaHoraInicio] = React.useState<string>("")
   const searchParams = useSearchParams()
   const router = useRouter()
+
+  // Auto-detectar el usuario actual como responsable
+  React.useEffect(() => {
+    const usuario = getStoredUser()
+    if (usuario) {
+      const nombreCompleto = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim()
+      if (nombreCompleto) {
+        setResponsable(nombreCompleto)
+      }
+    }
+  }, [])
 
   React.useEffect(() => {
     try {
@@ -176,7 +189,12 @@ export default function AsistenciaPage() {
 
           <div className="mt-6 flex items-center gap-3">
             <button
-              onClick={() => { iniciarRegistro(actividad, responsable); toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'}` }) }}
+              onClick={() => { 
+                const ahora = new Date().toISOString()
+                setFechaHoraInicio(ahora)
+                iniciarRegistro(actividad, responsable); 
+                toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'}` }) 
+              }}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold shadow-md transition active:scale-95"
             >
               Iniciar Registro
@@ -265,6 +283,11 @@ export default function AsistenciaPage() {
                     <div className="mt-4">
                       <p className="text-sm">Actividad: <span className="font-medium">{actividad.replace('_', ' ')}</span></p>
                       <p className="text-sm">Responsable: <span className="font-medium">{responsable || '—'}</span></p>
+                      {fechaHoraInicio && (
+                        <p className="text-sm text-gray-600">
+                          Fecha y hora de inicio: <span className="font-medium">{new Date(fechaHoraInicio).toLocaleString('es-PE', { dateStyle: 'long', timeStyle: 'short' })}</span>
+                        </p>
+                      )}
 
                       <div className="grid grid-cols-3 gap-4 mt-3 text-center">
                         <div>
