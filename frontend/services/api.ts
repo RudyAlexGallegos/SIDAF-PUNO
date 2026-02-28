@@ -507,6 +507,10 @@ export interface Usuario {
     unidadOrganizacional?: string;
     permisosEspecificos?: string;
     token?: string;
+    perfilCompleto?: boolean;
+    cargoCodar?: string;
+    areaCodar?: string;
+    telefono?: string;
 }
 
 export async function login(dni: string, password: string): Promise<Usuario> {
@@ -683,6 +687,45 @@ export async function eliminarTodosUsuarios(): Promise<any> {
         }
     });
     if (!response.ok) throw new Error("Error al eliminar usuarios");
+    return await response.json();
+}
+
+// Completar perfil de usuario (para usuarios CODAR)
+export async function completarPerfil(data: {
+    dni: string;
+    telefono?: string;
+    cargoCodar?: string;
+    areaCodar?: string;
+}): Promise<any> {
+    const response = await fetch(buildUrl("/auth/completar-perfil"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al completar perfil");
+    }
+    
+    return await response.json();
+}
+
+// Listar usuarios CODAR (para PRESIDENCIA_CODAR)
+export async function getUsuariosCODAR(): Promise<Usuario[]> {
+    const response = await fetch(buildUrl("/auth/usuarios/codar"), {
+        headers: { "Authorization": `Bearer ${getStoredToken()}` }
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error getUsuariosCODAR:", response.status, errorText);
+        try {
+            const errorData = JSON.parse(errorText);
+            throw new Error(errorData.error || errorData.message || "Error al obtener usuarios CODAR");
+        } catch (e) {
+            throw new Error("Error al obtener usuarios CODAR: " + response.status);
+        }
+    }
     return await response.json();
 }
 
