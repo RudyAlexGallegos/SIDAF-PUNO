@@ -46,45 +46,62 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                // Check API connection first
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL + "/api/hello"
-                const helloRes = await fetch(apiUrl)
-                if (!helloRes.ok) throw new Error("API no disponible")
-                setApiStatus("ok")
+            let retries = 3
+            let lastError = null
+            
+            while (retries > 0) {
+                try {
+                    // Check API connection first
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL + "/api/hello"
+                    const helloRes = await fetch(apiUrl)
+                    if (!helloRes.ok) throw new Error("API no disponible")
+                    setApiStatus("ok")
 
-                // Fetch all data in parallel
-                const [arbitros, designaciones, championships, equipos, todayAsistencias] = await Promise.all([
-                    getArbitros(),
-                    getDesignaciones(),
-                    getCampeonatos(),
-                    getEquipos(),
-                    getAsistencias(),
-                ])
+                    // Fetch all data in parallel
+                    const [arbitros, designaciones, championships, equipos, todayAsistencias] = await Promise.all([
+                        getArbitros(),
+                        getDesignaciones(),
+                        getCampeonatos(),
+                        getEquipos(),
+                        getAsistencias(),
+                    ])
 
-                // Calculate stats
-                const arbitrosActivos = arbitros.filter((a: Arbitro) => a.estado === "ACTIVO" || a.disponible).length
-                const designacionesPendientes = designaciones.filter((d: Designacion) => d.estado === "PENDIENTE" || d.estado === "CONFIRMADA").length
-                const championshipsActivos = championships.filter((c: Campeonato) => c.estado === "ACTIVO" || c.estado === "EN_CURSO").length
-                const today = new Date().toISOString().split('T')[0]
-                const todayAsistCount = todayAsistencias.filter((a: Asistencia) => a.fecha === today).length
+                    // Calculate stats
+                    const arbitrosActivos = arbitros.filter((a: Arbitro) => a.estado === "ACTIVO" || a.disponible).length
+                    const designacionesPendientes = designaciones.filter((d: Designacion) => d.estado === "PENDIENTE" || d.estado === "CONFIRMADA").length
+                    const championshipsActivos = championships.filter((c: Campeonato) => c.estado === "ACTIVO" || c.estado === "EN_CURSO").length
+                    const today = new Date().toISOString().split('T')[0]
+                    const todayAsistCount = todayAsistencias.filter((a: Asistencia) => a.fecha === today).length
 
-                setStats({
-                    arbitros: arbitros.length,
-                    arbitrosActivos,
-                    designaciones: designaciones.length,
-                    designacionesPendientes,
-                    championships: championships.length,
-                    championshipsActivos,
-                    equipos: equipos.length,
-                    todayAsistencias: todayAsistCount,
-                })
-            } catch (error) {
-                console.error("Error fetching dashboard data:", error)
-                setApiStatus("error")
-            } finally {
-                setLoading(false)
+                    setStats({
+                        arbitros: arbitros.length,
+                        arbitrosActivos,
+                        designaciones: designaciones.length,
+                        designacionesPendientes,
+                        championships: championships.length,
+                        championshipsActivos,
+                        equipos: equipos.length,
+                        todayAsistencias: todayAsistCount,
+                    })
+                    
+                    // Success - exit the retry loop
+                    return
+                } catch (error) {
+                    console.error(`Attempt failed (${3 - retries + 1}/3):`, error)
+                    lastError = error
+                    retries--
+                    
+                    if (retries > 0) {
+                        // Wait 3 seconds before retrying
+                        await new Promise(resolve => setTimeout(resolve, 3000))
+                    }
+                }
             }
+            
+            // All retries failed
+            console.error("Error fetching dashboard data after 3 attempts:", lastError)
+            setApiStatus("error")
+            setLoading(false)
         }
 
         fetchData()
@@ -115,11 +132,21 @@ export default function DashboardPage() {
 
             {/* Error State */}
             {!loading && apiStatus === "error" && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                    <div>
-                        <p className="font-medium text-red-800">Error de conexión</p>
-                        <p className="text-sm text-red-600">No se pudo conectar con el servidor. Intente más tarde.</p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-medium text-amber-800">Backend en modo suspensión</p>
+                            <p className="text-sm text-amber-700 mt-1">
+                                El servidor puede tardar 30-60 segundos en despertar. Por favor, espere un momento y actualice la página.
+                            </p>
+                            <button 
+                                onClick={() => window.location.reload()}
+                                className="mt-3 px-4 py-2 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 transition-colors"
+                            >
+                                Actualizar página
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
