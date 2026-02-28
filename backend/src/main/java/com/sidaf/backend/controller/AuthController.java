@@ -93,6 +93,9 @@ public class AuthController {
         String apellido = datos.get("apellido");
         String email = datos.get("email");
         String password = datos.get("password");
+        String telefono = datos.get("telefono");
+        String cargoCodar = datos.get("cargoCodar");
+        String areaCodar = datos.get("areaCodar");
         String unidadOrganizacional = datos.get("unidadOrganizacional");
 
         // Validaciones
@@ -130,11 +133,15 @@ public class AuthController {
         nuevoUsuario.setApellido(apellido);
         nuevoUsuario.setEmail(email);
         nuevoUsuario.setPassword(password);
+        nuevoUsuario.setTelefono(telefono != null ? telefono : "");
+        nuevoUsuario.setCargoCodar(cargoCodar != null ? cargoCodar : "");
+        nuevoUsuario.setAreaCodar(areaCodar != null ? areaCodar : "");
         nuevoUsuario.setRol(rol);
         nuevoUsuario.setEstado(estado);
         nuevoUsuario.setUnidadOrganizacional(unidadOrganizacional);
         nuevoUsuario.setPermisosEspecificos(permisos);
         nuevoUsuario.setFechaRegistro(LocalDateTime.now());
+        nuevoUsuario.setPerfilCompleto(false);
 
         Usuario guardado = usuarioRepository.save(nuevoUsuario);
 

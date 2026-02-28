@@ -34,8 +34,8 @@ export default function LoginPage() {
         try {
             const user = await login(dni, password)
             
-            // Verificar si el usuario CODAR necesita completar su perfil
-            if (user.rol === "CODAR" && !user.perfilCompleto) {
+            // Verificar si el usuario necesita completar su perfil
+            if ((user.rol === "CODAR" || user.rol === "UNIDAD_TECNICA_CODAR") && !user.perfilCompleto) {
                 router.push("/dashboard/perfil")
             } else {
                 router.push("/dashboard")

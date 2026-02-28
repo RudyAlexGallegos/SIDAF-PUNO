@@ -32,8 +32,8 @@ export default function PerfilPage() {
     const [nuevaPassword, setNuevaPassword] = useState("")
     const [confirmarPassword, setConfirmarPassword] = useState("")
 
-    // Verificar si es usuario CODAR que necesita completar perfil
-    const isCODARUser = usuario?.rol === "CODAR"
+    // Verificar si es usuario que necesita completar perfil
+    const isCODARUser = usuario?.rol === "CODAR" || usuario?.rol === "UNIDAD_TECNICA_CODAR"
     const needsProfileCompletion = isCODARUser && !usuario?.perfilCompleto
 
     useEffect(() => {
