@@ -97,19 +97,31 @@ export default function AsistenciaPage() {
 
   if (!registro) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center p-6">
-        <div className="w-[calc(100vw-32px)] sm:w-full max-w-xl bg-white rounded-2xl shadow-xl p-6 sm:p-8 -mx-4 sm:mx-0">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">SP</div>
-            <div>
-              <div className="text-sm text-gray-500">Comisión Departamental de Árbitros</div>
-              <div className="text-base font-semibold">Sistema de Gestión — Registro de Asistencia</div>
+      <div className="min-h-[60vh] flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-2xl">
+          {/* Header gradient card */}
+          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold">Control de Asistencia</h2>
+                <p className="text-blue-100 text-sm">Comisión Departamental de Árbitros - Puno</p>
+              </div>
             </div>
           </div>
 
           <p className="text-sm text-gray-600 mb-6">Inicia un nuevo registro para marcar la asistencia. Los cambios se guardan localmente hasta que finalices.</p>
 
-          <div className="grid grid-cols-1 gap-4">
+          {/* Main card with improved styling */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
+              Selecciona la actividad
+            </h3>
             <div>
               <div className="text-xs text-gray-500 mb-2">Selecciona la actividad</div>
               <div role="radiogroup" aria-label="Tipo de actividad" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -176,18 +188,18 @@ export default function AsistenciaPage() {
             </div>
 
             <div>
-              <label className="text-xs text-gray-500">Responsable <span className="text-gray-400 text-xs">(opcional)</span></label>
+              <label className="text-sm font-medium text-gray-700 block mb-2">Responsable</label>
               <input
                 id="responsable-quick"
                 value={responsable}
                 onChange={(e) => setResponsable(e.target.value)}
                 placeholder="Nombre del responsable"
-                className="mt-1 w-full px-3 py-2 border rounded-md text-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               />
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
               onClick={() => { 
                 const ahora = new Date().toISOString()
@@ -195,21 +207,24 @@ export default function AsistenciaPage() {
                 iniciarRegistro(actividad, responsable); 
                 toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'}` }) 
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold shadow-md transition active:scale-95"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
               Iniciar Registro
             </button>
 
             <button
               onClick={() => router.push("/dashboard/asistencia/historial")}
-              className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold shadow-md transition active:scale-95"
+              className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
             >
               <BarChart3 className="h-5 w-5" />
               Reportes
             </button>
-
-            <div className="text-sm text-gray-500">Prueba con árbitros ficticios para validar la interfaz.</div>
           </div>
+
+          <p className="mt-4 text-sm text-gray-500 text-center sm:text-left">Prueba con árbitros ficticios para validar la interfaz.</p>
         </div>
       </div>
     )
