@@ -15,7 +15,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
-import { Check } from "lucide-react"
+import { Check, BarChart3 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getStoredUser } from "@/services/api"
 export default function AsistenciaPage() {
@@ -198,6 +198,14 @@ export default function AsistenciaPage() {
               className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold shadow-md transition active:scale-95"
             >
               Iniciar Registro
+            </button>
+
+            <button
+              onClick={() => router.push("/dashboard/asistencia/historial")}
+              className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold shadow-md transition active:scale-95"
+            >
+              <BarChart3 className="h-5 w-5" />
+              Reportes
             </button>
 
             <div className="text-sm text-gray-500">Prueba con árbitros ficticios para validar la interfaz.</div>
