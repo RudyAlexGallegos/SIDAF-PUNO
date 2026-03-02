@@ -21,6 +21,11 @@ import {
     Shield,
     Clock,
     GraduationCap,
+    Globe,
+    Ruler,
+    Heart,
+    Users,
+    Briefcase,
     Activity,
 } from "lucide-react"
 
@@ -135,7 +140,7 @@ export default function VerArbitroPage() {
         html2pdf()
             .set({
                 margin: 0.2,
-                filename: `perfil_arbitr_${ar.nombre}_${ar.apellido}.pdf`,
+                filename: `perfil_arbitro_${arb.nombre}_${arb.apellido}.pdf`,
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
             })
@@ -143,7 +148,7 @@ export default function VerArbitroPage() {
             .save()
     }
 
-    if (!ar) {
+    if (!arbitro) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="animate-pulse text-slate-400">Cargando información...</div>
@@ -163,8 +168,8 @@ export default function VerArbitroPage() {
     const estado = arb.estado || "activo"
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            {/* HEADER */}
+        <div className="min-h-screen bg-slate-100">
+            {/* HEADER CORPOATIVO */}
             <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
@@ -184,7 +189,7 @@ export default function VerArbitroPage() {
                             </Button>
 
                             <Button size="sm" asChild className="gap-2 bg-slate-900 hover:bg-slate-800">
-                                <Link href={`/dashboard/arbitros/${ar.id}/editar`}>
+                                <Link href={`/dashboard/arbitros/${arbitro.id}/editar`}>
                                     <Edit className="w-4 h-4" />
                                     <span className="hidden sm:inline">Editar</span>
                                 </Link>
@@ -194,69 +199,69 @@ export default function VerArbitroPage() {
                 </div>
             </header>
 
-            {/* MAIN CONTENT */}
+            {/* CONTENIDO PRINCIPAL */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div ref={pdfRef} className="space-y-6">
                     
-                    {/* PROFILE HEADER */}
+                    {/* CABECERA DEL PERFIL */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        {/* Banner */}
-                        <div className="h-20 sm:h-24 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 relative">
+                        {/* Banner corporativo */}
+                        <div className="h-24 sm:h-32 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 relative">
                             <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+')]"></div>
                         </div>
                         
                         <div className="px-6 sm:px-8 pb-8">
-                            <div className="flex flex-col sm:flex-row gap-6 -mt-14 sm:-mt-16">
-                                {/* Avatar */}
+                            <div className="flex flex-col sm:flex-row gap-6 -mt-12 sm:-mt-16">
+                                {/* Foto de perfil */}
                                 <div className="flex-shrink-0">
-                                    <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-xl bg-white shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
+                                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-white shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
                                         {foto ? (
                                             <img src={foto} alt="Foto" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                                                <User className="w-12 h-12 sm:w-14 sm:h-14 text-slate-400" />
+                                                <User className="w-10 h-10 sm:w-14 sm:h-14 text-slate-400" />
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Info */}
-                                <div className="flex-1 pt-3 sm:pt-4 min-w-0">
+                                {/* Info principal */}
+                                <div className="flex-1 pt-2 sm:pt-4 min-w-0">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                         <div className="min-w-0">
                                             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">
-                                                {ar.nombre} {ar.apellido}
+                                                {arb.nombre} {arb.apellido}
                                             </h1>
-                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-3">
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-sm font-semibold">
-                                                    <Award className="w-4 h-4" />
-                                                    {ar.categoria || "Sin categoría"}
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-900 text-white text-sm font-medium">
+                                                    <Award className="w-3.5 h-3.5" />
+                                                    {arb.categoria || "Sin categoría"}
                                                 </span>
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${getEstadoColor(estado)}`}>
-                                                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-white text-sm font-medium ${getEstadoColor(estado)}`}>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
                                                     {getEstadoLabel(estado)}
                                                 </span>
                                                 {aniosCODAR !== null && (
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium">
-                                                        <Clock className="w-4 h-4" />
-                                                        {aniosCODAR} años en CODAR
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 text-slate-700 text-sm font-medium">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        {aniosCODAR} años CODAR
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                         
-                                        {/* Contact */}
-                                        <div className="flex flex-col gap-2 text-sm bg-slate-50 p-3 rounded-lg">
+                                        {/* Contacto */}
+                                        <div className="flex flex-col gap-2 text-sm">
                                             {arb.telefono && (
                                                 <a href={`tel:${arb.telefono}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
                                                     <Phone className="w-4 h-4 text-slate-400" />
-                                                    <span className="font-medium">{arb.telefono}</span>
+                                                    <span>{arb.telefono}</span>
                                                 </a>
                                             )}
                                             {arb.email && (
-                                                <a href={`mailto:${arb.email}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                                                <a href={`mailto:${arb.email}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 truncate">
                                                     <Mail className="w-4 h-4 text-slate-400" />
-                                                    <span className="font-medium truncate max-w-[200px]">{arb.email}</span>
+                                                    <span className="truncate">{arb.email}</span>
                                                 </a>
                                             )}
                                         </div>
@@ -266,91 +271,91 @@ export default function VerArbitroPage() {
                         </div>
                     </div>
 
-                    {/* GRID */}
+                    {/* GRID DE INFORMACIÓN */}
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                         
-                        {/* LEFT COLUMN */}
+                        {/* COLUMNA IZQUIERDA - 4 columnas */}
                         <div className="md:col-span-4 lg:col-span-3 space-y-6">
                             
-                            {/* Personal Info */}
+                            {/* Datos Personales */}
                             <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 bg-slate-50/50 border-b">
-                                    <CardTitle className="text-sm font-semibold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                                <CardHeader className="pb-3 border-b border-slate-100">
+                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                                         <User className="w-4 h-4 text-slate-600" />
                                         Datos Personales
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-4 space-y-3">
                                     {arb.dni && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                                        <div className="flex justify-between items-center py-1">
                                             <span className="text-sm text-slate-500">DNI</span>
-                                            <span className="text-sm font-semibold text-slate-900">{arb.dni}</span>
+                                            <span className="text-sm font-medium text-slate-900">{arb.dni}</span>
                                         </div>
                                     )}
                                     {genero && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                                        <div className="flex justify-between items-center py-1">
                                             <span className="text-sm text-slate-500">Sexo</span>
-                                            <span className="text-sm font-semibold text-slate-900 capitalize">{genero}</span>
+                                            <span className="text-sm font-medium text-slate-900 capitalize">{genero}</span>
                                         </div>
                                     )}
                                     {edad !== null && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                                        <div className="flex justify-between items-center py-1">
                                             <span className="text-sm text-slate-500">Edad</span>
-                                            <span className="text-sm font-semibold text-slate-900">{edad} años</span>
+                                            <span className="text-sm font-medium text-slate-900">{edad} años</span>
                                         </div>
                                     )}
                                     {arb.fechaNacimiento && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                                            <span className="text-sm text-slate-500">Nacimiento</span>
-                                            <span className="text-sm font-semibold text-slate-900">{new Date(arb.fechaNacimiento).toLocaleDateString('es-PE')}</span>
+                                        <div className="flex justify-between items-center py-1">
+                                            <span className="text-sm text-slate-500">F. Nacimiento</span>
+                                            <span className="text-sm font-medium text-slate-900">{new Date(arb.fechaNacimiento).toLocaleDateString('es-PE')}</span>
                                         </div>
                                     )}
                                     {arb.lugarNacimiento && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                                            <span className="text-sm text-slate-500">Lugar</span>
-                                            <span className="text-sm font-semibold text-slate-900 text-right">{arb.lugarNacimiento}</span>
+                                        <div className="flex justify-between items-center py-1">
+                                            <span className="text-sm text-slate-500">L. Nacimiento</span>
+                                            <span className="text-sm font-medium text-slate-900 text-right">{arb.lugarNacimiento}</span>
                                         </div>
                                     )}
                                     {arb.estatura && (
-                                        <div className="flex justify-between items-center py-1.5">
+                                        <div className="flex justify-between items-center py-1">
                                             <span className="text-sm text-slate-500">Estatura</span>
-                                            <span className="text-sm font-semibold text-slate-900">{arb.estatura} cm</span>
+                                            <span className="text-sm font-medium text-slate-900">{arb.estatura} cm</span>
                                         </div>
                                     )}
                                 </CardContent>
                             </Card>
 
-                            {/* Location */}
+                            {/* Ubicación */}
                             <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 bg-slate-50/50 border-b">
-                                    <CardTitle className="text-sm font-semibold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                                <CardHeader className="pb-3 border-b border-slate-100">
+                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                                         <MapPin className="w-4 h-4 text-slate-600" />
                                         Ubicación
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-4 space-y-3">
                                     {arb.provincia && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                                        <div className="flex justify-between items-center py-1">
                                             <span className="text-sm text-slate-500">Provincia</span>
-                                            <span className="text-sm font-semibold text-slate-900">{arb.provincia}</span>
+                                            <span className="text-sm font-medium text-slate-900">{arb.provincia}</span>
                                         </div>
                                     )}
                                     {arb.distrito && (
-                                        <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                                        <div className="flex justify-between items-center py-1">
                                             <span className="text-sm text-slate-500">Distrito</span>
-                                            <span className="text-sm font-semibold text-slate-900">{arb.distrito}</span>
+                                            <span className="text-sm font-medium text-slate-900">{arb.distrito}</span>
                                         </div>
                                     )}
                                     {arb.direccion && (
-                                        <div className="py-1.5">
+                                        <div className="py-1">
                                             <span className="text-sm text-slate-500 block mb-1">Dirección</span>
-                                            <span className="text-sm font-semibold text-slate-900">{arb.direccion}</span>
+                                            <span className="text-sm font-medium text-slate-900">{arb.direccion}</span>
                                         </div>
                                     )}
                                     {arb.telefonoEmergencia && (
-                                        <div className="flex justify-between items-center py-1.5 pt-3 border-t border-slate-100">
-                                            <span className="text-sm text-slate-500">Emergencia</span>
-                                            <span className="text-sm font-semibold text-red-600">{arb.telefonoEmergencia}</span>
+                                        <div className="flex justify-between items-center py-1">
+                                            <span className="text-sm text-slate-500">Tel. Emergencia</span>
+                                            <span className="text-sm font-medium text-slate-900">{arb.telefonoEmergencia}</span>
                                         </div>
                                     )}
                                 </CardContent>
@@ -358,17 +363,17 @@ export default function VerArbitroPage() {
 
                             {/* Roles */}
                             <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 bg-slate-50/50 border-b">
-                                    <CardTitle className="text-sm font-semibold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                                <CardHeader className="pb-3 border-b border-slate-100">
+                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                                         <Shield className="w-4 h-4 text-slate-600" />
-                                        Roles Asignados
+                                        Roles
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-4">
                                     {roles.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {roles.map((rol: string, i: number) => (
-                                                <Badge key={i} className="bg-slate-800 text-white hover:bg-slate-700 px-3 py-1">
+                                                <Badge key={i} variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200">
                                                     {rol}
                                                 </Badge>
                                             ))}
@@ -380,111 +385,101 @@ export default function VerArbitroPage() {
                             </Card>
                         </div>
 
-                        {/* RIGHT COLUMN */}
+                        {/* COLUMNA DERECHA - 8 columnas */}
                         <div className="md:col-span-8 lg:col-span-9 space-y-6">
                             
-                            {/* Stats */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-slate-800 to-slate-900">
-                                    <CardContent className="p-5 text-center">
-                                        <p className="text-3xl sm:text-4xl font-bold text-white">{ar.experiencia || 0}</p>
-                                        <p className="text-xs sm:text-sm text-slate-300 mt-2 font-medium">Años Experiencia</p>
+                            {/* Estadísticas */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-slate-50 to-slate-100">
+                                    <CardContent className="p-4 text-center">
+                                        <p className="text-2xl sm:text-3xl font-bold text-slate-800">{arb.experiencia || 0}</p>
+                                        <p className="text-xs sm:text-sm text-slate-600 mt-1">Años Experiencia</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-emerald-600 to-emerald-700">
-                                    <CardContent className="p-5 text-center">
-                                        <p className="text-3xl sm:text-4xl font-bold text-white">{aniosCODAR || 0}</p>
-                                        <p className="text-xs sm:text-sm text-emerald-100 mt-2 font-medium">Años en CODAR</p>
+                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-emerald-50 to-emerald-100">
+                                    <CardContent className="p-4 text-center">
+                                        <p className="text-2xl sm:text-3xl font-bold text-emerald-700">{aniosCODAR || 0}</p>
+                                        <p className="text-xs sm:text-sm text-emerald-600 mt-1">Años CODAR</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-blue-600 to-blue-700">
-                                    <CardContent className="p-5 text-center">
-                                        <p className="text-3xl sm:text-4xl font-bold text-white">{roles.length}</p>
-                                        <p className="text-xs sm:text-sm text-blue-100 mt-2 font-medium">Roles Asignados</p>
+                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
+                                    <CardContent className="p-4 text-center">
+                                        <p className="text-2xl sm:text-3xl font-bold text-blue-700">{roles.length}</p>
+                                        <p className="text-xs sm:text-sm text-blue-600 mt-1">Roles</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-violet-600 to-violet-700">
-                                    <CardContent className="p-5 text-center">
-                                        <p className="text-3xl sm:text-4xl font-bold text-white">{especialidades.length}</p>
-                                        <p className="text-xs sm:text-sm text-violet-100 mt-2 font-medium">Especialidades</p>
+                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-violet-50 to-violet-100">
+                                    <CardContent className="p-4 text-center">
+                                        <p className="text-2xl sm:text-3xl font-bold text-violet-700">{especialidades.length}</p>
+                                        <p className="text-xs sm:text-sm text-violet-600 mt-1">Especialidades</p>
                                     </CardContent>
                                 </Card>
                             </div>
 
-                            {/* Professional Data */}
+                            {/* Datos Profesionales */}
                             <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 bg-slate-50/50 border-b">
-                                    <CardTitle className="text-sm font-semibold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                                        <TrendingUp className="w-4 h-4 text-slate-600" />
-                                        Trayectoria Profesional
+                                <CardHeader className="pb-3 border-b border-slate-100">
+                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                                        <Briefcase className="w-4 h-4 text-slate-600" />
+                                        Datos Profesionales
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="pt-5">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <CardContent className="pt-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {arb.fechaAfiliacion && (
-                                            <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100">
-                                                <div className="p-2 rounded-lg bg-slate-800 text-white">
-                                                    <Calendar className="w-5 h-5" />
-                                                </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                                                <Calendar className="w-5 h-5 text-slate-500 flex-shrink-0" />
                                                 <div>
-                                                    <p className="text-xs text-slate-500 font-medium uppercase">Fecha Afiliación</p>
-                                                    <p className="text-sm font-bold text-slate-900 mt-0.5">{new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE', { year: 'numeric', month: 'long' })}</p>
+                                                    <p className="text-xs text-slate-500">Fecha de Afiliación</p>
+                                                    <p className="text-sm font-medium text-slate-900">{new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE')}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.fechaExamenTeorico && (
-                                            <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100">
-                                                <div className="p-2 rounded-lg bg-blue-600 text-white">
-                                                    <FileText className="w-5 h-5" />
-                                                </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                                                <FileText className="w-5 h-5 text-slate-500 flex-shrink-0" />
                                                 <div>
-                                                    <p className="text-xs text-slate-500 font-medium uppercase">Examen Teórico</p>
-                                                    <p className="text-sm font-bold text-slate-900 mt-0.5">{new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE')}</p>
+                                                    <p className="text-xs text-slate-500">Examen Teórico</p>
+                                                    <p className="text-sm font-medium text-slate-900">{new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE')}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.fechaExamenPractico && (
-                                            <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100">
-                                                <div className="p-2 rounded-lg bg-emerald-600 text-white">
-                                                    <Target className="w-5 h-5" />
-                                                </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                                                <Target className="w-5 h-5 text-slate-500 flex-shrink-0" />
                                                 <div>
-                                                    <p className="text-xs text-slate-500 font-medium uppercase">Examen Práctico</p>
-                                                    <p className="text-sm font-bold text-slate-900 mt-0.5">{new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE')}</p>
+                                                    <p className="text-xs text-slate-500">Examen Práctico</p>
+                                                    <p className="text-sm font-medium text-slate-900">{new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE')}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.academiaFormadora && (
-                                            <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100">
-                                                <div className="p-2 rounded-lg bg-violet-600 text-white">
-                                                    <GraduationCap className="w-5 h-5" />
-                                                </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                                                <GraduationCap className="w-5 h-5 text-slate-500 flex-shrink-0" />
                                                 <div>
-                                                    <p className="text-xs text-slate-500 font-medium uppercase">Academia</p>
-                                                    <p className="text-sm font-bold text-slate-900 mt-0.5">{arb.academiaFormadora}</p>
+                                                    <p className="text-xs text-slate-500">Academia Formadora</p>
+                                                    <p className="text-sm font-medium text-slate-900">{arb.academiaFormadora}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.nivelPreparacion && (
-                                            <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100">
-                                                <div className="p-2 rounded-lg bg-amber-500 text-white">
-                                                    <TrendingUp className="w-5 h-5" />
-                                                </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                                                <TrendingUp className="w-5 h-5 text-slate-500 flex-shrink-0" />
                                                 <div>
-                                                    <p className="text-xs text-slate-500 font-medium uppercase">Nivel</p>
-                                                    <p className="text-sm font-bold text-slate-900 mt-0.5">{arb.nivelPreparacion}</p>
+                                                    <p className="text-xs text-slate-500">Nivel de Preparación</p>
+                                                    <p className="text-sm font-medium text-slate-900">{arb.nivelPreparacion}</p>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
                                     
-                                    {/* Specialties */}
+                                    {/* Especialidades */}
                                     {especialidades.length > 0 && (
-                                        <div className="mt-5 pt-5 border-t border-slate-200">
-                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Especialidades Deportivas</p>
+                                        <div className="mt-4 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-medium text-slate-700 mb-3">Especialidades</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {especialidades.map((esp: string, i: number) => (
-                                                    <Badge key={i} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-4 py-1.5 text-sm font-semibold">
+                                                    <Badge key={i} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200">
                                                         {esp}
                                                     </Badge>
                                                 ))}
@@ -494,43 +489,43 @@ export default function VerArbitroPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* Profile Description */}
+                            {/* Perfil Profesional */}
                             <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 bg-slate-50/50 border-b">
-                                    <CardTitle className="text-sm font-semibold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                                <CardHeader className="pb-3 border-b border-slate-100">
+                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                                         <Activity className="w-4 h-4 text-slate-600" />
                                         Perfil Profesional
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="pt-5">
-                                    <p className="text-slate-700 leading-relaxed text-base">
-                                        Árbitro de categoría <strong className="text-slate-900">{ar.categoria || "sin especificar"}</strong> con{' '}
-                                        <strong className="text-slate-900">{ar.experiencia || 0} años</strong> de experiencia en el arbitraje de fútbol regional.{' '}
-                                        {aniosCODAR ? `Miembro activo de la Comisión Departamental de Árbitros de Puno (CODAR) desde el año ${new Date(arb.fechaAfiliacion).getFullYear()}.` : ''}{' '}
-                                        Profesional comprometido con la imparcialidad, el cumplimiento del reglamento y la ética deportiva. 
-                                        Actualmente cuenta con disponibilidad <strong className={estado === 'activo' ? "text-emerald-600" : "text-slate-600"}>{estado === 'activo' ? "activa" : "limitada"}</strong> para接受 designaciones en torneos oficiales.
+                                <CardContent className="pt-4">
+                                    <p className="text-slate-700 leading-relaxed">
+                                        Árbitro de categoría <strong>{arb.categoria?.toLowerCase() || "sin especificar"}</strong> con{' '}
+                                        <strong>{arb.experiencia || 0} años</strong> de experiencia en competiciones de nivel regional.{' '}
+                                        {aniosCODAR ? `Afiliado a la Comisión Departamental de Árbitros de Puno desde el año ${new Date(arb.fechaAfiliacion).getFullYear()}.` : ''}{' '}
+                                        Comprometido con el cumplimiento del reglamento y la ética deportiva, 
+                                        actualmente con disponibilidad <strong>{estado === 'activo' ? 'activa' : 'inactiva'}</strong> para designaciones en torneos oficiales.
                                     </p>
                                 </CardContent>
                             </Card>
 
-                            {/* Observations */}
+                            {/* Observaciones */}
                             {arb.observaciones && (
                                 <Card className="border-slate-200 shadow-sm">
-                                    <CardHeader className="pb-3 bg-slate-50/50 border-b">
-                                        <CardTitle className="text-sm font-semibold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                                    <CardHeader className="pb-3 border-b border-slate-100">
+                                        <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                                             <FileText className="w-4 h-4 text-slate-600" />
                                             Observaciones
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="pt-5">
+                                    <CardContent className="pt-4">
                                         <p className="text-slate-700 whitespace-pre-line">{arb.observaciones}</p>
                                     </CardContent>
                                 </Card>
                             )}
 
                             {/* Footer */}
-                            <div className="text-center py-6 text-xs text-slate-400 border-t border-slate-200 bg-white rounded-xl p-4">
-                                <p className="font-medium">Sistema de Información y Designación de Árbitros - CODAR Puno</p>
+                            <div className="text-center py-4 text-xs text-slate-400 border-t border-slate-200">
+                                <p>Sistema de Información y Designación de Árbitros - CODAR Puno</p>
                                 <p className="mt-1">Perfil generado el {new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                             </div>
                         </div>
