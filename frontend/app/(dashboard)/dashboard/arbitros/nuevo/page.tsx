@@ -86,9 +86,8 @@ const CATEGORIAS_CODAR = [
 ]
 
 const ROLES_CODAR = [
-  { id: "arbitro_central", label: "Árbitro Central" },
-  { id: "asistente_1", label: "Asistente N°1" },
-  { id: "asistente_2", label: "Asistente N°2" },
+  { id: "arbitro_principal", label: "Árbitro Principal" },
+  { id: "asistente", label: "Asistente" },
   { id: "cuarto_oficial", label: "Cuarto Oficial" },
   { id: "var", label: "VAR" },
   { id: "avar", label: "AVAR" }
@@ -723,6 +722,9 @@ export default function NuevoArbitroPage() {
       const nuevaSecuencia = secuenciaCODAR + 1
       setSecuenciaCODAR(nuevaSecuencia)
       localStorage.setItem('secuenciaCODAR', nuevaSecuencia.toString())
+
+      // Mostrar mensaje de éxito
+      alert("Se ha registrado exitosamente al árbitro")
 
       router.push(`/dashboard/arbitros?registro=exitoso&codigo=${codigoCompleto}`)
 
