@@ -751,9 +751,9 @@ export default function NuevoArbitroPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* HEADER CORPORATIVO */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="h-20 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="h-auto py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+            <div className="flex items-center gap-3 order-2 sm:order-1">
               <Link
                 href="/dashboard/arbitros"
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
@@ -761,18 +761,18 @@ export default function NuevoArbitroPage() {
                 <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center">
                   <span className="text-lg">←</span>
                 </div>
-                <span className="font-medium">Volver al listado</span>
+                <span className="font-medium hidden sm:inline">Volver</span>
               </Link>
             </div>
 
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">Comisión Departamental de Árbitros</h1>
-              <p className="text-sm text-gray-600">Departamento de Puno • Sistema de Registro</p>
+            <div className="text-center order-1 sm:order-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Comisión Departamental de Árbitros</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Departamento de Puno • Sistema de Registro</p>
             </div>
 
-            <div className="text-right">
-              <div className="inline-flex flex-col items-end">
-                <span className="text-xs font-medium text-gray-500">Código CODAR (Generado automáticamente)</span>
+            <div className="text-center sm:text-right order-3">
+              <div className="inline-flex flex-col sm:items-end">
+                <span className="text-xs font-medium text-gray-500">Código CODAR</span>
                 <span className="text-lg font-bold text-blue-700 font-mono">{generarCodigoCODAR()}</span>
               </div>
             </div>
@@ -797,16 +797,14 @@ export default function NuevoArbitroPage() {
               <div className="lg:w-1/3">
                 <div className="sticky top-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Foto de Perfil</h3>
-                  <FotoPerfil
-                    foto={form.foto}
-                    nombres={form.nombres}
-                    apellidoPaterno={form.apellidoPaterno}
-                    onFotoChange={(fotoUrl) => updateForm({ foto: fotoUrl })}
-                  />
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>Recomendación:</strong> Sube una foto profesional o genera un avatar automático con las iniciales del árbitro.
-                    </p>
+                  <div className="p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 font-medium">Esta función estará disponible proximamente</p>
+                    <p className="text-xs text-gray-400 mt-2">Pronto podrás subir fotos de perfil</p>
                   </div>
                 </div>
               </div>
