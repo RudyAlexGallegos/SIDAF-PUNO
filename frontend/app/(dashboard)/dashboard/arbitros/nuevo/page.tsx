@@ -50,18 +50,31 @@ interface ArbitroData {
   declaracionJurada: boolean
 }
 
-// ==================== DATOS PUNO ====================
-const DISTRITOS_PUNO = [
-  "Puno", "Juliaca", "Ilave", "Juli", "Ayaviri", "Lampa", "Moho", "Huancané",
-  "Putina", "Sandia", "San Antonio de Putina", "Yunguyo", "Desaguadero",
-  "Zepita", "Taraco", "Ácora", "Atuncolla", "Mañazo", "Tirapata", "Nuñoa"
-]
+// ==================== DATOS PUNO - ESTRUCTURA JERÁRQUICA ====================
+// Departamento: Puno (código 26)
+const DEPARTAMENTO_PUNO = "Puno"
 
-const PROVINCIAS_PUNO = [
-  "Puno", "San Román", "El Collao", "Chucuito", "Huancané",
-  "Lampa", "Melgar", "Moho", "San Antonio de Putina",
-  "Sandia", "Yunguyo"
-]
+// Provincias y distritos de Puno (estructura jerárquica)
+const PROVINCIA_DISTRITOS: Record<string, string[]> = {
+  Puno: ["Puno", "Ácora", "Atuncolla", "Mañazo", "Tirapata", "Paucarcolla", "San Antonio de Esquilache", "Maure", "Taquile"],
+  "San Román": ["Juliaca", "Azángaro", "Samicaya", "Cuyuchí", "Huancané", "Cojata", "Huatasani", "Cuturapi", "Otoca", "Tilali"],
+  "El Collao": ["Ilave", "Capazo", "Pilcuyo", "Santa Rosa", "Mañazo", "Conduriri"],
+  Chucuito: ["Juli", "Desaguadero", "Zepita", "Balvina", "Comina", "Kelluyo", "Maure", "Pisacoma", "Pomata", "Tinicachi"],
+  Huancané: ["Huancané", "Taraco", "Vilque Chico", "Cahocache", "Pisacoma", "Huatasani", "Rosaspata", "San Antonio de Cusi", "Tinquiconi"],
+  Lampa: ["Lampa", "Cabanilla", "Calapuja", "Núñoa", "Palca", "Pucará", "Santa Lucía", "Ocuviri", "Picuta", "Progreso"],
+  Melgar: ["Ayaviri", "Antauta", "Cupi", "Llalli", "Macari", "Nuñoa", "Ocuviri", "Pucará", "Santa Rosa", "Umachiri"],
+  Moho: ["Moho", "Conima", "Huayrapata", "Tilali"],
+  "San Antonio de Putina": ["Putina", "Ananea", "Pedro Vilca Apaza", "Quilcapuncu", "Sina"],
+  Sandia: ["Sandia", "Cuyuchí", "Bala", "Limbani", "Patambuco", "Phara", "Quilcapuncu", "Sibayo", "Tiniguad"],
+  Yunguyo: ["Yunguyo", "Anapia", "Camacachi", "Chupa", "Manu", "Ollachea", "Tapacari", "Tiquillaca", "Unicachi"]
+}
+
+const PROVINCIAS_PUNO = Object.keys(PROVINCIA_DISTRITOS)
+
+// Obtener distritos según la provincia seleccionada
+const getDistritosPorProvincia = (provincia: string): string[] => {
+  return PROVINCIA_DISTRITOS[provincia] || []
+}
 
 const CATEGORIAS_CODAR = [
   { value: "FIFA", label: "FIFA", desc: "Árbitros FIFA" },
@@ -520,6 +533,8 @@ export default function NuevoArbitroPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [edad, setEdad] = useState<number>(0)
   const [aniosComoArbitro, setAniosComoArbitro] = useState<number>(0)
+  // Estado para el número de secuencia del código CODAR
+  const [secuenciaCODAR, setSecuenciaCODAR] = useState<number>(11)
 
   const [form, setForm] = useState<ArbitroData>({
     apellidoPaterno: "",
@@ -568,13 +583,12 @@ export default function NuevoArbitroPage() {
     }
   }, [form.fechaAfiliacion])
 
-  // Generar código CODAR
+  // Generar código CODAR secuencial (formato: CODAR-26-011, CODAR-26-012, etc.)
   const generarCodigoCODAR = useCallback(() => {
-    const iniciales = `${form.apellidoPaterno.charAt(0) || '0'}${form.apellidoMaterno.charAt(0) || '0'}${form.nombres.charAt(0) || '0'}`.toUpperCase()
-    const fecha = new Date().getFullYear().toString().slice(-2)
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    return `CODAR-${fecha}-${iniciales}-${random}`
-  }, [form.apellidoPaterno, form.apellidoMaterno, form.nombres])
+    const añoActual = new Date().getFullYear().toString().slice(-2)
+    const numeroSecuencial = secuenciaCODAR.toString().padStart(3, '0')
+    return `CODAR-${añoActual}-${numeroSecuencial}`
+  }, [secuenciaCODAR])
 
   // Actualizar formulario
   const updateForm = useCallback((updates: Partial<ArbitroData>) => {
@@ -703,7 +717,12 @@ export default function NuevoArbitroPage() {
 
       // Enviar al backend
       const resultado = await createArbitro(arbitroData)
-      console.log('✅ Árbitro guardado:', resultado)
+      console.log('✅ Árbito guardado:', resultado)
+
+      // Incrementar y guardar la secuencia para el próximo árbitro
+      const nuevaSecuencia = secuenciaCODAR + 1
+      setSecuenciaCODAR(nuevaSecuencia)
+      localStorage.setItem('secuenciaCODAR', nuevaSecuencia.toString())
 
       router.push(`/dashboard/arbitros?registro=exitoso&codigo=${codigoCompleto}`)
 
@@ -719,6 +738,14 @@ export default function NuevoArbitroPage() {
   useEffect(() => {
     validateStep(currentStep)
   }, [currentStep])
+
+  // Cargar secuencia CODAR desde localStorage
+  useEffect(() => {
+    const savedSecuencia = localStorage.getItem('secuenciaCODAR')
+    if (savedSecuencia) {
+      setSecuenciaCODAR(parseInt(savedSecuencia, 10))
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -900,9 +927,10 @@ export default function NuevoArbitroPage() {
                   <CustomSelect
                     value={form.distrito}
                     onChange={(e) => updateForm({ distrito: e.target.value })}
+                    disabled={!form.provincia}
                   >
-                    <option value="">Seleccionar distrito</option>
-                    {DISTRITOS_PUNO.map(dist => (
+                    <option value="">{form.provincia ? "Seleccionar distrito" : "Primero seleccione una provincia"}</option>
+                    {getDistritosPorProvincia(form.provincia).map((dist: string) => (
                       <option key={dist} value={dist}>{dist}</option>
                     ))}
                   </CustomSelect>
