@@ -19,6 +19,7 @@ export interface Arbitro {
     dni?: string;
     tipoDocumento?: string;
     fechaNacimiento?: string;
+    lugarNacimiento?: string;
     genero?: string;
     estatura?: string;
     
@@ -28,6 +29,7 @@ export interface Arbitro {
     telefonoEmergencia?: string;
     direccion?: string;
     provincia?: string;
+    distrito?: string;
     
     // Datos del árbitro
     categoria?: string;
@@ -35,6 +37,16 @@ export interface Arbitro {
     experiencia?: number;
     nivelCertificacion?: string;
     nivelPreparacion?: string;
+    
+    // Fechas profesionales
+    fechaAfiliacion?: string;
+    fechaExamenTeorico?: string;
+    fechaExamenPractico?: string;
+    academiaFormadora?: string;
+    
+    // Roles y especialidades
+    roles?: string;
+    especialidades?: string;
     
     // Disponibilidad
     disponible?: boolean;
@@ -45,6 +57,7 @@ export interface Arbitro {
     observaciones?: string;
     fechaRegistro?: string;
     estado?: string;
+    declaracionJurada?: boolean;
 }
 
 export async function getArbitros(): Promise<Arbitro[]> {
