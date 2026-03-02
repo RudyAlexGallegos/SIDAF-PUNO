@@ -417,32 +417,44 @@ export default function EditarArbitroPage() {
         } catch { especialidadesArray = [] }
 
         setForm({
+          // Nombre completo se parsea en apellido paterno y materno
           apellidoPaterno,
           apellidoMaterno,
-          nombres: arb.nombre || "",
+          // Nombre del árbitro
+          nombres: arb.nombre || arb.nombres || "",
+          // Fechas
           fechaNacimiento: arb.fechaNacimiento || "",
           lugarNacimiento: arb.lugarNacimiento || "",
+          // Identificación
           dni: arb.dni || "",
-          sexo: arb.sexo || "",
+          // Sexo puede venir como 'sexo' o 'genero'
+          sexo: arb.sexo || arb.genero || "",
           estatura: arb.estatura || "",
           foto: arb.foto || "",
+          // Ubicación
           distrito: arb.distrito || "",
           provincia: arb.provincia || "",
           direccion: arb.direccion || "",
+          // Contacto
           telefono: arb.telefono || "",
           telefonoEmergencia: arb.telefonoEmergencia || "",
           email: arb.email || "",
+          // Datos profesionales
           categoria: arb.categoria || "Tercera Categoría",
           fechaAfiliacion: arb.fechaAfiliacion || "",
           fechaExamenTeorico: arb.fechaExamenTeorico || "",
           fechaExamenPractico: arb.fechaExamenPractico || "",
           academiaFormadora: arb.academiaFormadora || "",
           experiencia: arb.experiencia?.toString() || "",
-          nivelPreparacion: arb.nivelPreparacion || "",
+          // Nivel puede venir como 'nivelPreparacion' o 'nivelCertificacion'
+          nivelPreparacion: arb.nivelPreparacion || arb.nivelCertificacion || "",
+          // Roles y especialidades
           roles: rolesArray,
           especialidades: especialidadesArray,
-          estado: arb.estado || "activo",
+          // Estado
+          estado: arb.estado || arb.disponible ? "activo" : "inactivo",
           observaciones: arb.observaciones || "",
+          // Declaración jurada (por defecto true para edición)
           declaracionJurada: true
         })
 
