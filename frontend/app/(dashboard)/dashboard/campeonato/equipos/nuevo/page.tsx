@@ -38,11 +38,12 @@ export default function NuevoEquipoPage() {
         }
 
         try {
-            await createEquipo(form)
+            const response = await createEquipo(form)
+            console.log('Equipo creado:', response)
             router.push("/dashboard/campeonato/equipos")
-        } catch (err) {
-            console.error("Error:", err)
-            setError("Error al crear el equipo. Intente de nuevo.")
+        } catch (err: any) {
+            console.error("Error completo:", err)
+            setError(err.message || "Error al crear el equipo. Intente de nuevo.")
         } finally {
             setLoading(false)
         }
