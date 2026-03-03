@@ -125,7 +125,7 @@ export default function EquiposPage() {
                     </div>
                 </div>
                 <Button asChild className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-                    <Link href="/dashboard/campeonato/nuevo">
+                    <Link href="/dashboard/campeonato/equipos/nuevo">
                         <Plus className="h-4 w-4 mr-2" />
                         Nuevo Equipo
                     </Link>
