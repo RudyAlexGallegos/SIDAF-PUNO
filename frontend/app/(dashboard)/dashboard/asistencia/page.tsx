@@ -133,7 +133,7 @@ export default function AsistenciaPage() {
                   className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'analisis_partido' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Análisis de partido</div>
-                    <div className={`text-xs ${actividad === 'analisis_partido' ? 'text-blue-100' : 'text-gray-500'}`}>Marcación puntual</div>
+                    <div className={`text-xs ${actividad === 'analisis_partido' ? 'text-blue-100' : 'text-gray-500'}`}>Lunes - 18:00</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'analisis_partido' ? 'opacity-100' : 'opacity-0'}`}>
                     <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'analisis_partido' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
@@ -148,7 +148,7 @@ export default function AsistenciaPage() {
                   className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'preparacion_fisica' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Preparación física</div>
-                    <div className={`text-xs ${actividad === 'preparacion_fisica' ? 'text-blue-100' : 'text-gray-500'}`}>Entrenamiento y control</div>
+                    <div className={`text-xs ${actividad === 'preparacion_fisica' ? 'text-blue-100' : 'text-gray-500'}`}>Mar, Jue, Sáb - 05:00</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'preparacion_fisica' ? 'opacity-100' : 'opacity-0'}`}>
                     <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'preparacion_fisica' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
@@ -163,7 +163,7 @@ export default function AsistenciaPage() {
                   className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'reunion_ordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión ordinaria</div>
-                    <div className={`text-xs ${actividad === 'reunion_ordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Asambleas y temas rutinarios</div>
+                    <div className={`text-xs ${actividad === 'reunion_ordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Viernes - 19:00</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'reunion_ordinaria' ? 'opacity-100' : 'opacity-0'}`}>
                     <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'reunion_ordinaria' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
@@ -178,6 +178,7 @@ export default function AsistenciaPage() {
                   className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'reunion_extraordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión extraordinaria</div>
+                    <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Fecha definida por usuario</div>
                     <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Asuntos urgentes</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'reunion_extraordinaria' ? 'opacity-100' : 'opacity-0'}`}>

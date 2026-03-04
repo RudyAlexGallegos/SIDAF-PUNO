@@ -463,6 +463,96 @@ export async function deleteAsistencia(id: number): Promise<boolean> {
 }
 
 // ============================================================
+// REPORTES DE ASISTENCIA
+// ============================================================
+
+export interface ReporteAsistencia {
+    tipo: string;
+    periodo: {
+        inicio: string;
+        fin: string;
+    };
+    resumen: {
+        totalRegistros: number;
+        presentes: number;
+        ausentes: number;
+        tardanzas: number;
+        justificaciones: number;
+        porcentajeAsistencia: number;
+    };
+    porActividad: Array<{
+        actividad: string;
+        total: number;
+        presentes: number;
+        ausentes: number;
+        tardanzas: number;
+        justificaciones: number;
+        porcentaje: number;
+    }>;
+    asistencias: Array<{
+        id: number;
+        fecha: string;
+        actividad: string;
+        evento: string;
+        estado: string;
+        observaciones: string;
+        responsable: string;
+    }>;
+}
+
+export async function getReporteSemanal(fechaInicio: string, fechaFin: string): Promise<ReporteAsistencia | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/semanal?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getReporteSemanal:", error);
+        return null;
+    }
+}
+
+export async function getReporteMensual(year: number, month: number): Promise<ReporteAsistencia | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/mensual?year=${year}&month=${month}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getReporteMensual:", error);
+        return null;
+    }
+}
+
+export async function getReporteAnual(year: number): Promise<ReporteAsistencia | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/anual?year=${year}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getReporteAnual:", error);
+        return null;
+    }
+}
+
+export async function getEstadisticasAsistencia(): Promise<any> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/estadisticas"));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getEstadisticasAsistencia:", error);
+        return null;
+    }
+}
+
+// ============================================================
 // REPORTES
 // ============================================================
 
