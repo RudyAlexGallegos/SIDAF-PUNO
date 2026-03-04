@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Plus, Users, Search, Shield, MapPin, Phone, Mail, Edit, Trash2, Building } from "lucide-react"
+import { ArrowLeft, Plus, Users, Search, Shield, MapPin, Phone, Mail, Edit, Trash2, Building, LayoutGrid } from "lucide-react"
 import { getEquipos, deleteEquipo, type Equipo as EquipoAPI } from "@/services/api"
 
 export default function EquiposPage() {
@@ -57,6 +57,20 @@ export default function EquiposPage() {
         primera: filtered.filter((e: EquipoAPI) => e.categoria === "Primera División").length,
         segunda: filtered.filter((e: EquipoAPI) => e.categoria === "Segunda División").length,
     }), [filtered])
+
+    // Stats por provincia para futura estructura COPAR
+    const statsPorProvincia = useMemo(() => {
+        const stats: Record<string, { total: number; primera: number; segunda: number }> = {}
+        provincias.forEach(p => {
+            const equiposProvincia = equipos.filter((e: EquipoAPI) => e.provincia === p)
+            stats[p] = {
+                total: equiposProvincia.length,
+                primera: equiposProvincia.filter((e: EquipoAPI) => e.categoria === "Primera División").length,
+                segunda: equiposProvincia.filter((e: EquipoAPI) => e.categoria === "Segunda División").length,
+            }
+        })
+        return stats
+    }, [equipos])
 
     const getDivisionBadge = (categoria?: string) => {
         switch (categoria) {
@@ -132,7 +146,39 @@ export default function EquiposPage() {
                 </Button>
             </div>
 
-            {/* Stats */}
+            {/* Stats por Provincia - Preparado para COPAR */}
+            <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                    <LayoutGrid className="h-5 w-5 text-slate-600" />
+                    <h2 className="text-lg font-semibold text-slate-900">Equipos por Provincia</h2>
+                </div>
+                <div className="grid gap-3 md:grid-cols-7">
+                    {provincias.map((p) => {
+                        const s = statsPorProvincia[p]
+                        if (s.total === 0) return null
+                        return (
+                            <button
+                                key={p}
+                                onClick={() => setProvinciaFilter(provinciaFilter === p ? "todos" : p)}
+                                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                                    provinciaFilter === p 
+                                        ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50" 
+                                        : "border-slate-200 hover:border-slate-300 bg-white"
+                                }`}
+                            >
+                                <p className="text-xs text-slate-500 truncate">{p}</p>
+                                <p className="text-xl font-bold text-slate-900">{s.total}</p>
+                                <p className="text-xs text-slate-400">
+                                    <span className="text-amber-600">{s.primera}P</span> · 
+                                    <span className="text-green-600">{s.segunda}S</span>
+                                </p>
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* Stats generales */}
             <div className="grid gap-4 md:grid-cols-3 mb-8">
                 <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
                     <CardContent className="pt-6">
@@ -276,9 +322,11 @@ export default function EquiposPage() {
                                     <Button variant="outline" size="sm" className="flex-1 hover:bg-red-50 hover:border-red-200 hover:text-red-600" onClick={() => handleDelete(equipo.id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
-                                    <Button size="sm" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white">
-                                        <Edit className="h-4 w-4 mr-1" />
-                                        Editar
+                                    <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white">
+                                        <Link href={`/dashboard/campeonato/equipos/${equipo.id}/editar`}>
+                                            <Edit className="h-4 w-4 mr-1" />
+                                            Editar
+                                        </Link>
                                     </Button>
                                 </div>
                             </CardContent>
