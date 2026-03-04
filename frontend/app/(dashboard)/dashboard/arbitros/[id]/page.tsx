@@ -17,12 +17,13 @@ import {
     Calendar,
     FileText,
     Shield,
-    Clock,
+    Star,
+    Target,
     Users,
+    TrendingUp,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
@@ -40,7 +41,8 @@ const calcularEdad = (fechaNacimiento: string): number => {
   return edad
 }
 
-const calcularAniosComoArbitro = (fechaAfiliacion: string): number => {
+// Años de experiencia = años desde afiliación
+const calcularAniosExperiencia = (fechaAfiliacion: string): number => {
   if (!fechaAfiliacion) return 0
   const afiliacion = new Date(fechaAfiliacion)
   const hoy = new Date()
@@ -91,7 +93,6 @@ const getEstadoLabel = (estado: string) => {
 
 export default function ArbitroPerfilPage() {
     const params = useParams()
-    const router = useRouter()
     const pdfRef = useRef<HTMLDivElement>(null)
     const [arbitros, setArbitros] = useState<Arbitro[]>([])
     const [loading, setLoading] = useState(true)
@@ -116,17 +117,17 @@ export default function ArbitroPerfilPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-blue-50 flex items-center justify-center">
-                <div className="text-blue-800">Cargando...</div>
+            <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+                <div className="text-slate-600 font-medium">Cargando...</div>
             </div>
         )
     }
 
     if (!arbitro) {
         return (
-            <div className="min-h-screen bg-blue-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-100 flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-blue-800 mb-4">Árbitro no encontrado</p>
+                    <p className="text-slate-600 mb-4">Árbitro no encontrado</p>
                     <Button asChild>
                         <Link href="/dashboard/arbitros">Volver</Link>
                     </Button>
@@ -139,7 +140,7 @@ export default function ArbitroPerfilPage() {
     const foto = arb.foto
     const genero = arb.genero
     const edad = calcularEdad(arb.fechaNacimiento || "")
-    const aniosCODAR = calcularAniosComoArbitro(arb.fechaAfiliacion || "")
+    const aniosExperiencia = calcularAniosExperiencia(arb.fechaAfiliacion || "")
     const roles = getRolesLabels(arb.roles || "[]")
     const especialidades = getEspecialidadesLabels(arb.especialidades || "[]")
     const estado = arb.estado || "inactivo"
@@ -147,8 +148,8 @@ export default function ArbitroPerfilPage() {
     const exportarPDF = () => {
         if (!pdfRef.current) return
         const opt = {
-            margin: 10,
-            filename: `arbitro_${arb.nombre}_${arb.apellido}.pdf`,
+            margin: 5,
+            filename: `CV_${arb.nombre}_${arb.apellido}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -157,20 +158,20 @@ export default function ArbitroPerfilPage() {
     }
 
     return (
-        <div className="min-h-screen bg-blue-50 p-4 md:p-8">
-            <div className="max-w-5xl mx-auto">
+        <div className="min-h-screen bg-slate-100 p-4 md:p-8">
+            <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <Link href="/dashboard/arbitros" className="flex items-center gap-2 text-blue-700 hover:text-blue-900 font-medium">
+                    <Link href="/dashboard/arbitros" className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium">
                         <ArrowLeft className="w-5 h-5" />
-                        Volver a Árbitros
+                        Volver
                     </Link>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={exportarPDF} className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                        <Button variant="outline" onClick={exportarPDF} className="border-slate-300">
                             <Download className="w-4 h-4 mr-2" />
-                            Exportar
+                            Descargar CV
                         </Button>
-                        <Button asChild className="bg-blue-700 hover:bg-blue-800">
+                        <Button asChild className="bg-slate-800 hover:bg-slate-900">
                             <Link href={`/dashboard/arbitros/${arb.id}/editar`}>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Editar
@@ -179,272 +180,274 @@ export default function ArbitroPerfilPage() {
                     </div>
                 </div>
 
-                <div ref={pdfRef}>
-                    {/* Profile Card */}
-                    <div className="bg-white rounded-xl shadow-lg border-2 border-blue-100 overflow-hidden mb-6">
-                        {/* Header azul */}
-                        <div className="bg-blue-700 px-6 py-8">
-                            <div className="flex items-center gap-4">
-                                {/* Avatar */}
-                                <div className="w-24 h-24 rounded-full bg-white shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
-                                    {foto ? (
-                                        <img src={foto} alt="Foto" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                                            <User className="w-12 h-12 text-blue-400" />
+                {/* CV Style */}
+                <div ref={pdfRef} className="bg-white shadow-2xl">
+                    {/* Header - CV Style */}
+                    <div className="bg-slate-800 text-white p-8">
+                        <div className="flex items-start gap-6">
+                            {/* Avatar */}
+                            <div className="w-28 h-28 rounded-full bg-white/10 border-4 border-white/20 overflow-hidden flex-shrink-0">
+                                {foto ? (
+                                    <img src={foto} alt="Foto" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <User className="w-14 h-14 text-white/40" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <h1 className="text-3xl font-bold tracking-wide">{arb.nombre} {arb.apellido}</h1>
+                                <p className="text-slate-300 text-lg mt-1">{arb.categoria || "Árbitro"}</p>
+                                
+                                <div className="flex flex-wrap items-center gap-3 mt-4">
+                                    <span className={`px-3 py-1 rounded text-sm font-medium ${
+                                        estado === 'activo' ? 'bg-green-500 text-white' : 'bg-slate-600 text-white'
+                                    }`}>
+                                        {getEstadoLabel(estado)}
+                                    </span>
+                                    <span className="text-slate-300">•</span>
+                                    <span className="text-slate-300">CODAR Puno</span>
+                                    <span className="text-slate-300">•</span>
+                                    <span className="text-slate-300">{arb.provincia || "Puno"}</span>
+                                </div>
+
+                                <div className="flex flex-wrap gap-4 mt-4">
+                                    {arb.telefono && (
+                                        <div className="flex items-center gap-2 text-slate-300">
+                                            <Phone className="w-4 h-4" />
+                                            <span>{arb.telefono}</span>
+                                        </div>
+                                    )}
+                                    {arb.email && (
+                                        <div className="flex items-center gap-2 text-slate-300">
+                                            <Mail className="w-4 h-4" />
+                                            <span>{arb.email}</span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="text-white">
-                                    <h1 className="text-3xl font-bold">{arb.nombre} {arb.apellido}</h1>
-                                    <p className="text-blue-200 mt-1">{arb.categoria || "Árbitro"} • CODAR Puno</p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                            estado === 'activo' ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
-                                        }`}>
-                                            {getEstadoLabel(estado)}
-                                        </span>
-                                        {aniosCODAR > 0 && (
-                                            <span className="text-blue-200 text-sm">
-                                                {aniosCODAR} años en CODAR
-                                            </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Experience Highlight - CV Style */}
+                    <div className="bg-amber-500 px-8 py-6">
+                        <div className="grid grid-cols-3 gap-6 text-center">
+                            <div className="text-white">
+                                <p className="text-4xl font-bold">{aniosExperiencia}</p>
+                                <p className="text-amber-100 text-sm mt-1">AÑOS DE EXPERIENCIA</p>
+                                <p className="text-amber-200 text-xs">(Desde {arb.fechaAfiliacion ? new Date(arb.fechaAfiliacion).getFullYear() : "N/A"})</p>
+                            </div>
+                            <div className="text-white border-l border-r border-amber-400">
+                                <p className="text-4xl font-bold">{roles.length}</p>
+                                <p className="text-amber-100 text-sm mt-1">ROLES</p>
+                            </div>
+                            <div className="text-white">
+                                <p className="text-4xl font-bold">{especialidades.length}</p>
+                                <p className="text-amber-100 text-sm mt-1">ESPECIALIDADES</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="p-8">
+                        <div className="grid grid-cols-3 gap-8">
+                            {/* Left Column - Personal Info */}
+                            <div className="col-span-1 space-y-6">
+                                {/* Datos Personales */}
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800 border-b-2 border-slate-800 pb-2 mb-4 flex items-center gap-2">
+                                        <User className="w-5 h-5" />
+                                        Datos Personales
+                                    </h2>
+                                    <div className="space-y-3 text-sm">
+                                        {arb.dni && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">DNI</p>
+                                                <p className="font-semibold text-slate-800">{arb.dni}</p>
+                                            </div>
+                                        )}
+                                        {genero && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Género</p>
+                                                <p className="font-semibold text-slate-800 capitalize">{genero}</p>
+                                            </div>
+                                        )}
+                                        {edad > 0 && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Edad</p>
+                                                <p className="font-semibold text-slate-800">{edad} años</p>
+                                            </div>
+                                        )}
+                                        {arb.fechaNacimiento && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Fecha de Nacimiento</p>
+                                                <p className="font-semibold text-slate-800">
+                                                    {new Date(arb.fechaNacimiento).toLocaleDateString('es-PE')}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {arb.estatura && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Estatura</p>
+                                                <p className="font-semibold text-slate-800">{arb.estatura} cm</p>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        {/* Info contacto */}
-                        <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                            <div className="flex flex-wrap gap-6">
-                                {arb.telefono && (
-                                    <div className="flex items-center gap-2 text-blue-800">
-                                        <Phone className="w-4 h-4" />
-                                        <span className="font-medium">{arb.telefono}</span>
+
+                                {/* Ubicación */}
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800 border-b-2 border-slate-800 pb-2 mb-4 flex items-center gap-2">
+                                        <MapPin className="w-5 h-5" />
+                                        Ubicación
+                                    </h2>
+                                    <div className="space-y-3 text-sm">
+                                        {arb.provincia && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Provincia</p>
+                                                <p className="font-semibold text-slate-800">{arb.provincia}</p>
+                                            </div>
+                                        )}
+                                        {arb.distrito && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Distrito</p>
+                                                <p className="font-semibold text-slate-800">{arb.distrito}</p>
+                                            </div>
+                                        )}
+                                        {arb.direccion && (
+                                            <div>
+                                                <p className="text-slate-500 text-xs">Dirección</p>
+                                                <p className="font-semibold text-slate-800">{arb.direccion}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                {arb.email && (
-                                    <div className="flex items-center gap-2 text-blue-800">
-                                        <Mail className="w-4 h-4" />
-                                        <span className="font-medium">{arb.email}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white rounded-lg shadow-md border-l-4 border-blue-500 p-4">
-                            <p className="text-3xl font-bold text-blue-700">{arb.experiencia || 0}</p>
-                            <p className="text-sm text-gray-600">Años Experiencia</p>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-md border-l-4 border-green-500 p-4">
-                            <p className="text-3xl font-bold text-green-700">{aniosCODAR}</p>
-                            <p className="text-sm text-gray-600">Años CODAR</p>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-md border-l-4 border-purple-500 p-4">
-                            <p className="text-3xl font-bold text-purple-700">{roles.length}</p>
-                            <p className="text-sm text-gray-600">Roles</p>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-md border-l-4 border-orange-500 p-4">
-                            <p className="text-3xl font-bold text-orange-700">{especialidades.length}</p>
-                            <p className="text-sm text-gray-600">Especialidades</p>
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Left Column */}
-                        <div className="space-y-6">
-                            {/* Datos Personales */}
-                            <div className="bg-white rounded-lg shadow-md border-t-4 border-blue-600 p-5">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <User className="w-5 h-5 text-blue-600" />
-                                    Datos Personales
-                                </h3>
-                                <div className="space-y-3">
-                                    {arb.dni && (
-                                        <div className="flex justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-gray-500">DNI</span>
-                                            <span className="font-medium text-gray-900">{arb.dni}</span>
-                                        </div>
-                                    )}
-                                    {genero && (
-                                        <div className="flex justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-gray-500">Género</span>
-                                            <span className="font-medium text-gray-900 capitalize">{genero}</span>
-                                        </div>
-                                    )}
-                                    {edad > 0 && (
-                                        <div className="flex justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-gray-500">Edad</span>
-                                            <span className="font-medium text-gray-900">{edad} años</span>
-                                        </div>
-                                    )}
-                                    {arb.fechaNacimiento && (
-                                        <div className="flex justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-gray-500">F. Nacimiento</span>
-                                            <span className="font-medium text-gray-900">
-                                                {new Date(arb.fechaNacimiento).toLocaleDateString('es-PE')}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {arb.estatura && (
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500">Estatura</span>
-                                            <span className="font-medium text-gray-900">{arb.estatura} cm</span>
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
 
-                            {/* Ubicación */}
-                            <div className="bg-white rounded-lg shadow-md border-t-4 border-green-600 p-5">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 text-green-600" />
-                                    Ubicación
-                                </h3>
-                                <div className="space-y-3">
-                                    {arb.provincia && (
-                                        <div className="flex justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-gray-500">Provincia</span>
-                                            <span className="font-medium text-gray-900">{arb.provincia}</span>
-                                        </div>
-                                    )}
-                                    {arb.distrito && (
-                                        <div className="flex justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-gray-500">Distrito</span>
-                                            <span className="font-medium text-gray-900">{arb.distrito}</span>
-                                        </div>
-                                    )}
-                                    {arb.direccion && (
-                                        <div>
-                                            <span className="text-gray-500 block">Dirección</span>
-                                            <span className="font-medium text-gray-900">{arb.direccion}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Roles */}
-                            <div className="bg-white rounded-lg shadow-md border-t-4 border-purple-600 p-5">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <Shield className="w-5 h-5 text-purple-600" />
-                                    Roles
-                                </h3>
-                                {roles.length > 0 ? (
-                                    <div className="flex flex-wrap gap-2">
-                                        {roles.map((rol: string, i: number) => (
-                                            <Badge key={i} className="bg-purple-600 text-white px-3 py-1">
-                                                {rol}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-400">Sin roles asignados</p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Right Column - Full width on mobile */}
-                        <div className="md:col-span-2 space-y-6">
-                            {/* Datos Profesionales */}
-                            <div className="bg-white rounded-lg shadow-md border-t-4 border-orange-600 p-5">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <Award className="w-5 h-5 text-orange-600" />
-                                    Datos Profesionales
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {arb.fechaAfiliacion && (
-                                        <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
-                                            <Calendar className="w-5 h-5 text-orange-600" />
-                                            <div>
-                                                <p className="text-xs text-orange-600">Fecha de Afiliación</p>
-                                                <p className="font-medium text-gray-900">
-                                                    {new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE')}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {arb.fechaExamenTeorico && (
-                                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                                            <FileText className="w-5 h-5 text-blue-600" />
-                                            <div>
-                                                <p className="text-xs text-blue-600">Examen Teórico</p>
-                                                <p className="font-medium text-gray-900">
-                                                    {new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE')}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {arb.fechaExamenPractico && (
-                                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                                            <Award className="w-5 h-5 text-green-600" />
-                                            <div>
-                                                <p className="text-xs text-green-600">Examen Práctico</p>
-                                                <p className="font-medium text-gray-900">
-                                                    {new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE')}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {arb.academiaFormadora && (
-                                        <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                                            <Users className="w-5 h-5 text-purple-600" />
-                                            <div>
-                                                <p className="text-xs text-purple-600">Academia Formadora</p>
-                                                <p className="font-medium text-gray-900">{arb.academiaFormadora}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {especialidades.length > 0 && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <p className="text-sm font-medium text-gray-700 mb-2">Especialidades</p>
+                                {/* Roles */}
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800 border-b-2 border-slate-800 pb-2 mb-4 flex items-center gap-2">
+                                        <Shield className="w-5 h-5" />
+                                        Roles
+                                    </h2>
+                                    {roles.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
+                                            {roles.map((rol: string, i: number) => (
+                                                <Badge key={i} className="bg-slate-800 text-white">
+                                                    {rol}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-slate-400 text-sm">Sin roles asignados</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right Column - Experience */}
+                            <div className="col-span-2 space-y-6">
+                                {/* Especialidades - Destacado */}
+                                {especialidades.length > 0 && (
+                                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-5">
+                                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                            <Star className="w-6 h-6 text-amber-500" />
+                                            Especialidades
+                                        </h2>
+                                        <div className="flex flex-wrap gap-3">
                                             {especialidades.map((esp: string, i: number) => (
-                                                <Badge key={i} className="bg-orange-600 text-white">
+                                                <Badge key={i} className="bg-amber-500 text-white px-4 py-2 text-sm font-semibold">
+                                                    <Target className="w-4 h-4 mr-1" />
                                                     {esp}
                                                 </Badge>
                                             ))}
                                         </div>
                                     </div>
                                 )}
-                            </div>
 
-                            {/* Perfil Profesional */}
-                            <div className="bg-white rounded-lg shadow-md border-t-4 border-blue-600 p-5">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-blue-600" />
-                                    Perfil Profesional
-                                </h3>
-                                <p className="text-gray-700 leading-relaxed">
-                                    Árbitro de categoría <strong className="text-blue-700">{arb.categoria?.toLowerCase() || "sin especificar"}</strong> con{' '}
-                                    <strong className="text-blue-700">{arb.experiencia || 0} años</strong> de experiencia en competiciones de nivel regional.
-                                    {aniosCODAR > 0 && arb.fechaAfiliacion && (
-                                        <> Afiliado a la Comisión Departamental de Árbitros de Puno desde el año {new Date(arb.fechaAfiliacion).getFullYear()}.</>
-                                    )}
-                                    {" "}Actualmente con disponibilidad <strong className={estado === 'activo' ? "text-green-600" : "text-gray-500"}>{estado === "activo" ? "activa" : "inactiva"}</strong> para designaciones en torneos oficiales.
-                                </p>
-                            </div>
-
-                            {/* Observaciones */}
-                            {arb.observaciones && (
-                                <div className="bg-white rounded-lg shadow-md border-t-4 border-gray-500 p-5">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                        <FileText className="w-5 h-5 text-gray-600" />
-                                        Observaciones
-                                    </h3>
-                                    <p className="text-gray-700">{arb.observaciones}</p>
+                                {/* Trayectoria */}
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800 border-b-2 border-slate-800 pb-2 mb-4 flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5" />
+                                        Trayectoria Profesional
+                                    </h2>
+                                    <div className="space-y-4">
+                                        {arb.fechaAfiliacion && (
+                                            <div className="flex gap-4">
+                                                <div className="w-3 h-3 rounded-full bg-amber-500 mt-1.5"></div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">Afiliación a CODAR Puno</p>
+                                                    <p className="text-slate-500 text-sm">
+                                                        Desde {new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE', { year: 'numeric', month: 'long' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {arb.fechaExamenTeorico && (
+                                            <div className="flex gap-4">
+                                                <div className="w-3 h-3 rounded-full bg-blue-500 mt-1.5"></div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">Examen Teórico Aprobado</p>
+                                                    <p className="text-slate-500 text-sm">
+                                                        {new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE', { year: 'numeric', month: 'long' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {arb.fechaExamenPractico && (
+                                            <div className="flex gap-4">
+                                                <div className="w-3 h-3 rounded-full bg-green-500 mt-1.5"></div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">Examen Práctico Aprobado</p>
+                                                    <p className="text-slate-500 text-sm">
+                                                        {new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE', { year: 'numeric', month: 'long' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {arb.academiaFormadora && (
+                                            <div className="flex gap-4">
+                                                <div className="w-3 h-3 rounded-full bg-purple-500 mt-1.5"></div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">Formación Académica</p>
+                                                    <p className="text-slate-500 text-sm">{arb.academiaFormadora}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
 
-                            {/* Footer */}
-                            <div className="text-center py-4 text-sm text-gray-500 bg-white rounded-lg shadow-md p-4">
-                                <p className="font-medium">Sistema de Información y Designación de Árbitros - CODAR Puno</p>
-                                <p className="mt-1">Perfil generado el {new Date().toLocaleDateString("es-PE", { year: "numeric", month: "long", day: "numeric" })}</p>
+                                {/* Perfil */}
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800 border-b-2 border-slate-800 pb-2 mb-4 flex items-center gap-2">
+                                        <Award className="w-5 h-5" />
+                                        Perfil Profesional
+                                    </h2>
+                                    <p className="text-slate-700 leading-relaxed text-justify">
+                                        Árbitro de categoría <strong>{arb.categoria?.toLowerCase() || "sin especificar"}</strong> con{' '}
+                                        <strong>{aniosExperiencia} años</strong> de experiencia en el arbitraje de fútbol regional.{' '}
+                                        {arb.fechaAfiliacion && (
+                                            <>Miembro activo de la Comisión Departamental de Árbitros de Puno (CODAR) desde el año {new Date(arb.fechaAfiliacion).getFullYear()}. </>
+                                        )}
+                                        Especializado en {especialidades.length > 0 ? especialidades.join(", ") : "competiciones de fútbol regional"}.{' '}
+                                        Actualmente con disponibilidad <strong>{estado === "activo" ? "activa" : "inactiva"}</strong> para cumplir designaciones en torneos oficiales de la Región Puno.
+                                    </p>
+                                </div>
+
+                                {/* Observaciones */}
+                                {arb.observaciones && (
+                                    <div>
+                                        <h2 className="text-lg font-bold text-slate-800 border-b-2 border-slate-800 pb-2 mb-4 flex items-center gap-2">
+                                            <FileText className="w-5 h-5" />
+                                            Observaciones
+                                        </h2>
+                                        <p className="text-slate-700">{arb.observaciones}</p>
+                                    </div>
+                                )}
+
+                                {/* Footer */}
+                                <div className="pt-6 border-t border-slate-200 text-center text-slate-500 text-sm">
+                                    <p className="font-medium">Sistema de Información y Designación de Árbitros - CODAR Puno</p>
+                                    <p className="mt-1">CV generado el {new Date().toLocaleDateString("es-PE", { year: "numeric", month: "long", day: "numeric" })}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
