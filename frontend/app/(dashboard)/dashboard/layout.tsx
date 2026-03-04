@@ -444,7 +444,7 @@ export default function DashboardLayout({
                     {showLabels ? (
                         <div className="flex items-center gap-3">
                             <img
-                                src="/codar.jpeg"
+                                src="/coda.jpeg"
                                 alt="Logo"
                                 className="h-10 w-10 rounded-xl object-cover bg-white p-1"
                             />

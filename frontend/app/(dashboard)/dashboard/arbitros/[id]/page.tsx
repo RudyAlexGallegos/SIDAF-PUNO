@@ -206,8 +206,15 @@ export default function VerArbitroPage() {
                     {/* CABECERA DEL PERFIL */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         {/* Banner corporativo */}
-                        <div className="h-24 sm:h-32 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 relative">
-                            <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+')]"></div>
+                        <div className="h-28 sm:h-36 bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-900 relative overflow-hidden">
+                            <div className="absolute inset-0 opacity-20">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                                <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                            </div>
+                            <div className="absolute bottom-4 left-8 flex items-center gap-2">
+                                <Shield className="w-6 h-6 text-white/80" />
+                                <span className="text-white/80 font-medium">CODAR Puno</span>
+                            </div>
                         </div>
                         
                         <div className="px-6 sm:px-8 pb-8">
@@ -227,23 +234,23 @@ export default function VerArbitroPage() {
 
                                 {/* Info principal */}
                                 <div className="flex-1 pt-2 sm:pt-4 min-w-0">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                         <div className="min-w-0">
                                             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">
                                                 {arb.nombre} {arb.apellido}
                                             </h1>
-                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-900 text-white text-sm font-medium">
-                                                    <Award className="w-3.5 h-3.5" />
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-3">
+                                                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold shadow-md">
+                                                    <Award className="w-4 h-4" />
                                                     {arb.categoria || "Sin categoría"}
                                                 </span>
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-white text-sm font-medium ${getEstadoColor(estado)}`}>
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                                <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white text-sm font-semibold shadow-md ${estado === 'activo' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-slate-400 to-slate-500'}`}>
+                                                    <span className={`w-2 h-2 rounded-full ${estado === 'activo' ? 'bg-white animate-pulse' : 'bg-white/50'}`}></span>
                                                     {getEstadoLabel(estado)}
                                                 </span>
-                                                {aniosCODAR !== null && (
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 text-slate-700 text-sm font-medium">
-                                                        <Clock className="w-3.5 h-3.5" />
+                                                {aniosCODAR !== null && aniosCODAR > 0 && (
+                                                    <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold shadow-md">
+                                                        <Clock className="w-4 h-4" />
                                                         {aniosCODAR} años CODAR
                                                     </span>
                                                 )}
@@ -326,10 +333,12 @@ export default function VerArbitroPage() {
                             </Card>
 
                             {/* Ubicación */}
-                            <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 border-b border-slate-100">
-                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-slate-600" />
+                            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                                <CardHeader className="pb-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-t-xl border-b-0">
+                                    <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                                            <MapPin className="w-4 h-4 text-white" />
+                                        </div>
                                         Ubicación
                                     </CardTitle>
                                 </CardHeader>
@@ -362,10 +371,12 @@ export default function VerArbitroPage() {
                             </Card>
 
                             {/* Roles */}
-                            <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 border-b border-slate-100">
-                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                                        <Shield className="w-4 h-4 text-slate-600" />
+                            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                                <CardHeader className="pb-3 bg-gradient-to-r from-violet-50 to-purple-50 rounded-t-xl border-b-0">
+                                    <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                                            <Shield className="w-4 h-4 text-white" />
+                                        </div>
                                         Roles
                                     </CardTitle>
                                 </CardHeader>
@@ -373,13 +384,13 @@ export default function VerArbitroPage() {
                                     {roles.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {roles.map((rol: string, i: number) => (
-                                                <Badge key={i} variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                                <Badge key={i} className="bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-md">
                                                     {rol}
                                                 </Badge>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-slate-400">Sin roles asignados</p>
+                                        <p className="text-sm text-slate-400 italic">Sin roles asignados</p>
                                     )}
                                 </CardContent>
                             </Card>
@@ -390,84 +401,104 @@ export default function VerArbitroPage() {
                             
                             {/* Estadísticas */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-slate-50 to-slate-100">
-                                    <CardContent className="p-4 text-center">
-                                        <p className="text-2xl sm:text-3xl font-bold text-slate-800">{arb.experiencia || 0}</p>
-                                        <p className="text-xs sm:text-sm text-slate-600 mt-1">Años Experiencia</p>
+                                <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-50 to-orange-100 overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-amber-200/30 rounded-full -mr-8 -mt-8"></div>
+                                    <CardContent className="p-5 text-center relative">
+                                        <Clock className="w-6 h-6 text-amber-600 mx-auto mb-2" />
+                                        <p className="text-3xl font-bold text-amber-700">{arb.experiencia || 0}</p>
+                                        <p className="text-xs font-medium text-amber-600 mt-1">Años Experiencia</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-emerald-50 to-emerald-100">
-                                    <CardContent className="p-4 text-center">
-                                        <p className="text-2xl sm:text-3xl font-bold text-emerald-700">{aniosCODAR || 0}</p>
-                                        <p className="text-xs sm:text-sm text-emerald-600 mt-1">Años CODAR</p>
+                                <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-200/30 rounded-full -mr-8 -mt-8"></div>
+                                    <CardContent className="p-5 text-center relative">
+                                        <Calendar className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+                                        <p className="text-3xl font-bold text-emerald-700">{aniosCODAR || 0}</p>
+                                        <p className="text-xs font-medium text-emerald-600 mt-1">Años CODAR</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
-                                    <CardContent className="p-4 text-center">
-                                        <p className="text-2xl sm:text-3xl font-bold text-blue-700">{roles.length}</p>
-                                        <p className="text-xs sm:text-sm text-blue-600 mt-1">Roles</p>
+                                <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-blue-200/30 rounded-full -mr-8 -mt-8"></div>
+                                    <CardContent className="p-5 text-center relative">
+                                        <Shield className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                                        <p className="text-3xl font-bold text-blue-700">{roles.length}</p>
+                                        <p className="text-xs font-medium text-blue-600 mt-1">Roles</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-violet-50 to-violet-100">
-                                    <CardContent className="p-4 text-center">
-                                        <p className="text-2xl sm:text-3xl font-bold text-violet-700">{especialidades.length}</p>
-                                        <p className="text-xs sm:text-sm text-violet-600 mt-1">Especialidades</p>
+                                <Card className="border-0 shadow-xl bg-gradient-to-br from-violet-50 to-purple-100 overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-violet-200/30 rounded-full -mr-8 -mt-8"></div>
+                                    <CardContent className="p-5 text-center relative">
+                                        <Target className="w-6 h-6 text-violet-600 mx-auto mb-2" />
+                                        <p className="text-3xl font-bold text-violet-700">{especialidades.length}</p>
+                                        <p className="text-xs font-medium text-violet-600 mt-1">Especialidades</p>
                                     </CardContent>
                                 </Card>
                             </div>
 
                             {/* Datos Profesionales */}
-                            <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 border-b border-slate-100">
-                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                                        <Briefcase className="w-4 h-4 text-slate-600" />
+                            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                                <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl border-b-0">
+                                    <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                            <Briefcase className="w-4 h-4 text-white" />
+                                        </div>
                                         Datos Profesionales
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {arb.fechaAfiliacion && (
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
-                                                <Calendar className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                                                <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
+                                                    <Calendar className="w-5 h-5 text-white" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Fecha de Afiliación</p>
-                                                    <p className="text-sm font-medium text-slate-900">{new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE')}</p>
+                                                    <p className="text-xs text-blue-600 font-medium">Fecha de Afiliación</p>
+                                                    <p className="text-sm font-bold text-slate-900">{new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE')}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.fechaExamenTeorico && (
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
-                                                <FileText className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100">
+                                                <div className="w-10 h-10 rounded-lg bg-violet-500 flex items-center justify-center">
+                                                    <FileText className="w-5 h-5 text-white" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Examen Teórico</p>
-                                                    <p className="text-sm font-medium text-slate-900">{new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE')}</p>
+                                                    <p className="text-xs text-violet-600 font-medium">Examen Teórico</p>
+                                                    <p className="text-sm font-bold text-slate-900">{new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE')}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.fechaExamenPractico && (
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
-                                                <Target className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100">
+                                                <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
+                                                    <Target className="w-5 h-5 text-white" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Examen Práctico</p>
-                                                    <p className="text-sm font-medium text-slate-900">{new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE')}</p>
+                                                    <p className="text-xs text-emerald-600 font-medium">Examen Práctico</p>
+                                                    <p className="text-sm font-bold text-slate-900">{new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE')}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.academiaFormadora && (
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
-                                                <GraduationCap className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100">
+                                                <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center">
+                                                    <GraduationCap className="w-5 h-5 text-white" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Academia Formadora</p>
-                                                    <p className="text-sm font-medium text-slate-900">{arb.academiaFormadora}</p>
+                                                    <p className="text-xs text-amber-600 font-medium">Academia Formadora</p>
+                                                    <p className="text-sm font-bold text-slate-900">{arb.academiaFormadora}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {arb.nivelPreparacion && (
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
-                                                <TrendingUp className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100">
+                                                <div className="w-10 h-10 rounded-lg bg-rose-500 flex items-center justify-center">
+                                                    <TrendingUp className="w-5 h-5 text-white" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Nivel de Preparación</p>
-                                                    <p className="text-sm font-medium text-slate-900">{arb.nivelPreparacion}</p>
+                                                    <p className="text-xs text-rose-600 font-medium">Nivel de Preparación</p>
+                                                    <p className="text-sm font-bold text-slate-900">{arb.nivelPreparacion}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -475,11 +506,14 @@ export default function VerArbitroPage() {
                                     
                                     {/* Especialidades */}
                                     {especialidades.length > 0 && (
-                                        <div className="mt-4 pt-4 border-t border-slate-100">
-                                            <p className="text-sm font-medium text-slate-700 mb-3">Especialidades</p>
+                                        <div className="mt-5 pt-5 border-t border-slate-100">
+                                            <p className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                                <Target className="w-4 h-4 text-violet-500" />
+                                                Especialidades
+                                            </p>
                                             <div className="flex flex-wrap gap-2">
                                                 {especialidades.map((esp: string, i: number) => (
-                                                    <Badge key={i} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200">
+                                                    <Badge key={i} className="bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-md px-3 py-1">
                                                         {esp}
                                                     </Badge>
                                                 ))}
@@ -490,20 +524,23 @@ export default function VerArbitroPage() {
                             </Card>
 
                             {/* Perfil Profesional */}
-                            <Card className="border-slate-200 shadow-sm">
-                                <CardHeader className="pb-3 border-b border-slate-100">
-                                    <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-slate-600" />
+                            <Card className="border-0 shadow-xl bg-gradient-to-br from-slate-50 to-blue-50 overflow-hidden relative">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -mr-16 -mt-16"></div>
+                                <CardHeader className="pb-3 bg-transparent border-b-0">
+                                    <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                                            <Activity className="w-4 h-4 text-white" />
+                                        </div>
                                         Perfil Profesional
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="pt-4">
-                                    <p className="text-slate-700 leading-relaxed">
-                                        Árbitro de categoría <strong>{arb.categoria?.toLowerCase() || "sin especificar"}</strong> con{' '}
-                                        <strong>{arb.experiencia || 0} años</strong> de experiencia en competiciones de nivel regional.{' '}
+                                <CardContent className="pt-2">
+                                    <p className="text-slate-700 leading-relaxed text-base">
+                                        Árbitro de categoría <strong className="text-amber-600">{arb.categoria?.toLowerCase() || "sin especificar"}</strong> con{' '}
+                                        <strong className="text-blue-600">{arb.experiencia || 0} años</strong> de experiencia en competiciones de nivel regional.{' '}
                                         {aniosCODAR ? `Afiliado a la Comisión Departamental de Árbitros de Puno desde el año ${new Date(arb.fechaAfiliacion).getFullYear()}.` : ''}{' '}
                                         Comprometido con el cumplimiento del reglamento y la ética deportiva, 
-                                        actualmente con disponibilidad <strong>{estado === 'activo' ? 'activa' : 'inactiva'}</strong> para designaciones en torneos oficiales.
+                                        actualmente con disponibilidad <strong className={estado === 'activo' ? "text-emerald-600" : "text-slate-500"}>{estado === 'activo' ? 'activa' : 'inactiva'}</strong> para designaciones en torneos oficiales.
                                     </p>
                                 </CardContent>
                             </Card>
