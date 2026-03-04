@@ -456,7 +456,7 @@ export default function DashboardLayout({
                     ) : (
                         <div className="flex items-center gap-2">
                             <img
-                                src="/codar.jpeg"
+                                src="/coda.jpeg"
                                 alt="Logo"
                                 className="h-8 w-8 rounded-lg object-cover bg-white p-0.5"
                             />
