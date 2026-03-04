@@ -19,11 +19,10 @@ import {
     Shield,
     Clock,
     Users,
-    ChevronRight,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
@@ -117,17 +116,17 @@ export default function ArbitroPerfilPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-gray-500">Cargando...</div>
+            <div className="min-h-screen bg-blue-50 flex items-center justify-center">
+                <div className="text-blue-800">Cargando...</div>
             </div>
         )
     }
 
     if (!arbitro) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-blue-50 flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-gray-600 mb-4">Árbitro no encontrado</p>
+                    <p className="text-blue-800 mb-4">Árbitro no encontrado</p>
                     <Button asChild>
                         <Link href="/dashboard/arbitros">Volver</Link>
                     </Button>
@@ -158,281 +157,255 @@ export default function ArbitroPerfilPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 shadow-sm">
-                <div className="max-w-6xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link href="/dashboard/arbitros" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-                                <ArrowLeft className="w-5 h-5" />
+        <div className="min-h-screen bg-blue-50 p-4 md:p-8">
+            <div className="max-w-5xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <Link href="/dashboard/arbitros" className="flex items-center gap-2 text-blue-700 hover:text-blue-900 font-medium">
+                        <ArrowLeft className="w-5 h-5" />
+                        Volver a Árbitros
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={exportarPDF} className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button asChild className="bg-blue-700 hover:bg-blue-800">
+                            <Link href={`/dashboard/arbitros/${arb.id}/editar`}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Editar
                             </Link>
-                            <div>
-                                <h1 className="text-lg font-semibold text-gray-900">Perfil del Árbitro</h1>
-                                <p className="text-sm text-gray-500">CODAR Puno - Sistema de Árbitros</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Button variant="outline" size="sm" onClick={exportarPDF} className="border-gray-300">
-                                <Download className="w-4 h-4 mr-2" />
-                                Exportar PDF
-                            </Button>
-                            <Button size="sm" asChild className="bg-gray-900 hover:bg-gray-800">
-                                <Link href={`/dashboard/arbitros/${arb.id}/editar`}>
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar
-                                </Link>
-                            </Button>
-                        </div>
+                        </Button>
                     </div>
                 </div>
-            </header>
 
-            {/* Main */}
-            <main className="max-w-6xl mx-auto px-6 py-8">
-                <div ref={pdfRef} className="space-y-6">
-                    
-                    {/* Hero Card */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="h-24 bg-gradient-to-r from-gray-800 to-gray-900"></div>
-                        
-                        <div className="px-8 pb-8">
-                            <div className="flex flex-col md:flex-row gap-8 -mt-16">
+                <div ref={pdfRef}>
+                    {/* Profile Card */}
+                    <div className="bg-white rounded-xl shadow-lg border-2 border-blue-100 overflow-hidden mb-6">
+                        {/* Header azul */}
+                        <div className="bg-blue-700 px-6 py-8">
+                            <div className="flex items-center gap-4">
                                 {/* Avatar */}
-                                <div className="flex-shrink-0">
-                                    <div className="w-28 h-28 rounded-xl bg-white shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
-                                        {foto ? (
-                                            <img src={foto} alt="Foto" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                                <User className="w-12 h-12 text-gray-400" />
-                                            </div>
-                                        )}
-                                    </div>
+                                <div className="w-24 h-24 rounded-full bg-white shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
+                                    {foto ? (
+                                        <img src={foto} alt="Foto" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                                            <User className="w-12 h-12 text-blue-400" />
+                                        </div>
+                                    )}
                                 </div>
-
-                                {/* Info */}
-                                <div className="flex-1 pt-4">
-                                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                                        {arb.nombre} {arb.apellido}
-                                    </h1>
-                                    <p className="text-gray-500 mt-1">{arb.categoria || "Árbitros"} • CODAR Puno</p>
-                                    
-                                    <div className="flex items-center gap-3 mt-4">
+                                <div className="text-white">
+                                    <h1 className="text-3xl font-bold">{arb.nombre} {arb.apellido}</h1>
+                                    <p className="text-blue-200 mt-1">{arb.categoria || "Árbitro"} • CODAR Puno</p>
+                                    <div className="flex items-center gap-2 mt-2">
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                            estado === 'activo' 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : 'bg-gray-100 text-gray-600'
+                                            estado === 'activo' ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
                                         }`}>
                                             {getEstadoLabel(estado)}
                                         </span>
                                         {aniosCODAR > 0 && (
-                                            <span className="text-sm text-gray-500">
+                                            <span className="text-blue-200 text-sm">
                                                 {aniosCODAR} años en CODAR
                                             </span>
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Contact */}
-                                <div className="pt-4 space-y-2">
-                                    {arb.telefono && (
-                                        <div className="flex items-center gap-3 text-gray-600">
-                                            <Phone className="w-4 h-4" />
-                                            <span className="text-sm">{arb.telefono}</span>
-                                        </div>
-                                    )}
-                                    {arb.email && (
-                                        <div className="flex items-center gap-3 text-gray-600">
-                                            <Mail className="w-4 h-4" />
-                                            <span className="text-sm">{arb.email}</span>
-                                        </div>
-                                    )}
-                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Info contacto */}
+                        <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
+                            <div className="flex flex-wrap gap-6">
+                                {arb.telefono && (
+                                    <div className="flex items-center gap-2 text-blue-800">
+                                        <Phone className="w-4 h-4" />
+                                        <span className="font-medium">{arb.telefono}</span>
+                                    </div>
+                                )}
+                                {arb.email && (
+                                    <div className="flex items-center gap-2 text-blue-800">
+                                        <Mail className="w-4 h-4" />
+                                        <span className="font-medium">{arb.email}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Stats Row */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-5">
-                                <p className="text-3xl font-bold text-gray-900">{arb.experiencia || 0}</p>
-                                <p className="text-sm text-gray-500 mt-1">Años de Experiencia</p>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-5">
-                                <p className="text-3xl font-bold text-gray-900">{aniosCODAR}</p>
-                                <p className="text-sm text-gray-500 mt-1">Años en CODAR</p>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-5">
-                                <p className="text-3xl font-bold text-gray-900">{roles.length}</p>
-                                <p className="text-sm text-gray-500 mt-1">Roles Asignados</p>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-5">
-                                <p className="text-3xl font-bold text-gray-900">{especialidades.length}</p>
-                                <p className="text-sm text-gray-500 mt-1">Especialidades</p>
-                            </CardContent>
-                        </Card>
+                    {/* Stats */}
+                    <div className="grid grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white rounded-lg shadow-md border-l-4 border-blue-500 p-4">
+                            <p className="text-3xl font-bold text-blue-700">{arb.experiencia || 0}</p>
+                            <p className="text-sm text-gray-600">Años Experiencia</p>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md border-l-4 border-green-500 p-4">
+                            <p className="text-3xl font-bold text-green-700">{aniosCODAR}</p>
+                            <p className="text-sm text-gray-600">Años CODAR</p>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md border-l-4 border-purple-500 p-4">
+                            <p className="text-3xl font-bold text-purple-700">{roles.length}</p>
+                            <p className="text-sm text-gray-600">Roles</p>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md border-l-4 border-orange-500 p-4">
+                            <p className="text-3xl font-bold text-orange-700">{especialidades.length}</p>
+                            <p className="text-sm text-gray-600">Especialidades</p>
+                        </div>
                     </div>
 
-                    {/* Content Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                        
-                        {/* Left Sidebar */}
-                        <div className="md:col-span-4 space-y-6">
-                            
-                            {/* Personal Info */}
-                            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-                                    Información Personal
+                    {/* Content */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Left Column */}
+                        <div className="space-y-6">
+                            {/* Datos Personales */}
+                            <div className="bg-white rounded-lg shadow-md border-t-4 border-blue-600 p-5">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <User className="w-5 h-5 text-blue-600" />
+                                    Datos Personales
                                 </h3>
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {arb.dni && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">DNI</p>
-                                            <p className="text-sm font-medium text-gray-900">{arb.dni}</p>
+                                        <div className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span className="text-gray-500">DNI</span>
+                                            <span className="font-medium text-gray-900">{arb.dni}</span>
                                         </div>
                                     )}
                                     {genero && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Género</p>
-                                            <p className="text-sm font-medium text-gray-900 capitalize">{genero}</p>
+                                        <div className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span className="text-gray-500">Género</span>
+                                            <span className="font-medium text-gray-900 capitalize">{genero}</span>
                                         </div>
                                     )}
                                     {edad > 0 && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Edad</p>
-                                            <p className="text-sm font-medium text-gray-900">{edad} años</p>
+                                        <div className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span className="text-gray-500">Edad</span>
+                                            <span className="font-medium text-gray-900">{edad} años</span>
                                         </div>
                                     )}
                                     {arb.fechaNacimiento && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Fecha de Nacimiento</p>
-                                            <p className="text-sm font-medium text-gray-900">
+                                        <div className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span className="text-gray-500">F. Nacimiento</span>
+                                            <span className="font-medium text-gray-900">
                                                 {new Date(arb.fechaNacimiento).toLocaleDateString('es-PE')}
-                                            </p>
+                                            </span>
                                         </div>
                                     )}
                                     {arb.estatura && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Estatura</p>
-                                            <p className="text-sm font-medium text-gray-900">{arb.estatura} cm</p>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-500">Estatura</span>
+                                            <span className="font-medium text-gray-900">{arb.estatura} cm</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Location */}
-                            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+                            {/* Ubicación */}
+                            <div className="bg-white rounded-lg shadow-md border-t-4 border-green-600 p-5">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-green-600" />
                                     Ubicación
                                 </h3>
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {arb.provincia && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Provincia</p>
-                                            <p className="text-sm font-medium text-gray-900">{arb.provincia}</p>
+                                        <div className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span className="text-gray-500">Provincia</span>
+                                            <span className="font-medium text-gray-900">{arb.provincia}</span>
                                         </div>
                                     )}
                                     {arb.distrito && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Distrito</p>
-                                            <p className="text-sm font-medium text-gray-900">{arb.distrito}</p>
+                                        <div className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span className="text-gray-500">Distrito</span>
+                                            <span className="font-medium text-gray-900">{arb.distrito}</span>
                                         </div>
                                     )}
                                     {arb.direccion && (
                                         <div>
-                                            <p className="text-xs text-gray-500">Dirección</p>
-                                            <p className="text-sm font-medium text-gray-900">{arb.direccion}</p>
+                                            <span className="text-gray-500 block">Dirección</span>
+                                            <span className="font-medium text-gray-900">{arb.direccion}</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Roles */}
-                            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+                            <div className="bg-white rounded-lg shadow-md border-t-4 border-purple-600 p-5">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Shield className="w-5 h-5 text-purple-600" />
                                     Roles
                                 </h3>
                                 {roles.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
                                         {roles.map((rol: string, i: number) => (
-                                            <Badge key={i} className="bg-gray-900 text-white">
+                                            <Badge key={i} className="bg-purple-600 text-white px-3 py-1">
                                                 {rol}
                                             </Badge>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-400">Sin roles asignados</p>
+                                    <p className="text-gray-400">Sin roles asignados</p>
                                 )}
                             </div>
                         </div>
 
-                        {/* Right Content */}
-                        <div className="md:col-span-8 space-y-6">
-                            
-                            {/* Professional Data */}
-                            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+                        {/* Right Column - Full width on mobile */}
+                        <div className="md:col-span-2 space-y-6">
+                            {/* Datos Profesionales */}
+                            <div className="bg-white rounded-lg shadow-md border-t-4 border-orange-600 p-5">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-orange-600" />
                                     Datos Profesionales
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {arb.fechaAfiliacion && (
-                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                            <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+                                            <Calendar className="w-5 h-5 text-orange-600" />
                                             <div>
-                                                <p className="text-xs text-gray-500">Fecha de Afiliación</p>
-                                                <p className="text-sm font-medium text-gray-900">
+                                                <p className="text-xs text-orange-600">Fecha de Afiliación</p>
+                                                <p className="font-medium text-gray-900">
                                                     {new Date(arb.fechaAfiliacion).toLocaleDateString('es-PE')}
                                                 </p>
                                             </div>
                                         </div>
                                     )}
                                     {arb.fechaExamenTeorico && (
-                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                            <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                                            <FileText className="w-5 h-5 text-blue-600" />
                                             <div>
-                                                <p className="text-xs text-gray-500">Examen Teórico</p>
-                                                <p className="text-sm font-medium text-gray-900">
+                                                <p className="text-xs text-blue-600">Examen Teórico</p>
+                                                <p className="font-medium text-gray-900">
                                                     {new Date(arb.fechaExamenTeorico).toLocaleDateString('es-PE')}
                                                 </p>
                                             </div>
                                         </div>
                                     )}
                                     {arb.fechaExamenPractico && (
-                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                            <Award className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                                            <Award className="w-5 h-5 text-green-600" />
                                             <div>
-                                                <p className="text-xs text-gray-500">Examen Práctico</p>
-                                                <p className="text-sm font-medium text-gray-900">
+                                                <p className="text-xs text-green-600">Examen Práctico</p>
+                                                <p className="font-medium text-gray-900">
                                                     {new Date(arb.fechaExamenPractico).toLocaleDateString('es-PE')}
                                                 </p>
                                             </div>
                                         </div>
                                     )}
                                     {arb.academiaFormadora && (
-                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                            <Users className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                                            <Users className="w-5 h-5 text-purple-600" />
                                             <div>
-                                                <p className="text-xs text-gray-500">Academia Formadora</p>
-                                                <p className="text-sm font-medium text-gray-900">{arb.academiaFormadora}</p>
+                                                <p className="text-xs text-purple-600">Academia Formadora</p>
+                                                <p className="font-medium text-gray-900">{arb.academiaFormadora}</p>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                                 
                                 {especialidades.length > 0 && (
-                                    <div className="mt-6 pt-6 border-t border-gray-100">
-                                        <p className="text-xs text-gray-500 mb-3">Especialidades</p>
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
+                                        <p className="text-sm font-medium text-gray-700 mb-2">Especialidades</p>
                                         <div className="flex flex-wrap gap-2">
                                             {especialidades.map((esp: string, i: number) => (
-                                                <Badge key={i} className="bg-gray-100 text-gray-800 hover:bg-gray-200">
+                                                <Badge key={i} className="bg-orange-600 text-white">
                                                     {esp}
                                                 </Badge>
                                             ))}
@@ -441,27 +414,27 @@ export default function ArbitroPerfilPage() {
                                 )}
                             </div>
 
-                            {/* Profile */}
-                            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+                            {/* Perfil Profesional */}
+                            <div className="bg-white rounded-lg shadow-md border-t-4 border-blue-600 p-5">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-blue-600" />
                                     Perfil Profesional
                                 </h3>
                                 <p className="text-gray-700 leading-relaxed">
-                                    Árbitro de categoría <span className="font-semibold">{arb.categoria?.toLowerCase() || "sin especificar"}</span> con{' '}
-                                    <span className="font-semibold">{arb.experiencia || 0} años</span> de experiencia en competiciones de nivel regional.
+                                    Árbitro de categoría <strong className="text-blue-700">{arb.categoria?.toLowerCase() || "sin especificar"}</strong> con{' '}
+                                    <strong className="text-blue-700">{arb.experiencia || 0} años</strong> de experiencia en competiciones de nivel regional.
                                     {aniosCODAR > 0 && arb.fechaAfiliacion && (
                                         <> Afiliado a la Comisión Departamental de Árbitros de Puno desde el año {new Date(arb.fechaAfiliacion).getFullYear()}.</>
                                     )}
-                                    {" "}Actualmente con disponibilidad{' '}
-                                    <span className="font-semibold">{estado === "activo" ? "activa" : "inactiva"}</span>{' '}
-                                    para designaciones en torneos oficiales.
+                                    {" "}Actualmente con disponibilidad <strong className={estado === 'activo' ? "text-green-600" : "text-gray-500"}>{estado === "activo" ? "activa" : "inactiva"}</strong> para designaciones en torneos oficiales.
                                 </p>
                             </div>
 
-                            {/* Observations */}
+                            {/* Observaciones */}
                             {arb.observaciones && (
-                                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+                                <div className="bg-white rounded-lg shadow-md border-t-4 border-gray-500 p-5">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-gray-600" />
                                         Observaciones
                                     </h3>
                                     <p className="text-gray-700">{arb.observaciones}</p>
@@ -469,14 +442,14 @@ export default function ArbitroPerfilPage() {
                             )}
 
                             {/* Footer */}
-                            <div className="text-center py-6 text-xs text-gray-400 border-t border-gray-200">
+                            <div className="text-center py-4 text-sm text-gray-500 bg-white rounded-lg shadow-md p-4">
                                 <p className="font-medium">Sistema de Información y Designación de Árbitros - CODAR Puno</p>
                                 <p className="mt-1">Perfil generado el {new Date().toLocaleDateString("es-PE", { year: "numeric", month: "long", day: "numeric" })}</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     )
 }
