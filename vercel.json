@@ -1,6 +1,5 @@
 {
-  "buildCommand": "cd frontend && pnpm run build",
+  "buildCommand": "npm run build --prefix frontend",
   "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && pnpm install",
-  "framework": "nextjs"
+  "installCommand": "npm install --prefix frontend"
 }
