@@ -167,20 +167,22 @@ export default function ArbitroPerfilPage() {
         <div className="min-h-screen bg-sky-50 p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <Link href="/dashboard/arbitros" className="flex items-center gap-2 text-sky-700 hover:text-sky-900 font-medium">
                         <ArrowLeft className="w-5 h-5" />
                         Volver
                     </Link>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={exportarPDF} className="border-sky-300 text-sky-700 hover:bg-sky-50">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <Button variant="outline" onClick={exportarPDF} className="flex-1 sm:flex-none border-sky-300 text-sky-700 hover:bg-sky-50">
                             <Download className="w-4 h-4 mr-2" />
-                            Descargar CV
+                            <span className="hidden sm:inline">Descargar CV</span>
+                            <span className="sm:hidden">CV</span>
                         </Button>
-                        <Button asChild className="bg-sky-600 hover:bg-sky-700">
+                        <Button asChild className="flex-1 sm:flex-none bg-sky-600 hover:bg-sky-700">
                             <Link href={`/dashboard/arbitros/${arb.id}/editar`}>
                                 <Edit className="w-4 h-4 mr-2" />
-                                Editar
+                                <span className="hidden sm:inline">Editar</span>
+                                <span className="sm:hidden">Editar</span>
                             </Link>
                         </Button>
                     </div>
@@ -189,23 +191,23 @@ export default function ArbitroPerfilPage() {
                 {/* CV Style - Acero Celeste y Blanco */}
                 <div ref={pdfRef} className="bg-white shadow-2xl rounded-xl overflow-hidden">
                     {/* Header - Acero Celeste */}
-                    <div className="bg-gradient-to-r from-sky-600 via-sky-500 to-sky-400 text-white p-8">
-                        <div className="flex items-start gap-6">
+                    <div className="bg-gradient-to-r from-sky-600 via-sky-500 to-sky-400 text-white p-4 md:p-8">
+                        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6">
                             {/* Avatar */}
-                            <div className="w-28 h-28 rounded-full bg-white border-4 border-white/50 overflow-hidden flex-shrink-0 shadow-lg">
+                            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white border-4 border-white/50 overflow-hidden flex-shrink-0 shadow-lg">
                                 {foto ? (
                                     <img src={foto} alt="Foto" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-sky-100">
-                                        <User className="w-14 h-14 text-sky-400" />
+                                        <User className="w-10 h-10 md:w-14 md:h-14 text-sky-400" />
                                     </div>
                                 )}
                             </div>
-                            <div className="flex-1">
-                                <h1 className="text-3xl font-bold tracking-wide text-white">{arb.nombre} {arb.apellido}</h1>
-                                <p className="text-sky-100 text-lg mt-1 font-medium">{arb.categoria || "Árbitro"}</p>
+                            <div className="flex-1 text-center md:text-left">
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-wide text-white">{arb.nombre} {arb.apellido}</h1>
+                                <p className="text-sky-100 text-base md:text-lg mt-1 font-medium">{arb.categoria || "Árbitro"}</p>
                                 
-                                <div className="flex flex-wrap items-center gap-3 mt-4">
+                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-3 mt-4">
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium shadow-sm ${getEstadoClassName(estado)}`}>
                                         {getEstadoLabel(estado)}
                                     </span>
@@ -215,17 +217,17 @@ export default function ArbitroPerfilPage() {
                                     <span className="text-sky-100">{arb.provincia || "Puno"}</span>
                                 </div>
 
-                                <div className="flex flex-wrap gap-4 mt-4">
+                                <div className="flex flex-wrap gap-3 md:gap-4 mt-4 justify-center md:justify-start">
                                     {arb.telefono && (
-                                        <div className="flex items-center gap-2 text-sky-100">
+                                        <div className="flex items-center gap-2 text-sky-100 text-sm md:text-base">
                                             <Phone className="w-4 h-4" />
                                             <span>{arb.telefono}</span>
                                         </div>
                                     )}
                                     {arb.email && (
-                                        <div className="flex items-center gap-2 text-sky-100">
+                                        <div className="flex items-center gap-2 text-sky-100 text-sm md:text-base">
                                             <Mail className="w-4 h-4" />
-                                            <span>{arb.email}</span>
+                                            <span className="truncate max-w-[150px] md:max-w-none">{arb.email}</span>
                                         </div>
                                     )}
                                 </div>
@@ -234,29 +236,29 @@ export default function ArbitroPerfilPage() {
                     </div>
 
                     {/* Experience Highlight - Acero Celeste claro */}
-                    <div className="bg-gradient-to-r from-sky-50 to-white border-b border-sky-100 px-8 py-6">
-                        <div className="grid grid-cols-3 gap-6 text-center">
-                            <div className="bg-white rounded-lg p-4 border border-sky-200 shadow-sm">
-                                <p className="text-4xl font-bold text-sky-600">{aniosExperiencia}</p>
-                                <p className="text-sky-500 text-sm mt-1 font-medium">AÑOS DE EXPERIENCIA</p>
+                    <div className="bg-gradient-to-r from-sky-50 to-white border-b border-sky-100 px-4 md:px-8 py-4 md:py-6">
+                        <div className="grid grid-cols-3 gap-2 md:gap-6">
+                            <div className="bg-white rounded-lg p-3 md:p-4 border border-sky-200 shadow-sm">
+                                <p className="text-2xl md:text-4xl font-bold text-sky-600">{aniosExperiencia}</p>
+                                <p className="text-sky-500 text-xs md:text-sm mt-1 font-medium">AÑOS DE EXPERIENCIA</p>
                                 <p className="text-sky-400 text-xs">(Desde {arb.fechaAfiliacion ? new Date(arb.fechaAfiliacion).getFullYear() : "N/A"})</p>
                             </div>
-                            <div className="bg-white rounded-lg p-4 border border-sky-200 shadow-sm">
-                                <p className="text-4xl font-bold text-sky-600">{roles.length}</p>
-                                <p className="text-sky-500 text-sm mt-1 font-medium">ROLES</p>
+                            <div className="bg-white rounded-lg p-3 md:p-4 border border-sky-200 shadow-sm">
+                                <p className="text-2xl md:text-4xl font-bold text-sky-600">{roles.length}</p>
+                                <p className="text-sky-500 text-xs md:text-sm mt-1 font-medium">ROLES</p>
                             </div>
-                            <div className="bg-white rounded-lg p-4 border border-sky-200 shadow-sm">
-                                <p className="text-4xl font-bold text-sky-600">{especialidades.length}</p>
-                                <p className="text-sky-500 text-sm mt-1 font-medium">ESPECIALIDADES</p>
+                            <div className="bg-white rounded-lg p-3 md:p-4 border border-sky-200 shadow-sm">
+                                <p className="text-2xl md:text-4xl font-bold text-sky-600">{especialidades.length}</p>
+                                <p className="text-sky-500 text-xs md:text-sm mt-1 font-medium">ESPECIALIDADES</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Main Content */}
-                    <div className="p-8">
-                        <div className="grid grid-cols-3 gap-8">
+                    <div className="p-4 md:p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                             {/* Left Column - Personal Info */}
-                            <div className="col-span-1 space-y-6">
+                            <div className="md:col-span-1 space-y-6">
                                 {/* Datos Personales */}
                                 <div>
                                     <h2 className="text-lg font-bold text-sky-700 border-b-2 border-sky-200 pb-2 mb-4 flex items-center gap-2">
@@ -348,7 +350,7 @@ export default function ArbitroPerfilPage() {
                             </div>
 
                             {/* Right Column - Experience */}
-                            <div className="col-span-2 space-y-6">
+                            <div className="md:col-span-2 space-y-6">
                                 {/* Especialidades - Destacado */}
                                 {especialidades.length > 0 && (
                                     <div className="bg-gradient-to-r from-sky-50 to-white border-l-4 border-sky-400 p-5 rounded-r-lg">
