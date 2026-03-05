@@ -19,6 +19,7 @@ import {
     Inbox,
     User,
     History,
+    Award,
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
 
@@ -192,6 +193,11 @@ function getMenuItems(
                         href: "/dashboard/asistencia/historial",
                         icon: History,
                     },
+                    {
+                        name: "Ranking Semanal",
+                        href: "/dashboard/asistencia/ranking",
+                        icon: Award,
+                    },
                 ],
             },
         ]
@@ -202,7 +208,7 @@ function getMenuItems(
         return [
             ...menuPrincipal,
             {
-                title: "Permisos",
+                title: "Presidencia",
                 items: [
                     { name: "Solicitar Permiso", href: "/dashboard/solicitar-permiso", icon: Send },
                     { name: "Ver Solicitudes", href: "/dashboard/solicitudes", icon: Inbox },
@@ -227,6 +233,11 @@ function getMenuItems(
                         name: "Historial Asistencia",
                         href: "/dashboard/asistencia/historial",
                         icon: History,
+                    },
+                    {
+                        name: "Ranking Semanal",
+                        href: "/dashboard/asistencia/ranking",
+                        icon: Award,
                     },
                 ],
             },
@@ -348,6 +359,11 @@ function getMenuItems(
                     name: "Historial Asistencia",
                     href: "/dashboard/asistencia/historial",
                     icon: History,
+                },
+                {
+                    name: "Ranking Semanal",
+                    href: "/dashboard/asistencia/ranking",
+                    icon: Award,
                 },
             ],
         },
