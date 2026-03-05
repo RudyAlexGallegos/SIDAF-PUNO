@@ -91,6 +91,12 @@ const getEstadoLabel = (estado: string) => {
   }
 }
 
+const getEstadoClassName = (estado: string) => {
+  return estado === 'activo' 
+    ? 'bg-green-100 text-green-700 border border-green-200' 
+    : 'bg-slate-200 text-slate-600 border border-slate-300'
+}
+
 export default function ArbitroPerfilPage() {
     const params = useParams()
     const pdfRef = useRef<HTMLDivElement>(null)
@@ -200,9 +206,7 @@ export default function ArbitroPerfilPage() {
                                 <p className="text-slate-600 text-lg mt-1 font-medium">{arb.categoria || "Árbitro"}</p>
                                 
                                 <div className="flex flex-wrap items-center gap-3 mt-4">
-                                    <span className={`px-3 py-1 rounded-full text-sm font-medium shadow-sm ${`
-                                        estado === 'activo' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-200 text-slate-600 border border-slate-300'
-                                    }`}>
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium shadow-sm ${getEstadoClassName(estado)}`}>
                                         {getEstadoLabel(estado)}
                                     </span>
                                     <span className="text-slate-500">•</span>
