@@ -18,6 +18,7 @@ import {
     Send,
     Inbox,
     User,
+    History,
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
 
@@ -87,6 +88,7 @@ const PERMISO_TO_HREF: Record<string, string> = {
     "VER_ARBITROS": "/dashboard/arbitros",
     "GESTION_ARBITROS": "/dashboard/arbitros",
     "GESTION_ASISTENCIA": "/dashboard/asistencia",
+    "GESTION_ASISTENCIA_HISTORIAL": "/dashboard/asistencia/historial",
     "GESTION_DESIGNACIONES": "/dashboard/designaciones",
     "GESTION_CAMPEONATOS": "/dashboard/campeonato",
     "GESTION_EQUIPOS": "/dashboard/campeonato/equipos",
@@ -141,6 +143,9 @@ function getMenuItems(
         if (uniqueHrefs.includes("/dashboard/asistencia")) {
             menuItems.push({ name: "Control Asistencia", href: "/dashboard/asistencia", icon: UserCheck })
         }
+        if (uniqueHrefs.includes("/dashboard/asistencia/historial")) {
+            menuItems.push({ name: "Historial Asistencia", href: "/dashboard/asistencia/historial", icon: History })
+        }
         if (uniqueHrefs.includes("/dashboard/designaciones")) {
             menuItems.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
         }
@@ -182,6 +187,11 @@ function getMenuItems(
                         href: "/dashboard/asistencia",
                         icon: UserCheck,
                     },
+                    {
+                        name: "Historial Asistencia",
+                        href: "/dashboard/asistencia/historial",
+                        icon: History,
+                    },
                 ],
             },
         ]
@@ -212,6 +222,11 @@ function getMenuItems(
                         name: "Control Asistencia",
                         href: "/dashboard/asistencia",
                         icon: UserCheck,
+                    },
+                    {
+                        name: "Historial Asistencia",
+                        href: "/dashboard/asistencia/historial",
+                        icon: History,
                     },
                 ],
             },
@@ -274,6 +289,11 @@ function getMenuItems(
                         href: "/dashboard/asistencia",
                         icon: UserCheck,
                     },
+                    {
+                        name: "Historial Asistencia",
+                        href: "/dashboard/asistencia/historial",
+                        icon: History,
+                    },
                 ],
             },
             {
@@ -309,7 +329,7 @@ function getMenuItems(
         ]
     }
 
-    // ADMIN: Acceso total
+    // Default: Acceso básico
     return [
         ...menuPrincipal,
         {
@@ -323,6 +343,11 @@ function getMenuItems(
                     name: "Control Asistencia",
                     href: "/dashboard/asistencia",
                     icon: UserCheck,
+                },
+                {
+                    name: "Historial Asistencia",
+                    href: "/dashboard/asistencia/historial",
+                    icon: History,
                 },
             ],
         },
