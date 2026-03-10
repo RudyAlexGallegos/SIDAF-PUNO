@@ -462,6 +462,182 @@ export async function deleteAsistencia(id: number): Promise<boolean> {
     }
 }
 
+/**
+ * Obtiene las asistencia(s) por fecha
+ * GET /api/asistencias/fecha/{fecha}
+ */
+export async function getAsistenciasByFecha(fecha: string): Promise<Asistencia[]> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/fecha/${fecha}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getAsistenciasByFecha:", error);
+        return [];
+    }
+}
+
+// ========== NUEVAS FUNCIONES PARA MEJORA DE ASISTENCIA ==========
+
+// Interfaz extendida de Asistencia con nuevos campos
+export interface AsistenciaExtendida extends Asistencia {
+    tipoDia?: string
+    tieneRetraso?: boolean
+    minutosRetraso?: number
+    fechaLimiteRegistro?: string
+    horaProgramada?: string
+    diaSemana?: number
+}
+
+// Información del día actual
+export interface DiaInfo {
+    fecha: string
+    diaSemana: number
+    nombreDia: string
+    esObligatorio: boolean
+    tipoDia: string
+}
+
+// Estadísticas por día de la semana
+export interface EstadisticaDia {
+    dia: string
+    numeroDia: number
+    esObligatorio: boolean
+    total: number
+    presentes: number
+    ausentes: number
+    tardanzas: number
+    justificaciones: number
+    porcentajeAsistencia: number
+}
+
+export interface EstadisticasPeriodo {
+    periodo: { inicio: string; fin: string }
+    porDia: Record<string, EstadisticaDia>
+    resumen: {
+        totalRegistros: number
+        presentes: number
+        porcentajeGeneral: number
+    }
+}
+
+export interface EstadisticasDiasObligatorios {
+    periodo: { inicio: string; fin: string }
+    diasObligatorios: {
+        total: number
+        presentes: number
+        ausentes: number
+        tardanzas: number
+        justificaciones: number
+        porcentajeAsistencia: number
+    }
+}
+
+// Request para registro con retraso
+export interface RegistroConRetrasoRequest {
+    fecha: string
+    horaEntrada?: string
+    horaSalida?: string
+    actividad?: string
+    evento?: string
+    estado: string
+    observaciones?: string
+    responsableId?: number
+    responsable?: string
+    horaProgramada?: string
+}
+
+/**
+ * Obtiene información del día actual (si es obligatorio, tipo de día)
+ */
+export async function getDiaActual(): Promise<DiaInfo | null> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/dia-actual"))
+        if (!response.ok) throw new Error("Error HTTP")
+        return await response.json()
+    } catch (error) {
+        console.error("❌ Error getDiaActual:", error)
+        return null
+    }
+}
+
+/**
+ * Obtiene información de un día específico
+ */
+export async function getDiaInfo(fecha: string): Promise<DiaInfo | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/dia/${fecha}`))
+        if (!response.ok) throw new Error("Error HTTP")
+        return await response.json()
+    } catch (error) {
+        console.error("❌ Error getDiaInfo:", error)
+        return null
+    }
+}
+
+/**
+ * Obtiene estadísticas por día de la semana
+ */
+export async function getEstadisticasDiasSemana(inicio: string, fin: string): Promise<EstadisticasPeriodo | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/estadisticas/dias-semana?inicio=${inicio}&fin=${fin}`))
+        if (!response.ok) throw new Error("Error HTTP")
+        return await response.json()
+    } catch (error) {
+        console.error("❌ Error getEstadisticasDiasSemana:", error)
+        return null
+    }
+}
+
+/**
+ * Obtiene estadísticas solo de días obligatorios
+ */
+export async function getEstadisticasDiasObligatorios(inicio: string, fin: string): Promise<EstadisticasDiasObligatorios | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/estadisticas/dias-obligatorios?inicio=${inicio}&fin=${fin}`))
+        if (!response.ok) throw new Error("Error HTTP")
+        return await response.json()
+    } catch (error) {
+        console.error("❌ Error getEstadisticasDiasObligatorios:", error)
+        return null
+    }
+}
+
+/**
+ * Registra asistencia con retraso (tolerancia)
+ */
+export async function registrarConRetraso(data: RegistroConRetrasoRequest): Promise<Asistencia | null> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/registro-con-retraso"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        })
+        if (!response.ok) throw new Error("Error HTTP")
+        return await response.json()
+    } catch (error) {
+        console.error("❌ Error registrarConRetraso:", error)
+        return null
+    }
+}
+
+/**
+ * Reprocesa una asistencia (recalcula retrasos, tipo día, etc.)
+ */
+export async function reprocesarAsistencia(id: number): Promise<Asistencia | null> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/${id}/procesar`), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+        })
+        if (!response.ok) throw new Error("Error HTTP")
+        return await response.json()
+    } catch (error) {
+        console.error("❌ Error reprocesarAsistencia:", error)
+        return null
+    }
+}
+
 // ============================================================
 // REPORTES DE ASISTENCIA
 // ============================================================

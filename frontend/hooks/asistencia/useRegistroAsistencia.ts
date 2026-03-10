@@ -1,13 +1,50 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createAsistencia } from "@/services/api"
+import { createAsistencia, getDiaActual, getAsistenciasByFecha, updateAsistencia, type DiaInfo } from "@/services/api"
 import { RegistroAsistencia, AsistenciaArbitro, TipoActividad, EstadoAsistencia, Arbitro } from "@/types/asistencia"
+import { esDiaObligatorio, getTipoDia, getNombreDia, getInfoDiaActual } from "@/lib/horarios-asistencia"
 
 const STORAGE_KEY = "sidaf_registro_temp"
 
 export function useRegistroAsistencia() {
     const [registro, setRegistro] = useState<RegistroAsistencia | null>(null)
+    const [diaInfo, setDiaInfo] = useState<DiaInfo | null>(null)
+    const [loadingDia, setLoadingDia] = useState(true)
+    const [existeRegistroHoy, setExisteRegistroHoy] = useState(false)
+    const [idRegistroExistente, setIdRegistroExistente] = useState<number | null>(null)
+
+    // Cargar información del día actual
+    useEffect(() => {
+        async function loadDiaInfo() {
+            try {
+                const info = await getDiaActual()
+                if (info) setDiaInfo(info)
+                else setDiaInfo(getInfoDiaActual() as unknown as DiaInfo)
+            } catch { 
+                setDiaInfo(getInfoDiaActual() as unknown as DiaInfo)
+            } finally { setLoadingDia(false) }
+        }
+        loadDiaInfo()
+    }, [])
+
+    // Verificar si ya existe registro para el día de hoy
+    useEffect(() => {
+        async function verificarRegistroExistente() {
+            const hoy = new Date().toISOString().split('T')[0]
+            try {
+                const registros = await getAsistenciasByFecha(hoy)
+                if (registros && registros.length > 0) {
+                    setExisteRegistroHoy(true)
+                    setIdRegistroExistente(registros[0].id || null)
+                    console.log("✅ Ya existe registro para hoy:", registros[0].id)
+                }
+            } catch (e) {
+                console.warn("Error verificando registro existente:", e)
+            }
+        }
+        verificarRegistroExistente()
+    }, [])
 
     useEffect(() => {
         try {
@@ -29,12 +66,16 @@ export function useRegistroAsistencia() {
         }
     }
 
-    function iniciarRegistro(tipo: TipoActividad, responsable?: string) {
+    function iniciarRegistro(tipo: TipoActividad, responsable?: string, fechaCustom?: string) {
         const now = new Date()
+        const fecha = fechaCustom || now.toISOString().split("T")[0]
+        const horaInicio = fechaCustom 
+            ? new Date(fechaCustom + "T" + now.toTimeString().slice(0, 8)).toISOString()
+            : now.toISOString()
         const newRegistro: RegistroAsistencia = {
             id: `local-${now.getTime()}`,
-            fecha: now.toISOString().split("T")[0],
-            horaInicio: now.toISOString(),
+            fecha: fecha,
+            horaInicio: horaInicio,
             horaFin: "",
             tipoActividad: tipo,
             descripcion: "",
@@ -84,19 +125,25 @@ export function useRegistroAsistencia() {
 
         const updated: RegistroAsistencia = { ...registro, horaFin: now, arbitros: updatedArbitros }
         
-        // Enviar al backend
+        const asistenciaData = {
+            fecha: updated.fecha,
+            horaEntrada: updated.horaInicio,
+            horaSalida: updated.horaFin,
+            actividad: updated.tipoActividad,
+            evento: updated.descripcion,
+            estado: "completado",
+            observaciones: JSON.stringify(updated.arbitros)
+        }
+
+        // Enviar al backend - actualizar si existe, crear si no
         try {
-            const asistenciaData = {
-                fecha: updated.fecha,
-                horaEntrada: updated.horaInicio,
-                horaSalida: updated.horaFin,
-                actividad: updated.tipoActividad,
-                evento: updated.descripcion,
-                estado: "completado",
-                observaciones: JSON.stringify(updated.arbitros)
+            if (idRegistroExistente) {
+                await updateAsistencia(idRegistroExistente, asistenciaData)
+                console.log("✅ Asistencia actualizada en backend")
+            } else {
+                await createAsistencia(asistenciaData)
+                console.log("✅ Nueva asistencia guardada en backend")
             }
-            await createAsistencia(asistenciaData)
-            console.log("✅ Asistencia guardada en backend")
         } catch (e) {
             console.warn("No se pudo guardar asistencia en backend", e)
         }
@@ -116,5 +163,23 @@ export function useRegistroAsistencia() {
         persist(null)
     }
 
-    return { registro, iniciarRegistro, marcarAsistencia, finalizarRegistro, cancelarRegistro }
+    // Funciones de utilidad para días obligatorios
+    const esHoyObligatorio = () => diaInfo?.esObligatorio ?? esDiaObligatorio(new Date())
+    const getTipoDiaActual = () => diaInfo?.tipoDia ?? getTipoDia(new Date())
+    const getNombreDiaActual = () => diaInfo?.nombreDia ?? getNombreDia(new Date())
+
+    return { 
+        registro, 
+        iniciarRegistro, 
+        marcarAsistencia, 
+        finalizarRegistro, 
+        cancelarRegistro,
+        diaInfo,
+        loadingDia,
+        esHoyObligatorio,
+        getTipoDiaActual,
+        getNombreDiaActual,
+        existeRegistroHoy,
+        idRegistroExistente
+    }
 }

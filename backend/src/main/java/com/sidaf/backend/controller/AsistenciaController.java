@@ -2,12 +2,14 @@ package com.sidaf.backend.controller;
 
 import com.sidaf.backend.model.Asistencia;
 import com.sidaf.backend.repository.AsistenciaRepository;
+import com.sidaf.backend.service.AsistenciaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -20,6 +22,9 @@ public class AsistenciaController {
 
     @Autowired
     private AsistenciaRepository asistenciaRepository;
+
+    @Autowired
+    private AsistenciaService asistenciaService;
 
     @GetMapping
     public List<Asistencia> listar() {
@@ -58,6 +63,14 @@ public class AsistenciaController {
         e.setLongitude(datos.getLongitude());
         e.setResponsableId(datos.getResponsableId());
         e.setResponsable(datos.getResponsable());
+
+        // Nuevos campos
+        e.setTipoDia(datos.getTipoDia());
+        e.setTieneRetraso(datos.getTieneRetraso());
+        e.setMinutosRetraso(datos.getMinutosRetraso());
+        e.setFechaLimiteRegistro(datos.getFechaLimiteRegistro());
+        e.setHoraProgramada(datos.getHoraProgramada());
+        e.setDiaSemana(datos.getDiaSemana());
 
         Asistencia actualizado = asistenciaRepository.save(e);
         return ResponseEntity.ok(actualizado);
@@ -225,6 +238,156 @@ public class AsistenciaController {
         }
 
         return stats;
+    }
+
+    // ========== NUEVOS ENDPOINTS PARA MEJORA DE ASISTENCIA ==========
+
+    /**
+     * GET /api/asistencias/dia-actual
+     * Devuelve información sobre el día actual (si es obligatorio, tipo de día)
+     */
+    @GetMapping("/dia-actual")
+    public Map<String, Object> getDiaActual() {
+        LocalDate hoy = LocalDate.now();
+        Map<String, Object> resultado = new LinkedHashMap<>();
+        resultado.put("fecha", hoy.toString());
+        resultado.put("diaSemana", hoy.getDayOfWeek().getValue());
+        resultado.put("nombreDia", hoy.getDayOfWeek().toString());
+        resultado.put("esObligatorio", asistenciaService.esDiaObligatorio(hoy));
+        resultado.put("tipoDia", asistenciaService.getTipoDia(hoy));
+        return resultado;
+    }
+
+    /**
+     * GET /api/asistencias/dia/{fecha}
+     * Devuelve información sobre un día específico
+     */
+    @GetMapping("/dia/{fecha}")
+    public Map<String, Object> getDiaInfo(@PathVariable String fecha) {
+        LocalDate fechaParse = LocalDate.parse(fecha);
+        Map<String, Object> resultado = new LinkedHashMap<>();
+        resultado.put("fecha", fechaParse.toString());
+        resultado.put("diaSemana", fechaParse.getDayOfWeek().getValue());
+        resultado.put("nombreDia", fechaParse.getDayOfWeek().toString());
+        resultado.put("esObligatorio", asistenciaService.esDiaObligatorio(fechaParse));
+        resultado.put("tipoDia", asistenciaService.getTipoDia(fechaParse));
+        return resultado;
+    }
+
+    /**
+     * GET /api/asistencias/estadisticas/dias-semana?inicio=2025-01-01&fin=2025-03-10
+     * Estadísticas agrupadas por día de la semana
+     */
+    @GetMapping("/estadisticas/dias-semana")
+    public Map<String, Object> getEstadisticasPorDiaSemana(
+            @RequestParam String inicio,
+            @RequestParam String fin) {
+        LocalDate fechaInicio = LocalDate.parse(inicio);
+        LocalDate fechaFin = LocalDate.parse(fin);
+        return asistenciaService.getEstadisticasPorDia(fechaInicio, fechaFin);
+    }
+
+    /**
+     * GET /api/asistencias/estadisticas/dias-obligatorios?inicio=2025-01-01&fin=2025-03-10
+     * Estadísticas solo de días obligatorios
+     */
+    @GetMapping("/estadisticas/dias-obligatorios")
+    public Map<String, Object> getEstadisticasDiasObligatorios(
+            @RequestParam String inicio,
+            @RequestParam String fin) {
+        LocalDate fechaInicio = LocalDate.parse(inicio);
+        LocalDate fechaFin = LocalDate.parse(fin);
+        return asistenciaService.getEstadisticasDiasObligatorios(fechaInicio, fechaFin);
+    }
+
+    /**
+     * POST /api/asistencias/registro-con-retraso
+     * Permite registrar asistencia con fecha anterior (tolerancia)
+     */
+    @PostMapping("/registro-con-retraso")
+    public ResponseEntity<Asistencia> registrarConRetraso(@RequestBody RegistroConRetrasoRequest request) {
+        // Validar que la fecha de registro no sea muy antigua (máximo 7 días)
+        LocalDate hoy = LocalDate.now();
+        if (request.getFecha().isBefore(hoy.minusDays(7))) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Validar fecha límite si es día obligatorio
+        if (asistenciaService.esDiaObligatorio(request.getFecha())) {
+            LocalDate fechaLimite = asistenciaService.getFechaLimiteRegistro(request.getFecha());
+            if (hoy.isAfter(fechaLimite)) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        Asistencia asistencia = new Asistencia();
+        asistencia.setFecha(request.getFecha());
+        asistencia.setHoraEntrada(request.getHoraEntrada());
+        asistencia.setHoraSalida(request.getHoraSalida());
+        asistencia.setActividad(request.getActividad());
+        asistencia.setEvento(request.getEvento());
+        asistencia.setEstado(request.getEstado());
+        asistencia.setObservaciones(request.getObservaciones());
+        asistencia.setResponsableId(request.getResponsableId());
+        asistencia.setResponsable(request.getResponsable());
+        asistencia.setHoraProgramada(request.getHoraProgramada());
+
+        // Procesar asistencia (calcula tipoDia, diaSemana, retraso, etc.)
+        asistenciaService.procesarAsistencia(asistencia);
+
+        asistencia.setCreatedAt(LocalDateTime.now());
+        Asistencia guardado = asistenciaRepository.save(asistencia);
+        return ResponseEntity.ok(guardado);
+    }
+
+    /**
+     * PUT /api/asistencias/{id}/procesar
+     * Reprocesa una asistencia existente (recalcula retrasos, tipo día, etc.)
+     */
+    @PutMapping("/{id}/procesar")
+    public ResponseEntity<Asistencia> reprocesarAsistencia(@PathVariable Long id) {
+        Optional<Asistencia> o = asistenciaRepository.findById(id);
+        if (o.isEmpty()) return ResponseEntity.notFound().build();
+
+        Asistencia asistencia = o.get();
+        asistenciaService.procesarAsistencia(asistencia);
+        return ResponseEntity.ok(asistenciaRepository.save(asistencia));
+    }
+
+    // DTO para request con retraso
+    public static class RegistroConRetrasoRequest {
+        private LocalDate fecha;
+        private LocalDateTime horaEntrada;
+        private LocalDateTime horaSalida;
+        private String actividad;
+        private String evento;
+        private String estado;
+        private String observaciones;
+        private Long responsableId;
+        private String responsable;
+        private LocalTime horaProgramada;
+
+        // Getters y setters
+        public LocalDate getFecha() { return fecha; }
+        public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+        public LocalDateTime getHoraEntrada() { return horaEntrada; }
+        public void setHoraEntrada(LocalDateTime horaEntrada) { this.horaEntrada = horaEntrada; }
+        public LocalDateTime getHoraSalida() { return horaSalida; }
+        public void setHoraSalida(LocalDateTime horaSalida) { this.horaSalida = horaSalida; }
+        public String getActividad() { return actividad; }
+        public void setActividad(String actividad) { this.actividad = actividad; }
+        public String getEvento() { return evento; }
+        public void setEvento(String evento) { this.evento = evento; }
+        public String getEstado() { return estado; }
+        public void setEstado(String estado) { this.estado = estado; }
+        public String getObservaciones() { return observaciones; }
+        public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+        public Long getResponsableId() { return responsableId; }
+        public void setResponsableId(Long responsableId) { this.responsableId = responsableId; }
+        public String getResponsable() { return responsable; }
+        public void setResponsable(String responsable) { this.responsable = responsable; }
+        public LocalTime getHoraProgramada() { return horaProgramada; }
+        public void setHoraProgramada(LocalTime horaProgramada) { this.horaProgramada = horaProgramada; }
     }
 
     // DTO para representar asistencia en respuestas

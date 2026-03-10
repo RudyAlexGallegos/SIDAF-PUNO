@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useArbitros } from "@/hooks/asistencia/useArbitros"
 import { useRegistroAsistencia } from "@/hooks/asistencia/useRegistroAsistencia"
 import ListaArbitros from "@/components/asistencia/ListaArbitros"
+import { format, getDay } from "date-fns"
+import { es } from "date-fns/locale"
 import {
   Dialog,
   DialogContent,
@@ -15,9 +17,10 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
-import { Check, BarChart3 } from "lucide-react"
+import { Check, BarChart3, Calendar, AlertCircle, Clock } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getStoredUser } from "@/services/api"
+import Link from "next/link"
 export default function AsistenciaPage() {
   const { arbitros, loading } = useArbitros()
   const {
@@ -25,7 +28,9 @@ export default function AsistenciaPage() {
     iniciarRegistro,
     marcarAsistencia,
     finalizarRegistro,
-    cancelarRegistro
+    cancelarRegistro,
+    existeRegistroHoy,
+    idRegistroExistente
   } = useRegistroAsistencia()
 
   const [search, setSearch] = React.useState("")
@@ -33,8 +38,19 @@ export default function AsistenciaPage() {
   const [responsable, setResponsable] = React.useState("")
   const [openFinalize, setOpenFinalize] = React.useState(false)
   const [fechaHoraInicio, setFechaHoraInicio] = React.useState<string>("")
+  const [fechaSeleccionada, setFechaSeleccionada] = React.useState<string>(format(new Date(), "yyyy-MM-dd"))
   const searchParams = useSearchParams()
   const router = useRouter()
+
+  // Verificar si hoy es un día obligatorio
+  const esDiaObligatorioHoy = () => {
+    const hoy = new Date()
+    const diaSemana = hoy.getDay() // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
+    const diasObligatorios = [1, 2, 4, 5, 6] // Lun(1), Mar(2), Jue(4), Vie(5), Sáb(6)
+    return diasObligatorios.includes(diaSemana)
+  }
+
+  const diaObligatorio = esDiaObligatorioHoy()
 
   // Auto-detectar el usuario actual como responsable
   React.useEffect(() => {
@@ -114,10 +130,75 @@ export default function AsistenciaPage() {
             </div>
           </div>
 
-          <p className="text-sm text-gray-600 mb-6">Inicia un nuevo registro para marcar la asistencia. Los cambios se guardan localmente hasta que finalices.</p>
+          {/* Aviso de día obligatorio */}
+          <div className={`rounded-lg p-4 mb-6 ${diaObligatorio ? 'bg-blue-50 border border-blue-200' : 'bg-gray-100 border border-gray-200'}`}>
+            <div className="flex items-center gap-3">
+              {diaObligatorio ? (
+                <Calendar className="w-5 h-5 text-blue-600" />
+              ) : (
+                <Clock className="w-5 h-5 text-gray-500" />
+              )}
+              <div className="flex-1">
+                <p className={`font-medium ${diaObligatorio ? 'text-blue-800' : 'text-gray-600'}`}>
+                  {diaObligatorio 
+                    ? `Hoy es ${format(new Date(), 'EEEE', { locale: es })} - Día obligatorio`
+                    : `Hoy es ${format(new Date(), 'EEEE', { locale: es })} - Día no obligatorio`}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Los días obligatorios desde 01/01/2026 son: Lunes, Martes, Jueves, Viernes y Sábado
+                </p>
+              </div>
+              <Link 
+                href="/dashboard/asistencia/historial"
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Ver historial
+              </Link>
+            </div>
+          </div>
+
+          {/* Notificación de registro existente */}
+          {existeRegistroHoy && (
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-amber-800">Ya existe un registro de asistencia para hoy</p>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Se actualizará el registro existente (ID: {idRegistroExistente}). Puedes modificar la asistencia de los árbitros y guardar los cambios.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm text-gray-600 mb-6">
+            {existeRegistroHoy 
+              ? "Continúa editando el registro de hoy. Los cambios se guardarán al finalizar."
+              : "Inicia un nuevo registro para marcar la asistencia. Los cambios se guardan localmente hasta que finalices."}
+          </p>
 
           {/* Main card with improved styling */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
+              Selecciona la fecha del registro
+            </h3>
+            <div className="mb-6">
+              <label className="text-sm text-gray-600 block mb-2">Fecha de asistencia</label>
+              <input
+                type="date"
+                value={fechaSeleccionada}
+                onChange={(e) => setFechaSeleccionada(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Selecciona una fecha pasada para subsanar registros faltantes de días obligatorios
+              </p>
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
               Selecciona la actividad
@@ -205,15 +286,15 @@ export default function AsistenciaPage() {
               onClick={() => { 
                 const ahora = new Date().toISOString()
                 setFechaHoraInicio(ahora)
-                iniciarRegistro(actividad, responsable); 
-                toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'}` }) 
+                iniciarRegistro(actividad, responsable, fechaSeleccionada); 
+                toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'} - Fecha: ${format(new Date(fechaSeleccionada), 'dd MMM yyyy', { locale: es })}` }) 
               }}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Iniciar Registro
+              {existeRegistroHoy ? "Continuar Editando" : "Iniciar Registro"}
             </button>
 
             <button
