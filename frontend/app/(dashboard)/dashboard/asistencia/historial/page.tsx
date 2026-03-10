@@ -354,7 +354,7 @@ export default function HistorialAsistenciaPage() {
     }
   }
 
-  // Expandir registros
+  // No expandir - directo por dia
   const registrosExpandidos = asistencias.flatMap((item: any) => {
     const parsed = parsearRegistros(item)
     if (parsed.length > 0) {
@@ -373,11 +373,9 @@ export default function HistorialAsistenciaPage() {
     }]
   })
 
-  const filtered = registrosExpandidos
+  const filtered = asistencias
     .filter(a => {
-      // Filtro de días obligatorios desde 01/01/2026 (siempre activo)
       if (!esDiaObligatorio(a.fecha)) return false
-      if (filtroArbitro !== "todos" && a.arbitrId !== filtroArbitro) return false
       if (filtroActividad !== "todos" && a.actividad !== filtroActividad) return false
       if (filtroMes !== "todos" && !a.fecha?.startsWith(filtroMes)) return false
       return true
