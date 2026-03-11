@@ -380,7 +380,7 @@ export default function HistorialAsistenciaPage() {
       if (filtroMes !== "todos" && !a.fecha?.startsWith(filtroMes)) return false
       return true
     })
-    .sort((a, b) => new Date(b.fecha || "").getTime() - new Date(a.fecha || "").getTime())
+    .sort((a: any, b: any) => new Date(b.fecha || "").getTime() - new Date(a.fecha || "").getTime())
 
   const totalPaginas = Math.ceil(filtered.length / elementosPorPagina)
   const inicio = (paginaActual - 1) * elementosPorPagina
@@ -388,9 +388,8 @@ export default function HistorialAsistenciaPage() {
 
   const stats = {
     total: filtered.length,
-    presentes: filtered.filter(a => a.estadoItem === "presente").length,
-    ausentes: filtered.filter(a => a.estadoItem === "ausente").length,
-    tardanzas: filtered.filter(a => a.estadoItem === "tardanza").length
+    conRegistro: filtered.filter((a: any) => a.hasRecord === true).length,
+    sinRegistro: filtered.filter((a: any) => a.hasRecord === false).length
   }
 
   // Calcular días obligatorios faltantes (desde 01/01/2026)
@@ -604,19 +603,19 @@ export default function HistorialAsistenciaPage() {
           </Card>
           <Card className="bg-green-50 border-green-200">
             <CardContent className="pt-4 text-center">
-              <p className="text-3xl font-bold text-green-700">{stats.presentes}</p>
+              <p className="text-3xl font-bold text-sky-700">{stats.total}</p>
               <p className="text-sm text-green-500">Presentes</p>
             </CardContent>
           </Card>
           <Card className="bg-red-50 border-red-200">
             <CardContent className="pt-4 text-center">
-              <p className="text-3xl font-bold text-red-700">{stats.ausentes}</p>
+              <p className="text-3xl font-bold text-blue-700">{stats.conRegistro}</p>
               <p className="text-sm text-red-500">Ausentes</p>
             </CardContent>
           </Card>
           <Card className="bg-yellow-50 border-yellow-200">
             <CardContent className="pt-4 text-center">
-              <p className="text-3xl font-bold text-yellow-700">{stats.tardanzas}</p>
+              <p className="text-3xl font-bold text-orange-700">{stats.sinRegistro}</p>
               <p className="text-sm text-yellow-500">Tardanzas</p>
             </CardContent>
           </Card>
@@ -658,43 +657,65 @@ export default function HistorialAsistenciaPage() {
                     asistenciaPaginada.map((item, index) => (
                       <TableRow key={index} className="hover:bg-sky-50">
                         <TableCell className="font-medium text-sky-800">{formatFecha(item.fecha)}</TableCell>
-                        <TableCell className="text-sky-700">{item.nombreArbitr}</TableCell>
+                        <TableCell className="text-sky-700">
+                          {item.hasRecord ? (item.nombreArbolo || 'General') : '-'}
+                        </TableCell>
                         <TableCell className="text-sky-600">{getActividadLabel(item.actividad)}</TableCell>
                         <TableCell className="text-sky-600">{getHoraRegistro(item)}</TableCell>
                         <TableCell>
-                          <Badge className={getEstadoClass(item.estadoItem)}>
-                            {item.estadoItem || "-"}
-                          </Badge>
+                          {item.hasRecord ? (
+                            <Badge className={getEstadoClass(item.estadoItem)}>
+                              {item.estadoItem || "-"}
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-600">
+                              Sin registrar
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => abrirEditar(item)}
-                              className="border-sky-300 text-sky-600 hover:bg-sky-50"
-                            >
-                              <Pencil className="w-3 h-3 mr-1" />
-                              Editar
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleExportarDia(item)}
-                              className="border-green-300 text-green-600 hover:bg-green-50"
-                            >
-                              <FileDown className="w-3 h-3 mr-1" />
-                              Exportar
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => abrirEliminar(item)}
-                              className="border-red-300 text-red-600 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-3 h-3 mr-1" />
-                              Eliminar
-                            </Button>
+                            {item.hasRecord ? (
+                              <>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => abrirEditar(item)}
+                                  className="border-sky-300 text-sky-600 hover:bg-sky-50"
+                                >
+                                  <Pencil className="w-3 h-3 mr-1" />
+                                  Editar
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleExportarDia(item)}
+                                  className="border-green-300 text-green-600 hover:bg-green-50"
+                                >
+                                  <FileDown className="w-3 h-3 mr-1" />
+                                  Exportar
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => abrirEliminar(item)}
+                                  className="border-red-300 text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1" />
+                                  Eliminar
+                                </Button>
+                              </>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => abrirEditar(item)}
+                                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                              >
+                                <Plus className="w-3 h-3 mr-1" />
+                                Subsanar
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
