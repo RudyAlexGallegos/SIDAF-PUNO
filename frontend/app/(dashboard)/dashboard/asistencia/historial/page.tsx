@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, Asistencia, Arbitro } from "@/services/api"
-import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay } from "date-fns"
+import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay, addDays, subDays, getWeek, getWeekOfMonth, getYear } from "date-fns"
 import { es } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -39,7 +39,8 @@ import {
   Edit,
   Pencil,
   Trash2,
-  Plus
+  Plus,
+  BarChart3
 } from "lucide-react"
 
 interface RegistroArbitro {
@@ -72,6 +73,10 @@ export default function HistorialAsistenciaPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [registroEliminando, setRegistroEliminando] = useState<any>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  
+  // Estado para reporte semanal
+  const [reporteSemanalOpen, setReporteSemanalOpen] = useState(false)
+  const [semanaData, setSemanaData] = useState<any[]>([])
 
   useEffect(() => {
     async function load() {
@@ -160,6 +165,20 @@ export default function HistorialAsistenciaPage() {
   // Días obligatorios: Lunes(1), Martes(2), Jueves(4), Viernes(5), Sábado(6)
   const DIAS_OBLIGATORIOS = [1, 2, 4, 5, 6]
   const FECHA_INICIO_OBLIGATORIOS = parseISO("2026-01-01")
+
+  // Obtener tipo de actividad según el día
+  const getActividadPorDia = (fechaStr: string): string => {
+    try {
+      const fecha = new Date(fechaStr)
+      const diaSemana = fecha.getDay()
+      if (diaSemana === 1) return "analisis_partido" // Lunes
+      if (diaSemana === 2 || diaSemana === 4 || diaSemana === 6) return "preparacion_fisica" // Mar, Jue, Sáb
+      if (diaSemana === 5) return "reunion_ordinaria" // Viernes
+      return ""
+    } catch {
+      return ""
+    }
+  }
 
   const esDiaObligatorio = (fechaStr?: string): boolean => {
     if (!fechaStr) return false
@@ -378,18 +397,39 @@ export default function HistorialAsistenciaPage() {
       if (!esDiaObligatorio(a.fecha)) return false
       if (filtroActividad !== "todos" && a.actividad !== filtroActividad) return false
       if (filtroMes !== "todos" && !a.fecha?.startsWith(filtroMes)) return false
+      if (filtroArbitro !== "todos" && a.arbitroId !== filtroArbitro) return false
       return true
     })
     .sort((a: any, b: any) => new Date(b.fecha || "").getTime() - new Date(a.fecha || "").getTime())
+
+  // Generar todos los días obligatorios desde 01/01/2026
+  const generarTodosLosDias = () => {
+    const fechaInicio = parseISO("2026-01-01")
+    const fechaFin = new Date()
+    const todosLosDias = eachDayOfInterval({ start: fechaInicio, end: fechaFin })
+    const diasObligatorios = [1, 2, 4, 5, 6]
+    const fechasConRegistro = new Set([...new Set(asistencias.map(a => a.fecha?.split('T')[0]))].filter(Boolean))
+    return todosLosDias
+      .filter(dia => diasObligatorios.includes(dia.getDay()))
+      .map(dia => {
+        const fechaStr = format(dia, 'yyyy-MM-dd')
+        const tieneRegistro = fechasConRegistro.has(fechaStr)
+        const asistenciaRegistro = filtered.find(a => a.fecha?.startsWith(fechaStr))
+        return { fecha: fechaStr, fechaDate: dia, diaSemana: dia.getDay(), tieneRegistro, registro: asistenciaRegistro || null, actividad: getActividadPorDia(fechaStr) }
+      })
+      .sort((a, b) => b.fechaDate.getTime() - a.fechaDate.getTime())
+  }
+
+  const diasCompletos = generarTodosLosDias()
 
   const totalPaginas = Math.ceil(filtered.length / elementosPorPagina)
   const inicio = (paginaActual - 1) * elementosPorPagina
   const asistenciaPaginada = filtered.slice(inicio, inicio + elementosPorPagina)
 
   const stats = {
-    total: filtered.length,
-    conRegistro: filtered.filter((a: any) => a.hasRecord === true).length,
-    sinRegistro: filtered.filter((a: any) => a.hasRecord === false).length
+    total: diasCompletos.length,
+    conRegistro: diasCompletos.filter((d: any) => d.tieneRegistro).length,
+    sinRegistro: diasCompletos.filter((d: any) => !d.tieneRegistro).length
   }
 
   // Calcular días obligatorios faltantes (desde 01/01/2026)
@@ -461,6 +501,130 @@ export default function HistorialAsistenciaPage() {
     }
   }
 
+  // Generar reporte semanal
+  const generarReporteSemanal = () => {
+    const hoy = new Date()
+    const diaSemana = hoy.getDay()
+    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana
+    const lunes = addDays(hoy, diffLunes)
+    
+    const diasSemana = [1, 2, 4, 5]
+    
+    const data: any[] = []
+    
+    arbitros.forEach(arbitro => {
+      const fila: any = {
+        arbitroId: arbitro.id,
+        nombre: `${arbitro.nombre || ''} ${arbitro.apellido || ''}`.trim(),
+        dias: {}
+      }
+      
+      diasSemana.forEach((dia, idx) => {
+        const fechaBusqueda = addDays(lunes, idx)
+        const fechaStr = format(fechaBusqueda, 'yyyy-MM-dd')
+        
+        const registro = registrosExpandidos.find((r: any) => 
+          r.fecha?.startsWith(fechaStr) && 
+          String(r.arbitroId) === String(arbitro.id)
+        )
+        
+        fila.dias[fechaStr] = {
+          estado: registro?.estadoItem || null,
+          actividad: registro?.actividad || null
+        }
+      })
+      
+      data.push(fila)
+    })
+    
+    setSemanaData(data)
+    setReporteSemanalOpen(true)
+  }
+
+  const handleExportarReporteSemanal = () => {
+    const hoy = new Date()
+    const diaSemana = hoy.getDay()
+    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana
+    const lunes = addDays(hoy, diffLunes)
+    const viernes = addDays(lunes, 4)
+    
+    const diasSemana = [1, 2, 4, 5]
+    const nombresDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+    
+    const contenido = `
+      <html>
+        <head>
+          <title>Reporte Semanal - SIDAF PUNO</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+            th { background-color: #007bff; color: white; }
+            .presente { background-color: #d4edda; }
+            .ausente { background-color: #f8d7da; }
+            .tardanza { background-color: #fff3cd; }
+            .justificado { background-color: #cce5ff; }
+          </style>
+        </head>
+        <body>
+          <h1>Reporte Semanal de Asistencia</h1>
+          <p><strong>Comisión Departamental de Árbitros - Puno</strong></p>
+          <p>Semana del ${format(lunes, 'dd/MM/yyyy')} al ${format(viernes, 'dd/MM/yyyy')}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Árbitro</th>
+                ${nombresDias.map(d => `<th>${d}</th>`).join('')}
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${semanaData.map(fila => {
+                let presentes = 0
+                const diasKeys = Object.keys(fila.dias)
+                diasKeys.forEach((key: string) => {
+                  if (fila.dias[key]?.estado === 'presente') presentes++
+                })
+                return `
+                  <tr>
+                    <td style="text-align: left;">${fila.nombre}</td>
+                    ${diasSemana.map((dia, idx) => {
+                      const fechaStr = diasKeys[idx]
+                      const estado = fila.dias[fechaStr]?.estado
+                      let clase = ''
+                      if (estado === 'presente') clase = 'presente'
+                      else if (estado === 'ausente') clase = 'ausente'
+                      else if (estado === 'tardanza') clase = 'tardanza'
+                      else if (estado === 'justificado') clase = 'justificado'
+                      return `<td class="${clase}">${estado ? getSimboloEstado(estado) : '-'}</td>`
+                    }).join('')}
+                    <td><strong>${presentes}</strong></td>
+                  </tr>
+                `
+              }).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+    const ventana = window.open('', '_blank')
+    if (ventana) {
+      ventana.document.write(contenido)
+      ventana.document.close()
+      ventana.print()
+    }
+  }
+  
+  const getSimboloEstado = (estado: string): string => {
+    switch(estado) {
+      case 'presente': return '✅'
+      case 'ausente': return '❌'
+      case 'tardanza': return '⏰'
+      case 'justificado': return '📝'
+      default: return '-'
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white p-4 md:p-8">
@@ -489,6 +653,10 @@ export default function HistorialAsistenciaPage() {
           <Button onClick={handleExportarPDF} className="bg-green-600 hover:bg-green-700">
             <FileDown className="w-4 h-4 mr-2" />
             Exportar PDF
+          </Button>
+          <Button onClick={generarReporteSemanal} className="bg-blue-600 hover:bg-blue-700">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Reporte Semanal
           </Button>
         </div>
 
@@ -598,25 +766,25 @@ export default function HistorialAsistenciaPage() {
           <Card className="bg-sky-50 border-sky-200">
             <CardContent className="pt-4 text-center">
               <p className="text-3xl font-bold text-sky-700">{stats.total}</p>
-              <p className="text-sm text-sky-500">Total</p>
+              <p className="text-sm text-sky-500">Total Días</p>
             </CardContent>
           </Card>
           <Card className="bg-green-50 border-green-200">
             <CardContent className="pt-4 text-center">
-              <p className="text-3xl font-bold text-sky-700">{stats.total}</p>
-              <p className="text-sm text-green-500">Presentes</p>
+              <p className="text-3xl font-bold text-green-700">{stats.conRegistro}</p>
+              <p className="text-sm text-green-500">Registrados</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="pt-4 text-center">
+              <p className="text-3xl font-bold text-amber-700">{stats.sinRegistro}</p>
+              <p className="text-sm text-amber-500">Pendientes</p>
             </CardContent>
           </Card>
           <Card className="bg-red-50 border-red-200">
             <CardContent className="pt-4 text-center">
-              <p className="text-3xl font-bold text-blue-700">{stats.conRegistro}</p>
-              <p className="text-sm text-red-500">Ausentes</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-yellow-50 border-yellow-200">
-            <CardContent className="pt-4 text-center">
-              <p className="text-3xl font-bold text-orange-700">{stats.sinRegistro}</p>
-              <p className="text-sm text-yellow-500">Tardanzas</p>
+              <p className="text-3xl font-bold text-red-700">{Math.round((stats.conRegistro / stats.total) * 100) || 0}%</p>
+              <p className="text-sm text-red-500">Asistencia</p>
             </CardContent>
           </Card>
         </div>
@@ -626,7 +794,7 @@ export default function HistorialAsistenciaPage() {
           <CardHeader className="bg-gradient-to-r from-sky-500 to-sky-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-6 h-6" />
-              Registros ({filtered.length})
+              Registros ({diasCompletos.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -635,15 +803,14 @@ export default function HistorialAsistenciaPage() {
                 <TableHeader>
                   <TableRow className="bg-sky-50">
                     <TableHead className="text-sky-800">Fecha</TableHead>
-                    <TableHead className="text-sky-800">Árbitro</TableHead>
+                    <TableHead className="text-sky-800">Día</TableHead>
                     <TableHead className="text-sky-800">Actividad</TableHead>
-                    <TableHead className="text-sky-800">Hora</TableHead>
                     <TableHead className="text-sky-800">Estado</TableHead>
                     <TableHead className="text-sky-800 text-center">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {asistenciaPaginada.length === 0 ? (
+                  {diasCompletos.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-sky-500">
                         <p className="text-lg font-medium">No hay registros de asistencia</p>
@@ -654,69 +821,65 @@ export default function HistorialAsistenciaPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    asistenciaPaginada.map((item, index) => (
-                      <TableRow key={index} className="hover:bg-sky-50">
-                        <TableCell className="font-medium text-sky-800">{formatFecha(item.fecha)}</TableCell>
+                    diasCompletos.map((item: any) => (
+                      <TableRow key={item.fecha} className={item.tieneRegistro ? "hover:bg-sky-50" : "bg-amber-50 hover:bg-amber-100"}>
+                        <TableCell className="font-medium text-sky-800">{format(item.fechaDate, 'dd/MM/yyyy')}</TableCell>
                         <TableCell className="text-sky-700">
-                          {item.hasRecord ? (item.nombreArbolo || 'General') : '-'}
+                          {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][item.diaSemana]}
                         </TableCell>
                         <TableCell className="text-sky-600">{getActividadLabel(item.actividad)}</TableCell>
-                        <TableCell className="text-sky-600">{getHoraRegistro(item)}</TableCell>
                         <TableCell>
-                          {item.hasRecord ? (
-                            <Badge className={getEstadoClass(item.estadoItem)}>
-                              {item.estadoItem || "-"}
+                          {item.tieneRegistro ? (
+                            <Badge className={getEstadoClass(item.registro?.estado)}>
+                              {item.registro?.estado || "-"}
                             </Badge>
                           ) : (
-                            <Badge className="bg-gray-100 text-gray-600">
-                              Sin registrar
+                            <Badge variant="outline" className="bg-amber-100 text-amber-800">
+                              ⏸️ Pendiente
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {item.hasRecord ? (
-                              <>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => abrirEditar(item)}
-                                  className="border-sky-300 text-sky-600 hover:bg-sky-50"
-                                >
-                                  <Pencil className="w-3 h-3 mr-1" />
-                                  Editar
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => handleExportarDia(item)}
-                                  className="border-green-300 text-green-600 hover:bg-green-50"
-                                >
-                                  <FileDown className="w-3 h-3 mr-1" />
-                                  Exportar
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => abrirEliminar(item)}
-                                  className="border-red-300 text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-3 h-3 mr-1" />
-                                  Eliminar
-                                </Button>
-                              </>
-                            ) : (
+                          {item.tieneRegistro && item.registro ? (
+                            <div className="flex items-center justify-center gap-1">
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => abrirEditar(item)}
-                                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                                onClick={() => abrirEditar(item.registro)}
+                                className="border-sky-300 text-sky-600 hover:bg-sky-50"
                               >
-                                <Plus className="w-3 h-3 mr-1" />
-                                Subsanar
+                                <Pencil className="w-3 h-3 mr-1" />
+                                Editar
                               </Button>
-                            )}
-                          </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleExportarDia(item.registro)}
+                                className="border-green-300 text-green-600 hover:bg-green-50"
+                              >
+                                <FileDown className="w-3 h-3 mr-1" />
+                                Exportar
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => abrirEliminar(item.registro)}
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Eliminar
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Subsanar
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -791,6 +954,78 @@ export default function HistorialAsistenciaPage() {
                     {editLoading ? "Guardando..." : "Guardar Cambios"}
                   </Button>
                 </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Modal de Reporte Semanal */}
+            <Dialog open={reporteSemanalOpen} onOpenChange={setReporteSemanalOpen}>
+              <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">
+                    📊 Reporte Semanal de Asistencia
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-sm text-slate-600 mb-4">
+                    Semana del {semanaData.length > 0 ? format(addDays(new Date(), (new Date().getDay() === 0 ? -6 : 1 - new Date().getDay()) - (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1)), 'dd/MM/yyyy') : '-'} al {semanaData.length > 0 ? format(addDays(new Date(), (new Date().getDay() === 0 ? -6 : 1 - new Date().getDay()) + 3), 'dd/MM/yyyy') : '-'}
+                  </p>
+                  
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-blue-50">
+                          <TableHead className="text-blue-800 font-bold">Árbitro</TableHead>
+                          <TableHead className="text-blue-800 font-bold text-center">Lunes</TableHead>
+                          <TableHead className="text-blue-800 font-bold text-center">Martes</TableHead>
+                          <TableHead className="text-blue-800 font-bold text-center">Miércoles</TableHead>
+                          <TableHead className="text-blue-800 font-bold text-center">Jueves</TableHead>
+                          <TableHead className="text-blue-800 font-bold text-center">Viernes</TableHead>
+                          <TableHead className="text-blue-800 font-bold text-center">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {semanaData.map((fila: any) => {
+                          let presentes = 0
+                          const diasKeys = Object.keys(fila.dias || {})
+                          diasKeys.forEach((key: string) => {
+                            if (fila.dias[key]?.estado === 'presente') presentes++
+                          })
+                          
+                          return (
+                            <TableRow key={fila.arbitroId} className="hover:bg-slate-50">
+                              <TableCell className="font-medium">{fila.nombre}</TableCell>
+                              {[1, 2, 4, 5].map((diaNum, idx) => {
+                                const fechaStr = diasKeys[idx]
+                                const estado = fila.dias?.[fechaStr]?.estado
+                                return (
+                                  <TableCell key={diaNum} className="text-center">
+                                    {estado ? (
+                                      <Badge className={`${getEstadoClass(estado)} text-xs`}>
+                                        {getSimboloEstado(estado)}
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-slate-300">-</span>
+                                    )}
+                                  </TableCell>
+                                )
+                              })}
+                              <TableCell className="text-center font-bold">
+                                {presentes}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  <div className="flex gap-2 mt-4">
+                    <Button onClick={handleExportarReporteSemanal} className="bg-green-600 hover:bg-green-700">
+                      <FileDown className="w-4 h-4 mr-2" />
+                      Exportar PDF
+                    </Button>
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
 
