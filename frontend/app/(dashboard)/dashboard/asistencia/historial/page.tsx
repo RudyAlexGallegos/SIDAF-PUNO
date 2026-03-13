@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, Asistencia, Arbitro } from "@/services/api"
+import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, createAsistencia, Asistencia, Arbitro } from "@/services/api"
 import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay, addDays, subDays, getWeek, getWeekOfMonth, getYear } from "date-fns"
 import { es } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -245,13 +245,28 @@ export default function HistorialAsistenciaPage() {
     ))
   }
 
-  // Guardar edición
+  // Guardar edición (crear o actualizar)
   const handleGuardarEdicion = async () => {
-    if (!registroEditando || !registroEditando.id || !Number(registroEditando.id)) return
+    if (!registroEditando) return
     
     setEditLoading(true)
     try {
-      // Siempre guardamos todos los árbitros del día
+      // Es un nuevo registro (subsanar)
+      if (!registroEditando.id) {
+        await createAsistencia({
+          fecha: registroEditando.fecha,
+          actividad: registroEditando.actividad || getActividadPorDia(registroEditando.fecha),
+          estado: 'ausente',
+          observaciones: '[]'
+        })
+        // Recargar datos
+        const [asistenciasData] = await Promise.all([getAsistencias()])
+        setAsistencias(asistenciasData)
+        setEditModalOpen(false)
+        return
+      }
+      
+      // Es una actualización de registro existente
       if (arbitrosEditando.length > 0) {
         // Actualizar todos los árbitros
         const updatedRegistros = arbitrosEditando.map((arb: any) => ({
@@ -874,6 +889,17 @@ export default function HistorialAsistenciaPage() {
                             <Button 
                               variant="outline" 
                               size="sm" 
+                              onClick={() => {
+                                // Subsanar: crear nuevo registro para este día
+                                const nuevoRegistro = {
+                                  id: null,
+                                  fecha: item.fecha,
+                                  actividad: item.actividad,
+                                  estado: 'ausente',
+                                  observaciones: '[]'
+                                }
+                                abrirEditar(nuevoRegistro)
+                              }}
                               className="border-orange-300 text-orange-600 hover:bg-orange-50"
                             >
                               <Plus className="w-3 h-3 mr-1" />
