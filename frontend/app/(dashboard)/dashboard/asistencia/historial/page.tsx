@@ -42,6 +42,8 @@ import {
   Plus,
   BarChart3
 } from "lucide-react"
+import RegistroCompactoArbitro from "@/components/asistencia/RegistroCompactoArbitro"
+import { EstadoAsistencia } from "@/types/asistencia"
 
 interface RegistroArbitro {
   arbitroId: string
@@ -890,14 +892,25 @@ export default function HistorialAsistenciaPage() {
                               variant="outline" 
                               size="sm" 
                               onClick={() => {
-                                // Subsanar: crear nuevo registro para este día
+                                // Subsanar: crear nuevo registro para este día con todos los árbitros
+                                //自动 detectar actividad según el día de la semana
+                                const actividadAuto = getActividadPorDia(item.fecha)
+                                const arbitrosIniciales = arbitros.map(ar => ({
+                                  arbitrId: ar.id,
+                                  nombreArbitro: `${ar.nombre || ''} ${ar.apellido || ''}`.trim() || `Arbitro ${ar.id}`,
+                                  estado: 'ausente',
+                                  horaRegistro: '',
+                                  observaciones: ''
+                                }))
                                 const nuevoRegistro = {
                                   id: null,
                                   fecha: item.fecha,
-                                  actividad: item.actividad,
+                                  actividad: actividadAuto,
                                   estado: 'ausente',
-                                  observaciones: '[]'
+                                  observaciones: JSON.stringify(arbitrosIniciales)
                                 }
+                                // precargar los árbitros en edición
+                                setArbitrosEditando(arbitrosIniciales)
                                 abrirEditar(nuevoRegistro)
                               }}
                               className="border-orange-300 text-orange-600 hover:bg-orange-50"
@@ -937,39 +950,35 @@ export default function HistorialAsistenciaPage() {
                     </p>
                   </div>
                   
-                  {/* Lista de árbitros para editar */}
-                  <div className="space-y-3">
+                  {/* Lista de árbitros para editar - Diseño igual que pagina principal */}
+                  <div className="space-y-2">
                     <Label className="text-base font-medium">Estado de Árbitros</Label>
-                    {arbitrosEditando.map((arb: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">{arb.nombreArbitro || `Árbitro ${arb.arbitrId}`}</p>
-                          <p className="text-xs text-gray-500">
-                            ⏰ Registro: {arb.horaRegistro ? new Date(arb.horaRegistro).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                          </p>
-                        </div>
-                        <Select 
-                          value={arb.estado} 
-                          onValueChange={(valor) => actualizarArbitroEnEdicion(arb.arbitrId, valor)}
-                        >
-                          <SelectTrigger className={`w-36 ${
-                            arb.estado === 'presente' ? 'bg-green-100 border-green-300 text-green-800' :
-                            arb.estado === 'ausente' ? 'bg-red-100 border-red-300 text-red-800' :
-                            arb.estado === 'tardanza' ? 'bg-yellow-100 border-yellow-300 text-yellow-800' :
-                            arb.estado === 'justificado' ? 'bg-blue-100 border-blue-300 text-blue-800' :
-                            'bg-gray-100'
-                          }`}>
-                            <SelectValue placeholder="Estado" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="presente">✅ Presente</SelectItem>
-                            <SelectItem value="ausente">❌ Ausente</SelectItem>
-                            <SelectItem value="tardanza">⏰ Tardanza</SelectItem>
-                            <SelectItem value="justificado">📝 Justificado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ))}
+                    <div className="max-h-[50vh] overflow-y-auto space-y-2 p-1">
+                      {arbitrosEditando.map((arb: any, index: number) => {
+                        const arbitroCompleto = arbitros.find(a => String(a.id) === String(arb.arbitrId))
+                        const nombreMostrar = arb.nombreArbitro || (arbitroCompleto ? `${arbitroCompleto.nombre || ''} ${arbitroCompleto.apellido || ''}`.trim() : `Árbitro ${arb.arbitrId}`)
+                        const arbitroParaComponente = arbitroCompleto || {
+                          id: arb.arbitrId,
+                          nombre: nombreMostrar,
+                          apellido: '',
+                          nombres: nombreMostrar,
+                          apellidoPaterno: nombreMostrar,
+                          dni: '',
+                          categoria: ''
+                        }
+                        return (
+                          <RegistroCompactoArbitro
+                            key={arb.arbitrId || index}
+                            arbitro={arbitroParaComponente}
+                            estado={(arb.estado as EstadoAsistencia) || 'ausente'}
+                            onChange={(nuevoEstado: EstadoAsistencia) => actualizarArbitroEnEdicion(arb.arbitrId, nuevoEstado)}
+                          />
+                        )
+                      })}
+                    </div>
+                    {arbitrosEditando.length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">No hay árbitros para mostrar</p>
+                    )}
                   </div>
                 </div>
                 <DialogFooter>
