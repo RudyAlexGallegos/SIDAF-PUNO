@@ -171,7 +171,10 @@ export default function HistorialAsistenciaPage() {
   // Obtener tipo de actividad según el día
   const getActividadPorDia = (fechaStr: string): string => {
     try {
-      const fecha = new Date(fechaStr)
+      // Parsear la fecha usando formato YYYY-MM-DD para evitar problemas de zona horaria
+      const [year, month, day] = fechaStr.split('-').map(Number)
+      // Crear fecha usando componentes explícitos (sin zona horaria)
+      const fecha = new Date(year, month - 1, day)
       const diaSemana = fecha.getDay()
       if (diaSemana === 1) return "analisis_partido" // Lunes
       if (diaSemana === 2 || diaSemana === 4 || diaSemana === 6) return "preparacion_fisica" // Mar, Jue, Sáb
@@ -847,8 +850,8 @@ export default function HistorialAsistenciaPage() {
                         <TableCell className="text-sky-600">{getActividadLabel(item.actividad)}</TableCell>
                         <TableCell>
                           {item.tieneRegistro ? (
-                            <Badge className={getEstadoClass(item.registro?.estado)}>
-                              {item.registro?.estado || "-"}
+                            <Badge className="bg-green-100 text-green-800">
+                              ✅ Completado
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="bg-amber-100 text-amber-800">
