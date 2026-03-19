@@ -367,7 +367,7 @@ export default function HistorialAsistenciaPage() {
     }
   }
 
-  // Exportar un solo día con todos los árbitros
+  // Exportar un solo día con todos los árbitros - mostrar previsualización
   const handleExportarDia = (registro: any) => {
     const fecha = registro.fecha?.split('T')[0]
     const actividad = registro.actividad
@@ -390,8 +390,11 @@ export default function HistorialAsistenciaPage() {
       arbitroId: r.arbitroId
     }))
     
-    // Usar el generador de PDF profesional
-    generateReporteDiario(asistenciaData, arbitros as any, fecha, actividad)
+    // Mostrar previsualización antes de exportar
+    setPreviewData(asistenciaData)
+    setPreviewTitulo(`Reporte Diario - ${fecha}`)
+    setPreviewTipo("pdf")
+    setPreviewOpen(true)
   }
 
   // No expandir - directo por dia
@@ -524,7 +527,14 @@ export default function HistorialAsistenciaPage() {
     const fechaInicio = parseISO("2026-01-01")
     const fechaFin = new Date()
     
-    if (previewTipo === "pdf") {
+    // Verificar si es un reporte diario (el título contiene "Diario")
+    if (previewTitulo.includes("Diario")) {
+      // Extraer la fecha del título
+      const fechaMatch = previewTitulo.match(/(\d{4}-\d{2}-\d{2})/)
+      const fecha = fechaMatch ? fechaMatch[1] : format(new Date(), 'yyyy-MM-dd')
+      const actividad = previewData[0]?.actividad || 'analisis_partido'
+      generateReporteDiario(previewData as any, arbitros as any, fecha, actividad)
+    } else if (previewTipo === "pdf") {
       generateReporteResumenEjecutivo(previewData as any, arbitros as any, fechaInicio, fechaFin, previewTitulo)
     } else {
       exportAsistenciaToExcel(previewData as any, arbitros as any, `asistencia-${format(new Date(), 'yyyy-MM-dd')}.csv`)
