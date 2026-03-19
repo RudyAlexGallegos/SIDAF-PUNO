@@ -1,535 +1,530 @@
 "use client"
 
-import type { Arbitro, Asistencia, Designacion, Campeonato } from "./data-store"
+import { jsPDF } from "jspdf"
+import autoTable from "jspdf-autotable"
+import { format, eachDayOfInterval } from "date-fns"
+import { es } from "date-fns/locale"
 
-// Función para generar PDF de asistencias
-export function generateAsistenciaPDF(
-  asistencias: Asistencia[],
-  arbitros: Arbitro[],
-  fechaInicio: Date,
-  fechaFin: Date,
-): void {
-  // Crear contenido HTML para el PDF
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Reporte de Asistencia</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
-                color: #333;
-            }
-            .header {
-                text-align: center;
-                margin-bottom: 30px;
-                border-bottom: 2px solid #2563eb;
-                padding-bottom: 20px;
-            }
-            .header h1 {
-                color: #2563eb;
-                margin: 0;
-                font-size: 28px;
-            }
-            .header p {
-                margin: 5px 0;
-                font-size: 16px;
-                color: #666;
-            }
-            .summary {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-            .summary-card {
-                background: #f8fafc;
-                padding: 20px;
-                border-radius: 8px;
-                border-left: 4px solid #2563eb;
-                text-align: center;
-            }
-            .summary-card h3 {
-                margin: 0 0 10px 0;
-                color: #2563eb;
-                font-size: 24px;
-            }
-            .summary-card p {
-                margin: 0;
-                color: #666;
-                font-size: 14px;
-            }
-            .table-container {
-                margin-bottom: 30px;
-            }
-            .table-title {
-                font-size: 20px;
-                font-weight: bold;
-                margin-bottom: 15px;
-                color: #2563eb;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 20px;
-                font-size: 12px;
-            }
-            th, td {
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: left;
-            }
-            th {
-                background-color: #2563eb;
-                color: white;
-                font-weight: bold;
-            }
-            tr:nth-child(even) {
-                background-color: #f8fafc;
-            }
-            .badge {
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 10px;
-                font-weight: bold;
-            }
-            .badge-fifa { background: #dcfce7; color: #166534; }
-            .badge-nacional { background: #dbeafe; color: #1d4ed8; }
-            .badge-regional { background: #f3e8ff; color: #7c3aed; }
-            .badge-provincial { background: #fed7aa; color: #ea580c; }
-            .badge-presente { background: #dcfce7; color: #166534; }
-            .badge-ausente { background: #fee2e2; color: #dc2626; }
-            .footer {
-                margin-top: 40px;
-                text-align: center;
-                font-size: 12px;
-                color: #666;
-                border-top: 1px solid #ddd;
-                padding-top: 20px;
-            }
-            @media print {
-                body { margin: 0; }
-                .no-print { display: none; }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>📋 Reporte de Asistencia</h1>
-            <p><strong>Período:</strong> ${fechaInicio.toLocaleDateString("es-ES")} - ${fechaFin.toLocaleDateString("es-ES")}</p>
-            <p><strong>Generado:</strong> ${new Date().toLocaleDateString("es-ES")} a las ${new Date().toLocaleTimeString("es-ES")}</p>
-        </div>
-
-        ${generateAsistenciaSummary(asistencias, arbitros)}
-        ${generateAsistenciaTable(asistencias, arbitros)}
-        ${generateAsistenciaByArbitro(asistencias, arbitros)}
-
-        <div class="footer">
-            <p>Sistema de Gestión de Árbitros - Reporte generado automáticamente</p>
-            <p>Total de registros: ${asistencias.length} | Árbitros: ${arbitros.length}</p>
-        </div>
-    </body>
-    </html>
-  `
-
-  // Crear y descargar el PDF
-  downloadPDF(
-    htmlContent,
-    `reporte-asistencia-${fechaInicio.toISOString().split("T")[0]}-${fechaFin.toISOString().split("T")[0]}.pdf`,
-  )
+// Colores corporativos SIDAF-PUNO
+const COLORS = {
+  primary: [37, 99, 235] as [number, number, number],
+  secondary: [124, 58, 237] as [number, number, number],
+  danger: [220, 38, 38] as [number, number, number],
+  dark: [15, 23, 42] as [number, number, number],
+  gray: [100, 116, 139] as [number, number, number],
+  light: [248, 250, 252] as [number, number, number],
 }
 
-// Función para generar PDF de designaciones
-export function generateDesignacionesPDF(
-  designaciones: Designacion[],
-  arbitros: Arbitro[],
-  campeonatos: Campeonato[],
-  fechaInicio: Date,
-  fechaFin: Date,
-): void {
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Reporte de Designaciones</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
-                color: #333;
-            }
-            .header {
-                text-align: center;
-                margin-bottom: 30px;
-                border-bottom: 2px solid #7c3aed;
-                padding-bottom: 20px;
-            }
-            .header h1 {
-                color: #7c3aed;
-                margin: 0;
-                font-size: 28px;
-            }
-            .header p {
-                margin: 5px 0;
-                font-size: 16px;
-                color: #666;
-            }
-            .summary {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-            .summary-card {
-                background: #f8fafc;
-                padding: 20px;
-                border-radius: 8px;
-                border-left: 4px solid #7c3aed;
-                text-align: center;
-            }
-            .summary-card h3 {
-                margin: 0 0 10px 0;
-                color: #7c3aed;
-                font-size: 24px;
-            }
-            .summary-card p {
-                margin: 0;
-                color: #666;
-                font-size: 14px;
-            }
-            .table-container {
-                margin-bottom: 30px;
-            }
-            .table-title {
-                font-size: 20px;
-                font-weight: bold;
-                margin-bottom: 15px;
-                color: #7c3aed;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 20px;
-                font-size: 11px;
-            }
-            th, td {
-                border: 1px solid #ddd;
-                padding: 6px;
-                text-align: left;
-            }
-            th {
-                background-color: #7c3aed;
-                color: white;
-                font-weight: bold;
-            }
-            tr:nth-child(even) {
-                background-color: #f8fafc;
-            }
-            .badge {
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-size: 9px;
-                font-weight: bold;
-            }
-            .badge-alto { background: #fee2e2; color: #dc2626; }
-            .badge-medio { background: #fef3c7; color: #d97706; }
-            .badge-bajo { background: #dcfce7; color: #166534; }
-            .footer {
-                margin-top: 40px;
-                text-align: center;
-                font-size: 12px;
-                color: #666;
-                border-top: 1px solid #ddd;
-                padding-top: 20px;
-            }
-            @media print {
-                body { margin: 0; }
-                .no-print { display: none; }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>⚽ Reporte de Designaciones</h1>
-            <p><strong>Período:</strong> ${fechaInicio.toLocaleDateString("es-ES")} - ${fechaFin.toLocaleDateString("es-ES")}</p>
-            <p><strong>Generado:</strong> ${new Date().toLocaleDateString("es-ES")} a las ${new Date().toLocaleTimeString("es-ES")}</p>
-        </div>
-
-        ${generateDesignacionesSummary(designaciones, campeonatos)}
-        ${generateDesignacionesTable(designaciones, arbitros, campeonatos)}
-
-        <div class="footer">
-            <p>Sistema de Gestión de Árbitros - Reporte generado automáticamente</p>
-            <p>Total de designaciones: ${designaciones.length} | Período: ${Math.ceil((fechaFin.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24))} días</p>
-        </div>
-    </body>
-    </html>
-  `
-
-  downloadPDF(
-    htmlContent,
-    `reporte-designaciones-${fechaInicio.toISOString().split("T")[0]}-${fechaFin.toISOString().split("T")[0]}.pdf`,
-  )
+// Tipos
+export interface ReporteAsistenciaData {
+  id?: number
+  fecha: string
+  horaEntrada?: string
+  horaSalida?: string
+  actividad?: string
+  evento?: string
+  estado: string
+  observaciones?: string
+  responsable?: string
+  arbitroId?: string
 }
 
-// Funciones auxiliares para generar contenido HTML
-
-function generateAsistenciaSummary(asistencias: Asistencia[], arbitros: Arbitro[]): string {
-  const totalAsistencias = asistencias.length
-  const preparacionFisica = asistencias.filter((a) => a.tipoActividad === "preparacion_fisica").length
-  const entrenamientos = asistencias.filter((a) => a.tipoActividad === "entrenamiento").length
-  const arbitrosUnicos = new Set(asistencias.map((a) => a.arbitroId)).size
-
-  return `
-    <div class="summary">
-        <div class="summary-card">
-            <h3>${totalAsistencias}</h3>
-            <p>Total Asistencias</p>
-        </div>
-        <div class="summary-card">
-            <h3>${preparacionFisica}</h3>
-            <p>Preparación Física</p>
-        </div>
-        <div class="summary-card">
-            <h3>${entrenamientos}</h3>
-            <p>Entrenamientos</p>
-        </div>
-        <div class="summary-card">
-            <h3>${arbitrosUnicos}</h3>
-            <p>Árbitros Participantes</p>
-        </div>
-    </div>
-  `
+export interface ArbitroReport {
+  id: string | number
+  nombre?: string
+  nombres?: string
+  apellido?: string
+  apellidoPaterno?: string
+  apellidoMaterno?: string
+  categoria?: string
+  telefono?: string
+  email?: string
 }
 
-function generateAsistenciaTable(asistencias: Asistencia[], arbitros: Arbitro[]): string {
-  const rows = asistencias
-    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-    .map((asistencia) => {
-      const arbitro = arbitros.find((a) => a.id === asistencia.arbitroId)
-      const fecha = new Date(asistencia.fecha)
-
-      return `
-        <tr>
-            <td>${fecha.toLocaleDateString("es-ES")}</td>
-            <td>${fecha.toLocaleDateString("es-ES", { weekday: "long" })}</td>
-            <td>${arbitro?.nombre || "N/A"}</td>
-            <td><span class="badge badge-${arbitro?.categoria.toLowerCase()}">${arbitro?.categoria || "N/A"}</span></td>
-            <td><span class="badge badge-${asistencia.presente ? "presente" : "ausente"}">${asistencia.presente ? "Presente" : "Ausente"}</span></td>
-            <td>${asistencia.tipoActividad === "preparacion_fisica" ? "Preparación Física" : "Entrenamiento"}</td>
-            <td>${asistencia.observaciones || "-"}</td>
-        </tr>
-      `
-    })
-    .join("")
-
-  return `
-    <div class="table-container">
-        <div class="table-title">📅 Registro Detallado de Asistencias</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Día</th>
-                    <th>Árbitro</th>
-                    <th>Categoría</th>
-                    <th>Estado</th>
-                    <th>Tipo Actividad</th>
-                    <th>Observaciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows}
-            </tbody>
-        </table>
-    </div>
-  `
+// Utilidades
+const getActividadLabel = (actividad?: string): string => {
+  const labels: Record<string, string> = {
+    analisis_partido: "Analisis de Partido",
+    preparacion_fisica: "Preparacion Fisica",
+    reunion_ordinaria: "Reunion Ordinaria",
+    reunion_extraordinaria: "Reunion Extraordinaria",
+  }
+  return labels[actividad || ""] || actividad || "-"
 }
 
-function generateAsistenciaByArbitro(asistencias: Asistencia[], arbitros: Arbitro[]): string {
-  const asistenciaPorArbitro = arbitros
-    .map((arbitro) => {
-      const asistenciasArbitro = asistencias.filter((a) => a.arbitroId === arbitro.id)
-      const preparacionFisica = asistenciasArbitro.filter((a) => a.tipoActividad === "preparacion_fisica").length
-      const entrenamientos = asistenciasArbitro.filter((a) => a.tipoActividad === "entrenamiento").length
-      const total = asistenciasArbitro.length
-
-      return {
-        arbitro,
-        preparacionFisica,
-        entrenamientos,
-        total,
-        porcentaje: arbitros.length > 0 ? Math.round((total / (asistencias.length / arbitros.length)) * 100) : 0,
-      }
-    })
-    .sort((a, b) => b.total - a.total)
-
-  const rows = asistenciaPorArbitro
-    .map(
-      (stats) => `
-    <tr>
-        <td>${stats.arbitro.nombre}</td>
-        <td><span class="badge badge-${stats.arbitro.categoria.toLowerCase()}">${stats.arbitro.categoria}</span></td>
-        <td style="text-align: center;">${stats.total}</td>
-        <td style="text-align: center;">${stats.preparacionFisica}</td>
-        <td style="text-align: center;">${stats.entrenamientos}</td>
-        <td style="text-align: center;">${stats.porcentaje}%</td>
-    </tr>
-  `,
-    )
-    .join("")
-
-  return `
-    <div class="table-container">
-        <div class="table-title">👥 Resumen por Árbitro</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Árbitro</th>
-                    <th>Categoría</th>
-                    <th>Total</th>
-                    <th>Prep. Física</th>
-                    <th>Entrenamientos</th>
-                    <th>% Participación</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows}
-            </tbody>
-        </table>
-    </div>
-  `
+const getEstadoLabel = (estado?: string): string => {
+  const labels: Record<string, string> = {
+    presente: "Presente",
+    ausente: "Ausente",
+    tardanza: "Tardanza",
+    justificado: "Justificado",
+    licencia: "Licencia",
+  }
+  return labels[estado || ""] || estado || "-"
 }
 
-function generateDesignacionesSummary(designaciones: Designacion[], campeonatos: Campeonato[]): string {
-  const totalDesignaciones = designaciones.length
-  const campeonatosActivos = new Set(designaciones.map((d) => d.campeonatoId)).size
-  const arbitrosDesignados = new Set([
-    ...designaciones.map((d) => d.arbitroPrincipal),
-    ...designaciones.map((d) => d.arbitroAsistente1),
-    ...designaciones.map((d) => d.arbitroAsistente2),
-    ...designaciones.map((d) => d.cuartoArbitro),
-  ]).size
-
-  const promedioCalificacion =
-    designaciones.filter((d) => d.calificacion).reduce((sum, d) => sum + (d.calificacion || 0), 0) /
-      designaciones.filter((d) => d.calificacion).length || 0
-
-  return `
-    <div class="summary">
-        <div class="summary-card">
-            <h3>${totalDesignaciones}</h3>
-            <p>Total Designaciones</p>
-        </div>
-        <div class="summary-card">
-            <h3>${campeonatosActivos}</h3>
-            <p>Campeonatos</p>
-        </div>
-        <div class="summary-card">
-            <h3>${arbitrosDesignados}</h3>
-            <p>Árbitros Designados</p>
-        </div>
-        <div class="summary-card">
-            <h3>${promedioCalificacion.toFixed(1)}</h3>
-            <p>Calificación Promedio</p>
-        </div>
-    </div>
-  `
-}
-
-function generateDesignacionesTable(
-  designaciones: Designacion[],
-  arbitros: Arbitro[],
-  campeonatos: Campeonato[],
-): string {
-  const rows = designaciones
-    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-    .map((designacion) => {
-      const campeonato = campeonatos.find((c) => c.id === designacion.campeonatoId)
-      const principal = arbitros.find((a) => a.id === designacion.arbitroPrincipal)
-      const asistente1 = arbitros.find((a) => a.id === designacion.arbitroAsistente1)
-      const asistente2 = arbitros.find((a) => a.id === designacion.arbitroAsistente2)
-      const cuarto = arbitros.find((a) => a.id === designacion.cuartoArbitro)
-      const fecha = new Date(designacion.fecha)
-
-      return `
-        <tr>
-            <td>${fecha.toLocaleDateString("es-ES")}</td>
-            <td>${designacion.equipoLocal} vs ${designacion.equipoVisitante}</td>
-            <td>${designacion.estadio}</td>
-            <td>${campeonato?.nombre || "N/A"}</td>
-            <td><span class="badge badge-${campeonato?.nivelDificultad.toLowerCase()}">${campeonato?.nivelDificultad || "N/A"}</span></td>
-            <td>${principal?.nombre || "N/A"}</td>
-            <td>${asistente1?.nombre || "N/A"}</td>
-            <td>${asistente2?.nombre || "N/A"}</td>
-            <td>${cuarto?.nombre || "N/A"}</td>
-            <td style="text-align: center;">${designacion.calificacion || "-"}</td>
-        </tr>
-      `
-    })
-    .join("")
-
-  return `
-    <div class="table-container">
-        <div class="table-title">⚽ Registro Detallado de Designaciones</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Partido</th>
-                    <th>Estadio</th>
-                    <th>Campeonato</th>
-                    <th>Dificultad</th>
-                    <th>Árbitro Principal</th>
-                    <th>Asistente 1</th>
-                    <th>Asistente 2</th>
-                    <th>Cuarto Árbitro</th>
-                    <th>Calificación</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows}
-            </tbody>
-        </table>
-    </div>
-  `
-}
-
-// Función para descargar PDF usando la API del navegador
-function downloadPDF(htmlContent: string, filename: string): void {
-  // Crear una nueva ventana para imprimir
-  const printWindow = window.open("", "_blank")
-
-  if (printWindow) {
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-
-    // Esperar a que se cargue el contenido y luego imprimir
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print()
-        // Opcional: cerrar la ventana después de imprimir
-        // printWindow.close()
-      }, 500)
+// Función helper para formatear hora correctamente
+const formatHora = (hora: any): string => {
+  if (!hora) return "-"
+  // Si es un string ISO (contiene T)
+  if (typeof hora === "string" && hora.includes("T")) {
+    const parts = hora.split("T")
+    if (parts[1]) {
+      return parts[1].substring(0, 5)
     }
-  } else {
-    // Fallback: crear un blob y descargar como HTML
-    const blob = new Blob([htmlContent], { type: "text/html" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = filename.replace(".pdf", ".html")
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    return "-"
+  }
+  // Si es un string con formato HH:mm:ss
+  if (typeof hora === "string" && hora.includes(":")) {
+    return hora.substring(0, 5)
+  }
+  // Si es un objeto Date
+  if (hora instanceof Date) {
+    return hora.toLocaleTimeString("es-PE", { hour: '2-digit', minute: '2-digit', hour12: false })
+  }
+  // Si es un objeto con formato ISO
+  if (typeof hora === "object" && hora.toString) {
+    const str = hora.toString()
+    if (str.includes("T")) {
+      return str.split("T")[1]?.substring(0, 5) || "-"
+    }
+  }
+  return String(hora).substring(0, 5) || "-"
+}
+
+function addFooter(doc: jsPDF): void {
+  const pageCount = doc.getNumberOfPages()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setTextColor(...COLORS.gray)
+    doc.text(`Pagina ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: "center" })
+    doc.text(`Generado por SIDAF-PUNO | ${format(new Date(), "dd/MM/yyyy HH:mm")}`, pageWidth / 2, pageHeight - 5, { align: "center" })
   }
 }
 
-// Función para exportar datos como JSON
+// Generar reporte RESUMEN
+export function generateReporteResumenEjecutivo(
+  asistencia: ReporteAsistenciaData[],
+  _arbitros: ArbitroReport[],
+  fechaInicio: Date,
+  fechaFin: Date,
+  titulo?: string
+): void {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  const totalRegistros = asistencia.length
+  const presentes = asistencia.filter((a) => a.estado === "presente").length
+  const ausentes = asistencia.filter((a) => a.estado === "ausente").length
+  const porcentaje = totalRegistros > 0 ? Math.round((presentes / totalRegistros) * 100) : 0
+
+  // Header
+  doc.setFillColor(...COLORS.primary)
+  doc.rect(0, 0, pageWidth, 35, "F")
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(22)
+  doc.setFont("helvetica", "bold")
+  doc.text("SIDAF-PUNO", 14, 18)
+
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "normal")
+  doc.text("Sistema de Designacion Inteligente de Arbitros", 14, 26)
+  doc.text("Comision Departamental de Arbitros - Puno", 14, 32)
+
+  // Titulo
+  doc.setTextColor(...COLORS.dark)
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.text(titulo || "REPORTE DE ASISTENCIA", pageWidth / 2, 48, { align: "center" })
+
+  doc.setFontSize(10)
+  doc.setTextColor(...COLORS.gray)
+  doc.text(`Periodo: ${format(fechaInicio, "dd/MM/yyyy")} - ${format(fechaFin, "dd/MM/yyyy")}`, pageWidth / 2, 56, { align: "center" })
+
+  // Estadisticas
+  let yPos = 70
+
+  doc.setFillColor(...COLORS.light)
+  doc.roundedRect(14, yPos, pageWidth - 28, 25, 3, 3, "F")
+
+  doc.setTextColor(...COLORS.primary)
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "bold")
+  doc.text("ESTADISTICAS GENERALES", 18, yPos + 10)
+
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(...COLORS.dark)
+  doc.text(`Total: ${totalRegistros}`, 18, yPos + 18)
+  doc.text(`Presentes: ${presentes}`, 80, yPos + 18)
+  doc.text(`Ausentes: ${ausentes}`, 130, yPos + 18)
+  doc.text(`%: ${porcentaje}%`, 170, yPos + 18)
+
+  // Tabla
+  yPos = 105
+  doc.setTextColor(...COLORS.dark)
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "bold")
+  doc.text("REGISTRO DETALLADO", 14, yPos)
+
+  const tableData = asistencia
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+    .slice(0, 20)
+    .map((a) => [
+      format(new Date(a.fecha), "dd/MM/yyyy"),
+      getActividadLabel(a.actividad),
+      getEstadoLabel(a.estado),
+    ])
+
+  autoTable(doc, {
+    startY: yPos + 4,
+    head: [["Fecha", "Actividad", "Estado"]],
+    body: tableData,
+    theme: "striped",
+    headStyles: { fillColor: COLORS.secondary, textColor: [255, 255, 255], fontStyle: "bold" },
+    margin: { left: 14, right: 14 },
+  })
+
+  addFooter(doc)
+  doc.save(`reporte-resumen-${format(fechaInicio, "yyyy-MM")}.pdf`)
+}
+
+// Reporte POR ARBITRO
+export function generateReportePorArbitro(
+  asistencia: ReporteAsistenciaData[],
+  arbitros: ArbitroReport[],
+  fechaInicio: Date,
+  fechaFin: Date
+): void {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  // Header
+  doc.setFillColor(...COLORS.primary)
+  doc.rect(0, 0, pageWidth, 35, "F")
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(22)
+  doc.setFont("helvetica", "bold")
+  doc.text("SIDAF-PUNO", 14, 18)
+
+  doc.setFontSize(12)
+  doc.text("Reporte por Arbitro", 14, 26)
+
+  // Titulo
+  doc.setTextColor(...COLORS.dark)
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.text("REPORTE POR ARBITRO", pageWidth / 2, 48, { align: "center" })
+
+  doc.setFontSize(10)
+  doc.setTextColor(...COLORS.gray)
+  doc.text(`Periodo: ${format(fechaInicio, "dd/MM/yyyy")} - ${format(fechaFin, "dd/MM/yyyy")}`, pageWidth / 2, 56, { align: "center" })
+
+  // Tabla vacia por ahora
+  const tableData = arbitros.map((arb) => [arb.nombre || arb.nombres || "Sin nombre", arb.categoria || "-", "-", "-", "-", "0%"])
+
+  autoTable(doc, {
+    startY: 65,
+    head: [["Arbitro", "Categoria", "Total", "Presentes", "Ausentes", "%"]],
+    body: tableData,
+    theme: "striped",
+    headStyles: { fillColor: COLORS.secondary, textColor: [255, 255, 255], fontStyle: "bold" },
+    margin: { left: 14, right: 14 },
+  })
+
+  addFooter(doc)
+  doc.save(`reporte-arbitros-${format(fechaInicio, "yyyy-MM")}.pdf`)
+}
+
+// Reporte MENSUAL
+export function generateReporteMensual(
+  asistencia: ReporteAsistenciaData[],
+  _arbitros: ArbitroReport[],
+  year: number,
+  month: number
+): void {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  const fechaInicio = new Date(year, month - 1, 1)
+  const fechaFin = new Date(year, month, 0)
+
+  const asistenciaMes = asistencia.filter((a) => {
+    const fecha = new Date(a.fecha)
+    return fecha >= fechaInicio && fecha <= fechaFin
+  })
+
+  const total = asistenciaMes.length
+  const presentes = asistenciaMes.filter((a) => a.estado === "presente").length
+  const ausentes = asistenciaMes.filter((a) => a.estado === "ausente").length
+  const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0
+
+  // Header
+  doc.setFillColor(...COLORS.primary)
+  doc.rect(0, 0, pageWidth, 35, "F")
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(22)
+  doc.setFont("helvetica", "bold")
+  doc.text("SIDAF-PUNO", 14, 18)
+
+  const mesLabel = format(fechaInicio, "MMMM yyyy", { locale: es })
+
+  // Titulo
+  doc.setTextColor(...COLORS.dark)
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.text(`REPORTE MENSUAL - ${mesLabel.toUpperCase()}`, pageWidth / 2, 48, { align: "center" })
+
+  // Resumen
+  doc.setFontSize(12)
+  doc.setFillColor(...COLORS.light)
+  doc.roundedRect(14, 58, pageWidth - 28, 30, 3, 3, "F")
+
+  doc.setTextColor(...COLORS.primary)
+  doc.setFont("helvetica", "bold")
+  doc.text("RESUMEN", 18, 68)
+
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(...COLORS.dark)
+  doc.text(`Registros: ${total}`, 18, 80)
+  doc.text(`Presentes: ${presentes}`, 80, 80)
+  doc.text(`Ausentes: ${ausentes}`, 130, 80)
+  doc.text(`%: ${porcentaje}%`, 170, 80)
+
+  // Tabla
+  const tableData = asistenciaMes
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+    .map((a) => [format(new Date(a.fecha), "dd/MM/yyyy"), getActividadLabel(a.actividad), getEstadoLabel(a.estado)])
+
+  autoTable(doc, {
+    startY: 95,
+    head: [["Fecha", "Actividad", "Estado"]],
+    body: tableData,
+    theme: "striped",
+    headStyles: { fillColor: COLORS.secondary, textColor: [255, 255, 255] },
+    margin: { left: 14, right: 14 },
+  })
+
+  addFooter(doc)
+  doc.save(`reporte-mensual-${year}-${String(month).padStart(2, "0")}.pdf`)
+}
+
+// Reporte FALTANTES
+export function generateReporteFaltantes(
+  asistencia: ReporteAsistenciaData[],
+  _arbitros: ArbitroReport[],
+  fechaInicio: Date,
+  fechaFin: Date
+): void {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  const diasObligatorios = [1, 2, 4, 5, 6]
+  const todosLosDias = eachDayOfInterval({ start: fechaInicio, end: fechaFin })
+  const diasObligatoriosDelPeriodo = todosLosDias.filter((d) => diasObligatorios.includes(d.getDay()))
+
+  const fechasConRegistro = new Set(asistencia.map((a) => a.fecha.split("T")[0]))
+  const diasFaltantes = diasObligatoriosDelPeriodo.filter((d) => !fechasConRegistro.has(format(d, "yyyy-MM-dd")))
+
+  // Header
+  doc.setFillColor(...COLORS.danger)
+  doc.rect(0, 0, pageWidth, 35, "F")
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(22)
+  doc.setFont("helvetica", "bold")
+  doc.text("SIDAF-PUNO", 14, 18)
+  doc.setFontSize(12)
+  doc.text("Reporte de Dias Faltantes", 14, 32)
+
+  // Titulo
+  doc.setTextColor(...COLORS.dark)
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.text("REPORTE DE DIAS SIN REGISTRO", pageWidth / 2, 48, { align: "center" })
+
+  // Resumen
+  doc.setFontSize(12)
+  doc.setFillColor(254, 226, 226)
+  doc.roundedRect(14, 58, pageWidth - 28, 20, 3, 3, "F")
+
+  doc.setTextColor(...COLORS.danger)
+  doc.text(`DIAS FALTANTES: ${diasFaltantes.length}`, 18, 72)
+
+  // Tabla
+  if (diasFaltantes.length > 0) {
+    const tableData = diasFaltantes.slice(0, 25).map((d) => [format(d, "dd/MM/yyyy"), format(d, "EEEE", { locale: es })])
+
+    autoTable(doc, {
+      startY: 85,
+      head: [["Fecha", "Dia"]],
+      body: tableData,
+      theme: "striped",
+      headStyles: { fillColor: COLORS.danger, textColor: [255, 255, 255] },
+      margin: { left: 14, right: 14 },
+    })
+  }
+
+  addFooter(doc)
+  doc.save(`reporte-faltantes-${format(fechaInicio, "yyyy-MM")}.pdf`)
+}
+
+// Exportar a Excel
+export function exportAsistenciaToExcel(asistencia: ReporteAsistenciaData[], _arbitros: ArbitroReport[], filename: string): void {
+  const data = asistencia.map((a) => ({
+    Fecha: format(new Date(a.fecha), "dd/MM/yyyy"),
+    Actividad: getActividadLabel(a.actividad),
+    Estado: getEstadoLabel(a.estado),
+    "Hora Entrada": formatHora(a.horaEntrada),
+    Responsable: a.responsable || "-",
+  }))
+
+  const headers = Object.keys(data[0] || {}).join(",")
+  const rows = data.map((row) => Object.values(row).join(","))
+  const csv = [headers, ...rows].join("\n")
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename || "asistencia.csv"
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+// Reporte DIARIO (todos los árbitros de un día específico)
+export function generateReporteDiario(
+  asistencia: ReporteAsistenciaData[],
+  arbitros: ArbitroReport[],
+  fecha: string,
+  actividad: string
+): void {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  // Filtrar registros de la fecha
+  const asistenciaDia = asistencia.filter((a) => {
+    const fechaStr = a.fecha?.split("T")[0]
+    return fechaStr === fecha
+  })
+
+  // Header
+  doc.setFillColor(...COLORS.primary)
+  doc.rect(0, 0, pageWidth, 35, "F")
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(22)
+  doc.setFont("helvetica", "bold")
+  doc.text("SIDAF-PUNO", 14, 18)
+
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "normal")
+  doc.text("Comisión Departamental de Árbitros - Puno", 14, 26)
+
+  // Título
+  const fechaObj = new Date(fecha + "T00:00:00")
+  const diaSemana = format(fechaObj, "EEEE", { locale: es })
+
+  doc.setTextColor(...COLORS.dark)
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.text(`REGISTRO DIARIO - ${format(fechaObj, "dd/MM/yyyy")}`, pageWidth / 2, 48, { align: "center" })
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "normal")
+  doc.text(`${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} | ${getActividadLabel(actividad)}`, pageWidth / 2, 56, { align: "center" })
+
+  // Resumen
+  const total = asistenciaDia.length
+  const presentes = asistenciaDia.filter((a) => a.estado === "presente").length
+  const tardanzas = asistenciaDia.filter((a) => a.estado === "tardanza").length
+  const ausentes = asistenciaDia.filter((a) => a.estado === "ausente").length
+  const justificados = asistenciaDia.filter((a) => a.estado === "justificado").length
+
+  doc.setFontSize(11)
+  doc.setFillColor(...COLORS.light)
+  doc.roundedRect(14, 65, pageWidth - 28, 25, 3, 3, "F")
+
+  doc.setTextColor(...COLORS.primary)
+  doc.setFont("helvetica", "bold")
+  doc.text("RESUMEN DEL DÍA", 18, 73)
+
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(...COLORS.dark)
+  doc.text(`Total: ${total}`, 18, 83)
+  doc.text(`Presentes: ${presentes}`, 50, 83)
+  doc.text(`Tardanzas: ${tardanzas}`, 90, 83)
+  doc.text(`Ausentes: ${ausentes}`, 130, 83)
+  doc.text(`Justificados: ${justificados}`, 165, 83)
+
+  // Tabla de árbitros
+  const tableData = asistenciaDia.map((a: any) => {
+    // Usar nombreArbitro directamente si está disponible
+    const nombreArbitro = a.nombreArbitro || "General"
+    
+    // Limpiar observaciones para evitar mostrar JSON
+    let observaciones = "-"
+    if (a.observaciones) {
+      try {
+        // Verificar si es JSON
+        const parsed = JSON.parse(a.observaciones)
+        if (typeof parsed === "string") {
+          observaciones = parsed
+        }
+      } catch (e) {
+        // Si no es JSON, usar directamente
+        if (typeof a.observaciones === "string" && a.observaciones.length > 0) {
+          observaciones = a.observaciones
+        }
+      }
+    }
+
+    return [
+      nombreArbitro,
+      formatHora(a.horaEntrada),
+      getEstadoLabel(a.estado),
+      observaciones,
+    ]
+  })
+
+  autoTable(doc, {
+    startY: 95,
+    head: [["Árbitro", "Hora", "Estado", "Observaciones"]],
+    body: tableData,
+    theme: "striped",
+    headStyles: { fillColor: COLORS.primary, textColor: [255, 255, 255], fontStyle: "bold" },
+    margin: { left: 14, right: 14 },
+    columnStyles: {
+      0: { cellWidth: 60 },
+      1: { cellWidth: 20 },
+      2: { cellWidth: 30 },
+      3: { cellWidth: "auto" },
+    },
+  })
+
+  addFooter(doc)
+  doc.save(`asistencia-${fecha}.pdf`)
+}
+
+// Funciones legacy
+export function generateAsistenciaPDF(_asistencias: any[], _arbitros: any[], fechaInicio: Date, fechaFin: Date): void {
+  generateReporteResumenEjecutivo([], [], fechaInicio, fechaFin, "Reporte de Asistencia")
+}
+
+export function generateDesignacionesPDF(_designaciones: any[], _arbitros: any[], _campeonato: any[], fechaInicio: Date, fechaFin: Date): void {
+  const doc = new jsPDF()
+  doc.text("Reporte de Designaciones", 10, 10)
+  doc.text(`Periodo: ${format(fechaInicio, "dd/MM/yyyy")} - ${format(fechaFin, "dd/MM/yyyy")}`, 10, 20)
+  doc.save("reporte-designaciones.pdf")
+}
+
 export function exportDataAsJSON(data: any, filename: string): void {
   const jsonString = JSON.stringify(data, null, 2)
   const blob = new Blob([jsonString], { type: "application/json" })

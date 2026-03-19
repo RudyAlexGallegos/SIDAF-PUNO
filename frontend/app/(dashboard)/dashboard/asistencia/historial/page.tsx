@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, createAsistencia, Asistencia, Arbitro } from "@/services/api"
+import { generateReporteResumenEjecutivo, generateReportePorArbitro, generateReporteMensual, generateReporteFaltantes, generateReporteDiario, exportAsistenciaToExcel } from "@/lib/pdf-generator"
 import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay, addDays, subDays, getWeek, getWeekOfMonth, getYear } from "date-fns"
 import { es } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -79,6 +80,12 @@ export default function HistorialAsistenciaPage() {
   // Estado para reporte semanal
   const [reporteSemanalOpen, setReporteSemanalOpen] = useState(false)
   const [semanaData, setSemanaData] = useState<any[]>([])
+  
+  // Estado para previsualización de exportación
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewData, setPreviewData] = useState<any[]>([])
+  const [previewTitulo, setPreviewTitulo] = useState("")
+  const [previewTipo, setPreviewTipo] = useState<"pdf" | "excel">("pdf")
 
   useEffect(() => {
     async function load() {
@@ -109,10 +116,20 @@ export default function HistorialAsistenciaPage() {
     return []
   }
 
-  const getNombreArbitro = (id?: string) => {
+  const getNombreArbitro = (id?: string | number) => {
     if (!id) return "General"
-    const arb = arbitros.find(a => a.id?.toString() === id)
-    return arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : `Árbitro ${id}`
+    // Normalizar el ID a string para la comparación
+    const idStr = String(id)
+    // Buscar en la lista de árbitros comparando como string
+    const arb = arbitros.find(a => 
+      String(a.id) === idStr || 
+      a.id?.toString() === idStr ||
+      Number(a.id) === Number(idStr)
+    )
+    if (arb) {
+      return `${arb.nombre || ""} ${arb.apellido || ""}`.trim() || `Árbitro ${id}`
+    }
+    return `Árbitro ${id}`
   }
 
   const getActividadLabel = (actividad?: string) => {
@@ -350,47 +367,31 @@ export default function HistorialAsistenciaPage() {
     }
   }
 
-  // Exportar un solo día
+  // Exportar un solo día con todos los árbitros
   const handleExportarDia = (registro: any) => {
-    const fecha = registro.fecha
-    const contenido = `
-      <html>
-        <head>
-          <title>Asistencia - ${formatFecha(fecha)} - SIDAF PUNO</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: left; }
-            th { background-color: #007bff; color: white; }
-          </style>
-        </head>
-        <body>
-          <h1>Registro de Asistencia</h1>
-          <p><strong>Comisión Departamental de Árbitros - Puno</strong></p>
-          <p><strong>Fecha:</strong> ${formatFecha(fecha)}</p>
-          <p><strong>Actividad:</strong> ${getActividadLabel(registro.actividad)}</p>
-          <table>
-            <thead>
-              <tr><th>Árbitro</th><th>Hora</th><th>Estado</th><th>Observaciones</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${registro.nombreArbitro || "General"}</td>
-                <td>${registro.horaEntrada?.substring(0, 5) || "-"}</td>
-                <td>${registro.estadoItem || registro.estado || "-"}</td>
-                <td>${registro.observaciones || "-"}</td>
-              </tr>
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `
-    const ventana = window.open('', '_blank')
-    if (ventana) {
-      ventana.document.write(contenido)
-      ventana.document.close()
-      ventana.print()
-    }
+    const fecha = registro.fecha?.split('T')[0]
+    const actividad = registro.actividad
+    
+    // Obtener todos los registros de árbitros para esta fecha
+    const arbitrosDelDia = registrosExpandidos.filter((r: any) => {
+      const fechaRegistro = r.fecha?.split('T')[0]
+      return fechaRegistro === fecha
+    })
+    
+    // Convertir al formato requerido por el generador de PDF
+    const asistenciaData = arbitrosDelDia.map((r: any) => ({
+      id: r.id,
+      fecha: r.fecha,
+      horaEntrada: r.horaEntrada || r.horaRegistro,
+      horaSalida: r.horaSalida,
+      actividad: r.actividad,
+      estado: r.estadoItem || r.estado,
+      nombreArbitro: r.nombreArbitro || "General",
+      arbitroId: r.arbitroId
+    }))
+    
+    // Usar el generador de PDF profesional
+    generateReporteDiario(asistenciaData, arbitros as any, fecha, actividad)
   }
 
   // No expandir - directo por dia
@@ -401,7 +402,8 @@ export default function HistorialAsistenciaPage() {
         ...item,
         arbitroId: reg.arbitrId,
         nombreArbitro: getNombreArbitro(reg.arbitrId),
-        estadoItem: reg.estado
+        estadoItem: reg.estado,
+        horaEntrada: reg.horaRegistro || item.horaEntrada
       }))
     }
     return [{
@@ -478,47 +480,56 @@ export default function HistorialAsistenciaPage() {
   
   const diasFaltantes = getDiasFaltantes()
 
-  const handleExportarPDF = () => {
-    const contenido = `
-      <html>
-        <head>
-          <title>Historial de Asistencia - SIDAF PUNO</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: left; }
-            th { background-color: #007bff; color: white; }
-          </style>
-        </head>
-        <body>
-          <h1>Historial de Asistencia</h1>
-          <p><strong>Comisión Departamental de Árbitros - Puno</strong></p>
-          <p>Fecha: ${new Date().toLocaleDateString()}</p>
-          <table>
-            <thead>
-              <tr><th>Fecha</th><th>Árbitro</th><th>Actividad</th><th>Hora</th><th>Estado</th></tr>
-            </thead>
-            <tbody>
-              ${filtered.map(r => `
-                <tr>
-                  <td>${formatFecha(r.fecha)}</td>
-                  <td>${r.nombreArbitro}</td>
-                  <td>${getActividadLabel(r.actividad)}</td>
-                  <td>${r.horaEntrada?.substring(0, 5) || "-"}</td>
-                  <td>${r.estadoItem || "-"}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `
-    const ventana = window.open('', '_blank')
-    if (ventana) {
-      ventana.document.write(contenido)
-      ventana.document.close()
-      ventana.print()
+  const handleExportarPDF = (tipoReporte: string = 'resumen') => {
+    const fechaInicio = parseISO("2026-01-01")
+    const fechaFin = new Date()
+    
+    // Usar los datos que se muestran en la tabla (registrosExpandidos/filtered)
+    const datosReporte = filtered.map((item: any) => ({
+      id: item.id,
+      fecha: item.fecha,
+      actividad: item.actividad,
+      estado: item.estadoItem || item.estado || '-',
+      horaEntrada: item.horaEntrada,
+      arbitroId: item.arbitrosId
+    }))
+    
+    // Mostrar previsualización antes de exportar
+    setPreviewData(datosReporte)
+    setPreviewTitulo("Reporte de Asistencia - Resumen")
+    setPreviewTipo("pdf")
+    setPreviewOpen(true)
+  }
+
+  const handleExportarExcel = () => {
+    const fechaInicio = parseISO("2026-01-01")
+    // Usar los datos que se muestran en la tabla
+    const datosReporte = filtered.map((item: any) => ({
+      id: item.id,
+      fecha: item.fecha,
+      actividad: item.actividad,
+      estado: item.estadoItem || item.estado || '-',
+      horaEntrada: item.horaEntrada,
+      arbitroId: item.arbitrosId
+    }))
+    // Mostrar previsualización antes de exportar
+    setPreviewData(datosReporte)
+    setPreviewTitulo("Reporte de Asistencia - Excel")
+    setPreviewTipo("excel")
+    setPreviewOpen(true)
+  }
+
+  // Confirmar y ejecutar exportación desde previsualización
+  const confirmarExportacion = () => {
+    const fechaInicio = parseISO("2026-01-01")
+    const fechaFin = new Date()
+    
+    if (previewTipo === "pdf") {
+      generateReporteResumenEjecutivo(previewData as any, arbitros as any, fechaInicio, fechaFin, previewTitulo)
+    } else {
+      exportAsistenciaToExcel(previewData as any, arbitros as any, `asistencia-${format(new Date(), 'yyyy-MM-dd')}.csv`)
     }
+    setPreviewOpen(false)
   }
 
   // Generar reporte semanal
@@ -670,9 +681,13 @@ export default function HistorialAsistenciaPage() {
             </h1>
             <p className="text-sky-600 mt-1">Registro histórico de asistencia de árbitros</p>
           </div>
-          <Button onClick={handleExportarPDF} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={() => handleExportarPDF('resumen')} className="bg-green-600 hover:bg-green-700">
             <FileDown className="w-4 h-4 mr-2" />
             Exportar PDF
+          </Button>
+          <Button onClick={handleExportarExcel} className="bg-emerald-600 hover:bg-emerald-700">
+            <FileDown className="w-4 h-4 mr-2" />
+            Exportar Excel
           </Button>
           <Button onClick={generarReporteSemanal} className="bg-blue-600 hover:bg-blue-700">
             <BarChart3 className="w-4 h-4 mr-2" />
@@ -1096,6 +1111,72 @@ export default function HistorialAsistenciaPage() {
                     className="bg-red-600 hover:bg-red-700"
                   >
                     {deleteLoading ? "Eliminando..." : "Eliminar"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Modal de Previsualización de Exportación */}
+            <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+              <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                    <FileDown className="w-5 h-5" />
+                    Previsualización - {previewTitulo}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-sm text-slate-600 mb-4">
+                    Total de registros a exportar: <strong>{previewData.length}</strong>
+                  </p>
+                  
+                  <div className="overflow-x-auto border rounded-lg max-h-96">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-green-50">
+                          <TableHead className="text-green-800 font-bold">Fecha</TableHead>
+                          <TableHead className="text-green-800 font-bold">Actividad</TableHead>
+                          <TableHead className="text-green-800 font-bold">Estado</TableHead>
+                          <TableHead className="text-green-800 font-bold">Hora</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {previewData.slice(0, 20).map((item: any, idx: number) => (
+                          <TableRow key={idx} className="hover:bg-slate-50">
+                            <TableCell>{item.fecha ? format(new Date(item.fecha), 'dd/MM/yyyy') : '-'}</TableCell>
+                            <TableCell className="capitalize">{item.actividad?.replace('_', ' ') || '-'}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                item.estado === 'presente' ? 'bg-green-100 text-green-800' :
+                                item.estado === 'ausente' ? 'bg-red-100 text-red-800' :
+                                item.estado === 'tardanza' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {item.estado || '-'}
+                              </span>
+                            </TableCell>
+                            <TableCell>{item.horaEntrada ? (typeof item.horaEntrada === 'string' ? item.horaEntrada.substring(0, 5) : '-') : '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {previewData.length > 20 && (
+                    <p className="text-sm text-slate-500 mt-2">
+                      ... y {previewData.length - 20} registros más
+                    </p>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={confirmarExportacion} 
+                    className={previewTipo === "pdf" ? "bg-green-600 hover:bg-green-700" : "bg-emerald-600 hover:bg-emerald-700"}
+                  >
+                    <FileDown className="w-4 h-4 mr-2" />
+                    {previewTipo === "pdf" ? "Descargar PDF" : "Descargar Excel"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
