@@ -94,6 +94,10 @@ export default function HistorialAsistenciaPage() {
           getAsistencias(),
           getArbitros()
         ])
+        console.log('DEBUG - Asistencias cargadas:', asistenciasData?.length)
+        console.log('DEBUG - Primera asistencia:', JSON.stringify(asistenciasData?.[0], null, 2))
+        console.log('DEBUG - Arbitros cargados:', arbitrosData?.length)
+        console.log('DEBUG - Primer arbitro:', JSON.stringify(arbitrosData?.[0], null, 2))
         setAsistencias(asistenciasData)
         setArbitros(arbitrosData)
       } catch (error) {
@@ -108,7 +112,10 @@ export default function HistorialAsistenciaPage() {
   const parsearRegistros = (asistencia: Asistencia): RegistroArbitro[] => {
     try {
       if (asistencia.observaciones) {
-        return JSON.parse(asistencia.observaciones)
+        const parsed = JSON.parse(asistencia.observaciones)
+        console.log('DEBUG parsearRegistros - observaciones:', asistencia.observaciones?.substring(0, 200))
+        console.log('DEBUG parsearRegistros - parsed:', parsed)
+        return parsed
       }
     } catch (e) {
       console.warn("Error parseando:", e)
@@ -770,6 +777,10 @@ export default function HistorialAsistenciaPage() {
         {(() => {
           // Calcular ranking de árbitros - versión mejorada
           // Primero,收集 todos los registros de asistencia por árbitro
+          console.log('DEBUG Ranking - Inicio cálculo')
+          console.log('DEBUG Ranking - arbitros:', arbitros?.length)
+          console.log('DEBUG Ranking - registrosExpandidos:', registrosExpandidos?.length)
+          
           const statsPorArbitro: Record<string, {total: number, presentes: number, tardanzas: number, justificados: number, nombre: string}> = {}
           
           // Inicializar con todos los árbitros conocidos
