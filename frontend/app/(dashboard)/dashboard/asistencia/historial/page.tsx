@@ -786,10 +786,10 @@ export default function HistorialAsistenciaPage() {
             }
           })
           
-          // Procesar registros expandidos
+          // Procesar registros expandidos - usar los campos correctos del objeto expandido
           ;(registrosExpandidos || []).forEach((r: any) => {
-            // Buscar cualquier ID de árbitro disponible
-            const id = String(r.arbitrId || r.arbitrId || r.idAritro || r.idArbitro || r.id || '')
+            // En registrosExpandidos, el campo es 'aribroId' (con 'o')
+            const id = String(r.aribroId || r.arbitrId || r.idArbitro || r.id || '')
             if (id && statsPorArbitro[id]) {
               statsPorArbitro[id].total++
               const estado = r.estadoItem || r.estado || ''
