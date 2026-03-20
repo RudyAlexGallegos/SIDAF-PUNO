@@ -777,10 +777,11 @@ export default function HistorialAsistenciaPage() {
         {(() => {
           // Calcular ranking de árbitros - versión mejorada
           // Primero,收集 todos los registros de asistencia por árbitro
-          console.log('DEBUG Ranking - Inicio cálculo')
-          console.log('DEBUG Ranking - arbitros:', arbitros?.length)
-          console.log('DEBUG Ranking - registrosExpandidos:', registrosExpandidos?.length)
-          
+          console.log('========================================')
+          console.log('DEBUG RANKING - IDs de árbitros:', (arbitros || []).map((a: any) => ({id: a.id, tipo: typeof a.id, nombre: a.nombre})))
+          console.log('DEBUG RANKING - arbitros:', arbitros?.length)
+          console.log('DEBUG RANKING - registrosExpandidos:', registrosExpandidos?.length)
+          console.log('========================================')
           const statsPorArbitro: Record<string, {total: number, presentes: number, tardanzas: number, justificados: number, nombre: string}> = {}
           
           // Inicializar con todos los árbitros conocidos - mostrar IDs para debug
