@@ -98,6 +98,7 @@ export default function HistorialAsistenciaPage() {
         console.log('DEBUG - Primera asistencia:', JSON.stringify(asistenciasData?.[0], null, 2))
         console.log('DEBUG - Arbitros cargados:', arbitrosData?.length)
         console.log('DEBUG - Primer arbitro:', JSON.stringify(arbitrosData?.[0], null, 2))
+        console.log('>>>>>> ARBITROS IDs:', arbitrosData?.map((a: any) => a.id) || 'none')
         setAsistencias(asistenciasData)
         setArbitros(arbitrosData)
       } catch (error) {
