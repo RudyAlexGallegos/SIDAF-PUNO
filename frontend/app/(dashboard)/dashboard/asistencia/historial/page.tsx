@@ -783,17 +783,23 @@ export default function HistorialAsistenciaPage() {
           
           const statsPorArbitro: Record<string, {total: number, presentes: number, tardanzas: number, justificados: number, nombre: string}> = {}
           
-          // Inicializar con todos los árbitros conocidos
+          // Inicializar con todos los árbitros conocidos - mostrar IDs para debug
+          console.log('DEBUG Ranking - IDs de árbitros disponibles:', (arbitros || []).map((a: any) => ({id: a.id, tipo: typeof a.id, nombre: a.nombre})))
           ;(arbitros || []).forEach((a: any) => {
-            const id = String(a.id || a.arbitrId || '')
-            if (id) {
-              statsPorArbitro[id] = {
-                total: 0,
-                presentes: 0,
-                tardanzas: 0,
-                justificados: 0,
-                nombre: `${a.nombre || a.nombres || ''} ${a.apellido || a.apellidoPaterno || ''}`.trim() || id
-              }
+            // Soportar tanto números como strings para el ID
+            const idNum = a.id
+            const idStr = String(a.id || a.arbitrId || '')
+            // Usar el número como key también
+            statsPorArbitro[idStr] = {
+              total: 0,
+              presentes: 0,
+              tardanzas: 0,
+              justificados: 0,
+              nombre: `${a.nombre || a.nombres || ''} ${a.apellido || a.apellidoPaterno || ''}`.trim() || idStr
+            }
+            // También guardar con número si es diferente
+            if (idNum && idStr !== String(idNum)) {
+              statsPorArbitro[String(idNum)] = statsPorArbitro[idStr]
             }
           })
           
@@ -1429,3 +1435,4 @@ export default function HistorialAsistenciaPage() {
     </div>
   )
 }
+
