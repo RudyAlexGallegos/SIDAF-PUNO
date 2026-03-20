@@ -778,14 +778,14 @@ export default function HistorialAsistenciaPage() {
           // Calcular ranking de árbitros - versión mejorada
           // Primero,收集 todos los registros de asistencia por árbitro
           console.log('========================================')
-          console.log('DEBUG RANKING - IDs de árbitros:', (arbitros || []).map((a: any) => ({id: a.id, tipo: typeof a.id, nombre: a.nombre})))
-          console.log('DEBUG RANKING - arbitros:', arbitros?.length)
-          console.log('DEBUG RANKING - registrosExpandidos:', registrosExpandidos?.length)
+          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
+          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
+          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
           console.log('========================================')
           const statsPorArbitro: Record<string, {total: number, presentes: number, tardanzas: number, justificados: number, nombre: string}> = {}
           
           // Inicializar con todos los árbitros conocidos - mostrar IDs para debug
-          console.log('DEBUG Ranking - IDs de árbitros disponibles:', (arbitros || []).map((a: any) => ({id: a.id, tipo: typeof a.id, nombre: a.nombre})))
+          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
           ;(arbitros || []).forEach((a: any) => {
             // Soportar tanto números como strings para el ID
             const idNum = a.id
@@ -808,7 +808,7 @@ export default function HistorialAsistenciaPage() {
           ;(registrosExpandidos || []).forEach((r: any) => {
             // En registrosExpandidos, el campo se llama 'aribroId' (con 'o') - ver línea 413
             const id = String(r.aribroId || r.arbitrId || r.idArbitro || r.id || '')
-            console.log('DEBUG Ranking - procesar registro, r keys:', Object.keys(r), 'id:', id, 'estado:', r.estadoItem)
+            console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
             if (id && statsPorArbitro[id]) {
               statsPorArbitro[id].total++
               const estado = r.estadoItem || r.estado || ''
@@ -1436,4 +1436,5 @@ export default function HistorialAsistenciaPage() {
     </div>
   )
 }
+
 
