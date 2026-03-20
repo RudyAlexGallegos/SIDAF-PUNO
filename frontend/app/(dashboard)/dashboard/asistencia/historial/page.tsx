@@ -797,10 +797,11 @@ export default function HistorialAsistenciaPage() {
             }
           })
           
-          // Procesar registros expandidos - usar los campos correctos del objeto expandido
+          // Procesar registros expandidos - el campo se llama 'aribroId' (con 'o') según línea 413
           ;(registrosExpandidos || []).forEach((r: any) => {
-            // En registrosExpandidos, el campo es 'aribroId' (con 'o')
+            // En registrosExpandidos, el campo se llama 'aribroId' (con 'o') - ver línea 413
             const id = String(r.aribroId || r.arbitrId || r.idArbitro || r.id || '')
+            console.log('DEBUG Ranking - procesar registro, r keys:', Object.keys(r), 'id:', id, 'estado:', r.estadoItem)
             if (id && statsPorArbitro[id]) {
               statsPorArbitro[id].total++
               const estado = r.estadoItem || r.estado || ''
