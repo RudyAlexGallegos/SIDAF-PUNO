@@ -1,8 +1,10 @@
 package com.sidaf.backend.controller;
 
+import com.sidaf.backend.dto.ReporteConsolidadoDTO;
 import com.sidaf.backend.model.Asistencia;
 import com.sidaf.backend.repository.AsistenciaRepository;
 import com.sidaf.backend.service.AsistenciaService;
+import com.sidaf.backend.service.ReporteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,9 @@ public class AsistenciaController {
 
     @Autowired
     private AsistenciaService asistenciaService;
+
+    @Autowired
+    private ReporteService reporteService;
 
     @GetMapping
     public List<Asistencia> listar() {
@@ -413,5 +418,55 @@ public class AsistenciaController {
                 return dto;
             }).collect(Collectors.toList());
         }
+    }
+
+    // ========== ENDPOINTS DE REPORTES AVANZADOS ==========
+
+    /**
+     * Reporte consolidado completo de asistencia
+     * GET /api/asistencias/reporte/consolidado?inicio=2024-01-01&fin=2024-01-31
+     */
+    @GetMapping("/reporte/consolidado")
+    public ReporteConsolidadoDTO reporteConsolidado(
+            @RequestParam String inicio,
+            @RequestParam String fin) {
+        LocalDate fechaInicio = LocalDate.parse(inicio);
+        LocalDate fechaFin = LocalDate.parse(fin);
+        return reporteService.generarReporteConsolidado(fechaInicio, fechaFin);
+    }
+
+    /**
+     * Dias faltantes en el periodo
+     * GET /api/asistencias/reporte/dias-faltantes?inicio=2024-01-01&fin=2024-01-31
+     */
+    @GetMapping("/reporte/dias-faltantes")
+    public Map<String, Object> diasFaltantes(
+            @RequestParam String inicio,
+            @RequestParam String fin) {
+        LocalDate fechaInicio = LocalDate.parse(inicio);
+        LocalDate fechaFin = LocalDate.parse(fin);
+        return reporteService.getDiasFaltantes(fechaInicio, fechaFin);
+    }
+
+    /**
+     * Tendencias por meses
+     * GET /api/asistencias/reporte/tendencias?meses=6
+     */
+    @GetMapping("/reporte/tendencias")
+    public Map<String, Object> tendencias(@RequestParam(defaultValue = "6") int meses) {
+        return reporteService.getTendencias(meses);
+    }
+
+    /**
+     * Ranking de arbitros por asistencia
+     * GET /api/asistencias/reporte/ranking?inicio=2024-01-01&fin=2024-01-31
+     */
+    @GetMapping("/reporte/ranking")
+    public Map<String, Object> ranking(
+            @RequestParam String inicio,
+            @RequestParam String fin) {
+        LocalDate fechaInicio = LocalDate.parse(inicio);
+        LocalDate fechaFin = LocalDate.parse(fin);
+        return reporteService.getRankingArbitros(fechaInicio, fechaFin);
     }
 }

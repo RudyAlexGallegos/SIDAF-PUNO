@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, createAsistencia, Asistencia, Arbitro } from "@/services/api"
-import { generateReporteResumenEjecutivo, generateReportePorArbitro, generateReporteMensual, generateReporteFaltantes, generateReporteDiario, exportAsistenciaToExcel } from "@/lib/pdf-generator"
+import { generateReporteResumenEjecutivo, generateReportePorArbitro, generateReporteMensual, generateReporteFaltantes, generateReporteDiario, generateReporteSemanalPDF, exportAsistenciaToExcel } from "@/lib/pdf-generator"
 import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay, addDays, subDays, getWeek, getWeekOfMonth, getYear } from "date-fns"
 import { es } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -534,6 +534,14 @@ export default function HistorialAsistenciaPage() {
       const fecha = fechaMatch ? fechaMatch[1] : format(new Date(), 'yyyy-MM-dd')
       const actividad = previewData[0]?.actividad || 'analisis_partido'
       generateReporteDiario(previewData as any, arbitros as any, fecha, actividad)
+    } else if (previewTitulo.includes("Semanal")) {
+      // Es reporte semanal - calcular fechas de la semana
+      const hoy = new Date()
+      const diaSemana = hoy.getDay()
+      const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana
+      const lunes = addDays(hoy, diffLunes)
+      const viernes = addDays(lunes, 4)
+      generateReporteSemanalPDF(previewData as any, lunes, viernes)
     } else if (previewTipo === "pdf") {
       generateReporteResumenEjecutivo(previewData as any, arbitros as any, fechaInicio, fechaFin, previewTitulo)
     } else {
@@ -582,6 +590,7 @@ export default function HistorialAsistenciaPage() {
     setReporteSemanalOpen(true)
   }
 
+  // Exportar reporte semanal - mostrar previsualización primero
   const handleExportarReporteSemanal = () => {
     const hoy = new Date()
     const diaSemana = hoy.getDay()
@@ -589,71 +598,22 @@ export default function HistorialAsistenciaPage() {
     const lunes = addDays(hoy, diffLunes)
     const viernes = addDays(lunes, 4)
     
-    const diasSemana = [1, 2, 4, 5]
-    const nombresDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+    // Preparar datos para previsualización
+    const datosPreview: any[] = semanaData.map((fila: any) => ({
+      nombre: fila.nombre,
+      arbitroId: fila.arbitroId,
+      dias: Object.entries(fila.dias).map(([fecha, data]: [string, any]) => ({
+        fecha,
+        estado: data?.estado || null,
+        actividad: data?.actividad || null
+      }))
+    }))
     
-    const contenido = `
-      <html>
-        <head>
-          <title>Reporte Semanal - SIDAF PUNO</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: center; }
-            th { background-color: #007bff; color: white; }
-            .presente { background-color: #d4edda; }
-            .ausente { background-color: #f8d7da; }
-            .tardanza { background-color: #fff3cd; }
-            .justificado { background-color: #cce5ff; }
-          </style>
-        </head>
-        <body>
-          <h1>Reporte Semanal de Asistencia</h1>
-          <p><strong>Comisión Departamental de Árbitros - Puno</strong></p>
-          <p>Semana del ${format(lunes, 'dd/MM/yyyy')} al ${format(viernes, 'dd/MM/yyyy')}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Árbitro</th>
-                ${nombresDias.map(d => `<th>${d}</th>`).join('')}
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${semanaData.map(fila => {
-                let presentes = 0
-                const diasKeys = Object.keys(fila.dias)
-                diasKeys.forEach((key: string) => {
-                  if (fila.dias[key]?.estado === 'presente') presentes++
-                })
-                return `
-                  <tr>
-                    <td style="text-align: left;">${fila.nombre}</td>
-                    ${diasSemana.map((dia, idx) => {
-                      const fechaStr = diasKeys[idx]
-                      const estado = fila.dias[fechaStr]?.estado
-                      let clase = ''
-                      if (estado === 'presente') clase = 'presente'
-                      else if (estado === 'ausente') clase = 'ausente'
-                      else if (estado === 'tardanza') clase = 'tardanza'
-                      else if (estado === 'justificado') clase = 'justificado'
-                      return `<td class="${clase}">${estado ? getSimboloEstado(estado) : '-'}</td>`
-                    }).join('')}
-                    <td><strong>${presentes}</strong></td>
-                  </tr>
-                `
-              }).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `
-    const ventana = window.open('', '_blank')
-    if (ventana) {
-      ventana.document.write(contenido)
-      ventana.document.close()
-      ventana.print()
-    }
+    // Mostrar previsualización antes de exportar
+    setPreviewData(datosPreview)
+    setPreviewTitulo(`Reporte Semanal - ${format(lunes, 'dd/MM')} al ${format(viernes, 'dd/MM/yyyy')}`)
+    setPreviewTipo("pdf")
+    setPreviewOpen(true)
   }
   
   const getSimboloEstado = (estado: string): string => {
@@ -805,6 +765,116 @@ export default function HistorialAsistenciaPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Ranking de Asistencia */}
+        {(() => {
+          // Calcular ranking de árbitros - versión mejorada
+          // Primero,收集 todos los registros de asistencia por árbitro
+          const statsPorArbitro: Record<string, {total: number, presentes: number, tardanzas: number, justificados: number, nombre: string}> = {}
+          
+          // Inicializar con todos los árbitros conocidos
+          ;(arbitros || []).forEach((a: any) => {
+            const id = String(a.id || a.arbitrId || '')
+            if (id) {
+              statsPorArbitro[id] = {
+                total: 0,
+                presentes: 0,
+                tardanzas: 0,
+                justificados: 0,
+                nombre: `${a.nombre || a.nombres || ''} ${a.apellido || a.apellidoPaterno || ''}`.trim() || id
+              }
+            }
+          })
+          
+          // Procesar registros expandidos
+          ;(registrosExpandidos || []).forEach((r: any) => {
+            // Buscar cualquier ID de árbitro disponible
+            const id = String(r.arbitrId || r.arbitrId || r.idAritro || r.idArbitro || r.id || '')
+            if (id && statsPorArbitro[id]) {
+              statsPorArbitro[id].total++
+              const estado = r.estadoItem || r.estado || ''
+              if (estado === 'presente') statsPorArbitro[id].presentes++
+              else if (estado === 'tardanza') statsPorArbitro[id].tardanzas++
+              else if (estado === 'justificado') statsPorArbitro[id].justificados++
+            }
+          })
+          
+          // Convertir a array y calcular porcentajes
+          const ranking = Object.entries(statsPorArbitro)
+            .map(([id, stats]) => ({
+              id,
+              nombre: stats.nombre,
+              total: stats.total,
+              presentes: stats.presentes,
+              tardanzas: stats.tardanzas,
+              justificados: stats.justificados,
+              porcentaje: stats.total > 0 ? Math.round(((stats.presentes + stats.justificados) / stats.total) * 100) : 0
+            }))
+            .filter(r => r.total > 0)
+            .sort((a, b) => b.porcentaje - a.porcentaje)
+          
+          // Si no hay datos, mostrar mensaje de depuración
+          if (ranking.length === 0) {
+            return (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-amber-800 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    🏆 Top 5 Árbitros con Mejor Asistencia
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-amber-600 text-sm">
+                    No hay suficientes datos para mostrar el ranking.
+                    <br/>
+                    Árbitros cargados: {arbitros?.length || 0}
+                    <br/>
+                    Registros expandidos: {registrosExpandidos?.length || 0}
+                  </p>
+                </CardContent>
+              </Card>
+            )
+          }
+          
+          return (
+            <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-amber-800 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  🏆 Top 5 Árbitros con Mejor Asistencia
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {ranking.slice(0, 5).map((arb, idx) => (
+                    <div key={arb.id} className="flex items-center gap-3 p-2 bg-white rounded-lg shadow-sm">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
+                        idx === 0 ? 'bg-yellow-500' : idx === 1 ? 'bg-gray-400' : idx === 2 ? 'bg-amber-600' : 'bg-slate-300'
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-slate-700">{arb.nombre}</p>
+                        <p className="text-xs text-slate-500">
+                          {arb.presentes} presentes, {arb.tardanzas} tardanzas, {arb.justificados} justificados
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-xl font-bold ${
+                          arb.porcentaje >= 90 ? 'text-green-600' :
+                          arb.porcentaje >= 70 ? 'text-amber-600' : 'text-red-600'
+                        }`}>
+                          {arb.porcentaje}%
+                        </p>
+                        <p className="text-xs text-slate-500">{arb.total} días</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })()}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1128,66 +1198,200 @@ export default function HistorialAsistenciaPage() {
 
             {/* Modal de Previsualización de Exportación */}
             <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-              <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                    <FileDown className="w-5 h-5" />
-                    Previsualización - {previewTitulo}
+              <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-slate-50">
+                <DialogHeader className="border-b border-slate-200 pb-4">
+                  <DialogTitle className="text-2xl font-bold flex items-center gap-3 text-slate-800">
+                    <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-md">
+                      <FileDown className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <span className="block text-lg text-slate-500 font-normal">Previsualización</span>
+                      <span className="block text-slate-800">{previewTitulo}</span>
+                    </div>
                   </DialogTitle>
                 </DialogHeader>
-                <div className="py-4">
-                  <p className="text-sm text-slate-600 mb-4">
-                    Total de registros a exportar: <strong>{previewData.length}</strong>
-                  </p>
+                
+                {/* Estadísticas */}
+                {(() => {
+                  const esSemanal = previewTitulo.includes("Semanal")
+                  let stats = { total: previewData.length, presentes: 0, ausentes: 0, tardanzas: 0 }
                   
-                  <div className="overflow-x-auto border rounded-lg max-h-96">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-green-50">
-                          <TableHead className="text-green-800 font-bold">Fecha</TableHead>
-                          <TableHead className="text-green-800 font-bold">Actividad</TableHead>
-                          <TableHead className="text-green-800 font-bold">Estado</TableHead>
-                          <TableHead className="text-green-800 font-bold">Hora</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {previewData.slice(0, 20).map((item: any, idx: number) => (
-                          <TableRow key={idx} className="hover:bg-slate-50">
-                            <TableCell>{item.fecha ? format(new Date(item.fecha), 'dd/MM/yyyy') : '-'}</TableCell>
-                            <TableCell className="capitalize">{item.actividad?.replace('_', ' ') || '-'}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                item.estado === 'presente' ? 'bg-green-100 text-green-800' :
-                                item.estado === 'ausente' ? 'bg-red-100 text-red-800' :
-                                item.estado === 'tardanza' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {item.estado || '-'}
-                              </span>
-                            </TableCell>
-                            <TableCell>{item.horaEntrada ? (typeof item.horaEntrada === 'string' ? item.horaEntrada.substring(0, 5) : '-') : '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  {previewData.length > 20 && (
-                    <p className="text-sm text-slate-500 mt-2">
-                      ... y {previewData.length - 20} registros más
-                    </p>
+                  if (esSemanal) {
+                    previewData.forEach((item: any) => {
+                      if (item.dias) {
+                        item.dias.forEach((dia: any) => {
+                          if (dia?.estado === 'presente') stats.presentes++
+                          else if (dia?.estado === 'ausente') stats.ausentes++
+                          else if (dia?.estado === 'tardanza') stats.tardanzas++
+                        })
+                      }
+                    })
+                  } else {
+                    stats.presentes = previewData.filter((i: any) => i.estado === 'presente').length
+                    stats.ausentes = previewData.filter((i: any) => i.estado === 'ausente').length
+                    stats.tardanzas = previewData.filter((i: any) => i.estado === 'tardanza').length
+                  }
+                  
+                  return (
+                    <div className="grid grid-cols-4 gap-3 py-4">
+                      <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200 text-center">
+                        <div className="text-2xl font-bold text-slate-800">{stats.total}</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wide">Total</div>
+                      </div>
+                      <div className="bg-white rounded-xl p-3 shadow-sm border border-green-200 text-center">
+                        <div className="text-2xl font-bold text-green-600">{stats.presentes}</div>
+                        <div className="text-xs text-green-600 uppercase tracking-wide">Presentes</div>
+                      </div>
+                      <div className="bg-white rounded-xl p-3 shadow-sm border border-red-200 text-center">
+                        <div className="text-2xl font-bold text-red-600">{stats.ausentes}</div>
+                        <div className="text-xs text-red-600 uppercase tracking-wide">Ausentes</div>
+                      </div>
+                      <div className="bg-white rounded-xl p-3 shadow-sm border border-yellow-200 text-center">
+                        <div className="text-2xl font-bold text-yellow-600">{stats.tardanzas}</div>
+                        <div className="text-xs text-yellow-600 uppercase tracking-wide">Tardanzas</div>
+                      </div>
+                    </div>
+                  )
+                })()}
+                
+                <div className="py-2">
+                  {previewTitulo.includes("Semanal") ? (
+                    // Vista especial para reporte semanal
+                    <>
+                      <div className="flex gap-4 mb-3 text-xs">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-100 rounded-full"></span> Presente</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-100 rounded-full"></span> Ausente</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-yellow-100 rounded-full"></span> Tardanza</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-blue-100 rounded-full"></span> Justificado</span>
+                      </div>
+                      
+                      <div className="overflow-x-auto border-2 border-slate-200 rounded-xl max-h-80">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50">
+                              <TableHead className="text-slate-700 font-bold">Árbitro</TableHead>
+                              <TableHead className="text-slate-700 font-bold text-center bg-blue-50/50">Lun</TableHead>
+                              <TableHead className="text-slate-700 font-bold text-center bg-blue-50/50">Mar</TableHead>
+                              <TableHead className="text-slate-700 font-bold text-center bg-blue-50/50">Mié</TableHead>
+                              <TableHead className="text-slate-700 font-bold text-center bg-blue-50/50">Jue</TableHead>
+                              <TableHead className="text-slate-700 font-bold text-center bg-blue-50/50">Vie</TableHead>
+                              <TableHead className="text-green-700 font-bold text-center bg-green-50">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {previewData.slice(0, 15).map((item: any, idx: number) => {
+                              let totalPresentes = 0
+                              if (item.dias) {
+                                item.dias.forEach((dia: any) => {
+                                  if (dia?.estado && ['presente', 'tardanza', 'justificado'].includes(dia.estado)) totalPresentes++
+                                })
+                              }
+                              
+                              return (
+                                <TableRow key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                  <TableCell className="font-medium text-slate-700">{item.nombre || 'Sin nombre'}</TableCell>
+                                  {item.dias?.slice(0, 5).map((dia: any, diaIdx: number) => (
+                                    <TableCell key={diaIdx} className="text-center">
+                                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                                        dia?.estado === 'presente' ? 'bg-green-500 text-white shadow-sm' :
+                                        dia?.estado === 'ausente' ? 'bg-red-500 text-white shadow-sm' :
+                                        dia?.estado === 'tardanza' ? 'bg-yellow-500 text-white shadow-sm' :
+                                        dia?.estado === 'justificado' ? 'bg-blue-500 text-white shadow-sm' :
+                                        'bg-slate-200 text-slate-400'
+                                      }`}>
+                                        {dia?.estado ? getSimboloEstado(dia.estado) : '-'}
+                                      </span>
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className="text-center font-bold text-green-600 bg-green-50">{totalPresentes}</TableCell>
+                                </TableRow>
+                              )
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      {previewData.length > 15 && (
+                        <p className="text-sm text-slate-500 mt-3 text-center">
+                          Mostrando 15 de {previewData.length} árbitros
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    // Vista normal para reportes diarios, resumen, Excel
+                    <>
+                      <div className="overflow-x-auto border-2 border-slate-200 rounded-xl max-h-80">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gradient-to-r from-green-100 to-emerald-50">
+                              <TableHead className="text-green-800 font-bold">Fecha</TableHead>
+                              <TableHead className="text-green-800 font-bold">Actividad</TableHead>
+                              <TableHead className="text-green-800 font-bold">Estado</TableHead>
+                              <TableHead className="text-green-800 font-bold">Hora</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {previewData.slice(0, 15).map((item: any, idx: number) => (
+                              <TableRow key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                <TableCell className="font-medium text-slate-700">{item.fecha ? format(new Date(item.fecha), 'dd/MM/yyyy') : '-'}</TableCell>
+                                <TableCell className="capitalize text-slate-600">
+                                {item.actividad === 'analisis_partido' ? 'Análisis de Partido' :
+                                 item.actividad === 'preparacion_fisica' ? 'Preparación Física' :
+                                 item.actividad === 'reunion_ordinaria' ? 'Reunión Ordinaria' :
+                                 item.actividad === 'reunion_extraordinaria' ? 'Reunión Extraordinaria' :
+                                 item.actividad?.replace(/_/g, ' ') || '-'}
+                              </TableCell>
+                                <TableCell>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    item.estado === 'presente' ? 'bg-green-100 text-green-800' :
+                                    item.estado === 'ausente' ? 'bg-red-100 text-red-800' :
+                                    item.estado === 'tardanza' ? 'bg-yellow-100 text-yellow-800' :
+                                    item.estado === 'justificado' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-slate-100 text-slate-800'
+                                  }`}>
+                                    {item.estado === 'presente' ? 'Completado' :
+                                     item.estado === 'ausente' ? 'Ausente' :
+                                     item.estado === 'tardanza' ? 'Tardanza' :
+                                     item.estado === 'justificado' ? 'Justificado' :
+                                     item.estado || '-'}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-slate-600">{item.horaEntrada ? (typeof item.horaEntrada === 'string' ? item.horaEntrada.substring(0, 5) : '-') : '-'}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      {previewData.length > 15 && (
+                        <p className="text-sm text-slate-500 mt-3 text-center">
+                          Mostrando 15 de {previewData.length} registros
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setPreviewOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={confirmarExportacion} 
-                    className={previewTipo === "pdf" ? "bg-green-600 hover:bg-green-700" : "bg-emerald-600 hover:bg-emerald-700"}
-                  >
-                    <FileDown className="w-4 h-4 mr-2" />
-                    {previewTipo === "pdf" ? "Descargar PDF" : "Descargar Excel"}
-                  </Button>
+                
+                <DialogFooter className="border-t border-slate-200 pt-4 mt-2">
+                  <div className="flex items-center justify-between w-full">
+                    <p className="text-xs text-slate-400">
+                      SIDAF-PUNO | Previsualización de reporte
+                    </p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setPreviewOpen(false)} className="border-slate-300 hover:bg-slate-100">
+                        Cancelar
+                      </Button>
+                      <Button 
+                        onClick={confirmarExportacion} 
+                        className={`shadow-lg shadow-${previewTipo === 'pdf' ? 'green' : 'emerald'}-500/25 ${
+                          previewTipo === 'pdf' 
+                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700' 
+                            : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
+                        } text-white`}
+                      >
+                        <FileDown className="w-4 h-4 mr-2" />
+                        {previewTipo === "pdf" ? "Descargar PDF" : "Descargar Excel"}
+                      </Button>
+                    </div>
+                  </div>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

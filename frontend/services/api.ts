@@ -728,6 +728,72 @@ export async function getEstadisticasAsistencia(): Promise<any> {
     }
 }
 
+// ========== NUEVOS ENDPOINTS DE REPORTES AVANZADOS ==========
+
+/**
+ * Obtiene reporte consolidado completo de asistencia
+ */
+export async function getReporteConsolidado(inicio: string, fin: string): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/consolidado?inicio=${inicio}&fin=${fin}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getReporteConsolidado:", error);
+        return null;
+    }
+}
+
+/**
+ * Obtiene días faltantes en el período
+ */
+export async function getDiasFaltantes(inicio: string, fin: string): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/dias-faltantes?inicio=${inicio}&fin=${fin}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getDiasFaltantes:", error);
+        return null;
+    }
+}
+
+/**
+ * Obtiene tendencias por meses
+ */
+export async function getTendenciasAsistencia(meses: number = 6): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/tendencias?meses=${meses}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getTendenciasAsistencia:", error);
+        return null;
+    }
+}
+
+/**
+ * Obtiene ranking de árbitros por asistencia
+ */
+export async function getRankingArbitros(inicio: string, fin: string): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/reporte/ranking?inicio=${inicio}&fin=${fin}`));
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Error getRankingArbitros:", error);
+        return null;
+    }
+}
+
 // ============================================================
 // REPORTES
 // ============================================================

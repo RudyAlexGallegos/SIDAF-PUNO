@@ -1,1 +1,144 @@
-package com.sidaf.backend.service;`n`nimport com.sidaf.backend.model.Asistencia;`nimport com.sidaf.backend.repository.AsistenciaRepository;`nimport org.springframework.beans.factory.annotation.Autowired;`nimport org.springframework.stereotype.Service;`n`nimport java.time.LocalDate;`nimport java.time.LocalTime;`nimport java.time.temporal.ChronoUnit;`nimport java.util.*;`n`n@Service`npublic class AsistenciaService {`n`n    @Autowired`n    private AsistenciaRepository asistenciaRepository;`n`n    public static final Set<Integer> DIAS_OBLIGATORIOS = Set.of(1, 2, 4, 5, 6);`n    private static final int MINUTOS_TOLERANCIA = 15;`n`n    public boolean esDiaObligatorio(LocalDate fecha) {`n        return DIAS_OBLIGATORIOS.contains(fecha.getDayOfWeek().getValue());`n    }`n`n    public String getTipoDia(LocalDate fecha) {`n        int dia = fecha.getDayOfWeek().getValue();`n        if (DIAS_OBLIGATORIOS.contains(dia)) return "OBLIGATORIO";`n        if (dia == 3 || dia == 7) return "DESCANSO";`n        return "OPCIONAL";`n    }`n`n    public int calcularRetraso(LocalTime horaProgramada, LocalTime horaReal) {`n        if (horaProgramada == null || horaReal == null) return 0;`n        LocalTime horaLimite = horaProgramada.plusMinutes(MINUTOS_TOLERANCIA);`n        if (horaReal.isBefore(horaLimite) || horaReal.equals(horaLimite)) return 0;`n        return (int) ChronoUnit.MINUTES.between(horaProgramada, horaReal);`n    }`n`n    public boolean tieneRetraso(int minutosRetraso) { return minutosRetraso > 0; }`n`n    public LocalDate getFechaLimiteRegistro(LocalDate fecha) { return fecha.plusDays(1); }`n`n    public boolean estaEnTolerancia(LocalDate fechaRegistro, LocalDate fechaLimite) {`n        return !fechaRegistro.isAfter(fechaLimite);`n    }`n`n    public void procesarAsistencia(Asistencia asistencia) {`n        if (asistencia.getFecha() != null) {`n            asistencia.setDiaSemana(asistencia.getFecha().getDayOfWeek().getValue());`n            asistencia.setTipoDia(getTipoDia(asistencia.getFecha()));`n            asistencia.setFechaLimiteRegistro(getFechaLimiteRegistro(asistencia.getFecha()));`n        }`n        if (asistencia.getHoraProgramada() != null && asistencia.getHoraEntrada() != null) {`n            LocalTime horaReal = asistencia.getHoraEntrada().toLocalTime();`n            int minutosRetraso = calcularRetraso(asistencia.getHoraProgramada(), horaReal);`n            asistencia.setMinutosRetraso(minutosRetraso);`n            asistencia.setTieneRetraso(tieneRetraso(minutosRetraso));`n        }`n    }`n`n    public Map<String, Object> getEstadisticasPorDia(LocalDate inicio, LocalDate fin) {`n        List<Asistencia> lista = asistenciaRepository.findByFechaBetween(inicio, fin);`n        Map<Integer, EstadisticaDia> stats = new HashMap<>();`n        for (int d = 1; d <= 7; d++) stats.put(d, new EstadisticaDia());`n        for (Asistencia a : lista) {`n            if (a.getFecha() == null) continue;`n            int ds = a.getFecha().getDayOfWeek().getValue();`n            EstadisticaDia s = stats.get(ds);`n            String e = a.getEstado();`n            if (e != null) {`n                switch (e.toLowerCase()) {`n                    case "presente": s.presentes++; break;`n                    case "ausente": s.ausentes++; break;`n                    case "tardanza": s.tardanzas++; break;`n                    case "justificacion": s.justificaciones++; break;`n                }`n                s.total++;`n            }`n        }`n        Map<String, Object> r = new LinkedHashMap<>();`n        r.put("periodo", Map.of("inicio", inicio.toString(), "fin", fin.toString()));`n        Map<String, Object> pd = new LinkedHashMap<>();`n        String[] nd = {"", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};`n        for (int d = 1; d <= 7; d++) {`n            EstadisticaDia s = stats.get(d);`n            Map<String, Object> ds = new LinkedHashMap<>();`n            ds.put("dia", nd[d]); ds.put("numeroDia", d);`n            ds.put("esObligatorio", DIAS_OBLIGATORIOS.contains(d));`n            ds.put("total", s.total); ds.put("presentes", s.presentes);`n            ds.put("ausentes", s.ausentes); ds.put("tardanzas", s.tardanzas);`n            ds.put("justificaciones", s.justificaciones);`n            ds.put("porcentajeAsistencia", s.getPorcentajeAsistencia());`n            pd.put(nd[d], ds);`n        }`n        r.put("porDia", pd);`n        long tp = lista.stream().filter(a -> "presente".equalsIgnoreCase(a.getEstado())).count();`n        r.put("resumen", Map.of("totalRegistros", lista.size(), "presentes", tp,`n            "porcentajeGeneral", lista.size() > 0 ? Math.round(tp * 1000.0 / lista.size()) / 10.0 : 0.0));`n        return r;`n    }`n`n    public Map<String, Object> getEstadisticasDiasObligatorios(LocalDate inicio, LocalDate fin) {`n        List<Asistencia> lista = asistenciaRepository.findByFechaBetween(inicio, fin);`n        List<Asistencia> oblig = new ArrayList<>();`n        for (Asistencia a : lista) if (a.getFecha() != null && esDiaObligatorio(a.getFecha())) oblig.add(a);`n        long p = oblig.stream().filter(a -> "presente".equalsIgnoreCase(a.getEstado())).count();`n        long aus = oblig.stream().filter(x -> "ausente".equalsIgnoreCase(x.getEstado())).count();`n        long t = oblig.stream().filter(x -> "tardanza".equalsIgnoreCase(x.getEstado())).count();`n        long j = oblig.stream().filter(x -> "justificacion".equalsIgnoreCase(x.getEstado())).count();`n        Map<String, Object> r = new LinkedHashMap<>();`n        r.put("periodo", Map.of("inicio", inicio.toString(), "fin", fin.toString()));`n        r.put("diasObligatorios", Map.of("total", oblig.size(), "presentes", p, "ausentes", aus,`n            "tardanzas", t, "justificaciones", j,`n            "porcentajeAsistencia", oblig.size() > 0 ? Math.round(p * 1000.0 / oblig.size()) / 10.0 : 0.0));`n        return r;`n    }`n`n    private static class EstadisticaDia {`n        int total = 0, presentes = 0, ausentes = 0, tardanzas = 0, justificaciones = 0;`n        double getPorcentajeAsistencia() { return total == 0 ? 0.0 : Math.round(presentes * 1000.0 / total) / 10.0; }`n    }`n}
+package com.sidaf.backend.service;
+
+import com.sidaf.backend.model.Asistencia;
+import com.sidaf.backend.repository.AsistenciaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+@Service
+public class AsistenciaService {
+
+    @Autowired
+    private AsistenciaRepository asistenciaRepository;
+
+    public static final Set<Integer> DIAS_OBLIGATORIOS = Set.of(1, 2, 4, 5, 6);
+    private static final int MINUTOS_TOLERANCIA = 15;
+
+    public boolean esDiaObligatorio(LocalDate fecha) {
+        return DIAS_OBLIGATORIOS.contains(fecha.getDayOfWeek().getValue());
+    }
+
+    public String getTipoDia(LocalDate fecha) {
+        int dia = fecha.getDayOfWeek().getValue();
+        if (DIAS_OBLIGATORIOS.contains(dia)) return "OBLIGATORIO";
+        if (dia == 3 || dia == 7) return "DESCANSO";
+        return "OPCIONAL";
+    }
+
+    public int calcularRetraso(LocalTime horaProgramada, LocalTime horaReal) {
+        if (horaProgramada == null || horaReal == null) return 0;
+        LocalTime horaLimite = horaProgramada.plusMinutes(MINUTOS_TOLERANCIA);
+        if (horaReal.isBefore(horaLimite) || horaReal.equals(horaLimite)) return 0;
+        return (int) ChronoUnit.MINUTES.between(horaProgramada, horaReal);
+    }
+
+    public boolean tieneRetraso(int minutosRetraso) { 
+        return minutosRetraso > 0; 
+    }
+
+    public LocalDate getFechaLimiteRegistro(LocalDate fecha) { 
+        return fecha.plusDays(1); 
+    }
+
+    public boolean estaEnTolerancia(LocalDate fechaRegistro, LocalDate fechaLimite) {
+        return !fechaRegistro.isAfter(fechaLimite);
+    }
+
+    public void procesarAsistencia(Asistencia asistencia) {
+        if (asistencia.getFecha() != null) {
+            asistencia.setDiaSemana(asistencia.getFecha().getDayOfWeek().getValue());
+            asistencia.setTipoDia(getTipoDia(asistencia.getFecha()));
+            asistencia.setFechaLimiteRegistro(getFechaLimiteRegistro(asistencia.getFecha()));
+        }
+        if (asistencia.getHoraProgramada() != null && asistencia.getHoraEntrada() != null) {
+            LocalTime horaReal = asistencia.getHoraEntrada().toLocalTime();
+            int minutosRetraso = calcularRetraso(asistencia.getHoraProgramada(), horaReal);
+            asistencia.setMinutosRetraso(minutosRetraso);
+            asistencia.setTieneRetraso(tieneRetraso(minutosRetraso));
+        }
+    }
+
+    public Map<String, Object> getEstadisticasPorDia(LocalDate inicio, LocalDate fin) {
+        List<Asistencia> lista = asistenciaRepository.findByFechaBetween(inicio, fin);
+        Map<Integer, EstadisticaDia> stats = new HashMap<>();
+        for (int d = 1; d <= 7; d++) stats.put(d, new EstadisticaDia());
+        
+        for (Asistencia a : lista) {
+            if (a.getFecha() == null) continue;
+            int ds = a.getFecha().getDayOfWeek().getValue();
+            EstadisticaDia s = stats.get(ds);
+            String e = a.getEstado();
+            if (e != null) {
+                switch (e.toLowerCase()) {
+                    case "presente": s.presentes++; break;
+                    case "ausente": s.ausentes++; break;
+                    case "tardanza": s.tardanzas++; break;
+                    case "justificacion": s.justificaciones++; break;
+                }
+                s.total++;
+            }
+        }
+        
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("periodo", Map.of("inicio", inicio.toString(), "fin", fin.toString()));
+        Map<String, Object> pd = new LinkedHashMap<>();
+        String[] nd = {"", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
+        for (int d = 1; d <= 7; d++) {
+            EstadisticaDia s = stats.get(d);
+            Map<String, Object> ds = new LinkedHashMap<>();
+            ds.put("dia", nd[d]);
+            ds.put("numeroDia", d);
+            ds.put("esObligatorio", DIAS_OBLIGATORIOS.contains(d));
+            ds.put("total", s.total);
+            ds.put("presentes", s.presentes);
+            ds.put("ausentes", s.ausentes);
+            ds.put("tardanzas", s.tardanzas);
+            ds.put("justificaciones", s.justificaciones);
+            ds.put("porcentajeAsistencia", s.getPorcentajeAsistencia());
+            pd.put(nd[d], ds);
+        }
+        r.put("porDia", pd);
+        
+        long tp = lista.stream().filter(a -> "presente".equalsIgnoreCase(a.getEstado())).count();
+        r.put("resumen", Map.of("totalRegistros", lista.size(), "presentes", tp,
+            "porcentajeGeneral", lista.size() > 0 ? Math.round(tp * 1000.0 / lista.size()) / 10.0 : 0.0));
+        
+        return r;
+    }
+
+    public Map<String, Object> getEstadisticasDiasObligatorios(LocalDate inicio, LocalDate fin) {
+        List<Asistencia> lista = asistenciaRepository.findByFechaBetween(inicio, fin);
+        List<Asistencia> oblig = new ArrayList<>();
+        for (Asistencia a : lista) {
+            if (a.getFecha() != null && esDiaObligatorio(a.getFecha())) {
+                oblig.add(a);
+            }
+        }
+        
+        long p = oblig.stream().filter(a -> "presente".equalsIgnoreCase(a.getEstado())).count();
+        long aus = oblig.stream().filter(x -> "ausente".equalsIgnoreCase(x.getEstado())).count();
+        long t = oblig.stream().filter(x -> "tardanza".equalsIgnoreCase(x.getEstado())).count();
+        long j = oblig.stream().filter(x -> "justificacion".equalsIgnoreCase(x.getEstado())).count();
+        
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("periodo", Map.of("inicio", inicio.toString(), "fin", fin.toString()));
+        r.put("diasObligatorios", Map.of("total", oblig.size(), "presentes", p, "ausentes", aus,
+            "tardanzas", t, "justificaciones", j,
+            "porcentajeAsistencia", oblig.size() > 0 ? Math.round(p * 1000.0 / oblig.size()) / 10.0 : 0.0));
+        
+        return r;
+    }
+
+    private static class EstadisticaDia {
+        int total = 0, presentes = 0, ausentes = 0, tardanzas = 0, justificaciones = 0;
+        
+        double getPorcentajeAsistencia() { 
+            return total == 0 ? 0.0 : Math.round(presentes * 1000.0 / total) / 10.0; 
+        }
+    }
+}
