@@ -808,7 +808,7 @@ export default function HistorialAsistenciaPage() {
           // Procesar registros expandidos - el campo se llama 'aribroId' (con 'o') según línea 413
           ;(registrosExpandidos || []).forEach((r: any) => {
             // En registrosExpandidos, el campo se llama 'aribroId' (con 'o') - ver línea 413
-            const id = String(r.aribroId || r.arbitrId || r.idArbitro || r.id || '')
+            const arbitroIdValue = r.aribroId ?? r.aritroId ?? r.arbitrId; const id = String(aribroIdValue || r.idArbitro || r.id || '')
             console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
             if (id && statsPorArbitro[id]) {
               statsPorArbitro[id].total++
@@ -1437,5 +1437,6 @@ export default function HistorialAsistenciaPage() {
     </div>
   )
 }
+
 
 
