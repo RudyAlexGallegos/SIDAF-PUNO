@@ -34,11 +34,46 @@ export default function AsistenciaPage() {
   } = useRegistroAsistencia()
 
   const [search, setSearch] = React.useState("")
-  const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
-  const [responsable, setResponsable] = React.useState("")
-  const [openFinalize, setOpenFinalize] = React.useState(false)
-  const [fechaHoraInicio, setFechaHoraInicio] = React.useState<string>("")
-  const [fechaSeleccionada, setFechaSeleccionada] = React.useState<string>(format(new Date(), "yyyy-MM-dd"))
+   const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
+   const [responsable, setResponsable] = React.useState("")
+   const [openFinalize, setOpenFinalize] = React.useState(false)
+   const [fechaHoraInicio, setFechaHoraInicio] = React.useState<string>("")
+   const [fechaSeleccionada, setFechaSeleccionada] = React.useState<string>(format(new Date(), "yyyy-MM-dd"))
+   
+   // Obtener actividades permitidas para la fecha seleccionada
+   const getActividadesPermitidas = (fechaString: string): Array<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria"> => {
+     const fecha = new Date(fechaString)
+     const diaSemana = fecha.getDay() // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
+     
+     switch (diaSemana) {
+       case 1: // Lunes
+         return ["analisis_partido"]
+       case 2: // Martes
+         return ["preparacion_fisica"]
+       case 3: // Miércoles
+         return ["reunion_extraordinaria"]
+       case 4: // Jueves
+         return ["preparacion_fisica"]
+       case 5: // Viernes
+         return ["reunion_ordinaria"]
+       case 6: // Sábado
+         return ["preparacion_fisica"]
+       case 0: // Domingo
+         return ["reunion_extraordinaria"]
+       default:
+         return ["reunion_extraordinaria"]
+     }
+   }
+   
+   const actividadesPermitidas = getActividadesPermitidas(fechaSeleccionada)
+   
+   // Asegurar que la actividad actual esté permitida, si no, cambiar a la primera permitida
+   React.useEffect(() => {
+     if (!actividadesPermitidas.includes(actividad as any)) {
+       setActividad(actividadesPermitidas[0])
+     }
+   }, [actividad, actividadesPermitidas])
+  
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -78,30 +113,29 @@ export default function AsistenciaPage() {
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return arbitros
-    return arbitros.filter((a: any) => {
-      return (
-        String(a.nombre || a.name || "").toLowerCase().includes(q) ||
-        String(a.apellido || a.surname || "").toLowerCase().includes(q) ||
-        String(a.dni || a.id || "").toLowerCase().includes(q)
-      )
+    return arbitros.filter((a) => {
+      const nombreCompleto = `${a.nombre || ''} ${a.apellido || ''}`.trim().toLowerCase()
+      const idStr = String(a.id || '')
+      const dniStr = String(a.dni || '')
+      return nombreCompleto.includes(q) || idStr.includes(q) || dniStr.includes(q)
     })
   }, [arbitros, search])
 
-  const estadosMap = React.useMemo(() => {
-    const map: Record<string, any> = {}
-    if (registro?.arbitros) {
-      for (const a of registro.arbitros) {
-        map[a.arbitroId] = a.estado
-      }
-    }
-    return map as Record<string, import("@/types/asistencia").EstadoAsistencia>
-  }, [registro])
+   const estadosMap = React.useMemo(() => {
+     const map: Record<string, any> = {}
+     if (registro?.arbitros) {
+       for (const a of registro.arbitros) {
+         map[a.arbitroId] = a.estado
+       }
+     }
+     return map as Record<string, import("@/types/asistencia").EstadoAsistencia>
+   }, [registro])
 
   // Estadísticas rápidas para el diálogo de finalización
   const _registros = registro?.arbitros ?? []
   const totalArbitros = arbitros?.length ?? 0
   const asistentesCount = _registros.filter(r => r.estado === 'presente' || r.estado === 'tardanza').length
-  const excusadosCount = _registros.filter(r => r.estado === 'justificado' || r.estado === 'licencia').length
+  const excusadosCount = _registros.filter(r => r.estado === 'justificacion').length
   const faltasCount = Math.max(0, totalArbitros - asistentesCount - excusadosCount)
   if (loading) {
     return (
@@ -177,26 +211,13 @@ export default function AsistenciaPage() {
           <p className="text-sm text-gray-600 mb-6">
             {existeRegistroHoy 
               ? "Continúa editando el registro de hoy. Los cambios se guardarán al finalizar."
-              : "Inicia un nuevo registro para marcar la asistencia. Los cambios se guardan localmente hasta que finalices."}
+              : "Inicia un nuevo registro haciendo clic en el botón de abajo."}
           </p>
 
           {/* Main card with improved styling */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
-              Selecciona la fecha del registro
-            </h3>
-            <div className="mb-6">
-              <label className="text-sm text-gray-600 block mb-2">Fecha de asistencia</label>
-              <input
-                type="date"
-                value={fechaSeleccionada}
-                onChange={(e) => setFechaSeleccionada(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Selecciona una fecha pasada para subsanar registros faltantes de días obligatorios
-              </p>
+            <div className="text-sm text-gray-600 mb-4">
+              Fecha: {format(new Date(fechaSeleccionada), 'dd/MM/yyyy', { locale: es })}
             </div>
 
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -209,9 +230,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'analisis_partido'}
+                  aria-disabled={!actividadesPermitidas.includes('analisis_partido') || !diaObligatorio}
                   type="button"
-                  onClick={() => setActividad('analisis_partido')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'analisis_partido' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('analisis_partido') && diaObligatorio && setActividad('analisis_partido')}
+                  disabled={!actividadesPermitidas.includes('analisis_partido') || !diaObligatorio}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('analisis_partido') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'analisis_partido' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Análisis de partido</div>
                     <div className={`text-xs ${actividad === 'analisis_partido' ? 'text-blue-100' : 'text-gray-500'}`}>Lunes - 18:00</div>
@@ -224,9 +247,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'preparacion_fisica'}
+                  aria-disabled={!actividadesPermitidas.includes('preparacion_fisica') || !diaObligatorio}
                   type="button"
-                  onClick={() => setActividad('preparacion_fisica')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'preparacion_fisica' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('preparacion_fisica') && diaObligatorio && setActividad('preparacion_fisica')}
+                  disabled={!actividadesPermitidas.includes('preparacion_fisica') || !diaObligatorio}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('preparacion_fisica') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'preparacion_fisica' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Preparación física</div>
                     <div className={`text-xs ${actividad === 'preparacion_fisica' ? 'text-blue-100' : 'text-gray-500'}`}>Mar, Jue, Sáb - 05:00</div>
@@ -239,9 +264,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'reunion_ordinaria'}
+                  aria-disabled={!actividadesPermitidas.includes('reunion_ordinaria') || !diaObligatorio}
                   type="button"
-                  onClick={() => setActividad('reunion_ordinaria')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'reunion_ordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('reunion_ordinaria') && diaObligatorio && setActividad('reunion_ordinaria')}
+                  disabled={!actividadesPermitidas.includes('reunion_ordinaria') || !diaObligatorio}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_ordinaria') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_ordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión ordinaria</div>
                     <div className={`text-xs ${actividad === 'reunion_ordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Viernes - 19:00</div>
@@ -254,13 +281,14 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'reunion_extraordinaria'}
+                  aria-disabled={!actividadesPermitidas.includes('reunion_extraordinaria') || !diaObligatorio}
                   type="button"
-                  onClick={() => setActividad('reunion_extraordinaria')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${actividad === 'reunion_extraordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('reunion_extraordinaria') && diaObligatorio && setActividad('reunion_extraordinaria')}
+                  disabled={!actividadesPermitidas.includes('reunion_extraordinaria') || !diaObligatorio}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_extraordinaria') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_extraordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión extraordinaria</div>
-                    <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Fecha definida por usuario</div>
-                    <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Asuntos urgentes</div>
+                    <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Mié, Dom - Urgente</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'reunion_extraordinaria' ? 'opacity-100' : 'opacity-0'}`}>
                     <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'reunion_extraordinaria' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
@@ -269,7 +297,7 @@ export default function AsistenciaPage() {
               </div>
             </div>
 
-            <div>
+            <div className={diaObligatorio ? '' : 'opacity-50 pointer-events-none'}>
               <label className="text-sm font-medium text-gray-700 block mb-2">Responsable</label>
               <input
                 id="responsable-quick"
@@ -282,20 +310,29 @@ export default function AsistenciaPage() {
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button
-              onClick={() => { 
-                const ahora = new Date().toISOString()
-                setFechaHoraInicio(ahora)
-                iniciarRegistro(actividad, responsable, fechaSeleccionada); 
-                toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'} - Fecha: ${format(new Date(fechaSeleccionada), 'dd MMM yyyy', { locale: es })}` }) 
-              }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              {existeRegistroHoy ? "Continuar Editando" : "Iniciar Registro"}
-            </button>
+            {!diaObligatorio ? (
+              <div className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-400 text-white py-3 px-6 rounded-xl font-semibold cursor-not-allowed">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Registro no disponible (día no obligatorio)
+              </div>
+            ) : (
+              <button
+                onClick={() => { 
+                  const ahora = new Date().toISOString()
+                  setFechaHoraInicio(ahora)
+                  iniciarRegistro(actividad, responsable, fechaSeleccionada); 
+                  toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'} - Fecha: ${format(new Date(fechaSeleccionada), 'dd MMM yyyy', { locale: es })}` }) 
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                {existeRegistroHoy ? "Continuar Editando" : "Iniciar Registro"}
+              </button>
+            )}
 
             <button
               onClick={() => router.push("/dashboard/asistencia/historial")}
