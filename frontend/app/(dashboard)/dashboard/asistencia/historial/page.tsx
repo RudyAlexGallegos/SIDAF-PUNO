@@ -47,7 +47,7 @@ import RegistroCompactoArbitro from "@/components/asistencia/RegistroCompactoArb
 import { EstadoAsistencia } from "@/types/asistencia"
 
 interface RegistroArbitro {
-  arbitroId: string
+  arbitrId: string
   estado: string
   horaRegistro: string
   observaciones: string
@@ -430,10 +430,30 @@ export default function HistorialAsistenciaPage() {
       if (!esDiaObligatorio(a.fecha)) return false
       if (filtroActividad !== "todos" && a.actividad !== filtroActividad) return false
       if (filtroMes !== "todos" && !a.fecha?.startsWith(filtroMes)) return false
-      if (filtroArbitro !== "todos" && a.arbitroId !== filtroArbitro) return false
+      if (filtroArbitro !== "todos" && a.idArbitro !== Number(filtroArbitro)) return false
       return true
     })
     .sort((a: any, b: any) => new Date(b.fecha || "").getTime() - new Date(a.fecha || "").getTime())
+
+  // ✅ Crear registros expandidos FILTRADOS - combina expansión con filtros
+  const registrosExpandidosFiltrados = filtered.flatMap((item: any) => {
+    const parsed = parsearRegistros(item)
+    if (parsed.length > 0) {
+      return parsed.map((reg: any) => ({
+        ...item,
+        arbitroId: reg.arbitrId,
+        nombreArbitro: getNombreArbitro(reg.arbitrId),
+        estadoItem: reg.estado,
+        horaEntrada: reg.horaRegistro || item.horaEntrada
+      }))
+    }
+    return [{
+      ...item,
+      arbitroId: "",
+      nombreArbitro: "General",
+      estadoItem: item.estado || "-"
+    }]
+  })
 
   // Generar todos los días obligatorios desde 01/01/2026
   const generarTodosLosDias = () => {
@@ -777,16 +797,10 @@ export default function HistorialAsistenciaPage() {
         {/* Ranking de Asistencia */}
         {(() => {
           // Calcular ranking de árbitros - versión mejorada
-          // Primero,收集 todos los registros de asistencia por árbitro
-          console.log('========================================')
-          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
-          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
-          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
-          console.log('========================================')
+          // Primero, recopilar todos los registros de asistencia por árbitro
           const statsPorArbitro: Record<string, {total: number, presentes: number, tardanzas: number, justificados: number, nombre: string}> = {}
           
-          // Inicializar con todos los árbitros conocidos - mostrar IDs para debug
-          console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
+          // Inicializar con todos los árbitros conocidos
           ;(arbitros || []).forEach((a: any) => {
             // Soportar tanto números como strings para el ID
             const idNum = a.id
@@ -805,11 +819,11 @@ export default function HistorialAsistenciaPage() {
             }
           })
           
-          // Procesar registros expandidos - el campo se llama 'aribroId' (con 'o') según línea 413
-          ;(registrosExpandidos || []).forEach((r: any) => {
-            // En registrosExpandidos, el campo se llama 'aribroId' (con 'o') - ver línea 413
-            const arbitroIdValue = r.aribroId ?? r.aritroId ?? r.arbitrId; const id = String(arbitroIdValue ?? r.idArbitro ?? r.id ?? '')
-            console.log("========================================"); console.log("ARBITROS DISPONIBLES:", (arbitros || []).map(a => a.id)); console.log("========================================");
+          // ✅ Procesar registros expandidos FILTRADOS - usar solo los registros que se muestran en la tabla
+          ;(registrosExpandidosFiltrados || []).forEach((r: any) => {
+            // En registrosExpandidosFiltrados, el campo se llama 'arbitroId' (con 'o') - ver línea 444
+            const arbitroIdValue = r.arbitroId
+            const id = String(arbitroIdValue ?? r.idArbitro ?? r.id ?? '')
             if (id && statsPorArbitro[id]) {
               statsPorArbitro[id].total++
               const estado = r.estadoItem || r.estado || ''
@@ -849,7 +863,7 @@ export default function HistorialAsistenciaPage() {
                     <br/>
                     Árbitros cargados: {arbitros?.length || 0}
                     <br/>
-                    Registros expandidos: {registrosExpandidos?.length || 0}
+                    Registros expandidos filtrados: {registrosExpandidosFiltrados?.length || 0}
                   </p>
                 </CardContent>
               </Card>
@@ -1076,13 +1090,14 @@ export default function HistorialAsistenciaPage() {
                         const arbitroCompleto = arbitros.find(a => String(a.id) === String(arb.arbitrId))
                         const nombreMostrar = arb.nombreArbitro || (arbitroCompleto ? `${arbitroCompleto.nombre || ''} ${arbitroCompleto.apellido || ''}`.trim() : `Árbitro ${arb.arbitrId}`)
                         const arbitroParaComponente = arbitroCompleto || {
-                          id: arb.arbitrId,
-                          nombre: nombreMostrar,
-                          apellido: '',
+                          id: String(arb.arbitrId),
+                          codigoCODAR: '',
                           nombres: nombreMostrar,
                           apellidoPaterno: nombreMostrar,
-                          dni: '',
-                          categoria: ''
+                          apellidoMaterno: '',
+                          categoria: '',
+                          telefono: '',
+                          email: ''
                         }
                         return (
                           <RegistroCompactoArbitro
