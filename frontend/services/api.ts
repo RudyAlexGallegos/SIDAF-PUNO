@@ -148,7 +148,7 @@ export interface Campeonato {
     diasJuego?: string;
     horaInicio?: string;
     horaFin?: string;
-    equipoIds?: string;
+    equipos?: number[];
     reglas?: string;
     premios?: string;
     observaciones?: string;
@@ -236,106 +236,6 @@ export interface Equipo {
     email?: string;
     colores?: string;
     fechaCreacion?: string;
-}
-
-// ============================================================
-// CAMPEONATOS
-// ============================================================
-
-export interface Campeonato {
-    id?: number;
-    nombre: string;
-    categoria?: string;
-    tipo?: string;
-    fechaInicio?: string;
-    fechaFin?: string;
-    estado?: string;
-    organizador?: string;
-    contacto?: string;
-    ciudad?: string;
-    provincia?: string;
-    nivelDificultad?: string;
-    numeroEquipos?: number;
-    formato?: string;
-    reglas?: string;
-    premios?: string;
-    observaciones?: string;
-    logo?: string;
-    fechaCreacion?: string;
-    equipos?: number[];
-}
-
-export async function getCampeonatos(): Promise<Campeonato[]> {
-    try {
-        const response = await fetch(buildUrl("/campeonatos"));
-        if (!response.ok) throw new Error("Error HTTP");
-        const data = await response.json();
-        console.log("✅ Campeonatos obtenidos:", data);
-        return data;
-    } catch (error) {
-        console.error("❌ Error getCampeonatos:", error);
-        return [];
-    }
-}
-
-export async function getCampeonatoById(id: number): Promise<Campeonato | null> {
-    try {
-        const response = await fetch(buildUrl(`/campeonatos/${id}`));
-        if (!response.ok) throw new Error("Error HTTP");
-        const data = await response.json();
-        console.log("✅ Campeonato obtenido:", data);
-        return data;
-    } catch (error) {
-        console.error("❌ Error getCampeonatoById:", error);
-        return null;
-    }
-}
-
-export async function createCampeonato(campeonato: Campeonato): Promise<Campeonato> {
-    try {
-        const response = await fetch(buildUrl("/campeonatos"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(campeonato)
-        });
-        if (!response.ok) throw new Error("Error HTTP");
-        const data = await response.json();
-        console.log("✅ Campeonato creado:", data);
-        return data;
-    } catch (error) {
-        console.error("❌ Error createCampeonato:", error);
-        throw error;
-    }
-}
-
-export async function updateCampeonato(id: number, campeonato: Campeonato): Promise<Campeonato> {
-    try {
-        const response = await fetch(buildUrl(`/campeonatos/${id}`), {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(campeonato)
-        });
-        if (!response.ok) throw new Error("Error HTTP");
-        const data = await response.json();
-        console.log("✅ Campeonato actualizado:", data);
-        return data;
-    } catch (error) {
-        console.error("❌ Error updateCampeonato:", error);
-        throw error;
-    }
-}
-
-export async function deleteCampeonato(id: number): Promise<void> {
-    try {
-        const response = await fetch(buildUrl(`/campeonatos/${id}`), {
-            method: "DELETE"
-        });
-        if (!response.ok) throw new Error("Error HTTP");
-        console.log("✅ Campeonato eliminado:", id);
-    } catch (error) {
-        console.error("❌ Error deleteCampeonato:", error);
-        throw error;
-    }
 }
 
 export async function getEquipos(): Promise<Equipo[]> {
@@ -607,248 +507,45 @@ export interface DiaInfo {
     tipoDia: string
 }
 
-// Estadísticas por día de la semana
-export interface EstadisticaDia {
-    dia: string
-    numeroDia: number
-    esObligatorio: boolean
-    total: number
-    presentes: number
-    ausentes: number
-    tardanzas: number
-    justificaciones: number
-    porcentajeAsistencia: number
-}
-
-export interface EstadisticasPeriodo {
-    periodo: { inicio: string; fin: string }
-    porDia: Record<string, EstadisticaDia>
-    resumen: {
-        totalRegistros: number
-        presentes: number
-        porcentajeGeneral: number
-    }
-}
-
-export interface EstadisticasDiasObligatorios {
-    periodo: { inicio: string; fin: string }
-    diasObligatorios: {
-        total: number
-        presentes: number
-        ausentes: number
-        tardanzas: number
-        justificaciones: number
-        porcentajeAsistencia: number
-    }
-}
-
-// Request para registro con retraso
-export interface RegistroConRetrasoRequest {
-    fecha: string
-    horaEntrada?: string
-    horaSalida?: string
-    actividad?: string
-    evento?: string
-    estado: string
-    observaciones?: string
-    responsableId?: number
-    responsable?: string
-    horaProgramada?: string
-}
-
 /**
- * Obtiene información del día actual (si es obligatorio, tipo de día)
+ * Obtiene estadísticas de asistencia por árbitro
+ * GET /api/asistencias/estadisticas
  */
-export async function getDiaActual(): Promise<DiaInfo | null> {
-    try {
-        const response = await fetch(buildUrl("/asistencias/dia-actual"))
-        if (!response.ok) throw new Error("Error HTTP")
-        return await response.json()
-    } catch (error) {
-        console.error("❌ Error getDiaActual:", error)
-        return null
-    }
-}
-
-/**
- * Obtiene información de un día específico
- */
-export async function getDiaInfo(fecha: string): Promise<DiaInfo | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/dia/${fecha}`))
-        if (!response.ok) throw new Error("Error HTTP")
-        return await response.json()
-    } catch (error) {
-        console.error("❌ Error getDiaInfo:", error)
-        return null
-    }
-}
-
-/**
- * Obtiene estadísticas por día de la semana
- */
-export async function getEstadisticasDiasSemana(inicio: string, fin: string): Promise<EstadisticasPeriodo | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/estadisticas/dias-semana?inicio=${inicio}&fin=${fin}`))
-        if (!response.ok) throw new Error("Error HTTP")
-        return await response.json()
-    } catch (error) {
-        console.error("❌ Error getEstadisticasDiasSemana:", error)
-        return null
-    }
-}
-
-/**
- * Obtiene estadísticas solo de días obligatorios
- */
-export async function getEstadisticasDiasObligatorios(inicio: string, fin: string): Promise<EstadisticasDiasObligatorios | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/estadisticas/dias-obligatorios?inicio=${inicio}&fin=${fin}`))
-        if (!response.ok) throw new Error("Error HTTP")
-        return await response.json()
-    } catch (error) {
-        console.error("❌ Error getEstadisticasDiasObligatorios:", error)
-        return null
-    }
-}
-
-/**
- * Registra asistencia con retraso (tolerancia)
- */
-export async function registrarConRetraso(data: RegistroConRetrasoRequest): Promise<Asistencia | null> {
-    try {
-        const response = await fetch(buildUrl("/asistencias/registro-con-retraso"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        })
-        if (!response.ok) throw new Error("Error HTTP")
-        return await response.json()
-    } catch (error) {
-        console.error("❌ Error registrarConRetraso:", error)
-        return null
-    }
-}
-
-/**
- * Reprocesa una asistencia (recalcula retrasos, tipo día, etc.)
- */
-export async function reprocesarAsistencia(id: number): Promise<Asistencia | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/${id}/procesar`), {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-        })
-        if (!response.ok) throw new Error("Error HTTP")
-        return await response.json()
-    } catch (error) {
-        console.error("❌ Error reprocesarAsistencia:", error)
-        return null
-    }
-}
-
-// ============================================================
-// REPORTES DE ASISTENCIA
-// ============================================================
-
-export interface ReporteAsistencia {
-    tipo: string;
-    periodo: {
-        inicio: string;
-        fin: string;
-    };
-    resumen: {
-        totalRegistros: number;
-        presentes: number;
-        ausentes: number;
-        tardanzas: number;
-        justificaciones: number;
-        porcentajeAsistencia: number;
-    };
-    porActividad: Array<{
-        actividad: string;
-        total: number;
-        presentes: number;
-        ausentes: number;
-        tardanzas: number;
-        justificaciones: number;
-        porcentaje: number;
-    }>;
-    asistencias: Array<{
-        id: number;
-        fecha: string;
-        actividad: string;
-        evento: string;
-        estado: string;
-        observaciones: string;
-        responsable: string;
-    }>;
-}
-
-export async function getReporteSemanal(fechaInicio: string, fechaFin: string): Promise<ReporteAsistencia | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/semanal?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error("❌ Error getReporteSemanal:", error);
-        return null;
-    }
-}
-
-export async function getReporteMensual(year: number, month: number): Promise<ReporteAsistencia | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/mensual?year=${year}&month=${month}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error("❌ Error getReporteMensual:", error);
-        return null;
-    }
-}
-
-export async function getReporteAnual(year: number): Promise<ReporteAsistencia | null> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/anual?year=${year}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error("❌ Error getReporteAnual:", error);
-        return null;
-    }
-}
-
 export async function getEstadisticasAsistencia(): Promise<any> {
     try {
         const response = await fetch(buildUrl("/asistencias/estadisticas"));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
     } catch (error) {
         console.error("❌ Error getEstadisticasAsistencia:", error);
         return null;
     }
 }
 
-// ========== NUEVOS ENDPOINTS DE REPORTES AVANZADOS ==========
+/**
+ * Obtiene resumen de asistencia por fecha
+ * GET /api/asistencias/resumen/{fecha}
+ */
+export async function getResumenAsistenciaPorFecha(fecha: string): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/resumen/${fecha}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getResumenAsistenciaPorFecha:", error);
+        return null;
+    }
+}
 
 /**
- * Obtiene reporte consolidado completo de asistencia
+ * Obtiene reporte consolidado de asistencias
+ * GET /api/asistencias/reporte-consolidado
  */
-export async function getReporteConsolidado(inicio: string, fin: string): Promise<any> {
+export async function getReporteConsolidado(): Promise<any> {
     try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/consolidado?inicio=${inicio}&fin=${fin}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
+        const response = await fetch(buildUrl("/asistencias/reporte-consolidado"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
     } catch (error) {
         console.error("❌ Error getReporteConsolidado:", error);
         return null;
@@ -856,443 +553,85 @@ export async function getReporteConsolidado(inicio: string, fin: string): Promis
 }
 
 /**
- * Obtiene días faltantes en el período
+ * Obtiene asistencias con información extendida
+ * GET /api/asistencias/extendidas
  */
-export async function getDiasFaltantes(inicio: string, fin: string): Promise<any> {
+export async function getAsistenciasExtendidas(): Promise<AsistenciaExtendida[]> {
     try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/dias-faltantes?inicio=${inicio}&fin=${fin}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error("❌ Error getDiasFaltantes:", error);
-        return null;
-    }
-}
-
-/**
- * Obtiene tendencias por meses
- */
-export async function getTendenciasAsistencia(meses: number = 6): Promise<any> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/tendencias?meses=${meses}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error("❌ Error getTendenciasAsistencia:", error);
-        return null;
-    }
-}
-
-/**
- * Obtiene ranking de árbitros por asistencia
- */
-export async function getRankingArbitros(inicio: string, fin: string): Promise<any> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/reporte/ranking?inicio=${inicio}&fin=${fin}`));
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error("❌ Error getRankingArbitros:", error);
-        return null;
-    }
-}
-
-// ============================================================
-// REPORTES
-// ============================================================
-
-export interface Reporte {
-    id?: number;
-    tipo?: string;
-    titulo?: string;
-    descripcion?: string;
-    fechaInicio?: string;
-    fechaFin?: string;
-    generadoPor?: string;
-    estado?: string;
-    fechaCreacion?: string;
-}
-
-export async function getReportes(): Promise<Reporte[]> {
-    try {
-        const response = await fetch(buildUrl("/reportes"));
+        const response = await fetch(buildUrl("/asistencias/extendidas"));
         if (!response.ok) throw new Error("Error HTTP");
-        const data = await response.json();
-        console.log("✅ Reportes obtenidos:", data);
-        return data;
+        return await response.json();
     } catch (error) {
-        console.error("❌ Error getReportes:", error);
+        console.error("❌ Error getAsistenciasExtendidas:", error);
         return [];
     }
 }
 
-export async function generateReporte(data: Partial<Reporte>): Promise<Reporte> {
-    const response = await fetch(buildUrl("/reportes/generate"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-        throw new Error("Error al generar reporte");
-    }
-
-    return await response.json();
-}
-
-// ============================================================
-// LOGIN / AUTENTICACIÓN
-// ============================================================
-
-export interface Usuario {
-    id?: number;
-    dni?: string;
-    email?: string;
-    nombre?: string;
-    apellido?: string;
-    rol?: string;
-    estado?: string;
-    unidadOrganizacional?: string;
-    permisosEspecificos?: string;
-    token?: string;
-    perfilCompleto?: boolean;
-    cargoCodar?: string;
-    areaCodar?: string;
-    telefono?: string;
-}
-
-export async function login(dni: string, password: string): Promise<Usuario> {
-    const response = await fetch(buildUrl("/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni, password }),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Credenciales inválidas");
-    }
-
-    const data = await response.json();
-    
-    // Guardar en localStorage
-    if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.token || "");
-        localStorage.setItem("user", JSON.stringify(data));
-    }
-    
-    return data;
-}
-
-export async function registro(data: {
-    dni: string;
-    nombre: string;
-    apellido: string;
-    email: string;
-    password: string;
-    rol?: string;
-    codigoSecreto?: string;
-    unidadOrganizacional?: string;
-    telefono?: string;
-    cargoCodar?: string;
-    areaCodar?: string;
-    esExArbitro?: string;
-    fechaNacimiento?: string;
-    especialidad?: string;
-}): Promise<Usuario> {
-    const response = await fetch(buildUrl("/auth/registro"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al registrar usuario");
-    }
-
-    return await response.json();
-}
-
-export async function verificarDni(dni: string): Promise<boolean> {
+/**
+ * Obtiene información del día actual
+ * GET /api/asistencias/dia-actual
+ */
+export async function getDiaActual(): Promise<DiaInfo> {
     try {
-        const response = await fetch(buildUrl(`/auth/verificar-dni/${dni}`));
-        if (!response.ok) return false;
-        const data = await response.json();
-        return data.existe;
-    } catch {
-        return false;
+        const response = await fetch(buildUrl("/asistencias/dia-actual"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getDiaActual:", error);
+        return {
+            fecha: new Date().toISOString().split('T')[0],
+            diaSemana: new Date().getDay(),
+            nombreDia: new Date().toLocaleDateString('es-ES', { weekday: 'long' }),
+            esObligatorio: false,
+            tipoDia: 'normal'
+        };
     }
 }
 
-export async function logout(): Promise<void> {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-}
-
-export function getStoredToken(): string | null {
-    if (typeof window !== "undefined") {
-        return localStorage.getItem("token");
+/**
+ * Obtiene resumen mensual de asistencias
+ * GET /api/asistencias/resumen-mensual/{anio}/{mes}
+ */
+export async function getResumenMensual(anio: number, mes: number): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/resumen-mensual/${anio}/${mes}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getResumenMensual:", error);
+        return null;
     }
-    return null;
 }
 
-export function getStoredUser(): Usuario | null {
-    if (typeof window !== "undefined") {
-        const user = localStorage.getItem("user");
-        return user ? JSON.parse(user) : null;
+/**
+ * Obtiene historial de asistencias por rango de fechas
+ * GET /api/asistencias/historial?fechaInicio={fechaInicio}&fechaFin={fechaFin}
+ */
+export async function getHistorialAsistencias(fechaInicio?: string, fechaFin?: string): Promise<Asistencia[]> {
+    try {
+        const params = new URLSearchParams();
+        if (fechaInicio) params.append('fechaInicio', fechaInicio);
+        if (fechaFin) params.append('fechaFin', fechaFin);
+        const response = await fetch(buildUrl(`/asistencias/historial?${params.toString()}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getHistorialAsistencias:", error);
+        return [];
     }
-    return null;
 }
 
-// ==================== GESTIÓN DE USUARIOS ====================
-
-export async function getUsuariosPendientes(): Promise<Usuario[]> {
-    const response = await fetch(buildUrl("/auth/usuarios/pendientes"), {
-        headers: { "Authorization": `Bearer ${getStoredToken()}` }
-    });
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error getUsuariosPendientes:", response.status, errorText);
-        try {
-            const errorData = JSON.parse(errorText);
-            throw new Error(errorData.error || errorData.message || "Error al obtener usuarios pendientes");
-        } catch (e) {
-            throw new Error("Error al obtener usuarios pendientes: " + response.status);
-        }
+/**
+ * Obtiene ranking de asistencias
+ * GET /api/asistencias/ranking
+ */
+export async function getRankingAsistencia(): Promise<any> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/ranking"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getRankingAsistencia:", error);
+        return null;
     }
-    return await response.json();
-}
-
-export async function getTodosUsuarios(): Promise<Usuario[]> {
-    const response = await fetch(buildUrl("/auth/usuarios"), {
-        headers: { "Authorization": `Bearer ${getStoredToken()}` }
-    });
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error getTodosUsuarios:", response.status, errorText);
-        try {
-            const errorData = JSON.parse(errorText);
-            throw new Error(errorData.error || errorData.message || "Error al obtener usuarios");
-        } catch (e) {
-            throw new Error("Error al obtener usuarios: " + response.status);
-        }
-    }
-    return await response.json();
-}
-
-export async function aprobarUsuario(id: number, rol?: string, permisos?: string): Promise<any> {
-    const response = await fetch(buildUrl(`/auth/usuarios/${id}/aprobar`), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify({ rol, permisos })
-    });
-    if (!response.ok) throw new Error("Error al aprobar usuario");
-    return await response.json();
-}
-
-export async function asignarPermisos(id: number, permisos: string): Promise<any> {
-    const response = await fetch(buildUrl(`/auth/usuarios/${id}/permisos`), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify({ permisos })
-    });
-    if (!response.ok) throw new Error("Error al asignar permisos");
-    return await response.json();
-}
-
-export async function cambiarEstadoUsuario(id: number, estado: string): Promise<any> {
-    const response = await fetch(buildUrl(`/auth/usuarios/${id}/estado`), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify({ estado })
-    });
-    if (!response.ok) throw new Error("Error al cambiar estado");
-    return await response.json();
-}
-
-// Eliminar un usuario
-export async function eliminarUsuario(id: number): Promise<any> {
-    const response = await fetch(buildUrl(`/auth/usuarios/${id}`), {
-        method: "DELETE",
-        headers: { 
-            "Authorization": `Bearer ${getStoredToken()}` 
-        }
-    });
-    if (!response.ok) throw new Error("Error al eliminar usuario");
-    return await response.json();
-}
-
-// Eliminar todos los usuarios (solo admins, para testing)
-export async function eliminarTodosUsuarios(): Promise<any> {
-    const response = await fetch(buildUrl(`/auth/usuarios/eliminar-todos`), {
-        method: "DELETE",
-        headers: { 
-            "Authorization": `Bearer ${getStoredToken()}` 
-        }
-    });
-    if (!response.ok) throw new Error("Error al eliminar usuarios");
-    return await response.json();
-}
-
-// Completar perfil de usuario (para usuarios CODAR)
-export async function completarPerfil(data: {
-    dni: string;
-    telefono?: string;
-    cargoCodar?: string;
-    areaCodar?: string;
-}): Promise<any> {
-    const response = await fetch(buildUrl("/auth/completar-perfil"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al completar perfil");
-    }
-    
-    return await response.json();
-}
-
-// Listar usuarios CODAR (para PRESIDENCIA_CODAR)
-export async function getUsuariosCODAR(): Promise<Usuario[]> {
-    const response = await fetch(buildUrl("/auth/usuarios/codar"), {
-        headers: { "Authorization": `Bearer ${getStoredToken()}` }
-    });
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error getUsuariosCODAR:", response.status, errorText);
-        try {
-            const errorData = JSON.parse(errorText);
-            throw new Error(errorData.error || errorData.message || "Error al obtener usuarios CODAR");
-        } catch (e) {
-            throw new Error("Error al obtener usuarios CODAR: " + response.status);
-        }
-    }
-    return await response.json();
-}
-
-// ==================== SOLICITUDES DE PERMISOS ====================
-
-export interface SolicitudPermiso {
-    id?: number;
-    usuarioId?: number;
-    usuarioNombre?: string;
-    permisoSolicitado?: string;
-    estado?: string;  // PENDIENTE, APROBADO, RECHAZADO
-    fechaSolicitud?: string;
-    fechaRespuesta?: string;
-    notas?: string;
-}
-
-// Solicitar un permiso
-export async function solicitarPermiso(permiso: string): Promise<any> {
-    const response = await fetch(buildUrl("/auth/solicitudes"), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify({ permiso })
-    });
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al solicitar permiso");
-    }
-    return await response.json();
-}
-
-// Ver mis solicitudes
-export async function getMisSolicitudes(): Promise<SolicitudPermiso[]> {
-    const response = await fetch(buildUrl("/auth/solicitudes/mis-solicitudes"), {
-        headers: { "Authorization": `Bearer ${getStoredToken()}` }
-    });
-    if (!response.ok) throw new Error("Error al obtener mis solicitudes");
-    return await response.json();
-}
-
-// Ver solicitudes pendientes (para Admin)
-export async function getSolicitudesPendientes(): Promise<SolicitudPermiso[]> {
-    const response = await fetch(buildUrl("/auth/solicitudes/pendientes"), {
-        headers: { "Authorization": `Bearer ${getStoredToken()}` }
-    });
-    if (!response.ok) throw new Error("Error al obtener solicitudes");
-    return await response.json();
-}
-
-// Responder solicitud (aprobar o rechazar)
-export async function responderSolicitud(id: number, accion: string, notas?: string): Promise<any> {
-    const response = await fetch(buildUrl(`/auth/solicitudes/${id}/responder`), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify({ accion, notas })
-    });
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al responder solicitud");
-    }
-    return await response.json();
-}
-
-// ==================== PERFIL ====================
-
-interface PerfilData {
-    nombre?: string;
-    apellido?: string;
-    email?: string;
-    telefono?: string;
-}
-
-// Actualizar perfil del usuario actual
-export async function actualizarPerfil(data: PerfilData): Promise<any> {
-    const response = await fetch(buildUrl("/auth/perfil"), {
-        method: "PUT",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify(data)
-    });
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al actualizar perfil");
-    }
-    return await response.json();
-}
-
-// Cambiar contraseña
-export async function cambiarPassword(passwordActual: string, nuevaPassword: string): Promise<any> {
-    const response = await fetch(buildUrl("/auth/perfil/password"), {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getStoredToken()}` 
-        },
-        body: JSON.stringify({ passwordActual, nuevaPassword })
-    });
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al cambiar contraseña");
-    }
-    return await response.json();
 }
