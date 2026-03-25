@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Shield, Save, Building, MapPin, Phone, Mail, Palette } from "lucide-react"
 import { createEquipo, type Equipo } from "@/services/api"
+import { getDistritosPorProvincia } from "@/lib/distritos-puno"
 
 export default function NuevoEquipoPage() {
     const router = useRouter()
@@ -19,6 +20,7 @@ export default function NuevoEquipoPage() {
         nombre: "",
         categoria: "Primera División",
         provincia: "Puno",
+        distrito: "",
         nombreEstadio: "",
         estadio: "",
         direccion: "",
@@ -26,6 +28,10 @@ export default function NuevoEquipoPage() {
         email: "",
         colores: "",
     })
+    
+    const distritosDisponibles = useMemo(() => {
+        return getDistritosPorProvincia(form.provincia)
+    }, [form.provincia])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -150,7 +156,7 @@ export default function NuevoEquipoPage() {
                                     <select
                                         id="provincia"
                                         value={form.provincia}
-                                        onChange={(e) => setForm({ ...form, provincia: e.target.value })}
+                                        onChange={(e) => setForm({ ...form, provincia: e.target.value, distrito: "" })}
                                         className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         {provincias.map((prov) => (
@@ -159,6 +165,27 @@ export default function NuevoEquipoPage() {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="distrito">Distrito</Label>
+                                    <select
+                                        id="distrito"
+                                        value={form.distrito}
+                                        onChange={(e) => setForm({ ...form, distrito: e.target.value })}
+                                        className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        disabled={distritosDisponibles.length === 0}
+                                    >
+                                        <option value="">Seleccione un distrito</option>
+                                        {distritosDisponibles.map((dist) => (
+                                            <option key={dist} value={dist}>{dist}</option>
+                                        ))}
+                                    </select>
+                                    {distritosDisponibles.length === 0 && form.provincia !== "" && (
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Distritos no disponibles para esta provincia
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">

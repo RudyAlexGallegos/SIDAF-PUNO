@@ -221,6 +221,7 @@ export interface Equipo {
     nombre: string;
     categoria?: string;
     provincia?: string;
+    distrito?: string;
     estadio?: string;
     nombreEstadio?: string;
     direccion?: string;

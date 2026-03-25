@@ -18,6 +18,8 @@ public class Equipo {
     
     private String provincia;
     
+    private String distrito;
+    
     private String estadio;
     
     private String nombreEstadio;
@@ -74,6 +76,14 @@ public class Equipo {
     
     public void setProvincia(String provincia) {
         this.provincia = provincia;
+    }
+    
+    public String getDistrito() {
+        return distrito;
+    }
+    
+    public void setDistrito(String distrito) {
+        this.distrito = distrito;
     }
     
     public String getEstadio() {
