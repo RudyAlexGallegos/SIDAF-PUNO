@@ -24,7 +24,7 @@ public class EquipoController {
     
     // GET equipo by id
     @GetMapping("/{id}")
-    public ResponseEntity<Equipo> getEquipoById(@PathVariable Long id) {
+    public ResponseEntity<Equipo> getEquipoById(@PathVariable Integer id) {
         Optional<Equipo> equipo = equipoRepository.findById(id);
         return equipo.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -38,7 +38,7 @@ public class EquipoController {
     
     // PUT update equipo
     @PutMapping("/{id}")
-    public ResponseEntity<Equipo> updateEquipo(@PathVariable Long id, @RequestBody Equipo equipoDetails) {
+    public ResponseEntity<Equipo> updateEquipo(@PathVariable Integer id, @RequestBody Equipo equipoDetails) {
         Optional<Equipo> equipo = equipoRepository.findById(id);
         if (equipo.isPresent()) {
             Equipo updatedEquipo = equipo.get();
@@ -57,7 +57,7 @@ public class EquipoController {
     
     // DELETE equipo
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEquipo(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteEquipo(@PathVariable Integer id) {
         if (equipoRepository.existsById(id)) {
             equipoRepository.deleteById(id);
             return ResponseEntity.ok().build();

@@ -31,7 +31,21 @@ export default function EquiposPage() {
         load()
     }, [])
 
-    const provincias = ["Puno", "Azángaro", "Carabaya", "Chucuito", "El Collao", "Huancané", "Lampa", "Melgar", "Moho", "San Antonio de Putina", "San Román", "Sandia", "Yunguyo"]
+    const provincias = [
+        { nombre: "Azángaro", capital: "Azángaro" },
+        { nombre: "Carabaya", capital: "Macusani" },
+        { nombre: "Chucuito", capital: "Juli" },
+        { nombre: "El Collao", capital: "Ilave" },
+        { nombre: "Huancané", capital: "Huancané" },
+        { nombre: "Lampa", capital: "Lampa" },
+        { nombre: "Melgar", capital: "Ayaviri" },
+        { nombre: "Moho", capital: "Moho" },
+        { nombre: "Puno", capital: "Puno (capital del departamento)" },
+        { nombre: "San Antonio de Putina", capital: "Putina" },
+        { nombre: "San Román", capital: "Juliaca (ciudad más poblada)" },
+        { nombre: "Sandia", capital: "Sandia" },
+        { nombre: "Yunguyo", capital: "Yunguyo" }
+    ]
     const divisiones = ["Primera División", "Segunda División"]
 
     const filtered = useMemo(() => {
@@ -61,9 +75,9 @@ export default function EquiposPage() {
     // Stats por provincia para futura estructura COPAR
     const statsPorProvincia = useMemo(() => {
         const stats: Record<string, { total: number; primera: number; segunda: number }> = {}
-        provincias.forEach(p => {
-            const equiposProvincia = equipos.filter((e: EquipoAPI) => e.provincia === p)
-            stats[p] = {
+        provincias.forEach(prov => {
+            const equiposProvincia = equipos.filter((e: EquipoAPI) => e.provincia === prov.nombre)
+            stats[prov.nombre as string] = {
                 total: equiposProvincia.length,
                 primera: equiposProvincia.filter((e: EquipoAPI) => e.categoria === "Primera División").length,
                 segunda: equiposProvincia.filter((e: EquipoAPI) => e.categoria === "Segunda División").length,
@@ -153,20 +167,20 @@ export default function EquiposPage() {
                     <h2 className="text-lg font-semibold text-slate-900">Equipos por Provincia</h2>
                 </div>
                 <div className="grid gap-3 md:grid-cols-7">
-                    {provincias.map((p) => {
-                        const s = statsPorProvincia[p]
+                    {provincias.map((prov) => {
+                        const s = statsPorProvincia[prov.nombre]
                         if (s.total === 0) return null
                         return (
                             <button
-                                key={p}
-                                onClick={() => setProvinciaFilter(provinciaFilter === p ? "todos" : p)}
+                                key={prov.nombre}
+                                onClick={() => setProvinciaFilter(provinciaFilter === prov.nombre ? "todos" : prov.nombre)}
                                 className={`p-3 rounded-xl border-2 transition-all text-left ${
-                                    provinciaFilter === p 
+                                    provinciaFilter === prov.nombre 
                                         ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50" 
                                         : "border-slate-200 hover:border-slate-300 bg-white"
                                 }`}
                             >
-                                <p className="text-xs text-slate-500 truncate">{p}</p>
+                                <p className="text-xs text-slate-500 truncate">{prov.nombre}</p>
                                 <p className="text-xl font-bold text-slate-900">{s.total}</p>
                                 <p className="text-xs text-slate-400">
                                     <span className="text-amber-600">{s.primera}P</span> · 
@@ -239,8 +253,8 @@ export default function EquiposPage() {
                         className="h-12 px-4 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="todos">Todas las provincias</option>
-                        {provincias.map((p) => (
-                            <option key={p} value={p}>{p}</option>
+                        {provincias.map((prov) => (
+                            <option key={prov.nombre} value={prov.nombre}>{prov.nombre} - Capital: {prov.capital}</option>
                         ))}
                     </select>
                     <select

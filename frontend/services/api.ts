@@ -222,6 +222,7 @@ export interface Equipo {
     categoria?: string;
     provincia?: string;
     estadio?: string;
+    nombreEstadio?: string;
     direccion?: string;
     telefono?: string;
     email?: string;

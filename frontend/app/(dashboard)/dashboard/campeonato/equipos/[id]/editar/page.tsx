@@ -88,9 +88,19 @@ export default function EditarEquipoPage() {
     const categorias = ["Primera División", "Segunda División"]
     
     const provincias = [
-        "Puno", "Azángaro", "Carabaya", "Chucuito", "El Collao", 
-        "Huancané", "Lampa", "Melgar", "Moho", "San Antonio de Putina", 
-        "San Román", "Sandia", "Yunguyo"
+        { nombre: "Azángaro", capital: "Azángaro" },
+        { nombre: "Carabaya", capital: "Macusani" },
+        { nombre: "Chucuito", capital: "Juli" },
+        { nombre: "El Collao", capital: "Ilave" },
+        { nombre: "Huancané", capital: "Huancané" },
+        { nombre: "Lampa", capital: "Lampa" },
+        { nombre: "Melgar", capital: "Ayaviri" },
+        { nombre: "Moho", capital: "Moho" },
+        { nombre: "Puno", capital: "Puno (capital del departamento)" },
+        { nombre: "San Antonio de Putina", capital: "Putina" },
+        { nombre: "San Román", capital: "Juliaca (ciudad más poblada)" },
+        { nombre: "Sandia", capital: "Sandia" },
+        { nombre: "Yunguyo", capital: "Yunguyo" }
     ]
 
     const colores = [
@@ -192,7 +202,9 @@ export default function EditarEquipoPage() {
                                         className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         {provincias.map((prov) => (
-                                            <option key={prov} value={prov}>{prov}</option>
+                                            <option key={prov.nombre} value={prov.nombre}>
+                                                {prov.nombre} - Capital: {prov.capital}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>

@@ -1,27 +1,28 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, createAsistencia, Asistencia, Arbitro } from "@/services/api"
+import { getAsistencias, getArbitros, updateAsistencia, deleteAsistencia, createAsistencia, Asistencia, Arbitro as ArbitroAPI } from "@/services/api"
+import { Arbitro } from "@/types/asistencia"
 import { generateReporteResumenEjecutivo, generateReportePorArbitro, generateReporteMensual, generateReporteFaltantes, generateReporteDiario, generateReporteSemanalPDF, exportAsistenciaToExcel } from "@/lib/pdf-generator"
-import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay, addDays, subDays, getWeek, getWeekOfMonth, getYear } from "date-fns"
+import { format, isAfter, parseISO, eachDayOfInterval, getDay, startOfDay, addDays, subDays, getWeek, getWeekOfMonth, getYear, getMonth } from "date-fns"
 import { es } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import {
   Dialog,
@@ -32,19 +33,28 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { 
-  Calendar, 
-  Filter, 
+import {
+  Calendar,
+  Filter,
   Users,
   FileDown,
   Edit,
   Pencil,
   Trash2,
   Plus,
-  BarChart3
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  Clock,
+  AlertCircle
 } from "lucide-react"
 import RegistroCompactoArbitro from "@/components/asistencia/RegistroCompactoArbitro"
 import { EstadoAsistencia } from "@/types/asistencia"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Progress } from "@/components/ui/progress"
 
 interface RegistroArbitro {
   arbitrId: string
@@ -55,7 +65,7 @@ interface RegistroArbitro {
 
 export default function HistorialAsistenciaPage() {
   const [asistencias, setAsistencias] = useState<Asistencia[]>([])
-  const [arbitros, setArbitros] = useState<Arbitro[]>([])
+  const [arbitros, setArbitros] = useState<ArbitroAPI[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroArbitro, setFiltroArbitro] = useState<string>("todos")
   const [filtroActividad, setFiltroActividad] = useState<string>("todos")
@@ -511,18 +521,86 @@ export default function HistorialAsistenciaPage() {
   
   const diasFaltantes = getDiasFaltantes()
 
+  // Agrupar datos por mes para acordeones
+  const agruparPorMes = () => {
+    const meses: Record<string, { dias: any[], total: number, completados: number }> = {}
+    
+    diasCompletos.forEach(dia => {
+      const mesKey = format(dia.fechaDate, 'yyyy-MM')
+      const mesNombre = format(dia.fechaDate, 'MMMM yyyy', { locale: es })
+      
+      if (!meses[mesKey]) {
+        meses[mesKey] = {
+          dias: [],
+          total: 0,
+          completados: 0
+        }
+      }
+      
+      meses[mesKey].dias.push(dia)
+      meses[mesKey].total++
+      if (dia.tieneRegistro) {
+        meses[mesKey].completados++
+      }
+    })
+    
+    // Convertir a array y ordenar por fecha (más reciente primero)
+    return Object.entries(meses)
+      .map(([key, data]) => ({
+        key,
+        nombre: format(parseISO(key + '-01'), 'MMMM yyyy', { locale: es }),
+        dias: data.dias,
+        total: data.total,
+        completados: data.completados,
+        porcentaje: data.total > 0 ? Math.round((data.completados / data.total) * 100) : 0
+      }))
+      .sort((a, b) => b.key.localeCompare(a.key))
+  }
+
+  const mesesData = agruparPorMes()
+
+  // Obtener gradiente según porcentaje
+  const getGradientByPercentage = (porcentaje: number) => {
+    if (porcentaje >= 90) {
+      return 'from-green-500 to-emerald-600'
+    } else if (porcentaje >= 70) {
+      return 'from-blue-500 to-cyan-600'
+    } else if (porcentaje >= 50) {
+      return 'from-yellow-500 to-orange-600'
+    } else if (porcentaje >= 30) {
+      return 'from-orange-500 to-red-500'
+    } else {
+      return 'from-red-500 to-rose-600'
+    }
+  }
+
+  // Obtener color de texto según porcentaje
+  const getTextColorByPercentage = (porcentaje: number) => {
+    if (porcentaje >= 70) return 'text-white'
+    return 'text-white'
+  }
+
+  // Obtener icono según porcentaje
+  const getIconByPercentage = (porcentaje: number) => {
+    if (porcentaje >= 90) return <CheckCircle2 className="w-5 h-5" />
+    if (porcentaje >= 70) return <TrendingUp className="w-5 h-5" />
+    if (porcentaje >= 50) return <Clock className="w-5 h-5" />
+    return <AlertCircle className="w-5 h-5" />
+  }
+
   const handleExportarPDF = (tipoReporte: string = 'resumen') => {
     const fechaInicio = parseISO("2026-01-01")
     const fechaFin = new Date()
     
-    // Usar los datos que se muestran en la tabla (registrosExpandidos/filtered)
-    const datosReporte = filtered.map((item: any) => ({
+    // Usar EXACTAMENTE los mismos datos que se muestran en la tabla
+    const datosReporte = registrosExpandidosFiltrados.map((item: any) => ({
       id: item.id,
       fecha: item.fecha,
       actividad: item.actividad,
       estado: item.estadoItem || item.estado || '-',
       horaEntrada: item.horaEntrada,
-      arbitroId: item.arbitrosId
+      arbitroId: item.arbitroId,
+      nombreArbitro: item.nombreArbitro
     }))
     
     // Mostrar previsualización antes de exportar
@@ -534,14 +612,15 @@ export default function HistorialAsistenciaPage() {
 
   const handleExportarExcel = () => {
     const fechaInicio = parseISO("2026-01-01")
-    // Usar los datos que se muestran en la tabla
-    const datosReporte = filtered.map((item: any) => ({
+    // Usar EXACTAMENTE los mismos datos que se muestran en la tabla
+    const datosReporte = registrosExpandidosFiltrados.map((item: any) => ({
       id: item.id,
       fecha: item.fecha,
       actividad: item.actividad,
       estado: item.estadoItem || item.estado || '-',
       horaEntrada: item.horaEntrada,
-      arbitroId: item.arbitrosId
+      arbitroId: item.arbitroId,
+      nombreArbitro: item.nombreArbitro
     }))
     // Mostrar previsualización antes de exportar
     setPreviewData(datosReporte)
@@ -938,126 +1017,198 @@ export default function HistorialAsistenciaPage() {
           </Card>
         </div>
 
-        {/* Tabla */}
+        {/* Acordeones Mensuales */}
         <Card className="border-sky-200 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-sky-500 to-sky-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-6 h-6" />
-              Registros ({diasCompletos.length})
+              Registros por Mes ({diasCompletos.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-sky-50">
-                    <TableHead className="text-sky-800">Fecha</TableHead>
-                    <TableHead className="text-sky-800">Día</TableHead>
-                    <TableHead className="text-sky-800">Actividad</TableHead>
-                    <TableHead className="text-sky-800">Estado</TableHead>
-                    <TableHead className="text-sky-800 text-center">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {diasCompletos.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-sky-500">
-                        <p className="text-lg font-medium">No hay registros de asistencia</p>
-                        <p className="text-sm mt-2 text-sky-600">
-                          Los registros de días obligatorios (Lun, Mar, Jue, Vie, Sáb) desde 01/01/2026 aparecerán aquí.
-                          Si no existen registros, debe <strong>subsanar la asistencia</strong> registrándolos.
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    diasCompletos.map((item: any) => (
-                      <TableRow key={item.fecha} className={item.tieneRegistro ? "hover:bg-sky-50" : "bg-amber-50 hover:bg-amber-100"}>
-                        <TableCell className="font-medium text-sky-800">{format(item.fechaDate, 'dd/MM/yyyy')}</TableCell>
-                        <TableCell className="text-sky-700">
-                          {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][item.diaSemana]}
-                        </TableCell>
-                        <TableCell className="text-sky-600">{getActividadLabel(item.actividad)}</TableCell>
-                        <TableCell>
-                          {item.tieneRegistro ? (
-                            <Badge className="bg-green-100 text-green-800">
-                              ✅ Completado
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-amber-100 text-amber-800">
-                              ⏸️ Pendiente
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.tieneRegistro && item.registro ? (
-                            <div className="flex items-center justify-center gap-1">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => abrirEditar(item.registro)}
-                                className="border-sky-300 text-sky-600 hover:bg-sky-50"
-                              >
-                                <Pencil className="w-3 h-3 mr-1" />
-                                Editar
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleExportarDia(item.registro)}
-                                className="border-green-300 text-green-600 hover:bg-green-50"
-                              >
-                                <FileDown className="w-3 h-3 mr-1" />
-                                Exportar
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => abrirEliminar(item.registro)}
-                                className="border-red-300 text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-3 h-3 mr-1" />
-                                Eliminar
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => {
-                                // Subsanar: crear nuevo registro para este día con todos los árbitros
-                                //自动 detectar actividad según el día de la semana
-                                const actividadAuto = getActividadPorDia(item.fecha)
-                                const arbitrosIniciales = arbitros.map(ar => ({
-                                  arbitrId: ar.id,
-                                  nombreArbitro: `${ar.nombre || ''} ${ar.apellido || ''}`.trim() || `Arbitro ${ar.id}`,
-                                  estado: 'ausente',
-                                  horaRegistro: '',
-                                  observaciones: ''
-                                }))
-                                const nuevoRegistro = {
-                                  id: null,
-                                  fecha: item.fecha,
-                                  actividad: actividadAuto,
-                                  estado: 'ausente',
-                                  observaciones: JSON.stringify(arbitrosIniciales)
-                                }
-                                // precargar los árbitros en edición
-                                setArbitrosEditando(arbitrosIniciales)
-                                abrirEditar(nuevoRegistro)
-                              }}
-                              className="border-orange-300 text-orange-600 hover:bg-orange-50"
+          <CardContent className="p-6">
+            {mesesData.length === 0 ? (
+              <div className="text-center py-8 text-sky-500">
+                <p className="text-lg font-medium">No hay registros de asistencia</p>
+                <p className="text-sm mt-2 text-sky-600">
+                  Los registros de días obligatorios (Lun, Mar, Jue, Vie, Sáb) desde 01/01/2026 aparecerán aquí.
+                  Si no existen registros, debe <strong>subsanar la asistencia</strong> registrándolos.
+                </p>
+              </div>
+            ) : (
+              <Accordion type="multiple" className="space-y-4">
+                {mesesData.map((mes) => (
+                  <AccordionItem key={mes.key} value={mes.key} className="border-2 rounded-xl overflow-hidden shadow-md">
+                    <AccordionTrigger className={`
+                      bg-gradient-to-r ${getGradientByPercentage(mes.porcentaje)}
+                      ${getTextColorByPercentage(mes.porcentaje)}
+                      hover:opacity-90 transition-all duration-300
+                      px-6 py-4
+                    `}>
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <div className="flex items-center gap-4">
+                          {getIconByPercentage(mes.porcentaje)}
+                          <div>
+                            <p className="text-xl font-bold capitalize">{mes.nombre}</p>
+                            <p className="text-sm opacity-90">
+                              {mes.completados} de {mes.total} días registrados
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className={`text-3xl font-bold ${mes.porcentaje >= 70 ? 'text-white' : 'text-white'}`}>
+                              {mes.porcentaje}%
+                            </p>
+                          </div>
+                          <ChevronDown className="w-6 h-6 transition-transform duration-300" />
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="bg-white">
+                      <div className="p-4">
+                        {/* Barra de progreso elegante */}
+                        <div className="mb-6">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium text-slate-600">Progreso del mes</span>
+                            <span className={`text-sm font-bold ${
+                              mes.porcentaje >= 90 ? 'text-green-600' :
+                              mes.porcentaje >= 70 ? 'text-blue-600' :
+                              mes.porcentaje >= 50 ? 'text-yellow-600' :
+                              mes.porcentaje >= 30 ? 'text-orange-600' :
+                              'text-red-600'
+                            }`}>
+                              {mes.porcentaje}% completado
+                            </span>
+                          </div>
+                          <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                            <div
+                              className={`
+                                h-full rounded-full transition-all duration-500 ease-out
+                                ${mes.porcentaje >= 90 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                                  mes.porcentaje >= 70 ? 'bg-gradient-to-r from-blue-400 to-cyan-600' :
+                                  mes.porcentaje >= 50 ? 'bg-gradient-to-r from-yellow-400 to-orange-600' :
+                                  mes.porcentaje >= 30 ? 'bg-gradient-to-r from-orange-400 to-red-500' :
+                                  'bg-gradient-to-r from-red-400 to-rose-600'}
+                              `}
+                              style={{ width: `${mes.porcentaje}%` }}
                             >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Subsanar
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                              <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-2 text-xs text-slate-500">
+                            <span>0%</span>
+                            <span>25%</span>
+                            <span>50%</span>
+                            <span>75%</span>
+                            <span>100%</span>
+                          </div>
+                        </div>
+
+                        {/* Tabla de días del mes */}
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-sky-50">
+                                <TableHead className="text-sky-800">Fecha</TableHead>
+                                <TableHead className="text-sky-800">Día</TableHead>
+                                <TableHead className="text-sky-800">Actividad</TableHead>
+                                <TableHead className="text-sky-800">Estado</TableHead>
+                                <TableHead className="text-sky-800 text-center">Acciones</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {mes.dias.map((item: any) => (
+                                <TableRow key={item.fecha} className={item.tieneRegistro ? "hover:bg-sky-50" : "bg-amber-50 hover:bg-amber-100"}>
+                                  <TableCell className="font-medium text-sky-800">{format(item.fechaDate, 'dd/MM/yyyy')}</TableCell>
+                                  <TableCell className="text-sky-700">
+                                    {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][item.diaSemana]}
+                                  </TableCell>
+                                  <TableCell className="text-sky-600">{getActividadLabel(item.actividad)}</TableCell>
+                                  <TableCell>
+                                    {item.tieneRegistro ? (
+                                      <Badge className="bg-green-100 text-green-800">
+                                        ✅ Completado
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="bg-amber-100 text-amber-800">
+                                        ⏸️ Pendiente
+                                      </Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {item.tieneRegistro && item.registro ? (
+                                      <div className="flex items-center justify-center gap-1">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => abrirEditar(item.registro)}
+                                          className="border-sky-300 text-sky-600 hover:bg-sky-50"
+                                        >
+                                          <Pencil className="w-3 h-3 mr-1" />
+                                          Editar
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleExportarDia(item.registro)}
+                                          className="border-green-300 text-green-600 hover:bg-green-50"
+                                        >
+                                          <FileDown className="w-3 h-3 mr-1" />
+                                          Exportar
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => abrirEliminar(item.registro)}
+                                          className="border-red-300 text-red-600 hover:bg-red-50"
+                                        >
+                                          <Trash2 className="w-3 h-3 mr-1" />
+                                          Eliminar
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          // Subsanar: crear nuevo registro para este día con todos los árbitros
+                                          const actividadAuto = getActividadPorDia(item.fecha)
+                                          const arbitrosIniciales = arbitros.map(ar => ({
+                                            arbitrId: ar.id,
+                                            nombreArbitro: `${ar.nombre || ''} ${ar.apellido || ''}`.trim() || `Arbitro ${ar.id}`,
+                                            estado: 'ausente',
+                                            horaRegistro: '',
+                                            observaciones: ''
+                                          }))
+                                          const nuevoRegistro = {
+                                            id: null,
+                                            fecha: item.fecha,
+                                            actividad: actividadAuto,
+                                            estado: 'ausente',
+                                            observaciones: JSON.stringify(arbitrosIniciales)
+                                          }
+                                          // precargar los árbitros en edición
+                                          setArbitrosEditando(arbitrosIniciales)
+                                          abrirEditar(nuevoRegistro)
+                                        }}
+                                        className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                                      >
+                                        <Plus className="w-3 h-3 mr-1" />
+                                        Subsanar
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
 
             {/* Modal de Edición */}
             <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
@@ -1089,15 +1240,20 @@ export default function HistorialAsistenciaPage() {
                       {arbitrosEditando.map((arb: any, index: number) => {
                         const arbitroCompleto = arbitros.find(a => String(a.id) === String(arb.arbitrId))
                         const nombreMostrar = arb.nombreArbitro || (arbitroCompleto ? `${arbitroCompleto.nombre || ''} ${arbitroCompleto.apellido || ''}`.trim() : `Árbitro ${arb.arbitrId}`)
-                        const arbitroParaComponente = arbitroCompleto || {
+                        const arbitroParaComponente: Arbitro = arbitroCompleto ? {
+                          id: String(arbitroCompleto.id),
+                          nombres: arbitroCompleto.nombre || '',
+                          apellidoPaterno: arbitroCompleto.apellido || '',
+                          apellidoMaterno: '',
+                          categoria: '',
+                          codigoCODAR: ''
+                        } : {
                           id: String(arb.arbitrId),
-                          codigoCODAR: '',
                           nombres: nombreMostrar,
                           apellidoPaterno: nombreMostrar,
                           apellidoMaterno: '',
                           categoria: '',
-                          telefono: '',
-                          email: ''
+                          codigoCODAR: ''
                         }
                         return (
                           <RegistroCompactoArbitro
@@ -1430,22 +1586,6 @@ export default function HistorialAsistenciaPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
-            {totalPaginas > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-sky-100">
-                <div className="text-sm text-sky-600">
-                  Página {paginaActual} de {totalPaginas}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1} className="border-sky-300">
-                    Anterior
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas} className="border-sky-300">
-                    Siguiente
-                  </Button>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
