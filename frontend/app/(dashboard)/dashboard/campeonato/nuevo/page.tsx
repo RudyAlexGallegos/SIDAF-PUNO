@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Save, Trophy, MapPin, Calendar, Users, Clock, Shield, Check, Plus, Search, Filter } from "lucide-react"
-import { useDataStore, type Campeonato } from "@/lib/data-store"
+import { getEquipos, type Equipo } from "@/services/api"
+import type { Campeonato } from "@/lib/data-store"
 import { createCampeonato, type Campeonato as CampeonatoAPI } from "@/services/api"
 
 // Simple ID generator
@@ -18,7 +19,8 @@ const generateId = () => `cam-${Date.now()}-${Math.random().toString(36).substr(
 
 export default function NuevoCampeonatoPage() {
     const router = useRouter()
-    const { addCampeonato, equipos } = useDataStore()
+    const [equipos, setEquipos] = useState<Equipo[]>([])
+    const [loadingEquipos, setLoadingEquipos] = useState(true)
 
     const [formData, setFormData] = useState<Partial<Campeonato>>({
         nombre: "",
@@ -45,6 +47,26 @@ export default function NuevoCampeonatoPage() {
     const [searchEquipos, setSearchEquipos] = useState("")
     const [provinciaFilter, setProvinciaFilter] = useState("todas")
     const [divisionFilter, setDivisionFilter] = useState("todas")
+
+    // Cargar equipos desde el backend
+    useEffect(() => {
+        async function loadEquipos() {
+            try {
+                const data = await getEquipos()
+                // Normalizar IDs a string para compatibilidad con el formulario
+                const normalized = data.map(e => ({
+                    ...e,
+                    id: String(e.id)
+                }))
+                setEquipos(normalized)
+            } catch (error) {
+                console.error("Error cargando equipos:", error)
+            } finally {
+                setLoadingEquipos(false)
+            }
+        }
+        loadEquipos()
+    }, [])
 
     const diasOptions = [
         { value: "lunes", label: "Lunes" },
@@ -403,7 +425,11 @@ export default function NuevoCampeonatoPage() {
                             </div>
 
                             {/* Lista de equipos */}
-                            {equipos.length === 0 ? (
+                            {loadingEquipos ? (
+                                <div className="text-center py-8">
+                                    <p className="text-slate-500">Cargando equipos...</p>
+                                </div>
+                            ) : equipos.length === 0 ? (
                                 <div className="text-center py-8">
                                     <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                                     <p className="text-slate-500 mb-4">No hay equipos registrados aún</p>
