@@ -32,7 +32,7 @@ export default function EquiposPage() {
     }, [])
 
     const provincias = [
-        { nombre: "Azángaro", capital: "Azángaro" },
+        { nombre: "Azángaro" },
         { nombre: "Carabaya", capital: "Macusani" },
         { nombre: "Chucuito", capital: "Juli" },
         { nombre: "El Collao", capital: "Ilave" },

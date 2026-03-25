@@ -1,225 +1,264 @@
 "use client"
 
-import React, { useMemo, useState, useEffect } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { ArrowLeft, Plus, Trophy, Calendar, Users, Search, MapPin } from "lucide-react"
+import { Trophy, Plus, Calendar, MapPin, Users, TrendingUp, Edit, Trash2 } from "lucide-react"
 import { getCampeonatos, type Campeonato } from "@/services/api"
 
 export default function CampeonatosPage() {
-    const [campeonato, setCampeonato] = useState<Campeonato[]>([])
+    const router = useRouter()
     const [loading, setLoading] = useState(true)
-    const [query, setQuery] = useState("")
-    const [statusFilter, setStatusFilter] = useState<string>("todos")
-
-    // Cargar campeonatos del backend
+    const [error, setError] = useState("")
+    const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
+    const [filtro, setFiltro] = useState<string>("todos")
+    
     useEffect(() => {
-        async function load() {
+        async function loadCampeonatos() {
             try {
                 const data = await getCampeonatos()
-                setCampeonato(data)
-            } catch (error) {
-                console.error("Error cargando campeonatos:", error)
+                setCampeonatos(data)
+            } catch (err) {
+                console.error("Error al cargar campeonatos:", err)
+                setError("Error al cargar campeonatos")
             } finally {
                 setLoading(false)
             }
         }
-        load()
+        loadCampeonatos()
     }, [])
-
-    const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase()
-        let result = campeonato
-
-        if (statusFilter !== "todos") {
-            result = result.filter(c => c.estado === statusFilter)
-        }
-
-        if (!q) return result
-        return result.filter((c: Campeonato) =>
-            c.nombre?.toLowerCase().includes(q) ||
-            c.categoria?.toLowerCase().includes(q)
-        )
-    }, [query, statusFilter, campeonato])
-
-    const stats = useMemo(() => ({
-        total: filtered.length,
-        activos: filtered.filter((c: Campeonato) => c.estado === "activo").length,
-        programados: filtered.filter((c: Campeonato) => c.estado === "programado").length,
-        finalizados: filtered.filter((c: Campeonato) => c.estado === "finalizado").length,
-    }), [filtered])
-
-    const getStatusBadge = (estado?: string) => {
+    
+    const campeonatosFiltrados = campeonatos.filter(campeonato => {
+        if (filtro === "todos") return true
+        if (filtro === "programado") return campeonato.estado === "PROGRAMADO"
+        if (filtro === "activo") return campeonato.estado === "ACTIVO"
+        if (filtro === "finalizado") return campeonato.estado === "FINALIZADO"
+        return true
+    })
+    
+    const getEstadoBadge = (estado?: string) => {
         switch (estado) {
-            case "activo":
-                return <Badge className="bg-green-500">Activo</Badge>
-            case "programado":
-                return <Badge variant="outline" className="border-blue-500 text-blue-600">Programado</Badge>
-            case "finalizado":
-                return <Badge variant="secondary">Finalizado</Badge>
+            case "PROGRAMADO":
+                return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Programado</span>
+            case "ACTIVO":
+                return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Activo</span>
+            case "FINALIZADO":
+                return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Finalizado</span>
             default:
-                return <Badge variant="outline">{estado}</Badge>
+                return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{estado}</span>
         }
     }
-
+    
+    const handleDelete = async (id: number) => {
+        if (!confirm("¿Estás seguro de que deseas eliminar este campeonato?")) return
+        
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"}/campeonatos/${id}`, {
+                method: "DELETE"
+            })
+            setCampeonatos(campeonatos.filter(c => c.id !== id))
+        } catch (err) {
+            console.error("Error al eliminar campeonato:", err)
+            alert("Error al eliminar campeonato")
+        }
+    }
+    
     if (loading) {
         return (
-            <div className="container mx-auto py-8 px-4 max-w-6xl">
-                <div className="text-center py-12">Cargando...</div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 border-t-transparent"></div>
+                    <p className="mt-4 text-slate-600">Cargando campeonatos...</p>
+                </div>
             </div>
         )
     }
-
+    
     return (
-        <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
-                        <ArrowLeft className="h-5 w-5" />
-                        <span className="hidden sm:inline">Volver</span>
-                    </Link>
-                    <div className="h-6 w-px bg-slate-300" />
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                            <Trophy className="h-7 w-7 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900">Campeonatos</h1>
-                            <p className="text-slate-500">Gestiona tus torneos y competiciones</p>
-                        </div>
-                    </div>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Campeonatos</h1>
+                    <p className="text-slate-600 mt-1">Gestiona los campeonatos de fútbol de la región de Puno</p>
                 </div>
-                <Button asChild className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/30">
-                    <Link href="/dashboard/campeonato/nuevo">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nuevo Campeonato
-                    </Link>
+                <Button onClick={() => router.push("/dashboard/campeonato/nuevo")} className="gap-2">
+                    <Plus className="h-5 w-5" />
+                    Nuevo Campeonato
                 </Button>
             </div>
-
+            
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid gap-4 md:grid-cols-4">
                 <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-3xl font-bold">{stats.total}</div>
-                        <p className="text-sm text-slate-500">Total</p>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium text-slate-600">Total</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-slate-900">{campeonatos.length}</div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-3xl font-bold text-green-600">{stats.activos}</div>
-                        <p className="text-sm text-slate-500">Activos</p>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium text-slate-600">Programados</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-blue-600">{campeonatos.filter(c => c.estado === "PROGRAMADO").length}</div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-3xl font-bold text-blue-600">{stats.programados}</div>
-                        <p className="text-sm text-slate-500">Programados</p>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium text-slate-600">Activos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-green-600">{campeonatos.filter(c => c.estado === "ACTIVO").length}</div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-3xl font-bold text-slate-600">{stats.finalizados}</div>
-                        <p className="text-sm text-slate-500">Finalizados</p>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium text-slate-600">Finalizados</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-gray-600">{campeonatos.filter(c => c.estado === "FINALIZADO").length}</div>
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Filters */}
-            <Card className="mb-8">
-                <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input
-                                placeholder="Buscar por nombre o categoría..."
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-full md:w-48">
-                                <SelectValue placeholder="Estado" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="todos">Todos</SelectItem>
-                                <SelectItem value="activo">Activo</SelectItem>
-                                <SelectItem value="programado">Programado</SelectItem>
-                                <SelectItem value="finalizado">Finalizado</SelectItem>
-                            </SelectContent>
-                        </Select>
+            
+            {/* Filtros */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Filtros
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-2 flex-wrap">
+                        <Button
+                            variant={filtro === "todos" ? "default" : "outline"}
+                            onClick={() => setFiltro("todos")}
+                            size="sm"
+                        >
+                            Todos
+                        </Button>
+                        <Button
+                            variant={filtro === "programado" ? "default" : "outline"}
+                            onClick={() => setFiltro("programado")}
+                            size="sm"
+                        >
+                            Programados
+                        </Button>
+                        <Button
+                            variant={filtro === "activo" ? "default" : "outline"}
+                            onClick={() => setFiltro("activo")}
+                            size="sm"
+                        >
+                            Activos
+                        </Button>
+                        <Button
+                            variant={filtro === "finalizado" ? "default" : "outline"}
+                            onClick={() => setFiltro("finalizado")}
+                            size="sm"
+                        >
+                            Finalizados
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
-
-            {/* List */}
-            {filtered.length === 0 ? (
-                <Card className="mb-8">
+            
+            {/* Lista de Campeonatos */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {campeonatosFiltrados.map((campeonato) => (
+                    <Card key={campeonato.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <CardTitle className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                        {campeonato.nombre}
+                                    </CardTitle>
+                                    <CardDescription className="mt-2">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <MapPin className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                                            <span className="truncate">{campeonato.ciudad}, {campeonato.provincia}</span>
+                                        </div>
+                                        {campeonato.categoria && (
+                                            <div className="flex items-center gap-2 text-sm mt-1">
+                                                <Users className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                                                <span className="truncate">{campeonato.categoria}</span>
+                                            </div>
+                                        )}
+                                    </CardDescription>
+                                </div>
+                                <div className="flex gap-1">
+                                    {getEstadoBadge(campeonato.estado)}
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                    <Trophy className="h-4 w-4 flex-shrink-0" />
+                                    <span>{campeonato.numeroEquipos} equipos</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-slate-500 mb-1">Formato</p>
+                                        <p className="font-medium text-slate-900">{campeonato.formato}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 mb-1">Nivel</p>
+                                        <p className="font-medium text-slate-900">{campeonato.nivelDificultad}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-2 pt-2 border-t border-slate-100">
+                                    <Link href={`/dashboard/campeonato/${campeonato.id}`}>
+                                        <Button variant="outline" size="sm" className="flex-1">
+                                            <Edit className="h-4 w-4" />
+                                            Editar
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleDelete(campeonato.id!)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+            
+            {campeonatosFiltrados.length === 0 && (
+                <Card>
                     <CardContent className="py-12 text-center">
-                        <Trophy className="h-12 w-12 mx-auto text-slate-300 mb-4" />
-                        <h3 className="text-lg font-semibold text-slate-600 mb-2">No hay campeonatos</h3>
-                        <p className="text-slate-500 mb-4">Crea tu primer campeonato para comenzar</p>
-                        <Button asChild>
-                            <Link href="/dashboard/campeonato/nuevo">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Crear Campeonato
-                            </Link>
+                        <Trophy className="h-16 w-16 mx-auto text-slate-300 mb-4" />
+                        <h3 className="text-xl font-semibold text-slate-900 mb-2">No hay campeonatos</h3>
+                        <p className="text-slate-600 mb-6">
+                            {filtro === "todos" 
+                                ? "No hay campeonatos registrados. Crea el primero para comenzar."
+                                : "No hay campeonatos en este estado."}
+                        </p>
+                        <Button onClick={() => router.push("/dashboard/campeonato/nuevo")} className="gap-2">
+                            <Plus className="h-5 w-5" />
+                            Crear Campeonato
                         </Button>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filtered.map((c: Campeonato) => (
-                        <Card key={c.id} className="hover:shadow-lg transition">
-                            <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg">{c.nombre}</CardTitle>
-                                        <CardDescription>{c.categoria}</CardDescription>
-                                    </div>
-                                    {getStatusBadge(c.estado)}
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
-                                {c.ciudad && (
-                                    <div className="flex items-center gap-2 text-slate-600">
-                                        <MapPin className="h-4 w-4" />
-                                        <span>{c.ciudad}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-2 text-slate-600">
-                                    <Users className="h-4 w-4" />
-                                    <span>{c.numeroEquipos || 0} equipos</span>
-                                </div>
-                                {c.fechaInicio && (
-                                    <div className="flex items-center gap-2 text-slate-600">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>{new Date(c.fechaInicio).toLocaleDateString()}</span>
-                                    </div>
-                                )}
-                                <div className="flex gap-2 pt-2">
-                                    <Button asChild size="sm" variant="outline" className="flex-1">
-                                        <Link href={`/dashboard/campeonato/${c.id}`}>
-                                            Ver detalles
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+            )}
+            
+            {error && (
+                <Card>
+                    <CardContent className="py-6 bg-red-50 border-red-200">
+                        <p className="text-red-800 text-center font-medium">{error}</p>
+                    </CardContent>
+                </Card>
             )}
         </div>
     )

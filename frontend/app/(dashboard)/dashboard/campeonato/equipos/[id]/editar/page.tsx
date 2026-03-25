@@ -94,10 +94,10 @@ export default function EditarEquipoPage() {
     const categorias = ["Primera División", "Segunda División"]
     
     const provincias = [
-        { nombre: "Azángaro", capital: "Azángaro" },
-        { nombre: "Carabaya", capital: "Macusani" },
-        { nombre: "Chucuito", capital: "Juli" },
-        { nombre: "El Collao", capital: "Ilave" },
+        { nombre: "Azángaro" },
+        { nombre: "Carabaya" },
+        { nombre: "Chucuito"},
+        { nombre: "El Collao" },
         { nombre: "Huancané", capital: "Huancané" },
         { nombre: "Lampa", capital: "Lampa" },
         { nombre: "Melgar", capital: "Ayaviri" },
@@ -209,7 +209,7 @@ export default function EditarEquipoPage() {
                                     >
                                         {provincias.map((prov) => (
                                             <option key={prov.nombre} value={prov.nombre}>
-                                                {prov.nombre} - Capital: {prov.capital}
+                                                {prov.nombre} : {prov.capital}
                                             </option>
                                         ))}
                                     </select>

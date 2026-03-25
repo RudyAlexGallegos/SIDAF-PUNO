@@ -59,19 +59,19 @@ export default function NuevoEquipoPage() {
     const categorias = ["Primera División", "Segunda División"]
     
     const provincias = [
-        { nombre: "Azángaro", capital: "Azángaro" },
-        { nombre: "Carabaya", capital: "Macusani" },
-        { nombre: "Chucuito", capital: "Juli" },
-        { nombre: "El Collao", capital: "Ilave" },
-        { nombre: "Huancané", capital: "Huancané" },
-        { nombre: "Lampa", capital: "Lampa" },
-        { nombre: "Melgar", capital: "Ayaviri" },
-        { nombre: "Moho", capital: "Moho" },
-        { nombre: "Puno", capital: "Puno (capital del departamento)" },
-        { nombre: "San Antonio de Putina", capital: "Putina" },
-        { nombre: "San Román", capital: "Juliaca (ciudad más poblada)" },
-        { nombre: "Sandia", capital: "Sandia" },
-        { nombre: "Yunguyo", capital: "Yunguyo" }
+        { nombre: "Azángaro" },
+        { nombre: "Carabaya" },
+        { nombre: "Chucuito" },
+        { nombre: "El Collao" },
+        { nombre: "Huancané" },
+        { nombre: "Lampa" },
+        { nombre: "Melgar" },
+        { nombre: "Moho"},
+        { nombre: "Puno" },
+        { nombre: "San Antonio de Putina" },
+        { nombre: "San Román" },
+        { nombre: "Sandia"},
+        { nombre: "Yunguyo"}
     ]
 
     const colores = [
