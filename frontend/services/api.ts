@@ -142,6 +142,13 @@ export interface Campeonato {
     nivelDificultad?: string;
     numeroEquipos?: number;
     formato?: string;
+    numeroJornadas?: number;
+    numeroArbitrosRequeridos?: number;
+    direccion?: string;
+    diasJuego?: string;
+    horaInicio?: string;
+    horaFin?: string;
+    equipoIds?: string;
     reglas?: string;
     premios?: string;
     observaciones?: string;

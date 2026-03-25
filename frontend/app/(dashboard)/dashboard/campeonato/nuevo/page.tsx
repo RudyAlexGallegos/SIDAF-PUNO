@@ -1,22 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Calendar, MapPin, Users, Trophy, Building, Phone, Mail } from "lucide-react"
-import { createCampeonato, type Campeonato } from "@/services/api"
-import { getEquipos } from "@/services/api"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Save, Trophy, MapPin, Calendar, Users, Clock, Shield, Check, Plus, Search, Filter } from "lucide-react"
+import { getEquipos, type Equipo } from "@/services/api"
+import type { Campeonato } from "@/lib/data-store"
+import { createCampeonato, type Campeonato as CampeonatoAPI } from "@/services/api"
+
+// Simple ID generator
+const generateId = () => `cam-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
 export default function NuevoCampeonatoPage() {
     const router = useRouter()
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState("")
-    
-    const [form, setForm] = useState<Campeonato>({
+    const [equipos, setEquipos] = useState<Equipo[]>([])
+    const [loadingEquipos, setLoadingEquipos] = useState(true)
+
+    const [formData, setFormData] = useState<Partial<Campeonato>>({
         nombre: "",
         categoria: "Primera División",
         tipo: "Liga",
@@ -35,17 +43,75 @@ export default function NuevoCampeonatoPage() {
         observaciones: "",
         logo: ""
     })
-    
-    const [equiposDisponibles, setEquiposDisponibles] = useState<number[]>([])
-    const [equiposSeleccionados, setEquiposSeleccionados] = useState<number[]>([])
-    
+
+    const [searchEquipos, setSearchEquipos] = useState("")
+    const [provinciaFilter, setProvinciaFilter] = useState("todas")
+    const [divisionFilter, setDivisionFilter] = useState("todas")
+
+    // Cargar equipos desde el backend
     useEffect(() => {
         async function loadEquipos() {
             try {
                 const data = await getEquipos()
-                setEquiposDisponibles(data.map(e => e.id!))
-            } catch (err) {
-                console.error("Error al cargar equipos:", err)
+                // Normalizar IDs a string para compatibilidad con el formulario
+                const normalized = data.map(e => ({
+                    ...e,
+                    id: String(e.id)
+                }))
+                setEquipos(normalized)
+            } catch (error) {
+                console.error("Error cargando equipos:", error)
+            } finally {
+                setLoadingEquipos(false)
+            }
+        }
+        loadEquipos()
+    }, [])
+
+    const diasOptions = [
+        { value: "lunes", label: "Lunes" },
+        { value: "martes", label: "Martes" },
+        { value: "miercoles", label: "Miércoles" },
+        { value: "jueves", label: "Jueves" },
+        { value: "viernes", label: "Viernes" },
+        { value: "sabado", label: "Sábado" },
+        { value: "domingo", label: "Domingo" },
+    ]
+
+    // Filtrar equipos
+    const filteredEquipos = equipos.filter(eq => {
+        const matchesSearch =
+            eq.nombre.toLowerCase().includes(searchEquipos.toLowerCase()) ||
+            eq.provincia?.toLowerCase().includes(searchEquipos.toLowerCase())
+        const matchesProvincia = provinciaFilter === "todas" || eq.provincia === provinciaFilter
+        const matchesDivision = divisionFilter === "todas" || eq.categoria === divisionFilter
+        return matchesSearch && matchesProvincia && matchesDivision
+    })
+
+    // Agrupar por división
+    const equiposPrimera = filteredEquipos.filter(eq => eq.categoria === "Primera División")
+    const equiposSegunda = filteredEquipos.filter(eq => eq.categoria === "Segunda División")
+    const equiposSinDivision = filteredEquipos.filter(eq => !eq.categoria || (!eq.categoria.includes("Primera") && !eq.categoria.includes("Segunda")))
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type } = e.target
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === "number" ? parseInt(value) || 0 : value
+        }))
+    }
+
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData(prev => ({ ...prev, [name]: value }))
+    }
+
+    const toggleDia = (dia: string) => {
+        setFormData(prev => {
+            const current = prev.diasJuego || []
+            if (current.includes(dia as any)) {
+                return { ...prev, diasJuego: current.filter(d => d !== dia) }
+            } else {
+                return { ...prev, diasJuego: [...current, dia] }
             }
         }
         loadEquipos()
@@ -175,12 +241,264 @@ export default function NuevoCampeonatoPage() {
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                        
-                        {/* Fechas */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-slate-900 mb-4">Fechas</h3>
-                            
+
+                            {/* Contador */}
+                            <div className="flex items-center justify-between mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                <span className="text-sm font-medium text-blue-800">
+                                    <strong>{formData.equipoIds?.length || 0}</strong> equipos seleccionados
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const allIds = filteredEquipos.map(e => e.id)
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            equipoIds: prev.equipoIds?.length === allIds.length ? [] : allIds
+                                        }))
+                                    }}
+                                >
+                                    {formData.equipoIds?.length === filteredEquipos.length ? "Deseleccionar todos" : "Seleccionar todos"}
+                                </Button>
+                            </div>
+
+                            {/* Lista de equipos */}
+                            {loadingEquipos ? (
+                                <div className="text-center py-8">
+                                    <p className="text-slate-500">Cargando equipos...</p>
+                                </div>
+                            ) : equipos.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                                    <p className="text-slate-500 mb-4">No hay equipos registrados aún</p>
+                                    <Button asChild className="bg-blue-500 hover:bg-blue-600">
+                                        <Link href="/dashboard/campeonato/equipos">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Crear Primer Equipo
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ) : filteredEquipos.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                                    <p className="text-slate-500">No se encontraron equipos con los filtros aplicados</p>
+                                </div>
+                            ) : (
+                                <div className="h-[400px] overflow-y-auto pr-4">
+                                    <EquipoGrupo
+                                        title="PRIMERA DIVISIÓN"
+                                        equiposList={equiposPrimera}
+                                        badgeColor="bg-amber-500"
+                                    />
+                                    <EquipoGrupo
+                                        title="SEGUNDA DIVISIÓN"
+                                        equiposList={equiposSegunda}
+                                        badgeColor="bg-green-500"
+                                    />
+                                    {equiposSinDivision.length > 0 && (
+                                        <EquipoGrupo
+                                            title="SIN DIVISIÓN"
+                                            equiposList={equiposSinDivision}
+                                            badgeColor="bg-slate-400"
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </section>
+
+                {/* Sección 3: Estructura del Torneo */}
+                <section>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-1 h-8 bg-emerald-500 rounded-full" />
+                        <h2 className="text-xl font-semibold text-slate-900">Estructura del Torneo</h2>
+                    </div>
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="grid gap-6 md:grid-cols-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="formato">Formato</Label>
+                                    <Select
+                                        value={formData.formato}
+                                        onValueChange={(v) => handleSelectChange("formato", v)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Liga">Liga</SelectItem>
+                                            <SelectItem value="Eliminatoria">Eliminatoria</SelectItem>
+                                            <SelectItem value="Liga + Eliminatoria">Liga + Eliminatoria</SelectItem>
+                                            <SelectItem value="Torneo Relámpago">Torneo Relámpago</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="numeroEquipos">Equipos Participantes</Label>
+                                    <Input
+                                        id="numeroEquipos"
+                                        name="numeroEquipos"
+                                        type="number"
+                                        min="2"
+                                        value={formData.numeroEquipos}
+                                        onChange={handleChange}
+                                        disabled={formData.equipoIds && formData.equipoIds.length > 0}
+                                        className={formData.equipoIds && formData.equipoIds.length > 0 ? "bg-slate-100" : ""}
+                                    />
+                                    {formData.equipoIds && formData.equipoIds.length > 0 && (
+                                        <p className="text-xs text-slate-500">
+                                            Se usará el número de equipos seleccionados
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="numeroJornadas">Número de Jornadas</Label>
+                                    <Input
+                                        id="numeroJornadas"
+                                        name="numeroJornadas"
+                                        type="number"
+                                        min="0"
+                                        value={formData.numeroJornadas}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
+
+                {/* Sección 4: Árbitros */}
+                <section>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-1 h-8 bg-purple-500 rounded-full" />
+                        <h2 className="text-xl font-semibold text-slate-900">Designación de Árbitros</h2>
+                    </div>
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="numeroArbitrosRequeridos">Árbitros por Partido</Label>
+                                    <Input
+                                        id="numeroArbitrosRequeridos"
+                                        name="numeroArbitrosRequeridos"
+                                        type="number"
+                                        min="1"
+                                        max="6"
+                                        value={formData.numeroArbitrosRequeridos}
+                                        onChange={handleChange}
+                                    />
+                                    <p className="text-xs text-slate-500">
+                                        Cantidad de árbitros necesarios para cada encuentro
+                                    </p>
+                                </div>
+                                <div className="bg-purple-50 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <Check className="h-5 w-5 text-purple-600 mt-0.5" />
+                                        <div>
+                                            <h4 className="font-medium text-purple-800">Configuración automática</h4>
+                                            <p className="text-sm text-purple-600 mt-1">
+                                                El sistema calculará automáticamente el total de árbitros necesarios
+                                                según el formato y número de jornadas.
+                                            </p>
+                                            <p className="text-sm font-medium text-purple-700 mt-2">
+                                                Total estimado: {
+                                                    formData.equipoIds?.length
+                                                        ? Math.ceil(formData.equipoIds.length / 2) * (formData.numeroJornadas || 0)
+                                                        : (formData.numeroEquipos || 0) / 2 * (formData.numeroJornadas || 0)
+                                                } designaciones
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
+
+                {/* Sección 5: Sede y Calendario */}
+                <section>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-1 h-8 bg-orange-500 rounded-full" />
+                        <h2 className="text-xl font-semibold text-slate-900">Sede y Calendario</h2>
+                    </div>
+
+                    <Card>
+                        <CardContent className="pt-6 space-y-6">
+                            {/* Lugar */}
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="ciudad">Ciudad / Provincia</Label>
+                                    <Input
+                                        id="ciudad"
+                                        name="ciudad"
+                                        value={formData.ciudad}
+                                        onChange={handleChange}
+                                        placeholder="Puno"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="direccion">Estadio / Campo Deportivo</Label>
+                                    <Input
+                                        id="direccion"
+                                        name="direccion"
+                                        value={formData.direccion}
+                                        onChange={handleChange}
+                                        placeholder="Estadio Enrique Torres Belón"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Días de juego */}
+                            <div>
+                                <Label className="mb-3 block">Días de Juego</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {diasOptions.map((dia) => {
+                                        const isSelected = formData.diasJuego?.includes(dia.value as any)
+                                        return (
+                                            <Button
+                                                key={dia.value}
+                                                type="button"
+                                                variant={isSelected ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => toggleDia(dia.value)}
+                                                className={isSelected ? "bg-slate-900" : ""}
+                                            >
+                                                {dia.label}
+                                            </Button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Horarios */}
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="horaInicio">Hora de Inicio (primer partido)</Label>
+                                    <Input
+                                        id="horaInicio"
+                                        name="horaInicio"
+                                        type="time"
+                                        value={formData.horaInicio}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="horaFin">Hora de Fin (último partido)</Label>
+                                    <Input
+                                        id="horaFin"
+                                        name="horaFin"
+                                        type="time"
+                                        value={formData.horaFin}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Fechas */}
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="fechaInicio">Fecha de Inicio</Label>
