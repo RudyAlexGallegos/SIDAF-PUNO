@@ -635,3 +635,123 @@ export async function getRankingAsistencia(): Promise<any> {
         return null;
     }
 }
+
+// ============================================================
+// AUTENTICACIÓN
+// ============================================================
+
+export interface Usuario {
+    id?: number;
+    dni?: string;
+    nombre?: string;
+    apellido?: string;
+    email?: string;
+    rol?: string;
+    estado?: string;
+    token?: string;
+    perfilCompleto?: boolean;
+    cargoCodar?: string;
+    areaCodar?: string;
+    unidadOrganizacional?: string;
+    permisosEspecificos?: string;
+}
+
+/**
+ * Inicia sesión con DNI y contraseña
+ * POST /api/auth/login
+ */
+export async function login(dni: string, password: string): Promise<Usuario> {
+    const response = await fetch(buildUrl("/auth/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni, password }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al iniciar sesión");
+    }
+
+    const data = await response.json();
+    
+    // Guardar token en localStorage
+    if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data));
+    }
+    
+    return data;
+}
+
+/**
+ * Registra un nuevo usuario
+ * POST /api/auth/registro
+ */
+export async function registro(datos: any): Promise<Usuario> {
+    const response = await fetch(buildUrl("/auth/registro"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al registrar usuario");
+    }
+
+    return await response.json();
+}
+
+/**
+ * Verifica si un DNI ya está registrado
+ * GET /api/auth/verificar-dni/{dni}
+ */
+export async function verificarDni(dni: string): Promise<boolean> {
+    try {
+        const response = await fetch(buildUrl(`/auth/verificar-dni/${dni}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        return data.existe || false;
+    } catch (error) {
+        console.error("❌ Error verificarDni:", error);
+        return false;
+    }
+}
+
+/**
+ * Cierra sesión del usuario
+ */
+export async function logout(): Promise<void> {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+}
+
+/**
+ * Obtiene el usuario almacenado en localStorage
+ */
+export function getStoredUser(): Usuario | null {
+    if (typeof window === "undefined") return null;
+    
+    try {
+        const userStr = localStorage.getItem("user");
+        if (!userStr) return null;
+        return JSON.parse(userStr);
+    } catch (error) {
+        console.error("Error al obtener usuario almacenado:", error);
+        return null;
+    }
+}
+
+/**
+ * Obtiene el token de autenticación almacenado
+ */
+export function getStoredToken(): string | null {
+    if (typeof window === "undefined") return null;
+    
+    try {
+        return localStorage.getItem("token");
+    } catch (error) {
+        console.error("Error al obtener token almacenado:", error);
+        return null;
+    }
+}
