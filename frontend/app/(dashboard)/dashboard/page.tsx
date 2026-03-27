@@ -52,7 +52,7 @@ export default function DashboardPage() {
             while (retries > 0) {
                 try {
                     // Check API connection first
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL + "/api/hello"
+                    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api") + "/hello"
                     const helloRes = await fetch(apiUrl)
                     if (!helloRes.ok) throw new Error("API no disponible")
                     setApiStatus("ok")
