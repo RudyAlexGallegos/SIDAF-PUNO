@@ -134,7 +134,7 @@ interface DataStore {
   extendDataExpiration?: () => void
 }
 
-const API_URL = "http://localhost:8083/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
 
 export const useDataStore = create<DataStore>()(
   persist(
@@ -214,37 +214,151 @@ export const useDataStore = create<DataStore>()(
       // =====================
       // EQUIPOS
       // =====================
-      createEquipo: (e) => {
-        const item = { ...e, id: e.id || `eq-${Date.now()}` }
-        set({ equipos: [...get().equipos, item] })
+      createEquipo: async (e) => {
+        set({ loading: true, error: null })
+        try {
+          const res = await fetch(`${API_URL}/equipos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(e),
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || "Error al crear equipo")
+          }
+
+          const nuevo = await res.json()
+          const item = { ...nuevo, id: String(nuevo.id) }
+          set({ equipos: [...get().equipos, item] })
+        } catch (err: any) {
+          set({ error: err.message })
+          throw err
+        } finally {
+          set({ loading: false })
+        }
       },
-      updateEquipo: (id, data) => {
-        set({
-          equipos: get().equipos.map((e) =>
-            e.id === id ? { ...e, ...data } : e
-          ),
-        })
+      updateEquipo: async (id, data) => {
+        set({ loading: true, error: null })
+        try {
+          const res = await fetch(`${API_URL}/equipos/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || "Error al actualizar equipo")
+          }
+
+          const updated = await res.json()
+          set({
+            equipos: get().equipos.map((e) =>
+              e.id === id ? { ...e, ...updated } : e
+            ),
+          })
+        } catch (err: any) {
+          set({ error: err.message })
+          throw err
+        } finally {
+          set({ loading: false })
+        }
       },
-      deleteEquipo: (id) => {
-        set({ equipos: get().equipos.filter((e) => e.id !== id) })
+      deleteEquipo: async (id) => {
+        set({ loading: true, error: null })
+        try {
+          const res = await fetch(`${API_URL}/equipos/${id}`, {
+            method: "DELETE",
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || "Error al eliminar equipo")
+          }
+
+          set({ equipos: get().equipos.filter((e) => e.id !== id) })
+        } catch (err: any) {
+          set({ error: err.message })
+          throw err
+        } finally {
+          set({ loading: false })
+        }
       },
 
       // =====================
       // CAMPEONATOS
       // =====================
-      addCampeonato: (c) => {
-        const item = { ...c, id: c.id || `cam-${Date.now()}` }
-        set({ campeonatos: [...get().campeonato, item] })
+      addCampeonato: async (c) => {
+        set({ loading: true, error: null })
+        try {
+          const res = await fetch(`${API_URL}/campeonato`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(c),
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || "Error al crear campeonato")
+          }
+
+          const nuevo = await res.json()
+          const item = { ...nuevo, id: String(nuevo.id) }
+          set({ campeonatos: [...get().campeonatos, item] })
+        } catch (err: any) {
+          set({ error: err.message })
+          throw err
+        } finally {
+          set({ loading: false })
+        }
       },
-      updateCampeonato: (id, data) => {
-        set({
-          campeonatos: get().campeonato.map((c) =>
-            c.id === id ? { ...c, ...data } : c
-          ),
-        })
+      updateCampeonato: async (id, data) => {
+        set({ loading: true, error: null })
+        try {
+          const res = await fetch(`${API_URL}/campeonato/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || "Error al actualizar campeonato")
+          }
+
+          const updated = await res.json()
+          set({
+            campeonatos: get().campeonatos.map((c) =>
+              c.id === id ? { ...c, ...updated } : c
+            ),
+          })
+        } catch (err: any) {
+          set({ error: err.message })
+          throw err
+        } finally {
+          set({ loading: false })
+        }
       },
-      deleteCampeonato: (id) => {
-        set({ campeonatos: get().campeonato.filter((c) => c.id !== id) })
+      deleteCampeonato: async (id) => {
+        set({ loading: true, error: null })
+        try {
+          const res = await fetch(`${API_URL}/campeonato/${id}`, {
+            method: "DELETE",
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || "Error al eliminar campeonato")
+          }
+
+          set({ campeonatos: get().campeonatos.filter((c) => c.id !== id) })
+        } catch (err: any) {
+          set({ error: err.message })
+          throw err
+        } finally {
+          set({ loading: false })
+        }
       },
 
       // =====================
@@ -273,7 +387,7 @@ export const useDataStore = create<DataStore>()(
       exportData: () => ({
         arbitros: get().arbitros,
         equipos: get().equipos,
-        campeonatos: get().campeonato,
+        campeonatos: get().campeonatos,
         designaciones: get().designaciones,
         asistencias: get().asistencias,
       }),
