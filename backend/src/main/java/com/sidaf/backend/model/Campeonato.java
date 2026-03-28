@@ -36,6 +36,16 @@ public class Campeonato {
     
     private String provincia;
     
+    private String direccion;
+    
+    private String estadio;
+    
+    private String horaInicio;
+    
+    private String horaFin;
+    
+    private String diasJuego;
+    
     @Column(name = "nivel_dificultad")
     private String nivelDificultad;
     
@@ -167,6 +177,46 @@ public class Campeonato {
     
     public void setProvincia(String provincia) {
         this.provincia = provincia;
+    }
+    
+    public String getDireccion() {
+        return direccion;
+    }
+    
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+    
+    public String getEstadio() {
+        return estadio;
+    }
+    
+    public void setEstadio(String estadio) {
+        this.estadio = estadio;
+    }
+    
+    public String getHoraInicio() {
+        return horaInicio;
+    }
+    
+    public void setHoraInicio(String horaInicio) {
+        this.horaInicio = horaInicio;
+    }
+    
+    public String getHoraFin() {
+        return horaFin;
+    }
+    
+    public void setHoraFin(String horaFin) {
+        this.horaFin = horaFin;
+    }
+    
+    public String getDiasJuego() {
+        return diasJuego;
+    }
+    
+    public void setDiasJuego(String diasJuego) {
+        this.diasJuego = diasJuego;
     }
     
     public String getNivelDificultad() {

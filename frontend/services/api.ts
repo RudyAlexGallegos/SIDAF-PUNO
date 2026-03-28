@@ -145,6 +145,7 @@ export interface Campeonato {
     numeroJornadas?: number;
     numeroArbitrosRequeridos?: number;
     direccion?: string;
+    estadio?: string;
     diasJuego?: string;
     horaInicio?: string;
     horaFin?: string;

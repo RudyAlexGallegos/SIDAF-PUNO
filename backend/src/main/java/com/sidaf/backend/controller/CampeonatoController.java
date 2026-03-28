@@ -89,6 +89,11 @@ public class CampeonatoController {
             updatedCampeonato.setContacto(campeonatoDetails.getContacto());
             updatedCampeonato.setCiudad(campeonatoDetails.getCiudad());
             updatedCampeonato.setProvincia(campeonatoDetails.getProvincia());
+            updatedCampeonato.setDireccion(campeonatoDetails.getDireccion());
+            updatedCampeonato.setEstadio(campeonatoDetails.getEstadio());
+            updatedCampeonato.setHoraInicio(campeonatoDetails.getHoraInicio());
+            updatedCampeonato.setHoraFin(campeonatoDetails.getHoraFin());
+            updatedCampeonato.setDiasJuego(campeonatoDetails.getDiasJuego());
             updatedCampeonato.setNivelDificultad(campeonatoDetails.getNivelDificultad());
             updatedCampeonato.setNumeroEquipos(campeonatoDetails.getNumeroEquipos());
             updatedCampeonato.setFormato(campeonatoDetails.getFormato());
