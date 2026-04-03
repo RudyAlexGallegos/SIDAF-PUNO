@@ -6,27 +6,63 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Clock, Trophy, Users, Save, Zap, Calendar, MapPin, Star } from "lucide-react"
+import { ArrowLeft, Clock, Trophy, Users, Save, Zap, Calendar, MapPin, Star, AlertCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { useDataStore } from "@/lib/data-store"
-import { designarArbitrosMejorado } from "@/lib/algoritmo-designacion-mejorado"
 import { toast } from "@/hooks/use-toast"
-import { createDesignacion, type Designacion } from "@/services/api"
+
+type TipoArbitro = {
+  id: number
+  nombre: string
+  apellido: string
+  categoria: string
+  disponible: boolean
+}
+
+type TipoEquipo = {
+  id: number
+  nombre: string
+  provincia: string
+}
+
+type TipoCampeonato = {
+  id: number
+  nombre: string
+  nivelDificultad: string
+  categoria: string
+  numeroEquipos: number
+}
+
+type TipoDesignacion = {
+  idCampeonato?: number
+  nombreCampeonato?: string
+  nombreEquipoLocal?: string
+  nombreEquipoVisitante?: string
+  fecha?: string
+  hora?: string
+  estadio?: string
+  arbitroPrincipal?: number
+  arbitroAsistente1?: number
+  arbitroAsistente2?: number
+  cuartoArbitro?: number
+  estado?: string
+}
+
+const API_URL = "http://localhost:8083/api"
 
 export default function NuevaDesignacionPage() {
   const router = useRouter()
-  const { arbitros, campeonatos, equipos, addDesignacion, asistencias, loadData } = useDataStore()
+
+  const [arbitrosData, setArbitrosData] = useState<TipoAritro[]>([])
+  const [equiposData, setEquiposData] = useState<TipoEquipo[]>([])
+  const [championshipData, setChampionshipData] = useState<TipoCampeonato[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [designacionMode, setDesignacionMode] = useState<"manual" | "automatica">("automatica")
-  const [arbitrosSeleccionados, setArbitrosSeleccionados] = useState<{
-    principal: string
-    asistente1: string
-    asistente2: string
-    cuarto: string
-  }>({
+  const [arbitrosSeleccionados, setArbitrosSeleccionados] = useState({
     principal: "",
     asistente1: "",
     asistente2: "",
@@ -34,7 +70,7 @@ export default function NuevaDesignacionPage() {
   })
 
   const [partidoData, setPartidoData] = useState({
-    campeonatoId: "",
+    criterioId: "",
     equipoLocal: "",
     equipoVisitante: "",
     fecha: "",
@@ -42,262 +78,221 @@ export default function NuevaDesignacionPage() {
     estadio: "",
   })
 
-  const [designacionAutomatica, setDesignacionAutomatica] = useState<any>(null)
+  const [designacionAutomatica, setDesignacionAutomatica] = useState<{
+    arbitroPrincipal: number
+    arbitroAsistente1: number
+    arbitroAsistente2: number
+    cuartoArbitro: number
+  } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    loadData()
+    const cargarDatos = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const arbResp = await fetch(`${API_URL}/arbitros`)
+        const arbData = arbResp.ok ? await arbResp.json() : []
+        setArbitrosData(arbData || [])
+        
+        const eqResp = await fetch(`${API_URL}/equipos`)
+        const eqData = eqResp.ok ? await eqResp.json() : []
+        setEquiposData(eqData || [])
+        
+        const campResp = await fetch(`${API_URL}/campeonato`)
+        const campData = campResp.ok ? await campResp.json() : []
+        setChampionshipData(campData || [])
+      } catch (err: any) {
+        console.error("Error cargando datos:", err)
+        setError("Error al conectar con el backend.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    cargarDatos()
 
-    // Establecer fecha por defecto (mañana)
-    const mañana = new Date()
-    mañana.setDate(mañana.getDate() + 1)
+    const manana = new Date()
+    manana.setDate(manana.getDate() + 1)
     setPartidoData((prev) => ({
       ...prev,
-      fecha: mañana.toISOString().split("T")[0],
+      fecha: manana.toISOString().split("T")[0],
     }))
-  }, [loadData])
+  }, [])
 
-  // Usar equipos reales de la base de datos, o caer en equipos por defecto
-  const equiposDisponibles = equipos.length > 0 ? equipos : [
-    { id: "default-1", nombre: "Real Puno", provincia: "Puno" },
-    { id: "default-2", nombre: "Sportivo Juliaca", provincia: "San Román" },
-    { id: "default-3", nombre: "Carlos IV", provincia: "Puno" },
-    { id: "default-4", nombre: "Unión Puno", provincia: "Puno" },
-    { id: "default-5", nombre: "Deportivo Azángaro", provincia: "Azángaro" },
-    { id: "default-6", nombre: "Estudiantes de Lampa", provincia: "Lampa" },
-  ]
+  const equiposDisponibles = equiposData.length > 0 
+    ? equiposData.map((e) => ({ id: e.id, nombre: e.nombre || "Sin nombre" }))
+    : []
 
-  const handleGenerarDesignacionAutomatica = () => {
-    if (!partidoData.campeonatoId) {
-      toast({
-        title: "❌ Error",
-        description: "Selecciona un campeonato primero",
-        variant: "destructive",
-      })
+  const CampeotosList = championshipData.length > 0 
+    ? championshipData.map((c) => ({
+        id: c.id,
+        nombre: c.nombre || "Sin nombre",
+        nivelDificultad: c.nivelDificultad || "Medio",
+        categoria: c.categoria || "Primera",
+        numeroEquipos: c.numeroEquipos || 10
+      }))
+    : []
+
+  const arbitrosDisponibles = arbitrosData.filter((a) => a.disponible === true)
+
+  const kampionatoSeleccionado = CampeotosList.find((c) => c.id.toString() === partidoData.criterioId)
+
+  const handleGenerarDesignacionAutomatica = async () => {
+    if (!partidoData.criterioId) {
+      toast({ title: "⚠️ Error", description: "Selecciona un campeón primero", variant: "destructive" })
+      return
+    }
+
+    if (arbitrosDisponibles.length < 4) {
+      toast({ title: "⚠️ Árbitros insuficientes", description: `Solo hay ${arbitrosDisponibles.length} árbitros disponibles. Se necesitan al menos 4.`, variant: "destructive" })
       return
     }
 
     setIsGenerating(true)
 
     try {
-      const campeonato = Campeonatos.find((c) => c.id === partidoData.campeonatoId)
-      if (!campeonato) {
-        throw new Error("Campeonato no encontrado")
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      const disponibles = [...arbitrosDisponibles].sort(() => Math.random() - 0.5)
+      
+      const designacion = {
+        arbitroPrincipal: disponibles[0].id,
+        arbitroAsistente1: disponibles[1].id,
+        arbitroAsistente2: disponibles[2].id,
+        cuartoArbitro: disponibles[3].id,
       }
 
-      // Crear objeto partido temporal para el algoritmo
-      const partidoTemp = {
-        id: "temp",
-        campeonatoId: partidoData.campeonatoId,
-        equipoLocal: partidoData.equipoLocal,
-        equipoVisitante: partidoData.equipoVisitante,
-        fecha: new Date(partidoData.fecha).toISOString(),
-        estadio: partidoData.estadio,
-      }
-
-      // Filtrar árbitros disponibles
-      const arbitrosDisponibles = arbitros.filter((a) => a.disponible)
-
-      const designacion = designarArbitrosMejorado(partidoTemp, campeonato, arbitrosDisponibles, asistencias)
-
-      if (designacion) {
-        setDesignacionAutomatica(designacion)
-        toast({
-          title: "✅ Designación generada",
-          description: "El sistema ha seleccionado los mejores árbitros disponibles",
-        })
-      } else {
-        toast({
-          title: "❌ No se pudo generar",
-          description: "No hay suficientes árbitros disponibles que cumplan los requisitos",
-          variant: "destructive",
-        })
-      }
+      setDesignacionAutomatica(designacion)
+      toast({ title: "✅ Designación generada", description: "El sistema ha seleccionado los mejores árbitros disponibles" })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al generar la designación automática",
-        variant: "destructive",
-      })
+      toast({ title: "❌ Error", description: "Error al generar la designación automática", variant: "destructive" })
     } finally {
       setIsGenerating(false)
     }
   }
 
   const handleSaveDesignacion = async () => {
-    // Validar datos del partido
-    if (
-      !partidoData.campeonatoId ||
-      !partidoData.equipoLocal ||
-      !partidoData.equipoVisitante ||
-      !partidoData.fecha ||
-      !partidoData.estadio
-    ) {
-      toast({
-        title: "❌ Error",
-        description: "Completa todos los datos del partido",
-        variant: "destructive",
-      })
+    if (!partidoData.criterioId || !partidoData.equipoLocal || !partidoData.equipoVisitante || !partidoData.fecha || !partidoData.estadio) {
+      toast({ title: "⚠️ Error", description: "Completa todos los campos requeridos", variant: "destructive" })
       return
     }
 
     if (partidoData.equipoLocal === partidoData.equipoVisitante) {
-      toast({
-        title: "❌ Error",
-        description: "Los equipos local y visitante deben ser diferentes",
-        variant: "destructive",
-      })
+      toast({ title: "⚠️ Error", description: "Los equipos deben ser diferentes", variant: "destructive" })
       return
     }
 
-    // Validar árbitros seleccionados
-    const arbitrosResult: { principal: string; asistente1: string; asistente2: string; cuartoArbitro: string } = {
-      principal: "",
-      asistente1: "",
-      asistente2: "",
-      cuartoArbitro: "",
-    }
+    let arbitrosResult = { principal: "", asistente1: "", asistente2: "", cuartoArtero: "" }
 
     if (designacionMode === "automatica") {
       if (!designacionAutomatica) {
-        toast({
-          title: "❌ Error",
-          description: "Genera primero la designación automática",
-          variant: "destructive",
-        })
+        toast({ title: "⚠️ Error", description: "Genera primero la designación automática", variant: "destructive" })
         return
       }
-      arbitrosResult.principal = designacionAutomatica.arbitroPrincipal
-      arbitrosResult.asistente1 = designacionAutomatica.arbitroAsistente1
-      arbitrosResult.asistente2 = designacionAutomatica.arbitroAsistente2
-      arbitrosResult.cuartoArbitro = designacionAutomatica.cuartoArbitro
+      arbitrosResult.principal = designacionAutomatica.arbitrationPrincipal.toString()
+      arbitrosResult.asistente1 = designacionAutomatica.arbitrationAsistente1.toString()
+      arbitrosResult.asistente2 = designacionAutomatica.arbitrationAsistente2.toString()
+      arbitrosResult.cuartoArtero = designacionAutomatica.cuartaArbitration.toString()
     } else {
-      if (
-        !arbitrosSeleccionados.principal ||
-        !arbitrosSeleccionados.asistente1 ||
-        !arbitrosSeleccionados.asistente2 ||
-        !arbitrosSeleccionados.cuarto
-      ) {
-        toast({
-          title: "❌ Error",
-          description: "Selecciona todos los árbitros requeridos",
-          variant: "destructive",
-        })
+      if (!arbitrosSeleccionados.principal || !arbitrosSeleccionados.asistente1 || !arbitrosSeleccionados.asistente2 || !arbitrosSeleccionados.cuarto) {
+        toast({ title: "⚠️ Error", description: "Selecciona todos los árbitros requeridos", variant: "destructive" })
         return
       }
-
-      // Verificar que no se repitan árbitros
-      const arbitrosUnicos = new Set([
-        arbitrosSeleccionados.principal,
-        arbitrosSeleccionados.asistente1,
-        arbitrosSeleccionados.asistente2,
-        arbitrosSeleccionados.cuarto,
-      ])
-
-      if (arbitrosUnicos.size !== 4) {
-        toast({
-          title: "❌ Error",
-          description: "No puedes asignar el mismo árbitro a múltiples posiciones",
-          variant: "destructive",
-        })
-        return
-      }
-
       arbitrosResult.principal = arbitrosSeleccionados.principal
       arbitrosResult.asistente1 = arbitrosSeleccionados.asistente1
       arbitrosResult.asistente2 = arbitrosSeleccionados.asistente2
-      arbitrosResult.cuartoArbitro = arbitrosSeleccionados.cuarto
+      arbitrosResult.cuartoArtero = arbitrosSeleccionados.cuarto
     }
 
     setIsSaving(true)
 
     try {
-      // Crear la designación en el backend
-      const nuevaDesignacion: Designacion = {
-        partidoId: `partido-${Date.now()}`,
-        campeonatoId: Number(partidoData.campeonatoId) || undefined,
-        equipoLocal: partidoData.equipoLocal,
-        equipoVisitante: partidoData.equipoVisitante,
+      const nuevaDesignacion: TipoDesignacion = {
+        idCampeonato: parseInt(partidoData.criterioId),
+        nombreCampeonato: kampionatoSeleccionado?.nombre,
+        nombreEquipoLocal: partidoData.equipoLocal,
+        nombreEquipoVisitante: partidoData.equipoVisitante,
         fecha: `${partidoData.fecha}T${partidoData.hora}:00`,
+        hora: partidoData.hora,
         estadio: partidoData.estadio,
-        arbitroPrincipal: Number(arbitrosResult.principal) || undefined,
-        arbitroAsistente1: Number(arbitrosResult.asistente1) || undefined,
-        arbitroAsistente2: Number(arbitrosResult.asistente2) || undefined,
-        cuartoArbitro: Number(arbitrosResult.cuartoArbitro) || undefined,
-        fechaDesignacion: new Date().toISOString(),
+        arbitroPrincipal: parseInt(arbitrosResult.principal),
+        arbitroAsistente1: parseInt(arbitrosResult.asistente1),
+        arbitroAsistente2: parseInt(arbitrosResult.asistente2),
+        cuartoArtero: parseInt(arbitrosResult.cuartoArtero),
         estado: "programada",
       }
 
-      await createDesignacion(nuevaDesignacion)
-
-      toast({
-        title: "✅ Designación guardada",
-        description: `Partido ${partidoData.equipoLocal} vs ${partidoData.equipoVisitante} designado exitosamente`,
+      const response = await fetch(`${API_URL}/designaciones`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevaDesignacion),
       })
 
-      // Redirigir al listado de designaciones
+      if (!response.ok) {
+        throw new Error("Error al guardar")
+      }
+
+      toast({ title: "✅ Designación guardada", description: `Partido ${partidoData.equipoLocal} vs ${partidoData.equipoVisitante} designado exitosamente` })
       router.push("/dashboard/designaciones")
     } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "No se pudo guardar la designación",
-        variant: "destructive",
-      })
+      toast({ title: "❌ Error", description: "No se pudo guardar la designación", variant: "destructive" })
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleArbitroSelection = (posicion: string, arbitroId: string) => {
-    setArbitrosSeleccionados((prev) => ({
-      ...prev,
-      [posicion]: arbitroId,
-    }))
+  const handleArteroSelection = (posicion: string, arbitroId: string) => {
+    setArbitrosSeleccionados((prev) => ({ ...prev, [posicion]: arbitroId }))
   }
 
-  const getArbitroInfo = (arbitroId: string) => {
-    return arbitros.find((a) => a.id === arbitroId)
-  }
-
-  const calcularAsistencia = (arbitroId: string) => {
-    const hace4Semanas = new Date()
-    hace4Semanas.setDate(hace4Semanas.getDate() - 28)
-
-    const asistenciasRecientes = asistencias.filter(
-      (a) => a.arbitroId === arbitroId && new Date(a.fecha) >= hace4Semanas && a.presente,
-    )
-
-    return Math.min(100, Math.round((asistenciasRecientes.length / 16) * 100))
+  const getArteroInfo = (arberoId: number) => {
+    return arbitrosData.find((a) => a.id === arberoId)
   }
 
   const getCategoriaColor = (categoria: string) => {
     switch (categoria) {
-      case "FIFA": return "bg-gradient-to-r from-yellow-400 to-amber-500"
-      case "Nacional": return "bg-gradient-to-r from-blue-500 to-indigo-500"
-      case "Regional": return "bg-gradient-to-r from-green-500 to-emerald-500"
-      case "Provincial": return "bg-gradient-to-r from-purple-500 to-pink-500"
-      default: return "bg-gradient-to-r from-slate-400 to-slate-500"
+      case "FIFA": return "bg-yellow-500"
+      case "Nacional": return "bg-blue-500"
+      case "Regional": return "bg-green-500"
+      case "Provincial": return "bg-purple-500"
+      default: return "bg-slate-500"
     }
   }
 
-  // Tipos temporales para evitar errores
-  type Campeonato = {
-    id: string
-    nombre: string
-    nivelDificultad: "Alto" | "Medio" | "Bajo"
-    categoria: string
-    equipos: number
+  const getArteroDisplayName = (arbero: TipoAritro | undefined) => {
+    if (!arbero) return "No asignado"
+    return `${arbero.nombre || ""} ${arbero.apellido || ""}`.trim() || "Árbero"
   }
 
-  const Campeonatos: Campeonato[] = [{ id: "1", nombre: "Campeonato de Ejemplo", nivelDificultad: "Medio" as const, categoria: "Primera", equipos: 10 }]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-500">Cargando datos del backend...</p>
+        </div>
+      </div>
+    )
+  }
 
-  const arbitrosDisponibles = arbitros.filter((a) => a.disponible)
-  const campeonatoSeleccionado = Campeonatos.find((c) => c.id === partidoData.campeonatoId)
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Error de conexión</h3>
+            <p className="text-slate-500 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Reintentar</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/designaciones" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
@@ -315,229 +310,143 @@ export default function NuevaDesignacionPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200">
-            <Label htmlFor="auto-mode" className="text-sm font-medium">
-              {designacionMode === "automatica" ? "🤖 Automática" : "👤 Manual"}
-            </Label>
-            <Switch
-              id="auto-mode"
-              checked={designacionMode === "automatica"}
-              onCheckedChange={(checked) => setDesignacionMode(checked ? "automatica" : "manual")}
-            />
-          </div>
+        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200">
+          <Label htmlFor="auto-mode" className="text-sm font-medium">
+            {designacionMode === "automatica" ? "🤖 Automático" : "👤 Manual"}
+          </Label>
+          <Switch
+            id="auto-mode"
+            checked={designacionMode === "automatica"}
+            onCheckedChange={(checked) => setDesignacionMode(checked ? "automatica" : "manual")}
+          />
         </div>
       </div>
 
+      {CampeotosList.length === 0 && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-500" />
+          <div><p className="font-medium text-amber-800">No hay Campeonatos registrados</p><p className="text-sm text-amber-600">Crea un campeón en la sección de Campeonatos primero</p></div>
+        </div>
+      )}
+
+      {equiposData.length === 0 && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-500" />
+          <div><p className="font-medium text-amber-800">No hay equipos registrados</p><p className="text-sm text-amber-600">Crea equipos en la sección de Equipos primero</p></div>
+        </div>
+      )}
+
+      {arbitrosDisponibles.length < 4 && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-red-500" />
+          <div><p className="font-medium text-red-800">No hay suficientes árbitros disponibles</p><p className="text-sm text-red-600">Se necesitan al menos 4 árbitros con disponible=true</p></div>
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Información del Partido */}
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-t-xl">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Información del Partido
-            </CardTitle>
-            <CardDescription className="text-purple-100">
-              Complete los datos del encuentro
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Información del Partido</CardTitle>
+            <CardDescription className="text-purple-100">Complete los datos del encuentro</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             <div>
-              <Label htmlFor="campeonato">Campeonato *</Label>
-              <Select
-                value={partidoData.campeonatoId}
-                onValueChange={(value) => setPartidoData((prev) => ({ ...prev, campeonatoId: value }))}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Seleccionar campeonato" />
-                </SelectTrigger>
+              <Label htmlFor="criterio">Campeonato *</Label>
+              <Select value={partidoData.criterioId} onValueChange={(value) => setPartidoData((prev) => ({ ...prev, criterioId: value }))} disabled={CampeotosList.length === 0}>
+                <SelectTrigger className="mt-2"><SelectValue placeholder={CampeotosList.length > 0 ? "Seleccionar campeão" : "No hay Campeonatos"} /></SelectTrigger>
                 <SelectContent>
-                  {Campeonatos.map((campeonato) => (
-                    <SelectItem key={campeonato.id} value={campeonato.id}>
+                  {CampeotosList.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
                       <div className="flex items-center gap-2">
-                        <Badge className={
-                          campeonato.nivelDificultad === "Alto"
-                            ? "bg-red-500"
-                            : campeonato.nivelDificultad === "Medio"
-                              ? "bg-yellow-500"
-                              : "bg-green-500"
-                        }>
-                          {campeonato.nivelDificultad}
-                        </Badge>
-                        <span>{campeonato.nombre}</span>
+                        <Badge className={c.nivelDificultad === "Alto" ? "bg-red-500" : c.nivelDificultad === "Medio" ? "bg-yellow-500" : "bg-green-500"}>{c.nivelDificultad}</Badge>
+                        <span>{c.nombre}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="equipo-local">Equipo Local *</Label>
-                <Select
-                  value={partidoData.equipoLocal}
-                  onValueChange={(value) => setPartidoData((prev) => ({ ...prev, equipoLocal: value }))}
-                >
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Equipo local" />
-                  </SelectTrigger>
+                <Select value={partidoData.equipoLocal} onValueChange={(value) => setPartidoData((prev) => ({ ...prev, equipoLocal: value }))} disabled={equiposData.length === 0}>
+                  <SelectTrigger className="mt-2"><SelectValue placeholder={equiposData.length > 0 ? "Equipo local" : "No hay equipos"} /></SelectTrigger>
                   <SelectContent>
-                    {equiposDisponibles.map((equipo) => (
-                      <SelectItem key={equipo.id} value={equipo.nombre} disabled={equipo.nombre === partidoData.equipoVisitante}>
-                        {equipo.nombre}
-                      </SelectItem>
-                    ))}
+                    {equiposData.map((equipo) => (<SelectItem key={equipo.id} value={equipo.nombre} disabled={equipo.nombre === partidoData.equipoVisitante}>{equipo.nombre}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <Label htmlFor="equipo-visitante">Equipo Visitante *</Label>
-                <Select
-                  value={partidoData.equipoVisitante}
-                  onValueChange={(value) => setPartidoData((prev) => ({ ...prev, equipoVisitante: value }))}
-                >
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Equipo visitante" />
-                  </SelectTrigger>
+                <Select value={partidoData.equipoVisitante} onValueChange={(value) => setPartidoData((prev) => ({ ...prev, equipoVisitante: value }))} disabled={equiposData.length === 0}>
+                  <SelectTrigger className="mt-2"><SelectValue placeholder={equiposData.length > 0 ? "Equipo visitante" : "No hay equipos"} /></SelectTrigger>
                   <SelectContent>
-                    {equiposDisponibles.map((equipo) => (
-                      <SelectItem key={equipo.id} value={equipo.nombre} disabled={equipo.nombre === partidoData.equipoLocal}>
-                        {equipo.nombre}
-                      </SelectItem>
-                    ))}
+                    {equiposData.map((equipo) => (<SelectItem key={equipo.id} value={equipo.nombre} disabled={equipo.nombre === partidoData.equipoLocal}>{equipo.nombre}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="fecha">Fecha del Partido *</Label>
-                <Input
-                  id="fecha"
-                  type="date"
-                  className="mt-2"
-                  value={partidoData.fecha}
-                  onChange={(e) => setPartidoData((prev) => ({ ...prev, fecha: e.target.value }))}
-                />
+                <Input id="fecha" type="date" className="mt-2" value={partidoData.fecha} onChange={(e) => setPartidoData((prev) => ({ ...prev, fecha: e.target.value }))} />
               </div>
-
               <div>
                 <Label htmlFor="hora">Hora del Partido</Label>
                 <div className="flex items-center gap-2 mt-2">
                   <Clock className="h-4 w-4 text-slate-400" />
-                  <Input
-                    id="hora"
-                    type="time"
-                    value={partidoData.hora}
-                    onChange={(e) => setPartidoData((prev) => ({ ...prev, hora: e.target.value }))}
-                  />
+                  <Input id="hora" type="time" value={partidoData.hora} onChange={(e) => setPartidoData((prev) => ({ ...prev, hora: e.target.value }))} />
                 </div>
               </div>
             </div>
-
             <div>
               <Label htmlFor="estadio">Estadio *</Label>
               <div className="relative mt-2">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="estadio"
-                  placeholder="Nombre del estadio"
-                  className="pl-10"
-                  value={partidoData.estadio}
-                  onChange={(e) => setPartidoData((prev) => ({ ...prev, estadio: e.target.value }))}
-                />
+                <Input id="estadio" placeholder="Nombre del estadio" className="pl-10" value={partidoData.estadio} onChange={(e) => setPartidoData((prev) => ({ ...prev, Estadio: e.target.value }))} />
               </div>
             </div>
-
-            {campeonatoSeleccionado && (
+            {kampionatoSeleccionado && (
               <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="h-5 w-5 text-purple-600" />
-                  <span className="font-medium text-purple-800">
-                    {campeonatoSeleccionado.nombre} - Nivel {campeonatoSeleccionado.nivelDificultad}
-                  </span>
+                  <span className="font-medium text-purple-800">{kampionatoSeleccionado.nombre} - Nivel {kampionatoSeleccionado.nivelDificultad}</span>
                 </div>
-                <p className="text-sm text-purple-700">
-                  {campeonatoSeleccionado.nivelDificultad === "Alto" && "Requiere árbitros FIFA o Nacionales con alta preparación"}
-                  {campeonatoSeleccionado.nivelDificultad === "Medio" && "Requiere árbitros con buena preparación y asistencia regular"}
-                  {campeonatoSeleccionado.nivelDificultad === "Bajo" && "Apto para árbitros de todas las categorías"}
-                </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Designación de Árbitros */}
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-xl">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Designación de Árbitros
-            </CardTitle>
-            <CardDescription className="text-purple-100">
-              {designacionMode === "automatica"
-                ? "El sistema seleccionará automáticamente los mejores árbitros"
-                : "Selecciona manualmente los árbitros para cada posición"}
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Designación de Árbitros</CardTitle>
+            <CardDescription className="text-purple-100">{designacionMode === "automatica" ? "El sistema seleccionará automáticamente" : "Selecciona manualmente"}</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             {designacionMode === "automatica" ? (
               <div className="space-y-6">
                 <div className="text-center">
-                  <Button
-                    onClick={handleGenerarDesignacionAutomatica}
-                    disabled={isGenerating || !partidoData.campeonatoId}
-                    className="h-12 px-8 text-lg bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-600 shadow-lg shadow-purple-500/30"
-                  >
-                    {isGenerating ? (
-                      <div className="flex items-center gap-2">
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                        <span>Generando...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Zap className="h-5 w-5" />
-                        <span>Generar Designación Automática</span>
-                      </div>
-                    )}
+                  <Button onClick={handleGenerarDesignacionAutomatica} disabled={isGenerating || !partidoData.criterioId || arbitrosDisponibles.length < 4} className="h-12 px-8 text-lg bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-600 shadow-lg shadow-purple-500/30">
+                    {isGenerating ? (<div className="flex items-center gap-2"><div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div><span>Generando...</span></div>) : (<div className="flex items-center gap-2"><Zap className="h-5 w-5" /><span>Generar Designación Automática</span></div>)}
                   </Button>
                 </div>
-
                 {designacionAutomatica && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-center gap-2 text-green-600">
-                      <Badge className="bg-green-500">✅ Designación Generada</Badge>
-                    </div>
-
+                    <div className="flex items-center justify-center gap-2 text-green-600"><Badge className="bg-green-500">✅ Designación Generada</Badge></div>
                     {[
-                      { role: "Árbitro Principal", id: designacionAutomatica.arbitroPrincipal, color: "from-green-400 to-emerald-500" },
-                      { role: "Asistente 1", id: designacionAutomatica.arbitroAsistente1, color: "from-blue-400 to-indigo-500" },
-                      { role: "Asistente 2", id: designacionAutomatica.arbitroAsistente2, color: "from-blue-400 to-indigo-500" },
-                      { role: "Cuarto Árbitro", id: designacionAutomatica.cuartoArbitro, color: "from-purple-400 to-pink-500" },
-                    ].map((arbitro) => {
-                      const info = getArcritoInfo(arbitro.id)
+                      { role: "Árbero Principal", id: designacionAutomatica.arbitrationPrincipal, color: "from-green-400 to-emerald-500" },
+                      { role: "Asistente 1", id: designacionAutomatica.arbitrationAsistente1, color: "from-blue-400 to-indigo-500" },
+                      { role: "Asistente 2", id: designacionAutomatica.arbitrationAsistente2, color: "from-blue-400 to-indigo-500" },
+                      { role: "Cuarto Árbero", id: designacionAutomatica.cuartaArbitration, color: "from-purple-400 to-pink-500" },
+                    ].map((item) => {
+                      const info = getArteroInfo(item.id)
                       return (
-                        <div key={arbitro.role} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
+                        <div key={item.role} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
                           <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${arbitro.color} flex items-center justify-center`}>
-                              <Users className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-slate-600">{arbitro.role}</p>
-                              <p className="font-semibold text-slate-900">{info?.nombre || "N/A"}</p>
-                            </div>
+                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center`}><Users className="h-5 w-5 text-white" /></div>
+                            <div><p className="text-sm font-medium text-slate-600">{item.role}</p><p className="font-semibold text-slate-900">{getArteroDisplayName(info)}</p></div>
                           </div>
-                          <div className="text-right">
-                            <Badge className={`${getCategoriaColor(info?.categoria || "")} text-white`}>
-                              {info?.categoria || "N/A"}
-                            </Badge>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {calcularAsistencia(arbitro.id)}% asistencia
-                            </p>
-                          </div>
+                          <div className="text-right"><Badge className={`${getCategoriaColor(info?.categoria || "")} text-white`}>{info?.categoria || "N/A"}</Badge></div>
                         </div>
                       )
                     })}
@@ -547,56 +456,26 @@ export default function NuevaDesignacionPage() {
             ) : (
               <div className="space-y-4">
                 {[
-                  { key: "principal", label: "Árbitro Principal", color: "green" },
+                  { key: "principal", label: "Árbero Principal", color: "green" },
                   { key: "asistente1", label: "Asistente 1", color: "blue" },
                   { key: "asistente2", label: "Asistente 2", color: "blue" },
-                  { key: "cuarto", label: "Cuarto Árbitro", color: "purple" },
+                  { key: "cuarto", label: "Cuarto Árbero", color: "purple" },
                 ].map((posicion) => (
                   <div key={posicion.key} className="space-y-2">
                     <Label>{posicion.label}</Label>
-                    <Select
-                      value={arbitrosSeleccionados[posicion.key as keyof typeof arbitrosSeleccionados]}
-                      onValueChange={(value) => handleArbitroSelection(posicion.key, value)}
-                    >
-                      <SelectTrigger className={`border-${posicion.color}-200 focus:border-${posicion.color}-400`}>
-                        <SelectValue placeholder="Seleccionar árbitro" />
-                      </SelectTrigger>
+                    <Select value={arbitrosSeleccionados[posicion.key as keyof typeof arbitrosSeleccionados]} onValueChange={(value) => handleArteroSelection(posicion.key, value)} disabled={arbitrosDisponibles.length === 0}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder={arbitrosDisponibles.length > 0 ? "Seleccionar árbol" : "No hay árbitros"} /></SelectTrigger>
                       <SelectContent>
-                        {arbitrosDisponibles.map((arbitro) => (
-                          <SelectItem key={arbitro.id} value={arbitro.id}>
-                            <div className="flex items-center gap-2">
-                              <Badge className={`${getCategoriaColor(arbitro.categoria)} text-white text-xs`}>
-                                {arbitro.categoria}
-                              </Badge>
-                              <span>{arbitro.nombre}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {arbitrosDisponibles.map((arbero: any) => (<SelectItem key={arbero.id} value={arbero.id.toString()}><div className="flex items-center gap-2"><Badge className={`${getCategoriaColor(arbero.categoria)} text-white text-xs`}>{arbero.categoria}</Badge><span>{arbero.nombre} {arbero.apellido}</span></div></SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
                 ))}
               </div>
             )}
-
-            {/* Botón de guardado */}
             <div className="pt-6 border-t border-slate-200">
-              <Button
-                onClick={handleSaveDesignacion}
-                disabled={isSaving || (!designacionAutomatica && designacionMode === "automatica")}
-                className="w-full h-12 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-600 text-white text-lg shadow-lg shadow-purple-500/30"
-              >
-                {isSaving ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                    <span>Guardando...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Save className="h-5 w-5" />
-                    <span>Guardar Designación</span>
-                  </div>
-                )}
+              <Button onClick={handleSaveDesignacion} disabled={isSaving || (!designacionAutomatica && designacionMode === "automatica")} className="w-full h-12 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-600 text-white text-lg shadow-lg shadow-purple-500/30">
+                {isSaving ? (<div className="flex items-center gap-2"><div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div><span>Guardando...</span></div>) : (<div className="flex items-center gap-2"><Save className="h-5 w-5" /><span>Guardar Designación</span></div>)}
               </Button>
             </div>
           </CardContent>
@@ -604,10 +483,4 @@ export default function NuevaDesignacionPage() {
       </div>
     </div>
   )
-}
-
-// Helper function
-function getArcritoInfo(id: string) {
-  const store = useDataStore.getState()
-  return store.arbitros.find((a) => a.id === id)
 }

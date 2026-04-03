@@ -324,6 +324,12 @@ export interface Designacion {
     estado?: string;
     observaciones?: string;
     createdAt?: string;
+    // Campos adicionales para nueva designación
+    arbitroPrincipal?: number;
+    arbitroAsistente1?: number;
+    arbitroAsistente2?: number;
+    cuartoArbitro?: number;
+    fechaDesignacion?: string;
 }
 
 export async function getDesignaciones(): Promise<Designacion[]> {

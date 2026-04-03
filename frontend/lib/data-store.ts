@@ -101,8 +101,7 @@ export interface Designacion {
 interface DataStore {
   arbitros: Arbitro[]
   equipos: Equipo[]
-  campeonatos: Campeonato[]
-  asistencias: Asistencia[]
+  circuitos: Campeonato[]
   designaciones: Designacion[]
   loading: boolean
   error: string | null
@@ -117,12 +116,12 @@ interface DataStore {
   updateEquipo: (id: string, data: Partial<Equipo>) => void
   deleteEquipo: (id: string) => void
 
-  // campeonatos
+  // Campeonatos
   addCampeonato: (c: Campeonato) => void
   updateCampeonato: (id: string, data: Partial<Campeonato>) => void
   deleteCampeonato: (id: string) => void
 
-  // asistencias
+  // Asistencias
   addAsistencia: (a: Asistencia) => void
   removeAsistencia: (id: string) => void
 
@@ -381,8 +380,52 @@ export const useDataStore = create<DataStore>()(
       // =====================
       // UTIL
       // =====================
-      loadData: () => {
-        // noop for now, could fetch or initialize sample data
+      loadData: async () => {
+        set({ loading: true, error: null })
+        try {
+          // Cargar árbitros
+          const arbitrosRes = await fetch(`${API_URL}/arbitros`)
+          if (arbitrosRes.ok) {
+            const arbitrosData = await arbitrosRes.json()
+            const normalizedArbitros = (arbitrosData || []).map((d: any) => ({ ...d, id: String(d.id) }))
+            set({ arbitros: normalizedArbitros })
+          }
+
+          // Cargar equipos
+          const equiposRes = await fetch(`${API_URL}/equipos`)
+          if (equiposRes.ok) {
+            const equiposData = await equiposRes.json()
+            const normalizedEquipos = (equiposData || []).map((d: any) => ({ ...d, id: String(d.id) }))
+            set({ equipos: normalizedEquipos })
+          }
+
+          // Cargar Campeonatos
+          const champsRes = await fetch(`${API_URL}/campeonato`)
+          if (champsRes.ok) {
+            const champsData = await champsRes.json()
+            const normalizedChamps = (champsData || []).map((d: any) => ({ ...d, id: String(d.id), nivelDificultad: d.nivelDificultad || "Medio" }))
+            set({ circuitos: normalizedChamps })
+          }
+
+          // Cargar asistencias
+          const asistsRes = await fetch(`${API_URL}/asistencias`)
+          if (asistsRes.ok) {
+            const asistsData = await asistsRes.json()
+            const normalizedAsists = (asistsData || []).map((d: any) => ({ 
+              ...d, 
+              id: String(d.id), 
+              arbitroId: String(d.idAribro || d.idAritro || d.idArbitro || d.arbitrId || d.arbitroId || d.id),
+              presente: d.estado === 'presente' || d.estado === 'presente' || d.presente === true
+            }))
+            set({ assistencias: normalizedAsists })
+          }
+
+        } catch (err: any) {
+          console.error("Error cargando datos:", err)
+          set({ error: err.message })
+        } finally {
+          set({ loading: false })
+        }
       },
       exportData: () => ({
         arbitros: get().arbitros,
