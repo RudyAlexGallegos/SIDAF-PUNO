@@ -82,7 +82,7 @@ export default function EditarEquipoPage() {
         try {
             const response = await updateEquipo(equipoId, form)
             console.log('Equipo actualizado:', response)
-            router.push("/dashboard/campeonato/equipos")
+            router.push("/dashboard/campeonatos/equipos")
         } catch (err: any) {
             console.error("Error completo:", err)
             setError(err.message || "Error al actualizar el equipo. Intente de nuevo.")
@@ -137,7 +137,7 @@ export default function EditarEquipoPage() {
         <div className="container mx-auto py-8 px-4 max-w-4xl">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-                <Link href="/dashboard/campeonato/equipos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                <Link href="/dashboard/campeonatos/equipos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
                     <ArrowLeft className="h-5 w-5" />
                     <span>Volver</span>
                 </Link>

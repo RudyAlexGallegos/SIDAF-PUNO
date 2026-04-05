@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users } from "lucide-react"
-import { createCampeonato } from "@/services/api"
+import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users, AlertCircle } from "lucide-react"
+import { createCampeonato, getEquipos, type Equipo } from "@/services/api"
+import { toast } from "@/hooks/use-toast"
 
 const DIAS_SEMANA = [
   { id: "lunes", label: "Lunes" },
@@ -22,18 +23,88 @@ const DIAS_SEMANA = [
   { id: "domingo", label: "Domingo" },
 ]
 
-const EQUIPOS_EJEMPLO = [
-  { id: 1, nombre: "C.D CONTINENTAL", provincia: "Puno", division: "Primera División" },
-  { id: 2, nombre: "C.D CENTRAL GALENO", provincia: "Puno", division: "Primera División" },
-]
-
 export default function NuevoCampeonatoPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [equiposLoading, setEquiposLoading] = useState(true)
+  const [equipos, setEquipos] = useState<Equipo[]>([])
   const [busquedaEquipo, setBusquedaEquipo] = useState("")
   const [filtroProvincia, setFiltroProvincia] = useState("todas")
   const [filtroDivision, setFiltroDivision] = useState("todas")
   const [equiposSeleccionados, setEquiposSeleccionados] = useState<number[]>([])
+  const [errores, setErrores] = useState<Record<string, string>>({})
+
+  // Cargar equipos al montar el componente
+  useEffect(() => {
+    const cargarEquipos = async () => {
+      try {
+        const data = await getEquipos()
+        setEquipos(data)
+      } catch (error) {
+        console.error("Error al cargar equipos:", error)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los equipos disponibles",
+          variant: "destructive"
+        })
+      } finally {
+        setEquiposLoading(false)
+      }
+    }
+    cargarEquipos()
+  }, [])
+
+  // Función de validación
+  const validarFormulario = () => {
+    const nuevosErrores: Record<string, string> = {}
+
+    // Validar campos requeridos
+    if (!formData.nombre.trim()) {
+      nuevosErrores.nombre = "El nombre del campeonato es requerido"
+    }
+
+    if (!formData.fechaInicio) {
+      nuevosErrores.fechaInicio = "La fecha de inicio es requerida"
+    }
+
+    if (!formData.fechaFin) {
+      nuevosErrores.fechaFin = "La fecha de fin es requerida"
+    }
+
+    // Validar lógica de fechas
+    if (formData.fechaInicio && formData.fechaFin) {
+      const fechaInicio = new Date(formData.fechaInicio)
+      const fechaFin = new Date(formData.fechaFin)
+      if (fechaFin <= fechaInicio) {
+        nuevosErrores.fechaFin = "La fecha de fin debe ser posterior a la fecha de inicio"
+      }
+    }
+
+    // Validar lógica de horas
+    if (formData.horaInicio && formData.horaFin) {
+      if (formData.horaFin <= formData.horaInicio) {
+        nuevosErrores.horaFin = "La hora de fin debe ser posterior a la hora de inicio"
+      }
+    }
+
+    // Validar equipos (mínimo 2)
+    if (equiposSeleccionados.length < 2) {
+      nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
+    }
+
+    // Validar días de juego
+    if (formData.diasJuego.length === 0) {
+      nuevosErrores.diasJuego = "Debe seleccionar al menos un día de juego"
+    }
+
+    // Validar contacto (formato básico de teléfono)
+    if (formData.contacto && !/^\+?[\d\s\-\(\)]+$/.test(formData.contacto)) {
+      nuevosErrores.contacto = "Formato de teléfono inválido"
+    }
+
+    setErrores(nuevosErrores)
+    return Object.keys(nuevosErrores).length === 0
+  }
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -67,23 +138,38 @@ export default function NuevoCampeonatoPage() {
     }
   }
 
-  const handleEquipoToggle = (equipoId: number) => {
-    if (equiposSeleccionados.includes(equipoId)) {
-      setEquiposSeleccionados(equiposSeleccionados.filter((id) => id !== equipoId))
-    } else if (equiposSeleccionados.length < 16) {
-      setEquiposSeleccionados([...equiposSeleccionados, equipoId])
-    }
-  }
+  const handleEquipoToggle = useCallback((equipoId: number) => {
+    setEquiposSeleccionados(prev => {
+      if (prev.includes(equipoId)) {
+        return prev.filter((id) => id !== equipoId)
+      } else if (prev.length < 16) {
+        return [...prev, equipoId]
+      }
+      return prev
+    })
+  }, [])
 
-  const equiposFiltrados = EQUIPOS_EJEMPLO.filter((equipo) => {
-    const matchBusqueda = equipo.nombre.toLowerCase().includes(busquedaEquipo.toLowerCase())
-    const matchProvincia = filtroProvincia === "todas" || equipo.provincia === filtroProvincia
-    const matchDivision = filtroDivision === "todas" || equipo.division === filtroDivision
-    return matchBusqueda && matchProvincia && matchDivision
-  })
+  const equiposFiltrados = useMemo(() => {
+    return equipos.filter((equipo) => {
+      const matchBusqueda = equipo.nombre.toLowerCase().includes(busquedaEquipo.toLowerCase())
+      const matchProvincia = filtroProvincia === "todas" || equipo.provincia === filtroProvincia
+      const matchDivision = filtroDivision === "todas" || equipo.categoria === filtroDivision
+      return matchBusqueda && matchProvincia && matchDivision
+    })
+  }, [equipos, busquedaEquipo, filtroProvincia, filtroDivision])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validarFormulario()) {
+      toast({
+        title: "Errores de validación",
+        description: "Corrige los errores marcados antes de continuar",
+        variant: "destructive"
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -106,9 +192,19 @@ export default function NuevoCampeonatoPage() {
         equipos: equiposSeleccionados,
       })
 
+      toast({
+        title: "Campeonato creado",
+        description: `El campeonato "${formData.nombre}" se ha creado exitosamente`,
+      })
+
       router.push("/dashboard/campeonatos")
     } catch (error) {
       console.error("Error al crear campeonato:", error)
+      toast({
+        title: "Error al crear campeonato",
+        description: "Ocurrió un error al guardar el campeonato. Inténtalo de nuevo.",
+        variant: "destructive"
+      })
     } finally {
       setIsLoading(false)
     }
@@ -153,7 +249,14 @@ export default function NuevoCampeonatoPage() {
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                     required
+                    className={errores.nombre ? "border-red-500" : ""}
                   />
+                  {errores.nombre && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errores.nombre}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,7 +325,14 @@ export default function NuevoCampeonatoPage() {
                       value={formData.fechaInicio}
                       onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
                       required
+                      className={errores.fechaInicio ? "border-red-500" : ""}
                     />
+                    {errores.fechaInicio && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.fechaInicio}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -233,7 +343,14 @@ export default function NuevoCampeonatoPage() {
                       value={formData.fechaFin}
                       onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
                       required
+                      className={errores.fechaFin ? "border-red-500" : ""}
                     />
+                    {errores.fechaFin && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.fechaFin}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -255,7 +372,14 @@ export default function NuevoCampeonatoPage() {
                       placeholder="Ej: +51 999 999 999"
                       value={formData.contacto}
                       onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+                      className={errores.contacto ? "border-red-500" : ""}
                     />
+                    {errores.contacto && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.contacto}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -329,7 +453,14 @@ export default function NuevoCampeonatoPage() {
                       type="time"
                       value={formData.horaFin}
                       onChange={(e) => setFormData({ ...formData, horaFin: e.target.value })}
+                      className={errores.horaFin ? "border-red-500" : ""}
                     />
+                    {errores.horaFin && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.horaFin}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -349,6 +480,12 @@ export default function NuevoCampeonatoPage() {
                       </div>
                     ))}
                   </div>
+                  {errores.diasJuego && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errores.diasJuego}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -362,72 +499,89 @@ export default function NuevoCampeonatoPage() {
                 </CardTitle>
                 <CardDescription>
                   Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
+                  {equiposSeleccionados.length < 2 && (
+                    <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar equipos..."
-                      value={busquedaEquipo}
-                      onChange={(e) => setBusquedaEquipo(e.target.value)}
-                      className="pl-8"
-                    />
+                {equiposLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2">Cargando equipos...</span>
                   </div>
-
-                  <Select value={filtroProvincia} onValueChange={setFiltroProvincia}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="Todas las provincias" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todas">Todas las provincias</SelectItem>
-                      <SelectItem value="Puno">Puno</SelectItem>
-                      <SelectItem value="Azángaro">Azángaro</SelectItem>
-                      <SelectItem value="Melgar">Melgar</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filtroDivision} onValueChange={setFiltroDivision}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="Todas las divisiones" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todas">Todas las divisiones</SelectItem>
-                      <SelectItem value="Primera División">Primera División</SelectItem>
-                      <SelectItem value="Segunda División">Segunda División</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="border rounded-lg divide-y">
-                  {equiposFiltrados.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
-                      No se encontraron equipos
-                    </div>
-                  ) : (
-                    equiposFiltrados.map((equipo) => (
-                      <div
-                        key={equipo.id}
-                        className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer"
-                        onClick={() => handleEquipoToggle(equipo.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            checked={equiposSeleccionados.includes(equipo.id)}
-                            onCheckedChange={() => handleEquipoToggle(equipo.id)}
-                          />
-                          <div>
-                            <p className="font-medium">{equipo.nombre}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {equipo.division} • {equipo.provincia}
-                            </p>
-                          </div>
-                        </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar equipos..."
+                          value={busquedaEquipo}
+                          onChange={(e) => setBusquedaEquipo(e.target.value)}
+                          className="pl-8"
+                        />
                       </div>
-                    ))
-                  )}
-                </div>
+
+                      <Select value={filtroProvincia} onValueChange={setFiltroProvincia}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <SelectValue placeholder="Todas las provincias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todas">Todas las provincias</SelectItem>
+                          <SelectItem value="Puno">Puno</SelectItem>
+                          <SelectItem value="Azángaro">Azángaro</SelectItem>
+                          <SelectItem value="Melgar">Melgar</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={filtroDivision} onValueChange={setFiltroDivision}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <SelectValue placeholder="Todas las categorías" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todas">Todas las categorías</SelectItem>
+                          <SelectItem value="Primera División">Primera División</SelectItem>
+                          <SelectItem value="Segunda División">Segunda División</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="border rounded-lg divide-y">
+                      {equiposFiltrados.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          No se encontraron equipos
+                        </div>
+                      ) : (
+                        equiposFiltrados.map((equipo) => (
+                          <div
+                            key={equipo.id}
+                            className="flex items-center justify-between p-4 hover:bg-muted/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={equipo.id ? equiposSeleccionados.includes(equipo.id) : false}
+                                onCheckedChange={() => equipo.id && handleEquipoToggle(equipo.id)}
+                              />
+                              <div>
+                                <p className="font-medium">{equipo.nombre}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {equipo.categoria} • {equipo.provincia}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    {errores.equipos && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.equipos}
+                      </p>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
 

@@ -94,13 +94,13 @@ export default function EditarCampeonatoPage() {
             ...formData,
             numeroEquipos: formData.equipoIds?.length || formData.numeroEquipos || 0,
         })
-        router.push("/dashboard/campeonato")
+        router.push("/dashboard/campeonatos")
     }
 
     const handleDelete = () => {
         if (confirm("¿Estás seguro de eliminar este campeonato? Esta acción no se puede deshacer.")) {
             deleteCampeonato(championshipId)
-            router.push("/dashboard/campeonato")
+            router.push("/dashboard/campeonatos")
         }
     }
 
@@ -122,25 +122,7 @@ export default function EditarCampeonatoPage() {
                 <h2 className="text-xl font-semibold text-slate-900">Campeonato no encontrado</h2>
                 <p className="text-slate-500 mt-2">El campeonato que buscas no existe o ha sido eliminado.</p>
                 <Button asChild className="mt-6">
-                    <Link href="/dashboard/campeonato">Volver a Campeonatos</Link>
-                </Button>
-            </div>
-        )
-    }
-
-    // Componente para grupo de equipos
-    const EquipoGrupo = ({ title, equiposList, badgeColor }: { title: string, equiposList: typeof filteredEquipos, badgeColor: string }) => {
-        if (equiposList.length === 0) return null
-        const allSelected = equiposList.length > 0 && equiposList.every(e => formData.equipoIds?.includes(e.id))
-        const someSelected = equiposList.some(e => formData.equipoIds?.includes(e.id))
-
-        return (
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                        <Badge className={badgeColor}>{title}</Badge>
-                        <span className="text-sm text-slate-500">{equiposList.length} equipos</span>
-                    </div>
+                        <Link href="/dashboard/campeonatos">Volver a Campeonatos</Link>
                     <Button
                         type="button"
                         variant="ghost"
@@ -202,7 +184,7 @@ export default function EditarCampeonatoPage() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <Link
-                                href="/dashboard/campeonato"
+                                href="/dashboard/campeonatos"
                                 className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
                             >
                                 <ArrowLeft className="h-5 w-5" />
@@ -327,7 +309,7 @@ export default function EditarCampeonatoPage() {
                             <CardDescription className="flex items-center justify-between">
                                 <span>Selecciona los equipos para este campeonato</span>
                                 <Button asChild variant="link" className="text-blue-500 p-0">
-                                    <Link href="/dashboard/campeonato/equipos">
+                                    <Link href="/dashboard/campeonatos/equipos">
                                         <Plus className="h-4 w-4 mr-1" />
                                         Crear nuevo equipo
                                     </Link>
@@ -364,7 +346,7 @@ export default function EditarCampeonatoPage() {
                                     <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                                     <p className="text-slate-500 mb-4">No hay equipos registrados aún</p>
                                     <Button asChild className="bg-blue-500 hover:bg-blue-600">
-                                        <Link href="/dashboard/campeonato/equipos">
+                                        <Link href="/dashboard/campeonatos/equipos">
                                             <Plus className="h-4 w-4 mr-2" />
                                             Crear Primer Equipo
                                         </Link>
@@ -587,7 +569,7 @@ export default function EditarCampeonatoPage() {
                 {/* Botones */}
                 <div className="flex gap-4 justify-end pb-8">
                     <Button type="button" variant="outline" asChild>
-                        <Link href="/dashboard/campeonato">Cancelar</Link>
+                        <Link href="/dashboard/campeonatos">Cancelar</Link>
                     </Button>
                     <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white">
                         <Save className="h-4 w-4 mr-2" />

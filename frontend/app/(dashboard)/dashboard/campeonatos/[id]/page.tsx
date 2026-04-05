@@ -9,18 +9,55 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Trophy, Calendar, Users, MapPin, Clock, Shield, Edit2, CalendarDays } from "lucide-react"
 import { useDataStore, type Campeonato } from "@/lib/data-store"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
+
 export default function DetalleCampeonatoPage() {
     const params = useParams()
     const { campeonatos, equipos } = useDataStore()
     const [loading, setLoading] = useState(true)
     const [championship, setChampionship] = useState<Campeonato | null>(null)
+    const [error, setError] = useState<string>("")
 
     const championshipId = params.id as string
 
     useEffect(() => {
-        const found = campeonatos.find((c) => c.id === championshipId)
-        setChampionship(found || null)
-        setLoading(false)
+        let active = true
+        const found = campeonatos.find((c) => String(c.id) === championshipId)
+
+        if (found) {
+            setChampionship(found)
+            setLoading(false)
+            setError("")
+            return
+        }
+
+        async function fetchChampionship() {
+            try {
+                setLoading(true)
+                setError("")
+
+                const res = await fetch(`${API_URL}/campeonatos/${championshipId}`)
+                if (!res.ok) throw new Error("Campeonato no encontrado")
+
+                const data = await res.json()
+                if (!active) return
+
+                setChampionship({ ...data, id: String(data.id) })
+            } catch (err: any) {
+                if (!active) return
+                console.error("Error cargando campeonato:", err)
+                setChampionship(null)
+                setError("No se pudo cargar el campeonato. Intenta nuevamente más tarde.")
+            } finally {
+                if (active) setLoading(false)
+            }
+        }
+
+        fetchChampionship()
+
+        return () => {
+            active = false
+        }
     }, [championshipId, campeonatos])
 
     // Obtener equipos seleccionados
@@ -57,9 +94,11 @@ export default function DetalleCampeonatoPage() {
             <div className="container mx-auto py-8 px-4 text-center">
                 <Trophy className="h-16 w-16 text-slate-300 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-slate-900">Campeonato no encontrado</h2>
-                <p className="text-slate-500 mt-2">El campeonato que buscas no existe o ha sido eliminado.</p>
+                <p className="text-slate-500 mt-2">
+                    {error || "El campeonato que buscas no existe o ha sido eliminado."}
+                </p>
                 <Button asChild className="mt-6">
-                    <Link href="/dashboard/campeonato">Volver a Campeonatos</Link>
+                    <Link href="/dashboard/campeonatos">Volver a Campeonatos</Link>
                 </Button>
             </div>
         )
@@ -70,7 +109,7 @@ export default function DetalleCampeonatoPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/campeonato" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                    <Link href="/dashboard/campeonatos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
                         <ArrowLeft className="h-5 w-5" />
                         <span className="hidden sm:inline">Volver</span>
                     </Link>
@@ -89,7 +128,7 @@ export default function DetalleCampeonatoPage() {
                     </div>
                 </div>
                 <Button asChild className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
-                    <Link href={`/dashboard/campeonato/${championship.id}/editar`}>
+                    <Link href={`/dashboard/campeonatos/${championship.id}/editar`}>
                         <Edit2 className="h-4 w-4 mr-2" />
                         Editar
                     </Link>

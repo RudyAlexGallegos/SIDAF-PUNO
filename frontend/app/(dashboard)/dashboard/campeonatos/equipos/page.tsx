@@ -137,7 +137,7 @@ export default function EquiposPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/campeonato" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                    <Link href="/dashboard/campeonatos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
                         <ArrowLeft className="h-5 w-5" />
                         <span className="hidden sm:inline">Volver</span>
                     </Link>
@@ -153,7 +153,7 @@ export default function EquiposPage() {
                     </div>
                 </div>
                 <Button asChild className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-                    <Link href="/dashboard/campeonato/equipos/nuevo">
+                    <Link href="/dashboard/campeonatos/equipos/nuevo">
                         <Plus className="h-4 w-4 mr-2" />
                         Nuevo Equipo
                     </Link>
@@ -337,7 +337,7 @@ export default function EquiposPage() {
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                     <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white">
-                                        <Link href={`/dashboard/campeonato/equipos/${equipo.id}/editar`}>
+                                        <Link href={`/dashboard/campeonatos/equipos/${equipo.id}/editar`}>
                                             <Edit className="h-4 w-4 mr-1" />
                                             Editar
                                         </Link>

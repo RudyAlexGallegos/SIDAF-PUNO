@@ -91,8 +91,8 @@ const PERMISO_TO_HREF: Record<string, string> = {
     "GESTION_ASISTENCIA": "/dashboard/asistencia",
     "GESTION_ASISTENCIA_HISTORIAL": "/dashboard/asistencia/historial",
     "GESTION_DESIGNACIONES": "/dashboard/designaciones",
-    "GESTION_CAMPEONATOS": "/dashboard/campeonato",
-    "GESTION_EQUIPOS": "/dashboard/campeonato/equipos",
+    "GESTION_CAMPEONATOS": "/dashboard/campeonatos",
+    "GESTION_EQUIPOS": "/dashboard/campeonatos/equipos",
     "VER_REPORTES": "/dashboard/reportes",
 }
 
@@ -150,11 +150,11 @@ function getMenuItems(
         if (uniqueHrefs.includes("/dashboard/designaciones")) {
             menuItems.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
         }
-        if (uniqueHrefs.includes("/dashboard/campeonato")) {
-            menuItems.push({ name: "Campeonatos", href: "/dashboard/campeonato", icon: Trophy })
+        if (uniqueHrefs.includes("/dashboard/campeonatos")) {
+            menuItems.push({ name: "Campeonatos", href: "/dashboard/campeonatos", icon: Trophy })
         }
-        if (uniqueHrefs.includes("/dashboard/campeonato/equipos")) {
-            menuItems.push({ name: "Equipos", href: "/dashboard/campeonato/equipos", icon: Shield })
+        if (uniqueHrefs.includes("/dashboard/campeonatos/equipos")) {
+            menuItems.push({ name: "Equipos", href: "/dashboard/campeonatos/equipos", icon: Shield })
         }
         if (uniqueHrefs.includes("/dashboard/reportes")) {
             menuItems.push({ name: "Reportes", href: "/dashboard/reportes", icon: FileText })
@@ -256,12 +256,12 @@ function getMenuItems(
                 items: [
                     {
                         name: "Campeonatos",
-                        href: "/dashboard/campeonato",
+                        href: "/dashboard/campeonatos",
                         icon: Trophy,
                     },
                     {
                         name: "Equipos",
-                        href: "/dashboard/campeonato/equipos",
+                        href: "/dashboard/campeonatos/equipos",
                         icon: Users,
                     },
                     {
@@ -322,12 +322,12 @@ function getMenuItems(
                 items: [
                     {
                         name: "Campeonatos",
-                        href: "/dashboard/campeonato",
+                        href: "/dashboard/campeonatos",
                         icon: Trophy,
                     },
                     {
                         name: "Equipos",
-                        href: "/dashboard/campeonato/equipos",
+                        href: "/dashboard/campeonatos/equipos",
                         icon: Users,
                     },
                     {
@@ -382,12 +382,12 @@ function getMenuItems(
             items: [
                 {
                     name: "Campeonatos",
-                    href: "/dashboard/campeonato",
+                    href: "/dashboard/campeonatos",
                     icon: Trophy,
                 },
                 {
                     name: "Equipos",
-                    href: "/dashboard/campeonato/equipos",
+                    href: "/dashboard/campeonatos/equipos",
                     icon: Users,
                 },
                 {

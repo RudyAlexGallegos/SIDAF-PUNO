@@ -7,18 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Search, X, Eye, Edit, Trash2, AlertCircle } from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
+import { ArrowLeft, Plus, Search, X, Eye, Edit } from "lucide-react"
+import { getCampeaonados, Campoado } from "@/services/api"
 
 function formatDate(iso: string) {
   try {
@@ -44,65 +34,17 @@ function StatusBadge({ estado }: { estado: string | undefined }) {
 
 export default function CampeonadosPage() {
   const [query, setQuery] = useState<string>("")
-  const [campeaonados, setCampeaonados] = useState<any[]>([])
+  const [campeaonados, setCampeaonados] = useState<Campoado[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; nombre: string }>({
-    open: false,
-    id: null,
-    nombre: "",
-  })
-  const [error, setError] = useState<string>("")
-
-  const cargarCampeones = async () => {
-    try {
-      setIsLoading(true)
-      const res = await fetch(`${API_URL}/campeonatos`)
-      if (!res.ok) throw new Error("Failed to load championships")
-      const data = await res.json()
-      setCampeaonados(Array.isArray(data) ? data : [])
-      setError("")
-    } catch (error) {
-      console.error("Error:", error)
-      setError("Error al cargar los campeonatos")
-      setCampeaonados([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   useEffect(() => {
+    const cargarCampeones = async () => {
+      const data = await getCampeaonados()
+      setCampeaonados(data)
+      setIsLoading(false)
+    }
     cargarCampeones()
   }, [])
-
-  const handleDeleteClick = (id: number, nombre: string) => {
-    setDeleteDialog({ open: true, id, nombre })
-  }
-
-  const handleConfirmDelete = async () => {
-    if (deleteDialog.id === null) return
-
-    try {
-      setIsDeleting(true)
-      const res = await fetch(`${API_URL}/campeonatos/${deleteDialog.id}`, {
-        method: "DELETE",
-      })
-
-      if (!res.ok) {
-        throw new Error("Error al eliminar el campeonato")
-      }
-
-      // Actualizar la lista removiendo el campeonato eliminado
-      setCampeaonados(campeaonados.filter(c => c.id !== deleteDialog.id))
-      setDeleteDialog({ open: false, id: null, nombre: "" })
-      setError("")
-    } catch (error) {
-      console.error("Error deleting:", error)
-      setError("Error al eliminar el campeonato. Intenta nuevamente.")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -147,12 +89,12 @@ export default function CampeonadosPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Gestión de Campeonatos</h1>
           <div className="flex items-center gap-2">
-            <label htmlFor="buscar-campeonato" className="sr-only">Buscar</label>
+            <label htmlFor="buscar-campeonato" className="sr-only">Buscar championship</label>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
               <Input id="buscar-campeonato" value={query} onChange={e => setQuery(e.target.value)} type="search" placeholder="Buscar..." className="w-[200px] pl-8 md:w-[320px]" />
               {query && (
-                <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-slate-100">
+                <button aria-label="Limpiar búsqueda" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-slate-100">
                   <X className="h-4 w-4" aria-hidden />
                 </button>
               )}
@@ -160,20 +102,12 @@ export default function CampeonadosPage() {
           </div>
         </div>
 
-        {error && (
-          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
-            <button onClick={() => setError("")} className="ml-auto text-red-600 hover:text-red-800">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
         <Card>
           <CardHeader>
             <CardTitle>Campeonatos Activos</CardTitle>
-            <CardDescription>Listado de certificados registrados</CardDescription>
+            <CardDescription>
+              Listado de championships registrados en el sistema
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -193,7 +127,7 @@ export default function CampeonadosPage() {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-6">
-                        No se encontraron.
+                        No se encontraron championships.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -210,28 +144,18 @@ export default function CampeonadosPage() {
                           <StatusBadge estado={c.estado} />
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-2">
                             <Button asChild variant="ghost" size="sm">
-                              <Link href={`/dashboard/campeonatos/${c.id}`} className="flex items-center gap-2">
+                              <Link href={`/dashboard/campeonatos/${c.id}`} aria-label={`Ver ${c.nombre}`} className="flex items-center gap-2">
                                 <Eye className="h-4 w-4" aria-hidden />
                                 <span className="hidden md:inline">Ver</span>
                               </Link>
                             </Button>
                             <Button asChild variant="ghost" size="sm">
-                              <Link href={`/dashboard/campeonatos/${c.id}/editar`} className="flex items-center gap-2">
+                              <Link href={`/dashboard/campeonatos/${c.id}/editar`} aria-label={`Editar ${c.nombre}`} className="flex items-center gap-2">
                                 <Edit className="h-4 w-4" aria-hidden />
                                 <span className="hidden md:inline">Editar</span>
                               </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteClick(c.id, c.nombre)}
-                              disabled={isDeleting}
-                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" aria-hidden />
-                              <span className="hidden md:inline">Eliminar</span>
                             </Button>
                           </div>
                         </TableCell>
@@ -244,27 +168,6 @@ export default function CampeonadosPage() {
           </CardContent>
         </Card>
       </main>
-
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !isDeleting && setDeleteDialog({ ...deleteDialog, open })}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar Campeonato</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás seguro de que deseas eliminar el campeonato <strong>"{deleteDialog.nombre}"</strong>? Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex gap-3 justify-end">
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

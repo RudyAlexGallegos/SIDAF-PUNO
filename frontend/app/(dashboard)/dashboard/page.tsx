@@ -178,7 +178,7 @@ export default function DashboardPage() {
                             subValue={`${stats.championshipsActivos} activos`}
                             icon={Trophy}
                             color="amber"
-                            href="/dashboard/campeonato"
+                            href="/dashboard/campeonatos"
                         />
                         <StatCard 
                             label="Equipos"
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                             subValue="Registrados"
                             icon={Flag}
                             color="emerald"
-                            href="/dashboard/campeonato/equipos"
+                            href="/dashboard/campeonatos/equipos"
                         />
                     </section>
 
@@ -233,7 +233,7 @@ export default function DashboardPage() {
                                 title="Campeonatos"
                                 description="Gestión institucional."
                                 icon={Trophy}
-                                href="/dashboard/campeonato"
+                                href="/dashboard/campeonatos"
                                 color="amber"
                                 count={stats.championshipsActivos}
                                 countLabel="activos"

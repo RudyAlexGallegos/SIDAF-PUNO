@@ -159,7 +159,7 @@ export interface Campeonato {
 
 export async function getCampeonatos(): Promise<Campeonato[]> {
     try {
-        const response = await fetch(buildUrl("/campeonato"));
+        const response = await fetch(buildUrl("/campeonatos"));
         if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
         console.log("✅ Campeonatos obtenidos:", data);
@@ -172,7 +172,7 @@ export async function getCampeonatos(): Promise<Campeonato[]> {
 
 export async function getCampeonatoById(id: number): Promise<Campeonato | null> {
     try {
-        const response = await fetch(buildUrl(`/campeonato/${id}`));
+        const response = await fetch(buildUrl(`/campeonatos/${id}`));
         if (!response.ok) throw new Error("Error HTTP");
         return await response.json();
     } catch (error) {
@@ -182,7 +182,7 @@ export async function getCampeonatoById(id: number): Promise<Campeonato | null> 
 }
 
 export async function createCampeonato(data: Campeonato): Promise<Campeonato> {
-    const response = await fetch(buildUrl("/campeonato"), {
+    const response = await fetch(buildUrl("/campeonatos"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -196,7 +196,7 @@ export async function createCampeonato(data: Campeonato): Promise<Campeonato> {
 }
 
 export async function updateCampeonato(id: number, data: Campeonato): Promise<Campeonato> {
-    const response = await fetch(buildUrl(`/campeonato/${id}`), {
+    const response = await fetch(buildUrl(`/campeonatos/${id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -211,7 +211,7 @@ export async function updateCampeonato(id: number, data: Campeonato): Promise<Ca
 
 export async function deleteCampeonato(id: number): Promise<boolean> {
     try {
-        const response = await fetch(buildUrl(`/campeonato/${id}`), {
+        const response = await fetch(buildUrl(`/campeonatos/${id}`), {
             method: "DELETE",
         });
         return response.ok;
