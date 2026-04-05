@@ -15,22 +15,67 @@ import { useDataStore, type Campeonato } from "@/lib/data-store"
 export default function EditarCampeonatoPage() {
     const router = useRouter()
     const params = useParams()
-    const { campeonatos, equipos, updateCampeonato, deleteCampeonato } = useDataStore()
+    const { campeonatos, equipos, updateCampeonato, deleteCampeonato, loadData } = useDataStore()
     const [loading, setLoading] = useState(true)
     const [formData, setFormData] = useState<Partial<Campeonato>>({})
     const [searchEquipos, setSearchEquipos] = useState("")
+    const [championship, setChampionship] = useState<Campeonato | null>(null)
 
     const championshipId = params.id as string
-    const championship = campeonatos.find((c) => c.id === championshipId)
 
     useEffect(() => {
-        if (championship) {
-            setFormData(championship)
-            setLoading(false)
-        } else {
-            setLoading(false)
+        const loadCampeonato = async () => {
+            setLoading(true)
+            try {
+                // Primero intenta buscar en el store
+                let champ = campeonatos.find((c) => c.id === championshipId)
+                
+                // Si no está en el store, carga todos los datos
+                if (!champ && campeonatos.length === 0) {
+                    await loadData()
+                    champ = campeonatos.find((c) => c.id === championshipId)
+                }
+                
+                // Si aún no encuentra, intenta obtener del API backend
+                if (!champ) {
+                    try {
+                        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
+                        const res = await fetch(`${API_URL}/campeonatos/${championshipId}`)
+                        if (res.ok) {
+                            const data = await res.json()
+                            champ = { ...data, id: String(data.id) }
+                        }
+                    } catch (apiError) {
+                        console.error("Error fetching from API:", apiError)
+                    }
+                }
+                
+                if (champ) {
+                    setChampionship(champ)
+                    setFormData(champ)
+                } else {
+                    // Si no consigue nada, muestra la página de "no encontrado"
+                    setChampionship(null)
+                }
+            } catch (error) {
+                console.error("Error cargando campeonato:", error)
+                setChampionship(null)
+            } finally {
+                setLoading(false)
+            }
         }
-    }, [championship])
+        
+        if (championshipId) {
+            loadCampeonato()
+        }
+    }, [championshipId])
+
+    // Cargar equipos al montar si no existen
+    useEffect(() => {
+        if (equipos.length === 0) {
+            loadData()
+        }
+    }, [])
 
     const diasOptions = [
         { value: "lunes", label: "Lunes" },
@@ -87,20 +132,29 @@ export default function EditarCampeonatoPage() {
         })
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-
-        updateCampeonato(championshipId, {
-            ...formData,
-            numeroEquipos: formData.equipoIds?.length || formData.numeroEquipos || 0,
-        })
-        router.push("/dashboard/campeonatos")
+        try {
+            await updateCampeonato(championshipId, {
+                ...formData,
+                numeroEquipos: formData.equipoIds?.length || formData.numeroEquipos || 0,
+            })
+            router.push("/dashboard/campeonatos")
+        } catch (error) {
+            console.error("Error actualizando campeonato:", error)
+            alert("Error al guardar los cambios. Por favor intenta de nuevo.")
+        }
     }
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (confirm("¿Estás seguro de eliminar este campeonato? Esta acción no se puede deshacer.")) {
-            deleteCampeonato(championshipId)
-            router.push("/dashboard/campeonatos")
+            try {
+                await deleteCampeonato(championshipId)
+                router.push("/dashboard/campeonatos")
+            } catch (error) {
+                console.error("Error eliminando campeonato:", error)
+                alert("Error al eliminar el campeonato. Por favor intenta de nuevo.")
+            }
         }
     }
 
@@ -108,8 +162,9 @@ export default function EditarCampeonatoPage() {
         return (
             <div className="container mx-auto py-8 px-4">
                 <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-slate-200 rounded w-1/4" />
+                    <div className="h-12 bg-slate-200 rounded w-1/3" />
                     <div className="h-64 bg-slate-200 rounded" />
+                    <div className="h-96 bg-slate-200 rounded" />
                 </div>
             </div>
         )
@@ -117,60 +172,21 @@ export default function EditarCampeonatoPage() {
 
     if (!championship) {
         return (
-            <div className="container mx-auto py-8 px-4 text-center">
-                <Trophy className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-slate-900">Campeonato no encontrado</h2>
-                <p className="text-slate-500 mt-2">El campeonato que buscas no existe o ha sido eliminado.</p>
-                <Button asChild className="mt-6">
-                        <Link href="/dashboard/campeonatos">Volver a Campeonatos</Link>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                            const ids = equiposList.map(e => e.id)
-                            setFormData(prev => {
-                                const current = prev.equipoIds || []
-                                const allSelected = ids.every(id => current.includes(id))
-                                if (allSelected) {
-                                    return { ...prev, equipoIds: current.filter(id => !ids.includes(id)) }
-                                } else {
-                                    return { ...prev, equipoIds: [...new Set([...current, ...ids])] }
-                                }
-                            })
-                        }}
-                        className="text-blue-600 hover:text-blue-700"
-                    >
-                        {allSelected ? "Deseleccionar todos" : someSelected ? "Limpiar selección" : "Seleccionar todos"}
-                    </Button>
-                </div>
-                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                    {equiposList.map((equipo) => {
-                        const isSelected = formData.equipoIds?.includes(equipo.id)
-                        return (
-                            <div
-                                key={equipo.id}
-                                onClick={() => toggleEquipo(equipo.id)}
-                                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
-                                    }`}>
-                                    {isSelected && <Check className="h-4 w-4 text-white" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-slate-900 truncate">{equipo.nombre}</p>
-                                    <div className="flex items-center gap-1 text-xs text-slate-500">
-                                        <MapPin className="h-3 w-3" />
-                                        <span className="truncate">{equipo.provincia}</span>
-                                    </div>
-                                </div>
-                                <Shield className="h-4 w-4 text-slate-300" />
-                            </div>
-                        )
-                    })}
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md mx-4">
+                    <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                        <Trophy className="h-8 w-8 text-amber-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Campeonato no encontrado</h2>
+                    <p className="text-slate-600 mb-6">El campeonato que buscas no existe, ha sido eliminado o el ID es inválido.</p>
+                    <div className="flex gap-3">
+                        <Button asChild className="flex-1 bg-amber-500 hover:bg-amber-600">
+                            <Link href="/dashboard/campeonatos">Volver a Campeonatos</Link>
+                        </Button>
+                        <Button asChild variant="outline" className="flex-1">
+                            <Link href="/dashboard">Ir al Dashboard</Link>
+                        </Button>
+                    </div>
                 </div>
             </div>
         )
