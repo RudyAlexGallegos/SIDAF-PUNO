@@ -1,0 +1,197 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img "Logo" [ref=e6]
+        - generic [ref=e7]:
+          - heading "SIDAF PUNO" [level=1] [ref=e8]
+          - paragraph [ref=e9]: Comisión de Árbitros
+      - button [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - navigation [ref=e12]:
+      - generic [ref=e13]:
+        - paragraph [ref=e14]: Principal
+        - generic [ref=e15]:
+          - link "Inicio" [ref=e16] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e17]
+            - generic [ref=e20]: Inicio
+          - link "Perfil" [ref=e21] [cursor=pointer]:
+            - /url: /dashboard/perfil
+            - img [ref=e22]
+            - generic [ref=e25]: Perfil
+      - generic [ref=e26]:
+        - paragraph [ref=e27]: Gestión
+        - link "Árbitros" [ref=e29] [cursor=pointer]:
+          - /url: /dashboard/arbitros
+          - img [ref=e30]
+          - generic [ref=e35]: Árbitros
+      - generic [ref=e36]:
+        - paragraph [ref=e37]: Asistencia
+        - generic [ref=e38]:
+          - link "Control Asistencia" [ref=e39] [cursor=pointer]:
+            - /url: /dashboard/asistencia
+            - img [ref=e40]
+            - generic [ref=e44]: Control Asistencia
+          - link "Historial Asistencia" [ref=e45] [cursor=pointer]:
+            - /url: /dashboard/asistencia/historial
+            - img [ref=e46]
+            - generic [ref=e50]: Historial Asistencia
+          - link "Ranking Semanal" [ref=e51] [cursor=pointer]:
+            - /url: /dashboard/asistencia/ranking
+            - img [ref=e52]
+            - generic [ref=e55]: Ranking Semanal
+      - generic [ref=e56]:
+        - paragraph [ref=e57]: Designaciones
+        - link "Designaciones" [ref=e59] [cursor=pointer]:
+          - /url: /dashboard/designaciones
+          - img [ref=e60]
+          - generic [ref=e62]: Designaciones
+      - generic [ref=e63]:
+        - paragraph [ref=e64]: Campeonato
+        - generic [ref=e65]:
+          - link "Campeonatos" [ref=e66] [cursor=pointer]:
+            - /url: /dashboard/campeonato
+            - img [ref=e67]
+            - generic [ref=e73]: Campeonatos
+          - link "Equipos" [ref=e74] [cursor=pointer]:
+            - /url: /dashboard/campeonato/equipos
+            - img [ref=e75]
+            - generic [ref=e80]: Equipos
+          - link "Reportes" [ref=e81] [cursor=pointer]:
+            - /url: /dashboard/reportes
+            - img [ref=e82]
+            - generic [ref=e85]: Reportes
+  - main [ref=e86]:
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - link "Volver al Dashboard" [ref=e89] [cursor=pointer]:
+          - /url: /
+          - img [ref=e90]
+          - generic [ref=e92]: Volver al Dashboard
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - generic [ref=e95]: Total
+            - generic [ref=e96]: "5"
+          - link "Nuevo Campeonato" [ref=e97] [cursor=pointer]:
+            - /url: /dashboard/campeonatos/nuevo
+            - img
+            - text: Nuevo Campeonato
+      - main [ref=e98]:
+        - generic [ref=e99]:
+          - heading "Gestión de Campeonatos" [level=1] [ref=e100]
+          - generic [ref=e101]:
+            - generic [ref=e102]: Buscar campeonato
+            - generic [ref=e103]:
+              - img [ref=e104]
+              - searchbox "Buscar campeonato" [ref=e107]
+        - generic [ref=e108]:
+          - generic [ref=e109]:
+            - generic [ref=e110]: Campeonatos Activos
+            - generic [ref=e111]: Listado de campeonatos registrados en el sistema con su nivel de dificultad
+          - table [ref=e115]:
+            - rowgroup [ref=e116]:
+              - row "Nombre Nivel Categoría Equipos Fecha Inicio Estado Acciones" [ref=e117]:
+                - columnheader "Nombre" [ref=e118]
+                - columnheader "Nivel" [ref=e119]
+                - columnheader "Categoría" [ref=e120]
+                - columnheader "Equipos" [ref=e121]
+                - columnheader "Fecha Inicio" [ref=e122]
+                - columnheader "Estado" [ref=e123]
+                - columnheader "Acciones" [ref=e124]
+            - rowgroup [ref=e125]:
+              - row "Liga Nacional Alto Primera División 20 14/01/2025 En Curso Ver Liga Nacional Editar Liga Nacional" [ref=e126]:
+                - cell "Liga Nacional" [ref=e127]
+                - cell "Alto" [ref=e128]:
+                  - generic [ref=e129]: Alto
+                - cell "Primera División" [ref=e130]
+                - cell "20" [ref=e131]
+                - cell "14/01/2025" [ref=e132]
+                - cell "En Curso" [ref=e133]:
+                  - generic [ref=e134]: En Curso
+                - cell "Ver Liga Nacional Editar Liga Nacional" [ref=e135]:
+                  - generic [ref=e136]:
+                    - link "Ver Liga Nacional" [ref=e137] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/liga-nacional
+                      - img
+                      - generic [ref=e138]: Ver
+                    - link "Editar Liga Nacional" [ref=e139] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/liga-nacional/editar
+                      - img
+                      - generic [ref=e140]: Editar
+              - row "Copa Regional Medio Segunda División 16 04/02/2025 En Curso Ver Copa Regional Editar Copa Regional" [ref=e141]:
+                - cell "Copa Regional" [ref=e142]
+                - cell "Medio" [ref=e143]:
+                  - generic [ref=e144]: Medio
+                - cell "Segunda División" [ref=e145]
+                - cell "16" [ref=e146]
+                - cell "04/02/2025" [ref=e147]
+                - cell "En Curso" [ref=e148]:
+                  - generic [ref=e149]: En Curso
+                - cell "Ver Copa Regional Editar Copa Regional" [ref=e150]:
+                  - generic [ref=e151]:
+                    - link "Ver Copa Regional" [ref=e152] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/copa-regional
+                      - img
+                      - generic [ref=e153]: Ver
+                    - link "Editar Copa Regional" [ref=e154] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/copa-regional/editar
+                      - img
+                      - generic [ref=e155]: Editar
+              - row "Torneo Juvenil Bajo Sub-19 12 19/03/2025 En Curso Ver Torneo Juvenil Editar Torneo Juvenil" [ref=e156]:
+                - cell "Torneo Juvenil" [ref=e157]
+                - cell "Bajo" [ref=e158]:
+                  - generic [ref=e159]: Bajo
+                - cell "Sub-19" [ref=e160]
+                - cell "12" [ref=e161]
+                - cell "19/03/2025" [ref=e162]
+                - cell "En Curso" [ref=e163]:
+                  - generic [ref=e164]: En Curso
+                - cell "Ver Torneo Juvenil Editar Torneo Juvenil" [ref=e165]:
+                  - generic [ref=e166]:
+                    - link "Ver Torneo Juvenil" [ref=e167] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/torneo-juvenil
+                      - img
+                      - generic [ref=e168]: Ver
+                    - link "Editar Torneo Juvenil" [ref=e169] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/torneo-juvenil/editar
+                      - img
+                      - generic [ref=e170]: Editar
+              - row "Copa Internacional Alto Elite 32 09/04/2025 Próximamente Ver Copa Internacional Editar Copa Internacional" [ref=e171]:
+                - cell "Copa Internacional" [ref=e172]
+                - cell "Alto" [ref=e173]:
+                  - generic [ref=e174]: Alto
+                - cell "Elite" [ref=e175]
+                - cell "32" [ref=e176]
+                - cell "09/04/2025" [ref=e177]
+                - cell "Próximamente" [ref=e178]:
+                  - generic [ref=e179]: Próximamente
+                - cell "Ver Copa Internacional Editar Copa Internacional" [ref=e180]:
+                  - generic [ref=e181]:
+                    - link "Ver Copa Internacional" [ref=e182] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/copa-internacional
+                      - img
+                      - generic [ref=e183]: Ver
+                    - link "Editar Copa Internacional" [ref=e184] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/copa-internacional/editar
+                      - img
+                      - generic [ref=e185]: Editar
+              - row "Liga Provincial Medio Tercera División 14 24/01/2025 En Curso Ver Liga Provincial Editar Liga Provincial" [ref=e186]:
+                - cell "Liga Provincial" [ref=e187]
+                - cell "Medio" [ref=e188]:
+                  - generic [ref=e189]: Medio
+                - cell "Tercera División" [ref=e190]
+                - cell "14" [ref=e191]
+                - cell "24/01/2025" [ref=e192]
+                - cell "En Curso" [ref=e193]:
+                  - generic [ref=e194]: En Curso
+                - cell "Ver Liga Provincial Editar Liga Provincial" [ref=e195]:
+                  - generic [ref=e196]:
+                    - link "Ver Liga Provincial" [ref=e197] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/liga-provincial
+                      - img
+                      - generic [ref=e198]: Ver
+                    - link "Editar Liga Provincial" [ref=e199] [cursor=pointer]:
+                      - /url: /dashboard/campeonatos/liga-provincial/editar
+                      - img
+                      - generic [ref=e200]: Editar
