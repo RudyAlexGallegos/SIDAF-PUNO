@@ -10,6 +10,23 @@ public class Designacion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Estructura COPA PERÚ
+    @Column(name = "temporada")
+    private Integer temporada;  // 2026
+    
+    @Column(name = "etapa")
+    @Enumerated(EnumType.STRING)
+    private EtapaContest etapa;  // DISTRITAL, PROVINCIAL, DEPARTAMENTAL
+    
+    @Column(name = "region")
+    private String region;  // PUNO, AREQUIPA, etc.
+    
+    @Column(name = "provincia")
+    private String provincia;  // Opcional, para Provincial/Departamental
+    
+    @Column(name = "distrito")
+    private String distrito;  // Para Distrital
     
     @Column(name = "partido_id")
     private String partidoId;
@@ -70,6 +87,12 @@ public class Designacion {
         CONFIRMADA,
         COMPLETADA,
         CANCELADA
+    }
+    
+    public enum EtapaContest {
+        DISTRITAL,
+        PROVINCIAL,
+        DEPARTAMENTAL
     }
     
     // Constructors
@@ -249,5 +272,46 @@ public class Designacion {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+    
+    // Getters and Setters para estructura COPA PERÚ 2026
+    public Integer getTemporada() {
+        return temporada;
+    }
+    
+    public void setTemporada(Integer temporada) {
+        this.temporada = temporada;
+    }
+    
+    public EtapaContest getEtapa() {
+        return etapa;
+    }
+    
+    public void setEtapa(EtapaContest etapa) {
+        this.etapa = etapa;
+    }
+    
+    public String getRegion() {
+        return region;
+    }
+    
+    public void setRegion(String region) {
+        this.region = region;
+    }
+    
+    public String getProvincia() {
+        return provincia;
+    }
+    
+    public void setProvincia(String provincia) {
+        this.provincia = provincia;
+    }
+    
+    public String getDistrito() {
+        return distrito;
+    }
+    
+    public void setDistrito(String distrito) {
+        this.distrito = distrito;
     }
 }

@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Eye, Edit, Trash2, Download, Trophy, Filter } from "lucide-react"
-import { getDesignaciones, getArbitros, getCampeonatos, deleteDesignacion, type Designacion, type Arbitro, type Campeonato } from "@/services/api"
+import { Plus, Search, Eye, Edit, Trash2, Download, Trophy, Filter, ChevronDown, ChevronRight, MapPin, FileText } from "lucide-react"
+import { getDesignaciones, getArbitros, getCampeonatos, getEquipos, deleteDesignacion, type Designacion, type Arbitro, type Campeonato, type Equipo } from "@/services/api"
 import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns"
 import { es } from "date-fns/locale"
 import { useRouter } from "next/navigation"
@@ -32,10 +32,13 @@ export default function DesignacionesPage() {
   const [designaciones, setDesignaciones] = useState<Designacion[]>([])
   const [arbitros, setArbitros] = useState<Arbitro[]>([])
   const [championships, setCampeonatos] = useState<Campeonato[]>([])
+  const [equipos, setEquipos] = useState<Equipo[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [weekFilter, setWeekFilter] = useState<string>("actual")
   const [championshipFilter, setChampionshipFilter] = useState<string>("todos")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("todas")
+  const [expandedProvincias, setExpandedProvincias] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -43,14 +46,21 @@ export default function DesignacionesPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [desigData, arbitData, campData] = await Promise.all([
+        const [desigData, arbitData, campData, equipData] = await Promise.all([
           getDesignaciones(),
           getArbitros(),
-          getCampeonatos()
+          getCampeonatos(),
+          getEquipos()
         ])
         setDesignaciones(desigData)
         setArbitros(arbitData)
         setCampeonatos(campData)
+        setEquipos(equipData)
+        // Inicialmente expandir la primera provincia
+        const provincias = [...new Set(equipData.map((e: Equipo) => e.provincia).filter(Boolean))] as string[]
+        if (provincias.length > 0) {
+          setExpandedProvincias(new Set([provincias[0]]))
+        }
       } catch (error) {
         console.error("Error cargando datos:", error)
       } finally {
@@ -187,6 +197,151 @@ export default function DesignacionesPage() {
     )
   }
 
+  // ============ FUNCIONES PARA AGRUPAR Y EXPORTAR POR DISTRITO ============
+  
+  const getProvinciaDistritoDeLaDesignacion = (designacion: Designacion) => {
+    const equipoLocal = equipos.find((e) => e.nombre === designacion.nombreEquipoLocal)
+    const equipoVisitante = equipos.find((e) => e.nombre === designacion.nombreEquipoVisitante)
+    const equipo = equipoLocal || equipoVisitante
+    return {
+      provincia: equipo?.provincia || "Sin provincia",
+      distrito: equipo?.distrito || "Sin distrito",
+    }
+  }
+
+  const designacionesAgrupadas = useMemo(() => {
+    const grupos: Record<string, Record<string, Designacion[]>> = {}
+    
+    designacionesFiltradas.forEach((d) => {
+      const { provincia, distrito } = getProvinciaDistritoDeLaDesignacion(d)
+      if (!grupos[provincia]) grupos[provincia] = {}
+      if (!grupos[provincia][distrito]) grupos[provincia][distrito] = []
+      grupos[provincia][distrito].push(d)
+    })
+    
+    return grupos
+  }, [designacionesFiltradas, equipos])
+
+  const provincias = useMemo(() => {
+    return Object.keys(designacionesAgrupadas).sort()
+  }, [designacionesAgrupadas])
+
+  const toggleProvincia = (provincia: string) => {
+    const newSet = new Set(expandedProvincias)
+    if (newSet.has(provincia)) {
+      newSet.delete(provincia)
+    } else {
+      newSet.add(provincia)
+    }
+    setExpandedProvincias(newSet)
+  }
+
+  const exportToPDFByDistrito = async (provincia: string, distrito: string) => {
+    const designacionesDistrito = designacionesAgrupadas[provincia]?.[distrito] || []
+    
+    if (designacionesDistrito.length === 0) {
+      toast({ title: "⚠️ Sin datos", description: "No hay designaciones en este distrito", variant: "destructive" })
+      return
+    }
+
+    try {
+      const jsPDF = (await import("jspdf")).jsPDF
+      const autoTable = (await import("jspdf-autotable")).default
+
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      })
+
+      let yPosition = 15
+
+      // ============ ENCABEZADO ============
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(11)
+      doc.text("FEDERACIÓN DEPORTIVA NACIONAL PERUANA DE FÚTBOL", 105, yPosition, { align: "center" })
+      yPosition += 5
+
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(10)
+      doc.text("COMISIÓN NACIONAL DE ÁRBITROS", 105, yPosition, { align: "center" })
+      yPosition += 8
+
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(11)
+      doc.text("DESIGNACIÓN DE ÁRBITROS - DISTRITO", 105, yPosition, { align: "center" })
+      yPosition += 5
+
+      doc.setFont("Arial", "normal")
+      doc.setFontSize(10)
+      doc.text(`${distrito}, ${provincia}`, 105, yPosition, { align: "center" })
+      yPosition += 10
+
+      // ============ TABLA PRINCIPAL ============
+      const tableData = designacionesDistrito.map((d, idx) => {
+        const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+        const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+        const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+        const arb4to = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+        
+        return [
+          (idx + 1).toString(),
+          d.fecha ? format(new Date(d.fecha), "dd MMM", { locale: es }) : "-",
+          d.fecha ? format(new Date(d.fecha), "HH:mm", { locale: es }) : "-",
+          d.estadio || "-",
+          d.nombreCampeonato || "-",
+          d.nombreEquipoLocal || "-",
+          d.nombreEquipoVisitante || "-",
+          arbPrincipal ? `${arbPrincipal.nombre} ${arbPrincipal.apellido}`.trim() : "-",
+          arbAsist1 ? `${arbAsist1.nombre} ${arbAsist1.apellido}`.trim() : "-",
+          arbAsist2 ? `${arbAsist2.nombre} ${arbAsist2.apellido}`.trim() : "-",
+          arb4to ? `${arb4to.nombre} ${arb4to.apellido}`.trim() : "-",
+          d.estado || "-",
+        ]
+      })
+
+      autoTable(doc, {
+        head: [
+          ["N°", "DÍA", "HORA", "ESTADIO", "CAMPEONATO", "E. LOCAL", "E. VISITA", "ÁRBITRO PRINCIPAL", "ÁRBITRO ASIST. 1", "ÁRBITRO ASIST. 2", "4° ÁRBITRO", "ESTADO"],
+        ],
+        body: tableData,
+        startY: yPosition,
+        margin: 8,
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          halign: "center",
+          valign: "middle",
+          font: "Arial",
+        },
+        headStyles: {
+          fillColor: [33, 150, 243],
+          textColor: 255,
+          fontStyle: "bold",
+          halign: "center",
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+      })
+
+      yPosition = (doc as any).lastAutoTable.finalY + 10
+
+      // ============ PIE DE PÁGINA ============
+      doc.setFont("Arial", "normal")
+      doc.setFontSize(8)
+      doc.text("Documento generado por el Sistema SIDAF", 105, yPosition, { align: "center" })
+      doc.text(format(new Date(), "dd/MM/yyyy HH:mm", { locale: es }), 105, yPosition + 4, { align: "center" })
+
+      const nombreArchivo = `designaciones-${distrito.replace(/\s+/g, "-").toLowerCase()}-${format(new Date(), "yyyy-MM-dd")}.pdf`
+      doc.save(nombreArchivo)
+      toast({ title: "✅ PDF exportado", description: `Designaciones de ${distrito}` })
+    } catch (error) {
+      console.error("Error exportando:", error)
+      toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
+    }
+  }
+
   const exportToPDF = async () => {
     try {
       const jsPDF = (await import("jspdf")).jsPDF
@@ -217,20 +372,27 @@ export default function DesignacionesPage() {
       yPosition += 10
 
       // ============ TABLA PRINCIPAL ============
-      const tableData = designacionesFiltradas.map((d, idx) => [
-        (idx + 1).toString(),
-        d.fecha ? format(new Date(d.fecha), "dd MMM", { locale: es }) : "-",
-        d.fecha ? format(new Date(d.fecha), "HH:mm", { locale: es }) : "-",
-        d.estadio || "-",
-        d.nombreCampeonato || "-",
-        d.nombreEquipoLocal || "-",
-        d.nombreEquipoVisitante || "-",
-        arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())?.nombre || "-",
-        arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())?.nombre || "-",
-        arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())?.nombre || "-",
-        arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())?.nombre || "-",
-        d.estado || "-",
-      ])
+      const tableData = designacionesFiltradas.map((d, idx) => {
+        const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+        const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+        const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+        const arb4to = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+        
+        return [
+          (idx + 1).toString(),
+          d.fecha ? format(new Date(d.fecha), "dd MMM", { locale: es }) : "-",
+          d.fecha ? format(new Date(d.fecha), "HH:mm", { locale: es }) : "-",
+          d.estadio || "-",
+          d.nombreCampeonato || "-",
+          d.nombreEquipoLocal || "-",
+          d.nombreEquipoVisitante || "-",
+          arbPrincipal ? `${arbPrincipal.nombre} ${arbPrincipal.apellido}`.trim() : "-",
+          arbAsist1 ? `${arbAsist1.nombre} ${arbAsist1.apellido}`.trim() : "-",
+          arbAsist2 ? `${arbAsist2.nombre} ${arbAsist2.apellido}`.trim() : "-",
+          arb4to ? `${arb4to.nombre} ${arb4to.apellido}`.trim() : "-",
+          d.estado || "-",
+        ]
+      })
 
       autoTable(doc, {
         head: [
@@ -285,7 +447,7 @@ export default function DesignacionesPage() {
       Array.from(arbitrosDesignados).forEach((arbitroId, idx) => {
         const arbitro = arbitros.find((a) => a.id === arbitroId)
         if (arbitro) {
-          doc.text(`${idx + 1}. ${arbitro.nombre || ""}`, 15, yPosition)
+          doc.text(`${idx + 1}. ${arbitro.nombre} ${arbitro.apellido}`.trim(), 15, yPosition)
           doc.setFont("Arial", "normal")
           doc.setFontSize(8)
           doc.text(`Categoría: ${arbitro.categoria || "N/A"}`, 20, yPosition + 3)
@@ -438,105 +600,206 @@ export default function DesignacionesPage() {
         </div>
       </div>
 
-      {/* Tabla de Designaciones - Para PDF */}
-      <div ref={printRef} className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-        {designacionesFiltradas.length === 0 ? (
-          <div className="p-12 text-center">
-            <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
-          </div>
+      {/* Tabla de Designaciones Agrupada por Provincia y Distrito */}
+      <div ref={printRef} className="space-y-4">
+        {provincias.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                <TableRow>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Fecha</TableHead>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Campeonato</TableHead>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Partido</TableHead>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Estadio</TableHead>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Árbitro Principal</TableHead>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Estado</TableHead>
-                  <TableHead className="h-12 text-xs font-bold text-slate-700 uppercase tracking-wide">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {designacionesFiltradas.map((designacion, idx) => (
-                  <TableRow 
-                    key={designacion.id} 
-                    className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-blue-50 transition-colors`}
-                  >
-                    <TableCell className="text-sm whitespace-nowrap font-medium">
-                      <div>
-                        <div className="text-slate-900">
-                          {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }) : "-"}
+          provincias.map((provincia) => (
+            <Card key={provincia} className="overflow-hidden shadow-sm">
+              {/* Encabezado de Provincia */}
+              <button
+                onClick={() => toggleProvincia(provincia)}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5" />
+                  <span className="font-bold text-lg">{provincia}</span>
+                  <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">
+                    {Object.values(designacionesAgrupadas[provincia] || {}).reduce((sum, arr) => sum + arr.length, 0)} designaciones
+                  </span>
+                </div>
+                {expandedProvincias.has(provincia) ? (
+                  <ChevronDown className="w-5 h-5" />
+                ) : (
+                  <ChevronRight className="w-5 h-5" />
+                )}
+              </button>
+
+              {/* Distritos */}
+              {expandedProvincias.has(provincia) && (
+                <CardContent className="p-0 space-y-3 bg-slate-50">
+                  {Object.entries(designacionesAgrupadas[provincia] || {})
+                    .sort(([, a], [, b]) => b.length - a.length)
+                    .map(([distrito, designacionesDistrito]) => (
+                      <div key={distrito} className="border-l-4 border-blue-500 bg-white p-4 m-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-900">{distrito}</h3>
+                            <p className="text-sm text-slate-500">{designacionesDistrito.length} designaciones</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => exportToPDFByDistrito(provincia, distrito)}
+                            className="hover:bg-blue-50"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Exportar PDF
+                          </Button>
                         </div>
-                        <div className="text-xs text-slate-500">
-                          {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
+
+                        {/* Tabla del Distrito */}
+                        <div className="overflow-x-auto">
+                          <Table className="text-sm">
+                            <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
+                              <TableRow>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Fecha</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Campeonato</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Partido</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estadio</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3 min-w-[180px]">Árbitro Principal</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3 min-w-[160px]">Asist. 1</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3 min-w-[160px]">Asist. 2</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3 min-w-[160px]">4° Árbitro</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estado</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Acciones</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {designacionesDistrito
+                                .sort((a, b) => {
+                                  const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
+                                  const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
+                                  return dateA - dateB
+                                })
+                                .map((designacion, idx) => {
+                                  const arbitroPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
+                                  const arbitroAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
+                                  const arbitroAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
+                                  const cuartoArbitro = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
+
+                                  return (
+                                    <TableRow
+                                      key={designacion.id}
+                                      className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-blue-50 transition-colors h-14`}
+                                    >
+                                      <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                        <div>
+                                          <div className="text-slate-900 font-bold text-xs">
+                                            {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
+                                          </div>
+                                          <div className="text-xs text-slate-500">
+                                            {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
+                                          </div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs text-slate-700 px-3 font-medium truncate max-w-xs">
+                                        {designacion.nombreCampeonato || "-"}
+                                      </TableCell>
+                                      <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                        <div className="space-y-1">
+                                          <div>
+                                            <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
+                                              {designacion.nombreEquipoLocal?.substring(0, 8) || "-"}
+                                            </span>
+                                          </div>
+                                          <div className="text-slate-400 text-xs font-bold">vs</div>
+                                          <div>
+                                            <span className="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
+                                              {designacion.nombreEquipoVisitante?.substring(0, 8) || "-"}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-xs">
+                                        {designacion.estadio || "-"}
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3 min-w-[180px]">
+                                        <div className="space-y-0.5">
+                                          <div className="font-semibold text-slate-900 text-xs">
+                                            {arbitroPrincipal ? `${arbitroPrincipal.nombre?.substring(0, 20)} ${arbitroPrincipal.apellido?.substring(0, 15)}`.trim() : "-"}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{arbitroPrincipal?.categoria || ""}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3 min-w-[160px]">
+                                        <div className="space-y-0.5">
+                                          <div className="font-medium text-slate-800 text-xs">
+                                            {arbitroAsist1 ? `${arbitroAsist1.nombre?.substring(0, 18)}`.trim() : "-"}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{arbitroAsist1?.categoria || ""}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3 min-w-[160px]">
+                                        <div className="space-y-0.5">
+                                          <div className="font-medium text-slate-800 text-xs">
+                                            {arbitroAsist2 ? `${arbitroAsist2.nombre?.substring(0, 18)}`.trim() : "-"}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{arbitroAsist2?.categoria || ""}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3 min-w-[160px]">
+                                        <div className="space-y-0.5">
+                                          <div className="font-medium text-slate-800 text-xs">
+                                            {cuartoArbitro ? `${cuartoArbitro.nombre?.substring(0, 18)}`.trim() : "-"}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{cuartoArbitro?.categoria || ""}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
+                                      <TableCell className="text-xs px-3">
+                                        <div className="flex gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                            className="h-7 w-7 p-0 hover:bg-blue-50"
+                                            title="Ver detalles"
+                                          >
+                                            <Link href={`/dashboard/designaciones/${designacion.id}`}>
+                                              <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                            </Link>
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                            className="h-7 w-7 p-0 hover:bg-slate-100"
+                                            title="Editar"
+                                          >
+                                            <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
+                                              <Edit className="w-3.5 h-3.5 text-slate-600" />
+                                            </Link>
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setDeleteId(designacion.id || null)}
+                                            className="h-7 w-7 p-0 hover:bg-red-50"
+                                            title="Eliminar"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                            </TableBody>
+                          </Table>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-700 max-w-xs truncate">
-                      {designacion.nombreCampeonato || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm font-semibold text-slate-900">
-                      <div className="flex items-center gap-1.5 whitespace-nowrap">
-                        <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded min-w-[40px] text-center">
-                          {designacion.nombreEquipoLocal?.substring(0, 3).toUpperCase()}
-                        </span>
-                        <span className="text-slate-400 text-xs">v</span>
-                        <span className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded min-w-[40px] text-center">
-                          {designacion.nombreEquipoVisitante?.substring(0, 3).toUpperCase()}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600">
-                      {designacion.estadio || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <span className="bg-slate-100 text-slate-800 px-2 py-1 rounded text-xs font-medium">
-                        {arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())?.nombre || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {getEstadoBadge(designacion.estado)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                          className="h-8 w-8 p-0 hover:bg-blue-50"
-                        >
-                          <Link href={`/dashboard/designaciones/${designacion.id}`}>
-                            <Eye className="w-4 h-4 text-blue-600" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                          className="h-8 w-8 p-0 hover:bg-slate-100"
-                        >
-                          <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
-                            <Edit className="w-4 h-4 text-slate-600" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteId(designacion.id || null)}
-                          className="h-8 w-8 p-0 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                    ))}
+                </CardContent>
+              )}
+            </Card>
+          ))
         )}
       </div>
 
