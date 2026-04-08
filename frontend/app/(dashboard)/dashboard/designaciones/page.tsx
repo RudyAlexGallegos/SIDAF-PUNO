@@ -188,18 +188,122 @@ export default function DesignacionesPage() {
   }
 
   const exportToPDF = async () => {
-    if (!printRef.current) return
     try {
-      const html2pdf = (await import("html2pdf.js")).default
-      const element = printRef.current
-      const options: any = {
-        margin: 10,
-        filename: `designaciones-${format(new Date(), "yyyy-MM-dd")}.pdf`,
-        image: { type: "png", quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { orientation: "landscape", unit: "mm", format: "a4" },
-      }
-      html2pdf().set(options).from(element).save()
+      const jsPDF = (await import("jspdf")).jsPDF
+      const autoTable = (await import("jspdf-autotable")).default
+
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      })
+
+      let yPosition = 15
+
+      // ============ ENCABEZADO PROFESIONAL ============
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(11)
+      doc.text("FEDERACIÓN DEPORTIVA NACIONAL PERUANA DE FÚTBOL", 105, yPosition, { align: "center" })
+      yPosition += 5
+
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(10)
+      doc.text("COMISIÓN NACIONAL DE ÁRBITROS", 105, yPosition, { align: "center" })
+      yPosition += 8
+
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(11)
+      doc.text("DESIGNACIÓN DE ÁRBITROS, ASESORES Y EQUIPO VAR", 105, yPosition, { align: "center" })
+      yPosition += 10
+
+      // ============ TABLA PRINCIPAL ============
+      const tableData = designacionesFiltradas.map((d, idx) => [
+        (idx + 1).toString(),
+        d.fecha ? format(new Date(d.fecha), "dd MMM", { locale: es }) : "-",
+        d.fecha ? format(new Date(d.fecha), "HH:mm", { locale: es }) : "-",
+        d.estadio || "-",
+        d.nombreCampeonato || "-",
+        d.nombreEquipoLocal || "-",
+        d.nombreEquipoVisitante || "-",
+        arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())?.nombre || "-",
+        arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())?.nombre || "-",
+        arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())?.nombre || "-",
+        arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())?.nombre || "-",
+        d.estado || "-",
+      ])
+
+      autoTable(doc, {
+        head: [
+          ["N°", "DÍA", "HORA", "ESTADIO", "CAMPEONATO", "E. LOCAL", "E. VISITA", "ÁRBITRO PRINCIPAL", "ÁRBITRO ASIST. 1", "ÁRBITRO ASIST. 2", "4° ÁRBITRO", "ESTADO"],
+        ],
+        body: tableData,
+        startY: yPosition,
+        margin: 8,
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          halign: "center",
+          valign: "middle",
+          font: "Arial",
+        },
+        headStyles: {
+          fillColor: [33, 150, 243],
+          textColor: 255,
+          fontStyle: "bold",
+          halign: "center",
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        columnStyles: {
+          0: { halign: "center", cellWidth: 8 },
+          1: { halign: "center", cellWidth: 12 },
+          2: { halign: "center", cellWidth: 12 },
+        },
+      })
+
+      yPosition = (doc as any).lastAutoTable.finalY + 10
+
+      // ============ SECCIÓN DE ÁRBITROS DESIGNADOS ============
+      doc.setFont("Arial", "bold")
+      doc.setFontSize(10)
+      doc.text("ÁRBITROS DESIGNADOS", 15, yPosition)
+      yPosition += 7
+
+      // Obtener árbitros únicos designados
+      const arbitrosDesignados = new Set<number>()
+      designacionesFiltradas.forEach((d) => {
+        if (d.arbitroPrincipal) arbitrosDesignados.add(d.arbitroPrincipal)
+        if (d.arbitroAsistente1) arbitrosDesignados.add(d.arbitroAsistente1)
+        if (d.arbitroAsistente2) arbitrosDesignados.add(d.arbitroAsistente2)
+        if (d.cuartoArbitro) arbitrosDesignados.add(d.cuartoArbitro)
+      })
+
+      doc.setFont("Arial", "normal")
+      doc.setFontSize(9)
+
+      Array.from(arbitrosDesignados).forEach((arbitroId, idx) => {
+        const arbitro = arbitros.find((a) => a.id === arbitroId)
+        if (arbitro) {
+          doc.text(`${idx + 1}. ${arbitro.nombre || ""}`, 15, yPosition)
+          doc.setFont("Arial", "normal")
+          doc.setFontSize(8)
+          doc.text(`Categoría: ${arbitro.categoria || "N/A"}`, 20, yPosition + 3)
+          doc.text(`${arbitro.disponible ? "✓ Disponible" : "✗ No Disponible"}`, 20, yPosition + 6)
+          doc.setFont("Arial", "normal")
+          doc.setFontSize(9)
+          yPosition += 10
+        }
+      })
+
+      // ============ PIE DE PÁGINA ============
+      yPosition += 5
+      doc.setFont("Arial", "normal")
+      doc.setFontSize(8)
+      doc.text("Documento generado por el Sistema SIDAF", 105, yPosition, { align: "center" })
+      doc.text(format(new Date(), "dd/MM/yyyy HH:mm", { locale: es }), 105, yPosition + 4, { align: "center" })
+
+      doc.save(`designaciones-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
       toast({ title: "✅ PDF exportado", description: "El archivo se descargó correctamente" })
     } catch (error) {
       console.error("Error exportando:", error)
