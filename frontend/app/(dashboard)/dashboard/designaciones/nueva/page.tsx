@@ -7,22 +7,34 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { Trophy, MapPin, Users, Shield, Calendar, Save } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Trophy, MapPin, Users, Shield, Calendar, Save, ArrowRight, Lock, CheckCircle2 } from "lucide-react"
+import { getCampeonatos, getEquipos, getArbitros, type Campeonato as CampeonatoApi, type Equipo as EquipoApi, type Arbitro as ArbitroApi } from "@/services/api"
 
-interface Campeonato {
+interface Campeonato extends CampeonatoApi {}
+interface Equipo extends EquipoApi {}
+interface Arbitro extends ArbitroApi {}
+
+interface Partido {
   id: number
-  nombre: string
+  equipo1: Equipo
+  equipo2: Equipo
+  fecha?: string
+  hora?: string
+  estadio?: string
 }
 
-interface Equipo {
-  id: number
+interface DistritoDatos {
   nombre: string
+  provincia: string
+  equipos: Equipo[]
 }
 
-interface Arbitro {
-  id: number
+interface ProvinciaResultados {
   nombre: string
-  apellido: string
+  distrito: string
+  campeon: Equipo | null
+  subcampeon: Equipo | null
 }
 
 export default function NuevaDesignacionPage() {
@@ -30,67 +42,98 @@ export default function NuevaDesignacionPage() {
   const [paso, setPaso] = useState(0)
   const [loading, setLoading] = useState(true)
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
-  const [equipos, setEquipos] = useState<Equipo[]>([])
   const [arbitros, setArbitros] = useState<Arbitro[]>([])
+  
+  // Selecciones principales
   const [campSelec, setCampSelec] = useState<Campeonato | null>(null)
   const [etapa, setEtapa] = useState("")
-  const [campeones, setCampeones] = useState<Record<string, number>>({})
-  const [subcampeones, setSubcampeones] = useState<Record<string, number>>({})
   const [etapasCompletas, setEtapasCompletas] = useState<Set<string>>(new Set())
+  
+  // Para etapa DISTRITAL
+  const [distritosDisponibles, setDistritosDisponibles] = useState<DistritoDatos[]>([])
+  const [distritoSelec, setDistritoSelec] = useState<DistritoDatos | null>(null)
+  const [partidosDistrital, setPartidosDistrital] = useState<Partido[]>([])
+  const [partidoSelecDistrital, setPartidoSelecDistrital] = useState<Partido | null>(null)
+  
+  // Para etapa PROVINCIAL
+  const [resultadosDistritales, setResultadosDistritales] = useState<ProvinciaResultados[]>([])
+  const [camponesProvincialesSelec, setCamponesProvincialesSelec] = useState<Map<string, Equipo>>(new Map())
+  const [subcamponesProvincialesSelec, setSubcamponesProvincialesSelec] = useState<Map<string, Equipo>>(new Map())
+  
+  // Para etapa DEPARTAMENTAL
+  const [camponsDepartamentalSelec, setCamponsDepartamentalSelec] = useState<Equipo | null>(null)
+  const [subcamponsDepartamentalSelec, setSubcamponsDepartamentalSelec] = useState<Equipo | null>(null)
+  
+  // Detalles del partido (común a todas las etapas)
   const [fecha, setFecha] = useState("")
   const [hora, setHora] = useState("")
   const [estadio, setEstadio] = useState("")
+  
+  // Designación de árbitros
   const [arbPrinc, setArbPrinc] = useState("")
   const [arbAsis1, setArbAsis1] = useState("")
   const [arbAsis2, setArbAsis2] = useState("")
   const [arbCuarto, setArbCuarto] = useState("")
 
-  // Datos de prueba
-  const campeonatosDM: Campeonato[] = [
-    { id: 1, nombre: "🏆 COPA PERÚ PUNO 2026" },
-    { id: 2, nombre: "Campeonato Distrital Juliaca" },
-    { id: 3, nombre: "Campeonato Provincial Puno" },
-  ]
-
-  const equiposDM: Equipo[] = [
-    { id: 1, nombre: "Sport Puno" },
-    { id: 2, nombre: "Juliaca FC" },
-    { id: 3, nombre: "Ayaviri United" },
-    { id: 4, nombre: "Azangaro Futbol Club" },
-    { id: 5, nombre: "Yunguyo Sports" },
-  ]
-
-  const arbitrosDM: Arbitro[] = [
-    { id: 1, nombre: "Juan", apellido: "Pérez" },
-    { id: 2, nombre: "Carlos", apellido: "López" },
-    { id: 3, nombre: "Miguel", apellido: "García" },
-    { id: 4, nombre: "Roberto", apellido: "Martínez" },
-    { id: 5, nombre: "Fernando", apellido: "Rodríguez" },
-  ]
-
+  // ===== EFECTOS =====
   useEffect(() => {
     const cargar = async () => {
       try {
         setLoading(true)
-        const [c, e, a] = await Promise.all([
-          fetch("/api/campeonatos").then(r => r.json()).catch(() => campeonatosDM),
-          fetch("/api/equipos").then(r => r.json()).catch(() => equiposDM),
-          fetch("/api/arbitros").then(r => r.json()).catch(() => arbitrosDM),
+        
+        // Cargar datos reales de la API
+        const [campsData, equiposData, arbitrosData] = await Promise.all([
+          getCampeonatos(),
+          getEquipos(),
+          getArbitros(),
         ])
-        setCampeonatos(c?.length ? c : campeonatosDM)
-        setEquipos(e?.length ? e : equiposDM)
-        setArbitros(a?.length ? a : arbitrosDM)
-      } catch {
-        setCampeonatos(campeonatosDM)
-        setEquipos(equiposDM)
-        setArbitros(arbitrosDM)
+
+        // Procesar campeonatos
+        const camps = Array.isArray(campsData) ? campsData : []
+        setCampeonatos(camps)
+
+        // Procesar equipos y agrupar por distrito/provincia
+        const equips = Array.isArray(equiposData) ? equiposData : []
+        
+        // Agrupar equipos por distrito
+        const equiposPorDistrito = new Map<string, EquipoApi[]>()
+        equips.forEach(eq => {
+          const distrito = eq.provincia || "Sin clasificar"
+          if (!equiposPorDistrito.has(distrito)) {
+            equiposPorDistrito.set(distrito, [])
+          }
+          equiposPorDistrito.get(distrito)?.push(eq)
+        })
+
+        // Crear datos de distritos
+        const distritosData: DistritoDatos[] = Array.from(equiposPorDistrito.entries()).map(([distrito, eqs]) => ({
+          nombre: distrito,
+          provincia: distrito,
+          equipos: eqs,
+        }))
+        
+        setDistritosDisponibles(distritosData)
+
+        // Procesar árbitros
+        const arbs = Array.isArray(arbitrosData) ? arbitrosData : []
+        setArbitros(arbs)
+        
+        console.log("✅ Datos cargados exitosamente")
+      } catch (error) {
+        console.error("❌ Error cargando datos:", error)
+        toast({ 
+          title: "⚠️ Error al cargar datos", 
+          description: "Algunos datos pueden no estar disponibles",
+          variant: "destructive" 
+        })
       } finally {
         setLoading(false)
       }
     }
     cargar()
-  }, [])
+  }, [toast])
 
+  // ===== LÓGICA =====
   const etapaHabilitada = (e: string): boolean => {
     if (e === "DISTRITAL") return true
     if (e === "PROVINCIAL") return etapasCompletas.has("DISTRITAL")
@@ -98,25 +141,24 @@ export default function NuevaDesignacionPage() {
     return false
   }
 
-  const guardarEtapa = () => {
-    if (!campeones[etapa] || !subcampeones[etapa]) {
-      toast({ title: "Selecciona campeón y subcampeón", variant: "destructive" })
+  const puedeSiguiente = (): boolean => {
+    if (etapa === "DISTRITAL") return !!partidoSelecDistrital && !!fecha && !!hora && !!estadio
+    if (etapa === "PROVINCIAL") return camponesProvincialesSelec.size > 0 && !!fecha && !!hora && !!estadio
+    if (etapa === "DEPARTAMENTAL") return !!camponsDepartamentalSelec && !!fecha && !!hora && !!estadio
+    return false
+  }
+
+  const avanzarAArbitros = () => {
+    if (!puedeSiguiente()) {
+      toast({ title: "❌ Completa todos los campos", variant: "destructive" })
       return
     }
-    const nuevas = new Set(etapasCompletas)
-    nuevas.add(etapa)
-    setEtapasCompletas(nuevas)
-    if (nuevas.size === 3) {
-      setPaso(3)
-    } else {
-      setEtapa("")
-      toast({ title: `${etapa} completada` })
-    }
+    setPaso(4)
   }
 
   const guardarDesignacion = async () => {
-    if (!fecha || !hora || !estadio || !arbPrinc) {
-      toast({ title: "Completa todos los campos", variant: "destructive" })
+    if (!arbPrinc) {
+      toast({ title: "❌ Selecciona al menos árbitro principal", variant: "destructive" })
       return
     }
     try {
@@ -135,41 +177,73 @@ export default function NuevaDesignacionPage() {
           arbCuarto,
         }),
       })
-      toast({ title: "Guardado exitosamente" })
-      setPaso(0)
-      setCampSelec(null)
-    } catch {}
+      toast({ title: "✅ Designación guardada exitosamente" })
+      resetForm()
+    } catch {
+      toast({ title: "❌ Error al guardar", variant: "destructive" })
+    }
   }
 
+  const resetForm = () => {
+    setPaso(0)
+    setCampSelec(null)
+    setEtapa("")
+    setPartidoSelecDistrital(null)
+    setFecha("")
+    setHora("")
+    setEstadio("")
+    setArbPrinc("")
+  }
+
+  // ===== RENDERIZADO =====
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Indicador de pasos */}
       <div className="flex gap-2 mb-8">
         {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 ${paso === i ? "bg-blue-600 text-white border-blue-600" : paso > i ? "bg-green-100 border-green-600" : "bg-gray-100 border-gray-300"}`}>
-            {i}
+          <div 
+            key={i}
+            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
+              paso === i ? "bg-blue-600 text-white border-blue-600 shadow-lg" :
+              paso > i ? "bg-green-200 border-green-600" :
+              "bg-gray-100 border-gray-300"
+            }`}
+          >
+            {paso > i ? <CheckCircle2 className="w-5 h-5" /> : i}
           </div>
         ))}
       </div>
 
+      {/* PASO 0: SELECCIONAR CAMPEONATO */}
       {paso === 0 && (
-        <Card className="border-2">
+        <Card className="border-2 border-red-300">
           <CardHeader className="bg-gradient-to-r from-red-500 to-red-600 text-white">
-            <CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5" />Campeonatos</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
+              Selecciona el Campeonato
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             {loading ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="animate-spin inline-block w-6 h-6 border-2 border-blue-600 rounded-full border-t-transparent"></div>
-                <p className="mt-3">Cargando campeonatos...</p>
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin">⏳</div>
+                <p className="mt-3 text-gray-600">Cargando campeonatos...</p>
               </div>
             ) : campeonatos.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No hay campeonatos disponibles</p>
-              </div>
+              <p className="text-center text-gray-500">No hay campeonatos disponibles</p>
             ) : (
-              <div className="space-y-2">
+              <div className="grid gap-3">
                 {campeonatos.map((c) => (
-                  <button key={c.id} onClick={() => { setCampSelec(c); setPaso(1); }} className="w-full p-4 text-left border rounded-lg hover:bg-blue-50 transition font-semibold">
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setCampSelec(c)
+                      setEtapa("")
+                      setEtapasCompletas(new Set())
+                      setPaso(1)
+                    }}
+                    className="p-4 border-2 rounded-lg hover:border-red-500 hover:bg-red-50 transition text-left font-semibold hover:shadow-md"
+                  >
                     {c.nombre}
                   </button>
                 ))}
@@ -179,149 +253,327 @@ export default function NuevaDesignacionPage() {
         </Card>
       )}
 
+      {/* PASO 1: SELECCIONAR ETAPA */}
       {paso === 1 && campSelec && (
-        <Card className="border-2">
+        <Card className="border-2 border-blue-300">
           <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardTitle className="flex items-center gap-2"><MapPin className="w-5 h-5" />Etapa</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Selecciona la Etapa: {campSelec.nombre}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {["DISTRITAL", "PROVINCIAL", "DEPARTAMENTAL"].map((e) => {
-                const activa = etapaHabilitada(e)
-                const completa = etapasCompletas.has(e)
+          <CardContent className="pt-6 space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              {["DISTRITAL", "PROVINCIAL", "DEPARTAMENTAL"].map((etName) => {
+                const habilitada = etapaHabilitada(etName)
+                const completa = etapasCompletas.has(etName)
                 return (
-                  <button key={e} disabled={!activa} onClick={() => { setEtapa(e); setPaso(2); }} className={`p-4 rounded-lg border-2 font-semibold ${!activa ? "bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed" : completa ? "bg-green-100 border-green-500" : "bg-white border-blue-300 hover:border-blue-500"}`}>
-                    {e} {completa && "✓"}
+                  <button
+                    key={etName}
+                    disabled={!habilitada}
+                    onClick={() => {
+                      setEtapa(etName)
+                      setPartidoSelecDistrital(null)
+                      setPaso(2)
+                    }}
+                    className={`p-4 rounded-lg border-2 font-semibold transition text-center relative ${
+                      !habilitada ? "bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed" :
+                      completa ? "bg-green-100 border-green-500 hover:shadow-md" :
+                      "bg-white border-blue-300 hover:border-blue-500 hover:shadow-md"
+                    }`}
+                  >
+                    {!habilitada && <Lock className="w-4 h-4 absolute top-2 right-2" />}
+                    {etName}
+                    {completa && <CheckCircle2 className="w-4 h-4 ml-2 inline" />}
                   </button>
                 )
               })}
             </div>
-            <Button onClick={() => setPaso(0)} variant="outline">← Atrás</Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setPaso(0)} variant="outline">← Atrás</Button>
+              <Button onClick={() => setPaso(2)} className="ml-auto bg-blue-600 hover:bg-blue-700">
+                Continuar →
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {paso === 2 && etapa && (
-        <Card className="border-2">
-          <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />{etapa}</CardTitle>
+      {/* PASO 2: CONTENIDO DINÁMICO POR ETAPA */}
+      {paso === 2 && etapa && campSelec && (
+        <Card className="border-2 border-green-300">
+          <CardHeader className={`bg-gradient-to-r ${
+            etapa === "DISTRITAL" ? "from-purple-500 to-purple-600" :
+            etapa === "PROVINCIAL" ? "from-cyan-500 to-cyan-600" :
+            "from-amber-500 to-amber-600"
+          } text-white`}>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Etapa: {etapa}
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>🏆 Campeón</Label>
-                <Select value={String(campeones[etapa] || "")} onValueChange={(v) => setCampeones({...campeones, [etapa]: parseInt(v)})}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                  <SelectContent>
-                    {equipos.map((eq) => (
-                      <SelectItem key={eq.id} value={String(eq.id)}>{eq.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* ETAPA DISTRITAL */}
+            {etapa === "DISTRITAL" && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                  <p className="text-sm font-semibold">ℹ️ Etapa Distrital</p>
+                  <p className="text-xs text-gray-600 mt-1">Los equipos se detectan automáticamente. Selecciona el distrito para ver sus equipos.</p>
+                </div>
+                
+                <div>
+                  <Label>📍 Selecciona Distrito</Label>
+                  <Select value={distritoSelec?.nombre || ""} onValueChange={(nombre) => {
+                    const dist = distritosDisponibles.find(d => d.nombre === nombre)
+                    setDistritoSelec(dist || null)
+                    setPartidoSelecDistrital(null)
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Selecciona un distrito" /></SelectTrigger>
+                    <SelectContent>
+                      {distritosDisponibles.map(d => (
+                        <SelectItem key={d.nombre} value={d.nombre}>
+                          {d.nombre} ({d.provincia}) - {d.equipos.length} equipos
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {distritoSelec && (
+                  <div>
+                    <Label>⚽ Equipos del Distrito {distritoSelec.nombre}</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {distritoSelec.equipos.map(eq => (
+                        <Badge key={eq.id} variant="outline" className="p-2 justify-center cursor-default">
+                          {eq.nombre}
+                        </Badge>
+                      ))}
+                    </div>
+                    {distritoSelec.equipos.length > 0 && (
+                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                        <p className="text-sm font-semibold">✓ {distritoSelec.equipos.length} equipos listos para competir</p>
+                        <p className="text-xs text-gray-600 mt-1">Los árbitros serán designados cuando se definan los partidos.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div>
-                <Label>🥈 Subcampeón</Label>
-                <Select value={String(subcampeones[etapa] || "")} onValueChange={(v) => setSubcampeones({...subcampeones, [etapa]: parseInt(v)})}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                  <SelectContent>
-                    {equipos.map((eq) => (
-                      <SelectItem key={eq.id} value={String(eq.id)}>{eq.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            )}
+
+            {/* ETAPA PROVINCIAL */}
+            {etapa === "PROVINCIAL" && (
+              <div className="space-y-4">
+                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                  <p className="text-sm font-semibold">ℹ️ Etapa Provincial</p>
+                  <p className="text-xs text-gray-600 mt-1">Selecciona los campeones y subcampeones de cada distrito de la etapa anterior.</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <p className="font-semibold text-gray-700">Resultados Distritales a Procesar:</p>
+                  {distritosDisponibles.map(d => (
+                    <div key={d.nombre} className="border rounded-lg p-3 space-y-2">
+                      <p className="font-semibold text-sm">{d.nombre}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">🏆 Campeón</Label>
+                          <Select value={camponesProvincialesSelec.get(d.nombre)?.id?.toString() || ""} onValueChange={(id) => {
+                            const eq = d.equipos.find(e => e.id === parseInt(id))
+                            if (eq) {
+                              const newMap = new Map(camponesProvincialesSelec)
+                              newMap.set(d.nombre, eq)
+                              setCamponesProvincialesSelec(newMap)
+                            }
+                          }}>
+                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                            <SelectContent>
+                              {d.equipos.map(eq => (
+                                <SelectItem key={eq.id} value={eq.id.toString()}>
+                                  {eq.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">🥈 Subcampeón</Label>
+                          <Select value={subcamponesProvincialesSelec.get(d.nombre)?.id?.toString() || ""} onValueChange={(id) => {
+                            const eq = d.equipos.find(e => e.id === parseInt(id))
+                            if (eq) {
+                              const newMap = new Map(subcamponesProvincialesSelec)
+                              newMap.set(d.nombre, eq)
+                              setSubcamponesProvincialesSelec(newMap)
+                            }
+                          }}>
+                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                            <SelectContent>
+                              {d.equipos.map(eq => (
+                                <SelectItem key={eq.id} value={eq.id.toString()}>
+                                  {eq.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ETAPA DEPARTAMENTAL */}
+            {etapa === "DEPARTAMENTAL" && (
+              <div className="space-y-4">
+                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                  <p className="text-sm font-semibold">ℹ️ Etapa Departamental</p>
+                  <p className="text-xs text-gray-600 mt-1">Selecciona el campeón y subcampeón departamental de los resultados provinciales.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>🏆 Campeón Departamental</Label>
+                    <Select value={camponsDepartamentalSelec?.id?.toString() || ""} onValueChange={(id) => {
+                      const eq = equiposDM.find(e => e.id === parseInt(id))
+                      setCamponsDepartamentalSelec(eq || null)
+                    }}>
+                      <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                      <SelectContent>
+                        {equiposDM.map(eq => (
+                          <SelectItem key={eq.id} value={eq.id.toString()}>
+                            {eq.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>🥈 Subcampeón Departamental</Label>
+                    <Select value={subcamponsDepartamentalSelec?.id?.toString() || ""} onValueChange={(id) => {
+                      const eq = equiposDM.find(e => e.id === parseInt(id))
+                      setSubcamponsDepartamentalSelec(eq || null)
+                    }}>
+                      <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                      <SelectContent>
+                        {equiposDM.map(eq => (
+                          <SelectItem key={eq.id} value={eq.id.toString()}>
+                            {eq.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Detalles comunes */}
+            <div className="border-t pt-4">
+              <p className="font-semibold mb-3">📅 Detalles del Evento</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Fecha</Label>
+                  <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Hora</Label>
+                  <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Estadio</Label>
+                  <Input value={estadio} onChange={(e) => setEstadio(e.target.value)} placeholder="Nombre del estadio" />
+                </div>
               </div>
             </div>
-            <div className="flex gap-3">
+
+            <div className="flex gap-2">
               <Button onClick={() => setPaso(1)} variant="outline">← Atrás</Button>
-              <Button onClick={guardarEtapa} disabled={!campeones[etapa] || !subcampeones[etapa]} className="flex-1 bg-green-600 hover:bg-green-700">Guardar Etapa →</Button>
+              <Button 
+                onClick={avanzarAArbitros} 
+                disabled={!puedeSiguiente()}
+                className="ml-auto bg-green-600 hover:bg-green-700"
+              >
+                Continuar → <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {paso === 3 && (
-        <Card className="border-2">
-          <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-            <CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5" />Detalles</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Fecha</Label>
-                <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-              </div>
-              <div>
-                <Label>Hora</Label>
-                <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
-              </div>
-              <div>
-                <Label>Estadio</Label>
-                <Input value={estadio} onChange={(e) => setEstadio(e.target.value)} />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={() => setPaso(1)} variant="outline">← Atrás</Button>
-              <Button onClick={() => setPaso(4)} disabled={!fecha || !hora || !estadio} className="flex-1 bg-orange-600 hover:bg-orange-700">Siguiente →</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
+      {/* PASO 4: DESIGNACIÓN DE ÁRBITROS */}
       {paso === 4 && (
-        <Card className="border-2">
+        <Card className="border-2 border-purple-300">
           <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
-            <CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5" />Árbitros</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Designación de Árbitros - {etapa}
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Árbitro Principal</Label>
+                <Label>🏴 Árbitro Principal *</Label>
                 <Select value={arbPrinc} onValueChange={setArbPrinc}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={String(a.id)}>{a.nombre} {a.apellido}</SelectItem>
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        {a.nombre} {a.apellido} ({a.categoria})
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Asistente 1</Label>
+                <Label>🏳️ Asistente 1</Label>
                 <Select value={arbAsis1} onValueChange={setArbAsis1}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={String(a.id)}>{a.nombre} {a.apellido}</SelectItem>
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        {a.nombre} {a.apellido}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Asistente 2</Label>
+                <Label>🏳️ Asistente 2</Label>
                 <Select value={arbAsis2} onValueChange={setArbAsis2}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={String(a.id)}>{a.nombre} {a.apellido}</SelectItem>
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        {a.nombre} {a.apellido}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Cuarto Árbitro</Label>
+                <Label>🟣 Cuarto Árbitro</Label>
                 <Select value={arbCuarto} onValueChange={setArbCuarto}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={String(a.id)}>{a.nombre} {a.apellido}</SelectItem>
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        {a.nombre} {a.apellido}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button onClick={() => setPaso(3)} variant="outline">← Atrás</Button>
-              <Button onClick={guardarDesignacion} disabled={!arbPrinc} className="flex-1 bg-purple-600 hover:bg-purple-700"><Save className="w-4 h-4 mr-2" />Guardar</Button>
+
+            <div className="flex gap-2">
+              <Button onClick={() => setPaso(2)} variant="outline">← Atrás</Button>
+              <Button 
+                onClick={guardarDesignacion}
+                disabled={!arbPrinc}
+                className="ml-auto bg-purple-600 hover:bg-purple-700"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Designación
+              </Button>
             </div>
           </CardContent>
         </Card>
