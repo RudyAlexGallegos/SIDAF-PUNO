@@ -82,13 +82,18 @@ export const AlgorithmConfigPanel: React.FC = () => {
   const total = config.weightLevel + config.weightLoad + config.weightDiversity
 
   return (
-    <Card className="border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900">
-      <CardHeader className="pb-3 border-b border-slate-700">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-white text-sm md:text-base">
-            <Zap className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />
-            Configuración del Algoritmo
-          </CardTitle>
+    <Card className="border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 h-full flex flex-col">
+      <CardHeader className="pb-3 border-b border-slate-700 flex-shrink-0">
+        <div className="flex items-start sm:items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="flex items-center gap-2 text-white text-xs sm:text-sm md:text-base">
+              <Zap className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 flex-shrink-0" />
+              <span className="truncate">⚙️ Algoritmo</span>
+            </CardTitle>
+            <CardDescription className="text-xs text-slate-400 mt-1">
+              Ajusta la prioridad
+            </CardDescription>
+          </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -96,27 +101,24 @@ export const AlgorithmConfigPanel: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsCustomizing(!isCustomizing)}
-                  className="text-slate-300 hover:text-white hover:bg-slate-700"
+                  className="text-slate-300 hover:text-white hover:bg-slate-700 flex-shrink-0"
                 >
                   <Settings className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {isCustomizing ? "Cerrar personalización" : "Personalizar pesos"}
+                {isCustomizing ? "Cerrar" : "Personalizar"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription className="text-xs text-slate-400">
-          Ajusta la prioridad del algoritmo de designación
-        </CardDescription>
       </CardHeader>
 
-      <CardContent className="p-4 space-y-4">
-        {/* PRESETS */}
+      <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
+        {/* PRESETS - Responsive */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-slate-300">Presets</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2">
             {Object.values(AlgorithmPreset).map((preset) => (
               <TooltipProvider key={preset}>
                 <Tooltip>
@@ -125,24 +127,31 @@ export const AlgorithmConfigPanel: React.FC = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => handlePresetSelect(preset)}
-                      className={`text-xs ${
+                      className={`text-xs h-auto py-2 px-1 sm:px-2 ${
                         algorithmPreset === preset
                           ? "border-yellow-400 bg-yellow-400/10 text-yellow-300"
                           : "border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600"
                       }`}
                     >
-                      {preset === AlgorithmPreset.CALIDAD && "🏅 Calidad"}
-                      {preset === AlgorithmPreset.BALANCE && "⚖️ Balance"}
-                      {preset === AlgorithmPreset.EQUITATIVO && "👥 Equitativo"}
+                      <span className="hidden sm:inline">
+                        {preset === AlgorithmPreset.CALIDAD && "🏅 Calidad"}
+                        {preset === AlgorithmPreset.BALANCE && "⚖️ Balance"}
+                        {preset === AlgorithmPreset.EQUITATIVO && "👥 Equit."}
+                      </span>
+                      <span className="sm:hidden">
+                        {preset === AlgorithmPreset.CALIDAD && "🏅"}
+                        {preset === AlgorithmPreset.BALANCE && "⚖️"}
+                        {preset === AlgorithmPreset.EQUITATIVO && "👥"}
+                      </span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="text-xs">
                     {preset === AlgorithmPreset.CALIDAD &&
-                      "Prioriza árbitros con alto nivel"}
+                      "Prioriza nivel"}
                     {preset === AlgorithmPreset.BALANCE &&
-                      "Balance entre nivel, carga y diversidad"}
+                      "Balance"}
                     {preset === AlgorithmPreset.EQUITATIVO &&
-                      "Prioriza distribución equitativa"}
+                      "Equitativo"}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -151,48 +160,49 @@ export const AlgorithmConfigPanel: React.FC = () => {
         </div>
 
         {/* CONFIGURACIÓN ACTUAL */}
-        <div className="space-y-3 pt-4 border-t border-slate-700">
+        <div className="space-y-2 pt-3 border-t border-slate-700">
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-center">
-              <p className="text-slate-400">Nivel</p>
-              <Badge className="bg-purple-500/20 text-purple-300 mt-1">
+              <p className="text-slate-400 text-xs">Nivel</p>
+              <Badge className="bg-purple-500/20 text-purple-300 mt-1 justify-center text-xs">
                 {getNormalizedValue(config.weightLevel)}%
               </Badge>
             </div>
             <div className="text-center">
-              <p className="text-slate-400">Carga</p>
-              <Badge className="bg-blue-500/20 text-blue-300 mt-1">
+              <p className="text-slate-400 text-xs">Carga</p>
+              <Badge className="bg-blue-500/20 text-blue-300 mt-1 justify-center text-xs">
                 {getNormalizedValue(config.weightLoad)}%
               </Badge>
             </div>
             <div className="text-center">
-              <p className="text-slate-400">Diversidad</p>
-              <Badge className="bg-green-500/20 text-green-300 mt-1">
+              <p className="text-slate-400 text-xs">Diversidad</p>
+              <Badge className="bg-green-500/20 text-green-300 mt-1 justify-center text-xs">
                 {getNormalizedValue(config.weightDiversity)}%
               </Badge>
             </div>
           </div>
 
           {total !== 1 && (
-            <Alert className="bg-yellow-500/10 border-yellow-600 text-yellow-300 text-xs">
-              <AlertCircle className="w-3 h-3" />
-              <AlertDescription>
-                Total: {getNormalizedValue(total)}% (debe ser ~100%)
+            <Alert className="bg-yellow-500/10 border-yellow-600 text-yellow-300 text-xs p-2">
+              <AlertCircle className="w-3 h-3 flex-shrink-0" />
+              <AlertDescription className="text-xs ml-2">
+                Total: {getNormalizedValue(total)}%
               </AlertDescription>
             </Alert>
           )}
         </div>
 
-        {/* PERSONALIZADOR */}
+        {/* PERSONALIZADOR - Responsive */}
         {isCustomizing && (
-          <div className="space-y-4 pt-4 border-t border-slate-700">
+          <div className="space-y-3 pt-3 border-t border-slate-700">
             {/* Weight Level */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold text-slate-300">
-                  Peso Nivel (Jerarquía)
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-semibold text-slate-300 truncate">
+                  <span className="hidden sm:inline">Peso Nivel</span>
+                  <span className="sm:hidden">Nivel</span>
                 </label>
-                <span className="text-xs text-purple-400">
+                <span className="text-xs text-purple-400 flex-shrink-0 ml-1">
                   {getNormalizedValue(config.weightLevel)}%
                 </span>
               </div>
@@ -206,18 +216,19 @@ export const AlgorithmConfigPanel: React.FC = () => {
                 step={5}
                 className="cursor-pointer"
               />
-              <p className="text-xs text-slate-500 mt-1">
-                Mayor peso = prioriza árbitros con nivel más alto
+              <p className="text-xs text-slate-500 mt-1 hidden sm:block">
+                Árbitros con nivel más alto
               </p>
             </div>
 
             {/* Weight Load */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold text-slate-300">
-                  Peso Carga (Disponibilidad)
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-semibold text-slate-300 truncate">
+                  <span className="hidden sm:inline">Peso Carga</span>
+                  <span className="sm:hidden">Carga</span>
                 </label>
-                <span className="text-xs text-blue-400">
+                <span className="text-xs text-blue-400 flex-shrink-0 ml-1">
                   {getNormalizedValue(config.weightLoad)}%
                 </span>
               </div>
@@ -231,18 +242,19 @@ export const AlgorithmConfigPanel: React.FC = () => {
                 step={5}
                 className="cursor-pointer"
               />
-              <p className="text-xs text-slate-500 mt-1">
-                Mayor peso = prioriza árbitros con menos partidos hoy
+              <p className="text-xs text-slate-500 mt-1 hidden sm:block">
+                Menos partidos hoy
               </p>
             </div>
 
             {/* Weight Diversity */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold text-slate-300">
-                  Peso Diversidad (Rotación)
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-semibold text-slate-300 truncate">
+                  <span className="hidden sm:inline">Peso Diversidad</span>
+                  <span className="sm:hidden">Diversidad</span>
                 </label>
-                <span className="text-xs text-green-400">
+                <span className="text-xs text-green-400 flex-shrink-0 ml-1">
                   {getNormalizedValue(config.weightDiversity)}%
                 </span>
               </div>
@@ -256,17 +268,17 @@ export const AlgorithmConfigPanel: React.FC = () => {
                 step={5}
                 className="cursor-pointer"
               />
-              <p className="text-xs text-slate-500 mt-1">
-                Mayor peso = evita saturar siempre los mismos árbitros
+              <p className="text-xs text-slate-500 mt-1 hidden sm:block">
+                Rotación de árbitros
               </p>
             </div>
 
             {/* Save Button */}
             <Button
               onClick={handleSaveConfig}
-              className="w-full bg-yellow-400 text-slate-900 hover:bg-yellow-500 text-xs font-semibold"
+              className="w-full bg-yellow-400 text-slate-900 hover:bg-yellow-500 text-xs font-semibold py-2"
             >
-              Guardar Configuración
+              ✓ Guardar
             </Button>
           </div>
         )}

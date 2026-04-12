@@ -225,6 +225,7 @@ export default function NuevaDesignacionPage() {
     referees,
     allMatches,
     selectedStage,
+    selectedChampionship,
     showSimulationResult,
     simulationResult,
     setChampionships,
@@ -303,107 +304,236 @@ export default function NuevaDesignacionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6 lg:p-8">
-      {/* HEADER */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/dashboard/designaciones">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:bg-white/10"
-            >
-              <ChevronLeft className="w-5 h-5 text-slate-400" />
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold text-white">
-              🤖 Designación Inteligente de Árbitros
-            </h1>
-            <p className="text-slate-400 mt-1">
-              Sistema avanzado con algoritmo heurístico y simulación en tiempo real
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* HEADER - Responsive */}
+      <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-3">
+            {/* Back Button + Title */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Link href="/dashboard/designaciones">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-white/10 flex-shrink-0"
+                >
+                  <ChevronLeft className="w-5 h-5 text-slate-400" />
+                </Button>
+              </Link>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold text-white truncate">
+                  🤖 Designación de Árbitros
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-400 hidden sm:block">
+                  Sistema inteligente con algoritmo heurístico
+                </p>
+              </div>
+            </div>
+
+            {/* Mobile Stats */}
+            <div className="flex gap-3 lg:hidden">
+              <div className="text-center">
+                <p className="text-xs text-slate-400">Campeonatos</p>
+                <p className="text-sm font-semibold text-yellow-400">
+                  {championships.length}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-slate-400">Árbitros</p>
+                <p className="text-sm font-semibold text-green-400">
+                  {referees.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats Desktop */}
+        <div className="hidden lg:block border-t border-slate-700 bg-slate-800/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Campeonatos:</span>
+                <span className="font-semibold text-yellow-400">
+                  {championships.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Árbitros:</span>
+                <span className="font-semibold text-green-400">
+                  {referees.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">
+                  Partidos en {selectedStage?.nombre || "selecciona etapa"}:
+                </span>
+                <span className="font-semibold text-blue-400">
+                  {getMatchesforStage().length}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ERROR STATE */}
       {errorState && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-600 rounded-lg">
-          <p className="text-red-400 text-sm">Error: {errorState}</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="p-3 sm:p-4 bg-red-500/10 border border-red-600 rounded-lg">
+            <p className="text-red-400 text-xs sm:text-sm">
+              ⚠️ Error: {errorState}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* MAIN LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* SIDEBAR - Campeonatos y Etapas (25% width en desktop) */}
-        <div className="lg:col-span-1">
-          <CompetitionSidebar championships={championships} />
-        </div>
-
-        {/* CONTENIDO PRINCIPAL (75% width en desktop) */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Panel de Errores */}
-          <ErrorPanel />
-
-          {/* Resultado de Simulación (si existe) */}
-          {showSimulationResult && simulationResult && (
-            <SimulationResultComponent
-              result={simulationResult}
-              onApply={() => {
-                toast({
-                  title: "Asignaciones aplicadas",
-                  description: `${simulationResult.successCount} designaciones confirmadas`,
-                })
-              }}
-              onDiscard={() => {
-                toast({
-                  title: "Simulación descartada",
-                  description: "Puedes ejecutar una nueva simulación",
-                })
-              }}
-            />
-          )}
-
-          {/* Sección de Partidos y Configuración */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Lista de Partidos */}
-            <MatchList matches={matchesForStage} />
-
-            {/* Configuración del Algoritmo */}
-            <AlgorithmConfigPanel />
+      {/* MAIN CONTENT - Responsive Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {/* Responsive Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* SIDEBAR - Hidden on mobile, 25% on desktop */}
+          <div className="hidden lg:block lg:col-span-1">
+            <div className="sticky top-20">
+              <CompetitionSidebar championships={championships} />
+            </div>
           </div>
 
-          {/* Panel de Asignación */}
-          <AssignmentPanel
-            matches={matchesForStage}
-            referees={referees}
-            onSimulate={(result) => {
-              console.log("Simulación completada:", result)
-            }}
-          />
+          {/* MAIN CONTENT - Full width mobile, 75% desktop */}
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+            {/* Mobile Championship Selector */}
+            <div className="lg:hidden">
+              {selectedChampionship ? (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                  <p className="text-xs text-slate-400 mb-2">
+                    Campeonato Seleccionado
+                  </p>
+                  <p className="text-sm sm:text-base font-semibold text-yellow-400 mb-3">
+                    {selectedChampionship.nombre}
+                  </p>
+                  <div className="space-y-2">
+                    {selectedChampionship.etapas?.map((stage) => (
+                      <button
+                        key={stage.id}
+                        onClick={() => {
+                          useDesignationStore.setState({ selectedStage: stage })
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                          selectedStage?.id === stage.id
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        }`}
+                      >
+                        {stage.nombre}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() =>
+                      useDesignationStore.setState({ selectedChampionship: null })
+                    }
+                    className="w-full mt-3 px-3 py-2 rounded text-sm bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                  >
+                    Cambiar Campeonato
+                  </button>
+                </div>
+              ) : (
+                <CompetitionSidebar championships={championships} />
+              )}
+            </div>
 
-          {/* INFORMACIÓN FOOTER */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs md:text-sm">
-              <div>
-                <p className="text-slate-400">Campeonatos</p>
-                <p className="text-yellow-400 font-semibold text-lg">
-                  {championships.length}
-                </p>
+            {/* Error Panel */}
+            <ErrorPanel />
+
+            {/* Simulation Result */}
+            {showSimulationResult && simulationResult && (
+              <div className="animate-in fade-in slide-in-from-top-2">
+                <SimulationResultComponent
+                  result={simulationResult}
+                  onApply={() => {
+                    toast({
+                      title: "✅ Asignaciones aplicadas",
+                      description: `${simulationResult.successCount} designaciones confirmadas`,
+                    })
+                  }}
+                  onDiscard={() => {
+                    toast({
+                      title: "❌ Simulación descartada",
+                      description: "Puedes ejecutar una nueva simulación",
+                    })
+                  }}
+                />
               </div>
-              <div>
-                <p className="text-slate-400">Árbitros Disponibles</p>
-                <p className="text-green-400 font-semibold text-lg">
-                  {referees.length}
-                </p>
+            )}
+
+            {/* Matches and Algorithm - Responsive */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Match List - Takes 2 cols on desktop, full on mobile */}
+              <div className="lg:col-span-2">
+                <MatchList matches={getMatchesforStage()} />
               </div>
-              <div>
-                <p className="text-slate-400">Partidos en {selectedStage?.nombre}</p>
-                <p className="text-blue-400 font-semibold text-lg">
-                  {matchesForStage.length}
-                </p>
+
+              {/* Algorithm Config - Takes 1 col on desktop, full on mobile */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-20 sm:top-32 lg:top-20">
+                  <AlgorithmConfigPanel />
+                </div>
               </div>
+            </div>
+
+            {/* Assignment Panel - Full width */}
+            <AssignmentPanel
+              matches={getMatchesforStage()}
+              referees={referees}
+              onSimulate={(result) => {
+                console.log("Simulación completada:", result)
+              }}
+            />
+
+            {/* Footer Info - Responsive */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs sm:text-sm">
+                <div className="min-w-0">
+                  <p className="text-slate-400 truncate">Campeonatos</p>
+                  <p className="text-lg sm:text-xl font-semibold text-yellow-400">
+                    {championships.length}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-slate-400 truncate">Árbitros</p>
+                  <p className="text-lg sm:text-xl font-semibold text-green-400">
+                    {referees.length}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-slate-400 truncate">Partidos</p>
+                  <p className="text-lg sm:text-xl font-semibold text-blue-400">
+                    {getMatchesforStage().length}
+                  </p>
+                </div>
+              </div>
+
+              {selectedStage && (
+                <div className="mt-4 pt-4 border-t border-slate-700 text-xs sm:text-sm">
+                  <p className="text-slate-400 mb-2">Etapa Seleccionada</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white truncate">
+                      {selectedStage.nombre}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-semibold ${
+                        selectedStage.status === "active"
+                          ? "bg-green-600 text-white"
+                          : "bg-blue-600 text-white"
+                      }`}
+                    >
+                      {selectedStage.status === "active"
+                        ? "Activa"
+                        : "Planificación"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -69,21 +69,23 @@ export const MatchList: React.FC<MatchListProps> = ({ matches }) => {
   }
 
   return (
-    <Card className="border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900">
-      <CardHeader className="pb-3 border-b border-slate-700">
-        <CardTitle className="text-white text-sm md:text-base flex items-center justify-between">
-          <span>Partidos</span>
-          <Badge variant="secondary" className="bg-slate-700 text-slate-300">
+    <Card className="border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 h-full flex flex-col">
+      <CardHeader className="pb-3 border-b border-slate-700 flex-shrink-0">
+        <CardTitle className="text-white text-xs sm:text-sm md:text-base flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            ⚽ Partidos
+          </span>
+          <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
             {matches.length}
           </Badge>
         </CardTitle>
         <p className="text-xs text-slate-400 mt-1">
-          {selectedMatches.length} seleccionados
+          {selectedMatches.length} / {matches.length} seleccionados
         </p>
       </CardHeader>
 
-      <CardContent className="p-4">
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+      <CardContent className="p-3 sm:p-4 flex-1 overflow-y-auto">
+        <div className="space-y-2 sm:space-y-3">
           {matches.map((match) => {
             const importanceInfo = getImportanceBadge(match.importancia)
             const isSelected = selectedMatches.includes(match.id)
@@ -92,46 +94,51 @@ export const MatchList: React.FC<MatchListProps> = ({ matches }) => {
               <div
                 key={match.id}
                 onClick={() => toggleMatchSelection(match.id)}
-                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all active:scale-95 ${
                   isSelected
-                    ? "border-yellow-400 bg-yellow-400/10"
-                    : "border-slate-700 bg-slate-700/50 hover:bg-slate-700"
+                    ? "border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20"
+                    : "border-slate-700 bg-slate-700/30 hover:bg-slate-700/50 active:bg-slate-700"
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2 sm:gap-3">
                   {/* Checkbox */}
                   <Checkbox
                     checked={isSelected}
                     onChange={() => toggleMatchSelection(match.id)}
-                    className="mt-1 flex-shrink-0"
+                    className="mt-1 flex-shrink-0 h-4 w-4"
                   />
 
                   {/* Contenido */}
                   <div className="flex-1 min-w-0">
-                    {/* Equipos */}
-                    <div className="text-xs md:text-sm font-semibold text-white mb-2">
-                      <span className="truncate">
+                    {/* Equipos - Responsive */}
+                    <div className="text-xs sm:text-sm font-semibold text-white mb-2 line-clamp-2">
+                      <span className="truncate inline">
                         {match.equipoLocal.nombre || "Local"}
                       </span>
-                      <span className="text-slate-400 mx-1">vs</span>
-                      <span className="truncate">
+                      <span className="text-slate-400 mx-0.5 sm:mx-1">vs</span>
+                      <span className="truncate inline">
                         {match.equipoVisitante.nombre || "Visitante"}
                       </span>
                     </div>
 
-                    {/* Metadata */}
-                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-300 mb-2">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-500" />
-                        <span>{new Date(match.fecha).toLocaleDateString()}</span>
+                    {/* Metadata - Grid responsive */}
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs text-slate-300 mb-2">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <Calendar className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                        <span className="truncate">
+                          {new Date(match.fecha).toLocaleDateString("es-PE", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-500" />
+                      <div className="flex items-center gap-1 min-w-0">
+                        <Clock className="w-3 h-3 text-slate-500 flex-shrink-0" />
                         <span>{match.hora}</span>
                       </div>
                     </div>
 
-                    {/* Badges */}
+                    {/* Badges - Responsive wrap */}
                     <div className="flex flex-wrap gap-1">
                       <TooltipProvider>
                         <Tooltip>
@@ -155,9 +162,9 @@ export const MatchList: React.FC<MatchListProps> = ({ matches }) => {
                         className={`text-xs border ${getStatusBadgeColor(match.status)}`}
                       >
                         {match.status === MatchStatus.PENDING && "Pendiente"}
-                        {match.status === MatchStatus.ASSIGNED && "Asignado"}
-                        {match.status === MatchStatus.COMPLETED && "Completado"}
-                        {match.status === MatchStatus.CANCELLED && "Cancelado"}
+                        {match.status === MatchStatus.ASSIGNED && "✓ Asignado"}
+                        {match.status === MatchStatus.COMPLETED && "✓ Completado"}
+                        {match.status === MatchStatus.CANCELLED && "✗ Cancelado"}
                       </Badge>
 
                       <TooltipProvider>
@@ -168,7 +175,7 @@ export const MatchList: React.FC<MatchListProps> = ({ matches }) => {
                               className="text-xs bg-slate-700 text-slate-200 cursor-help"
                             >
                               <Users className="w-2.5 h-2.5 mr-0.5" />
-                              {match.rolesRequeridos?.length || 0} roles
+                              {match.rolesRequeridos?.length || 0}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -177,6 +184,15 @@ export const MatchList: React.FC<MatchListProps> = ({ matches }) => {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
 
                     {/* Estadio */}
                     {match.estadio && (
