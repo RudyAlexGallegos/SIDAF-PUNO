@@ -44,7 +44,7 @@ function StatusBadge({ estado }: { estado: string | undefined }) {
 
 export default function CampeonadosPage() {
   const [query, setQuery] = useState<string>("")
-  const [campeaonados, setCampeaonados] = useState<any[]>([])
+  const [campeonatos, setCampeonatos] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; nombre: string }>({
@@ -57,15 +57,15 @@ export default function CampeonadosPage() {
   const cargarCampeones = async () => {
     try {
       setIsLoading(true)
-      const res = await fetch(`${API_URL}/campeonatos`)
+      const res = await fetch(`${API_URL}/campeonato`)
       if (!res.ok) throw new Error("Failed to load championships")
       const data = await res.json()
-      setCampeaonados(Array.isArray(data) ? data : [])
+      setCampeonatos(Array.isArray(data) ? data : [])
       setError("")
     } catch (error) {
       console.error("Error:", error)
       setError("Error al cargar los campeonatos")
-      setCampeaonados([])
+      setCampeonatos([])
     } finally {
       setIsLoading(false)
     }
@@ -84,7 +84,7 @@ export default function CampeonadosPage() {
 
     try {
       setIsDeleting(true)
-      const res = await fetch(`${API_URL}/campeonatos/${deleteDialog.id}`, {
+      const res = await fetch(`${API_URL}/campeonato/${deleteDialog.id}`, {
         method: "DELETE",
       })
 
@@ -93,7 +93,7 @@ export default function CampeonadosPage() {
       }
 
       // Actualizar la lista removiendo el campeonato eliminado
-      setCampeaonados(campeaonados.filter(c => c.id !== deleteDialog.id))
+      setCampeonatos(campeonatos.filter(c => c.id !== deleteDialog.id))
       setDeleteDialog({ open: false, id: null, nombre: "" })
       setError("")
     } catch (error) {
@@ -106,13 +106,13 @@ export default function CampeonadosPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return campeaonados
-    return campeaonados.filter(c => 
+    if (!q) return campeonatos
+    return campeonatos.filter(c => 
       c.nombre?.toLowerCase().includes(q) || 
       c.categoria?.toLowerCase().includes(q) || 
       c.nivelDificultad?.toLowerCase().includes(q)
     )
-  }, [query, campeaonados])
+  }, [query, campeonatos])
 
   if (isLoading) {
     return (
@@ -132,10 +132,10 @@ export default function CampeonadosPage() {
         <div className="ml-auto flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Total</span>
-            <Badge className="bg-slate-100 text-slate-800 px-2 py-1">{campeaonados.length}</Badge>
+            <Badge className="bg-slate-100 text-slate-800 px-2 py-1">{campeonatos.length}</Badge>
           </div>
           <Button asChild>
-            <Link href="/dashboard/campeonatos/nuevo" className="flex items-center">
+            <Link href="/dashboard/campeonato/nuevo" className="flex items-center">
               <Plus className="mr-2 h-4 w-4" aria-hidden />
               Nuevo Campeonato
             </Link>

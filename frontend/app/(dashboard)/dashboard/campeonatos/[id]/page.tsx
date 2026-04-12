@@ -36,7 +36,7 @@ export default function DetalleCampeonatoPage() {
                 setLoading(true)
                 setError("")
 
-                const res = await fetch(`${API_URL}/campeonatos/${championshipId}`)
+                const res = await fetch(`${API_URL}/campeonato/${championshipId}`)
                 if (!res.ok) throw new Error("Campeonato no encontrado")
 
                 const data = await res.json()

@@ -292,7 +292,7 @@ export const useDataStore = create<DataStore>()(
       addCampeonato: async (c) => {
         set({ loading: true, error: null })
         try {
-          const res = await fetch(`${API_URL}/campeonatos`, {
+          const res = await fetch(`${API_URL}/campeonato`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(c),
@@ -316,7 +316,7 @@ export const useDataStore = create<DataStore>()(
       updateCampeonato: async (id, data) => {
         set({ loading: true, error: null })
         try {
-          const res = await fetch(`${API_URL}/campeonatos/${id}`, {
+          const res = await fetch(`${API_URL}/campeonato/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -343,7 +343,7 @@ export const useDataStore = create<DataStore>()(
       deleteCampeonato: async (id) => {
         set({ loading: true, error: null })
         try {
-          const res = await fetch(`${API_URL}/campeonatos/${id}`, {
+          const res = await fetch(`${API_URL}/campeonato/${id}`, {
             method: "DELETE",
           })
 
@@ -401,7 +401,7 @@ export const useDataStore = create<DataStore>()(
           }
 
           // Cargar Campeonatos
-          const champsRes = await fetch(`${API_URL}/campeonatos`)
+          const champsRes = await fetch(`${API_URL}/campeonato`)
           if (champsRes.ok) {
             const champsData = await champsRes.json()
             const normalizedChamps = (champsData || []).map((d: any) => ({ ...d, id: String(d.id), nivelDificultad: d.nivelDificultad || "Medio" }))

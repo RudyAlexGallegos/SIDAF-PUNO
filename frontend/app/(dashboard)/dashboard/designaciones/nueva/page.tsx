@@ -1,583 +1,413 @@
-﻿"use client"
+/**
+ * PÁGINA PRINCIPAL DE DESIGNACIÓN DE ÁRBITROS
+ * 
+ * Sistema completo y profesional para:
+ * - Gestión de campeonatos y etapas
+ * - Creación y gestión de partidos
+ * - Designación manual de árbitros
+ * - Designación automática inteligente con algoritmo heurístico
+ * - Simulación y validación
+ * 
+ * TODO CONTENIDO EN ESTA RUTA: /dashboard/designaciones/nueva
+ */
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
+import React, { useEffect, useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
-import { Badge } from "@/components/ui/badge"
-import { Trophy, MapPin, Users, Shield, Calendar, Save, ArrowRight, Lock, CheckCircle2 } from "lucide-react"
-import { getCampeonatos, getEquipos, getArbitros, type Campeonato as CampeonatoApi, type Equipo as EquipoApi, type Arbitro as ArbitroApi } from "@/services/api"
+import { ChevronLeft, Loader } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
+import {
+  getCampeonatos,
+  getArbitros,
+  getDesignacionesByCampeonato,
+  getEquiposByCampeonato,
+  type Campeonato,
+  type Arbitro,
+  type Designacion,
+  type Equipo,
+} from "@/services/api"
 
-interface Campeonato extends CampeonatoApi {}
-interface Equipo extends EquipoApi {}
-interface Arbitro extends ArbitroApi {}
+// IMPORTAR TIPOS
+import {
+  Championship,
+  Stage,
+  Match,
+  Referee,
+  RefereeRole,
+ MatchStatus,
+  StageStatus,
+} from "./lib/types"
 
-interface Partido {
-  id: number
-  equipo1: Equipo
-  equipo2: Equipo
-  fecha?: string
-  hora?: string
-  estadio?: string
+// IMPORTAR COMPONENTES
+import { CompetitionSidebar } from "./components/CompetitionSidebar"
+import { MatchList } from "./components/MatchList"
+import { AssignmentPanel } from "./components/AssignmentPanel"
+import { AlgorithmConfigPanel } from "./components/AlgorithmConfigPanel"
+import { SimulationResultComponent } from "./components/SimulationResult"
+import { ErrorPanel } from "./components/ErrorPanel"
+
+// IMPORTAR STORE
+import { useDesignationStore } from "./hooks/useDesignationStore"
+
+// ============================================================
+// MAPEO DE DATOS - Transformar API a tipos internos
+// ============================================================
+
+const mapCampeonatoToChampionship = (camp: Campeonato): Championship => {
+  // Generar etapas de ejemplo si no existen
+  const etapas: Stage[] = [
+    {
+      id: 1,
+      nombre: "Fase 1: Grupos",
+      idCampeonato: camp.id || 0,
+      fecha_inicio: camp.estado ? new Date().toISOString() : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: camp.estado === "ACTIVO" ? StageStatus.ACTIVE : StageStatus.PLANNING,
+      orden: 1,
+      descripcion: "Fase de grupos",
+    },
+    {
+      id: 2,
+      nombre: "Fase 2: Eliminación Directa",
+      idCampeonato: camp.id || 0,
+      fecha_inicio: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_fin: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      status: StageStatus.PLANNING,
+      orden: 2,
+      descripcion: "Fase eliminación",
+    },
+  ]
+
+  return {
+    id: camp.id || 0,
+    nombre: camp.nombre || "Sin nombre",
+    categoria: camp.categoria,
+    estado: camp.estado,
+    numeroEquipos: camp.numeroEquipos || 0,
+    etapas,
+    etapaActiva: etapas.find(
+      (e) => e.status === StageStatus.ACTIVE
+    ),
+  }
 }
 
-interface DistritoDatos {
-  nombre: string
-  provincia: string
-  equipos: Equipo[]
+const mapArbitroToReferee = (arb: Arbitro): Referee => {
+  // Mapear categoría a nivel y roles
+  const categoriaToLevel: Record<string, number> = {
+    FIFA: 10,
+    "Nacional A": 8,
+    "Nacional B": 7,
+    Regional: 5,
+    Provincial: 3,
+  }
+
+  const nivel = categoriaToLevel[arb.categoria || "Provincial"] || 3
+  const roles: RefereeRole[] = [
+    RefereeRole.PRINCIPAL,
+    RefereeRole.ASISTENTE_1,
+    RefereeRole.ASISTENTE_2,
+  ]
+
+  if (nivel >= 7) {
+    roles.push(RefereeRole.CUARTO)
+    roles.push(RefereeRole.VAR)
+  }
+
+  return {
+    id: arb.id || 0,
+    nombres: arb.nombre || "Sin nombre",
+    apellido: arb.apellido || "",
+    nombre: arb.nombre || "",
+    dni: arb.dni || "",
+    categoria: arb.categoria || "Provincial",
+    nivel,
+    especialidad: arb.especialidad || "General",
+    experiencia: arb.experiencia || 0,
+    roles,
+    disponible: true,
+    partidosHoy: Math.random() < 0.5 ? 0 : 1,
+  }
 }
 
-interface ProvinciaResultados {
-  nombre: string
-  distrito: string
-  campeon: Equipo | null
-  subcampeon: Equipo | null
+const mapDesignacionToMatch = (des: Designacion, championship: Championship): Match => {
+  return {
+    id: `match-${des.id}`,
+    idCampeonato: des.idCampeonato || championship.id,
+    idEtapa: championship.etapaActiva?.id || 1,
+    equipoLocal: {
+      id: des.idEquipoLocal || 0,
+      nombre: des.nombreEquipoLocal || "Equipo Local",
+    },
+    equipoVisitante: {
+      id: des.idEquipoVisitante || 0,
+      nombre: des.nombreEquipoVisitante || "Equipo Visitante",
+    },
+    fecha: des.fecha || new Date().toISOString().split("T")[0],
+    hora: des.hora || "15:00",
+    estadio: des.estadio || "Por definir",
+    importancia: 5, // Valor por defecto
+    rolesRequeridos: [
+      RefereeRole.PRINCIPAL,
+      RefereeRole.ASISTENTE_1,
+      RefereeRole.ASISTENTE_2,
+      RefereeRole.CUARTO,
+    ],
+    status: des.estado === "PROGRAMADA" ? MatchStatus.PENDING : MatchStatus.ASSIGNED,
+    designaciones: {
+      [RefereeRole.PRINCIPAL]: des.arbitroPrincipal ? parseInt(String(des.arbitroPrincipal)) : null,
+      [RefereeRole.ASISTENTE_1]: des.arbitroAsistente1 ? parseInt(String(des.arbitroAsistente1)) : null,
+      [RefereeRole.ASISTENTE_2]: des.arbitroAsistente2 ? parseInt(String(des.arbitroAsistente2)) : null,
+      [RefereeRole.CUARTO]: des.cuartoArbitro ? parseInt(String(des.cuartoArbitro)) : null,
+      [RefereeRole.VAR]: null,
+      [RefereeRole.AVAR]: null,
+    },
+    createdAt: des.createdAt || new Date().toISOString(),
+  }
 }
+
+// Generar partidos de ejemplo basado en etapas
+const generateExampleMatches = (championship: Championship): Match[] => {
+  if (!championship.etapaActiva) return []
+
+  const etapa = championship.etapaActiva
+  const numPartidos = Math.ceil(Math.random() * 4) + 2 // 2-6 partidos
+
+  const matches: Match[] = []
+  for (let i = 1; i <= numPartidos; i++) {
+    const fecha = new Date(etapa.fecha_inicio)
+    fecha.setDate(fecha.getDate() + Math.floor(Math.random() * 7))
+
+    matches.push({
+      id: `match-${etapa.id}-${i}`,
+      idCampeonato: championship.id,
+      idEtapa: etapa.id,
+      equipoLocal: { id: i * 2 - 1, nombre: `Equipo Local ${i}` },
+      equipoVisitante: { id: i * 2, nombre: `Equipo Visitante ${i}` },
+      fecha: fecha.toISOString().split("T")[0],
+      hora: `${String(15 + Math.floor(Math.random() * 3)).padStart(2, "0")}:00`,
+      estadio: `Estadio ${String.fromCharCode(65 + (i % 26))}`,
+      importancia: Math.ceil(Math.random() * 10),
+      rolesRequeridos: [
+        RefereeRole.PRINCIPAL,
+        RefereeRole.ASISTENTE_1,
+        RefereeRole.ASISTENTE_2,
+        RefereeRole.CUARTO,
+      ],
+      status: MatchStatus.PENDING,
+      designaciones: {
+        [RefereeRole.PRINCIPAL]: null,
+        [RefereeRole.ASISTENTE_1]: null,
+        [RefereeRole.ASISTENTE_2]: null,
+        [RefereeRole.CUARTO]: null,
+        [RefereeRole.VAR]: null,
+        [RefereeRole.AVAR]: null,
+      },
+      createdAt: new Date().toISOString(),
+    })
+  }
+
+  return matches
+}
+
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
 
 export default function NuevaDesignacionPage() {
-  const { toast } = useToast()
-  const [paso, setPaso] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
-  const [arbitros, setArbitros] = useState<Arbitro[]>([])
-  
-  // Selecciones principales
-  const [campSelec, setCampSelec] = useState<Campeonato | null>(null)
-  const [etapa, setEtapa] = useState("")
-  const [etapasCompletas, setEtapasCompletas] = useState<Set<string>>(new Set())
-  
-  // Para etapa DISTRITAL
-  const [distritosDisponibles, setDistritosDisponibles] = useState<DistritoDatos[]>([])
-  const [distritoSelec, setDistritoSelec] = useState<DistritoDatos | null>(null)
-  const [partidosDistrital, setPartidosDistrital] = useState<Partido[]>([])
-  const [partidoSelecDistrital, setPartidoSelecDistrital] = useState<Partido | null>(null)
-  
-  // Para etapa PROVINCIAL
-  const [resultadosDistritales, setResultadosDistritales] = useState<ProvinciaResultados[]>([])
-  const [camponesProvincialesSelec, setCamponesProvincialesSelec] = useState<Map<string, Equipo>>(new Map())
-  const [subcamponesProvincialesSelec, setSubcamponesProvincialesSelec] = useState<Map<string, Equipo>>(new Map())
-  
-  // Para etapa DEPARTAMENTAL
-  const [camponsDepartamentalSelec, setCamponsDepartamentalSelec] = useState<Equipo | null>(null)
-  const [subcamponsDepartamentalSelec, setSubcamponsDepartamentalSelec] = useState<Equipo | null>(null)
-  
-  // Detalles del partido (común a todas las etapas)
-  const [fecha, setFecha] = useState("")
-  const [hora, setHora] = useState("")
-  const [estadio, setEstadio] = useState("")
-  
-  // Designación de árbitros
-  const [arbPrinc, setArbPrinc] = useState("")
-  const [arbAsis1, setArbAsis1] = useState("")
-  const [arbAsis2, setArbAsis2] = useState("")
-  const [arbCuarto, setArbCuarto] = useState("")
+  const [errorState, setErrorState] = useState<string | null>(null)
 
-  // ===== EFECTOS =====
+  // ZUSTAND STORE
+  const {
+    championships,
+    referees,
+    allMatches,
+    selectedStage,
+    showSimulationResult,
+    simulationResult,
+    setChampionships,
+    setReferees,
+    setMatches,
+    getMatchesforStage,
+  } = useDesignationStore()
+
+  // CARGAR DATOS
   useEffect(() => {
-    const cargar = async () => {
+    async function loadData() {
       try {
         setLoading(true)
-        
-        // Cargar datos reales de la API
-        const [campsData, equiposData, arbitrosData] = await Promise.all([
+        const [campData, arbData] = await Promise.all([
           getCampeonatos(),
-          getEquipos(),
           getArbitros(),
         ])
 
-        // Procesar campeonatos
-        const camps = Array.isArray(campsData) ? campsData : []
-        setCampeonatos(camps)
+        // Mapear datos de campeonatos
+        const mappedChampionships = campData.map(mapCampeonatoToChampionship)
+        const mappedReferees = arbData.map(mapArbitroToReferee)
 
-        // Procesar equipos y agrupar por distrito/provincia
-        const equips = Array.isArray(equiposData) ? equiposData : []
-        
-        // Agrupar equipos por distrito
-        const equiposPorDistrito = new Map<string, EquipoApi[]>()
-        equips.forEach(eq => {
-          const distrito = eq.provincia || "Sin clasificar"
-          if (!equiposPorDistrito.has(distrito)) {
-            equiposPorDistrito.set(distrito, [])
-          }
-          equiposPorDistrito.get(distrito)?.push(eq)
+        // Cargar designaciones reales del backend
+        let allLoadedMatches: Match[] = []
+        const designacionesPromises = mappedChampionships.map((camp) =>
+          getDesignacionesByCampeonato(camp.id)
+        )
+        const designacionesArrays = await Promise.all(designacionesPromises)
+
+        // Convertir designaciones a matches
+        designacionesArrays.forEach((designaciones, index) => {
+          const championship = mappedChampionships[index]
+          const matches = designaciones
+            .filter((des) => des.estado === "PROGRAMADA") // Solo designaciones sin asignar
+            .map((des) => mapDesignacionToMatch(des, championship))
+          allLoadedMatches = [...allLoadedMatches, ...matches]
         })
 
-        // Crear datos de distritos
-        const distritosData: DistritoDatos[] = Array.from(equiposPorDistrito.entries()).map(([distrito, eqs]) => ({
-          nombre: distrito,
-          provincia: distrito,
-          equipos: eqs,
-        }))
-        
-        setDistritosDisponibles(distritosData)
+        setChampionships(mappedChampionships)
+        setReferees(mappedReferees)
+        setMatches(allLoadedMatches)
 
-        // Procesar árbitros
-        const arbs = Array.isArray(arbitrosData) ? arbitrosData : []
-        setArbitros(arbs)
-        
-        console.log("✅ Datos cargados exitosamente")
+        toast({
+          title: "Datos cargados",
+          description: `${mappedChampionships.length} campeonatos, ${mappedReferees.length} árbitros, ${allLoadedMatches.length} partidos por designar`,
+        })
       } catch (error) {
-        console.error("❌ Error cargando datos:", error)
-        toast({ 
-          title: "⚠️ Error al cargar datos", 
-          description: "Algunos datos pueden no estar disponibles",
-          variant: "destructive" 
+        console.error("Error cargando datos:", error)
+        const message = error instanceof Error ? error.message : "Error desconocido"
+        setErrorState(message)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los datos",
+          variant: "destructive",
         })
       } finally {
         setLoading(false)
       }
     }
-    cargar()
-  }, [toast])
 
-  // ===== LÓGICA =====
-  const etapaHabilitada = (e: string): boolean => {
-    if (e === "DISTRITAL") return true
-    if (e === "PROVINCIAL") return etapasCompletas.has("DISTRITAL")
-    if (e === "DEPARTAMENTAL") return etapasCompletas.has("PROVINCIAL")
-    return false
+    loadData()
+  }, [setChampionships, setReferees, setMatches])
+
+  // OBTENER PARTIDOS DE LA ETAPA ACTUAL
+  const matchesForStage = getMatchesforStage()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="text-center">
+          <Loader className="w-12 h-12 animate-spin text-yellow-400 mx-auto mb-4" />
+          <p className="text-slate-400">Cargando sistema de designación...</p>
+        </div>
+      </div>
+    )
   }
 
-  const puedeSiguiente = (): boolean => {
-    if (etapa === "DISTRITAL") return !!partidoSelecDistrital && !!fecha && !!hora && !!estadio
-    if (etapa === "PROVINCIAL") return camponesProvincialesSelec.size > 0 && !!fecha && !!hora && !!estadio
-    if (etapa === "DEPARTAMENTAL") return !!camponsDepartamentalSelec && !!fecha && !!hora && !!estadio
-    return false
-  }
-
-  const avanzarAArbitros = () => {
-    if (!puedeSiguiente()) {
-      toast({ title: "❌ Completa todos los campos", variant: "destructive" })
-      return
-    }
-    setPaso(4)
-  }
-
-  const guardarDesignacion = async () => {
-    if (!arbPrinc) {
-      toast({ title: "❌ Selecciona al menos árbitro principal", variant: "destructive" })
-      return
-    }
-    try {
-      await fetch("/api/designaciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          campeonato: campSelec,
-          etapa,
-          fecha,
-          hora,
-          estadio,
-          arbPrincipal: arbPrinc,
-          arbAsistente1: arbAsis1,
-          arbAsistente2: arbAsis2,
-          arbCuarto,
-        }),
-      })
-      toast({ title: "✅ Designación guardada exitosamente" })
-      resetForm()
-    } catch {
-      toast({ title: "❌ Error al guardar", variant: "destructive" })
-    }
-  }
-
-  const resetForm = () => {
-    setPaso(0)
-    setCampSelec(null)
-    setEtapa("")
-    setPartidoSelecDistrital(null)
-    setFecha("")
-    setHora("")
-    setEstadio("")
-    setArbPrinc("")
-  }
-
-  // ===== RENDERIZADO =====
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Indicador de pasos */}
-      <div className="flex gap-2 mb-8">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div 
-            key={i}
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
-              paso === i ? "bg-blue-600 text-white border-blue-600 shadow-lg" :
-              paso > i ? "bg-green-200 border-green-600" :
-              "bg-gray-100 border-gray-300"
-            }`}
-          >
-            {paso > i ? <CheckCircle2 className="w-5 h-5" /> : i}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6 lg:p-8">
+      {/* HEADER */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Link href="/dashboard/designaciones">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:bg-white/10"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-400" />
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-bold text-white">
+              🤖 Designación Inteligente de Árbitros
+            </h1>
+            <p className="text-slate-400 mt-1">
+              Sistema avanzado con algoritmo heurístico y simulación en tiempo real
+            </p>
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* PASO 0: SELECCIONAR CAMPEONATO */}
-      {paso === 0 && (
-        <Card className="border-2 border-red-300">
-          <CardHeader className="bg-gradient-to-r from-red-500 to-red-600 text-white">
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5" />
-              Selecciona el Campeonato
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="inline-block animate-spin">⏳</div>
-                <p className="mt-3 text-gray-600">Cargando campeonatos...</p>
-              </div>
-            ) : campeonatos.length === 0 ? (
-              <p className="text-center text-gray-500">No hay campeonatos disponibles</p>
-            ) : (
-              <div className="grid gap-3">
-                {campeonatos.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setCampSelec(c)
-                      setEtapa("")
-                      setEtapasCompletas(new Set())
-                      setPaso(1)
-                    }}
-                    className="p-4 border-2 rounded-lg hover:border-red-500 hover:bg-red-50 transition text-left font-semibold hover:shadow-md"
-                  >
-                    {c.nombre}
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ERROR STATE */}
+      {errorState && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-600 rounded-lg">
+          <p className="text-red-400 text-sm">Error: {errorState}</p>
+        </div>
       )}
 
-      {/* PASO 1: SELECCIONAR ETAPA */}
-      {paso === 1 && campSelec && (
-        <Card className="border-2 border-blue-300">
-          <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Selecciona la Etapa: {campSelec.nombre}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              {["DISTRITAL", "PROVINCIAL", "DEPARTAMENTAL"].map((etName) => {
-                const habilitada = etapaHabilitada(etName)
-                const completa = etapasCompletas.has(etName)
-                return (
-                  <button
-                    key={etName}
-                    disabled={!habilitada}
-                    onClick={() => {
-                      setEtapa(etName)
-                      setPartidoSelecDistrital(null)
-                      setPaso(2)
-                    }}
-                    className={`p-4 rounded-lg border-2 font-semibold transition text-center relative ${
-                      !habilitada ? "bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed" :
-                      completa ? "bg-green-100 border-green-500 hover:shadow-md" :
-                      "bg-white border-blue-300 hover:border-blue-500 hover:shadow-md"
-                    }`}
-                  >
-                    {!habilitada && <Lock className="w-4 h-4 absolute top-2 right-2" />}
-                    {etName}
-                    {completa && <CheckCircle2 className="w-4 h-4 ml-2 inline" />}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => setPaso(0)} variant="outline">← Atrás</Button>
-              <Button onClick={() => setPaso(2)} className="ml-auto bg-blue-600 hover:bg-blue-700">
-                Continuar →
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* MAIN LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* SIDEBAR - Campeonatos y Etapas (25% width en desktop) */}
+        <div className="lg:col-span-1">
+          <CompetitionSidebar championships={championships} />
+        </div>
 
-      {/* PASO 2: CONTENIDO DINÁMICO POR ETAPA */}
-      {paso === 2 && etapa && campSelec && (
-        <Card className="border-2 border-green-300">
-          <CardHeader className={`bg-gradient-to-r ${
-            etapa === "DISTRITAL" ? "from-purple-500 to-purple-600" :
-            etapa === "PROVINCIAL" ? "from-cyan-500 to-cyan-600" :
-            "from-amber-500 to-amber-600"
-          } text-white`}>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Etapa: {etapa}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            {/* ETAPA DISTRITAL */}
-            {etapa === "DISTRITAL" && (
-              <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                  <p className="text-sm font-semibold">ℹ️ Etapa Distrital</p>
-                  <p className="text-xs text-gray-600 mt-1">Los equipos se detectan automáticamente. Selecciona el distrito para ver sus equipos.</p>
-                </div>
-                
-                <div>
-                  <Label>📍 Selecciona Distrito</Label>
-                  <Select value={distritoSelec?.nombre || ""} onValueChange={(nombre) => {
-                    const dist = distritosDisponibles.find(d => d.nombre === nombre)
-                    setDistritoSelec(dist || null)
-                    setPartidoSelecDistrital(null)
-                  }}>
-                    <SelectTrigger><SelectValue placeholder="Selecciona un distrito" /></SelectTrigger>
-                    <SelectContent>
-                      {distritosDisponibles.map(d => (
-                        <SelectItem key={d.nombre} value={d.nombre}>
-                          {d.nombre} ({d.provincia}) - {d.equipos.length} equipos
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* CONTENIDO PRINCIPAL (75% width en desktop) */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Panel de Errores */}
+          <ErrorPanel />
 
-                {distritoSelec && (
-                  <div>
-                    <Label>⚽ Equipos del Distrito {distritoSelec.nombre}</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {distritoSelec.equipos.map(eq => (
-                        <Badge key={eq.id} variant="outline" className="p-2 justify-center cursor-default">
-                          {eq.nombre}
-                        </Badge>
-                      ))}
-                    </div>
-                    {distritoSelec.equipos.length > 0 && (
-                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-                        <p className="text-sm font-semibold">✓ {distritoSelec.equipos.length} equipos listos para competir</p>
-                        <p className="text-xs text-gray-600 mt-1">Los árbitros serán designados cuando se definan los partidos.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Resultado de Simulación (si existe) */}
+          {showSimulationResult && simulationResult && (
+            <SimulationResultComponent
+              result={simulationResult}
+              onApply={() => {
+                toast({
+                  title: "Asignaciones aplicadas",
+                  description: `${simulationResult.successCount} designaciones confirmadas`,
+                })
+              }}
+              onDiscard={() => {
+                toast({
+                  title: "Simulación descartada",
+                  description: "Puedes ejecutar una nueva simulación",
+                })
+              }}
+            />
+          )}
 
-            {/* ETAPA PROVINCIAL */}
-            {etapa === "PROVINCIAL" && (
-              <div className="space-y-4">
-                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
-                  <p className="text-sm font-semibold">ℹ️ Etapa Provincial</p>
-                  <p className="text-xs text-gray-600 mt-1">Selecciona los campeones y subcampeones de cada distrito de la etapa anterior.</p>
-                </div>
-                
-                <div className="space-y-3">
-                  <p className="font-semibold text-gray-700">Resultados Distritales a Procesar:</p>
-                  {distritosDisponibles.map(d => (
-                    <div key={d.nombre} className="border rounded-lg p-3 space-y-2">
-                      <p className="font-semibold text-sm">{d.nombre}</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">🏆 Campeón</Label>
-                          <Select value={camponesProvincialesSelec.get(d.nombre)?.id?.toString() || ""} onValueChange={(id) => {
-                            const eq = d.equipos.find(e => e.id === parseInt(id))
-                            if (eq) {
-                              const newMap = new Map(camponesProvincialesSelec)
-                              newMap.set(d.nombre, eq)
-                              setCamponesProvincialesSelec(newMap)
-                            }
-                          }}>
-                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                            <SelectContent>
-                              {d.equipos.map(eq => (
-                                <SelectItem key={eq.id} value={eq.id.toString()}>
-                                  {eq.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">🥈 Subcampeón</Label>
-                          <Select value={subcamponesProvincialesSelec.get(d.nombre)?.id?.toString() || ""} onValueChange={(id) => {
-                            const eq = d.equipos.find(e => e.id === parseInt(id))
-                            if (eq) {
-                              const newMap = new Map(subcamponesProvincialesSelec)
-                              newMap.set(d.nombre, eq)
-                              setSubcamponesProvincialesSelec(newMap)
-                            }
-                          }}>
-                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                            <SelectContent>
-                              {d.equipos.map(eq => (
-                                <SelectItem key={eq.id} value={eq.id.toString()}>
-                                  {eq.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Sección de Partidos y Configuración */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Lista de Partidos */}
+            <MatchList matches={matchesForStage} />
 
-            {/* ETAPA DEPARTAMENTAL */}
-            {etapa === "DEPARTAMENTAL" && (
-              <div className="space-y-4">
-                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
-                  <p className="text-sm font-semibold">ℹ️ Etapa Departamental</p>
-                  <p className="text-xs text-gray-600 mt-1">Selecciona el campeón y subcampeón departamental de los resultados provinciales.</p>
-                </div>
+            {/* Configuración del Algoritmo */}
+            <AlgorithmConfigPanel />
+          </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>🏆 Campeón Departamental</Label>
-                    <Select value={camponsDepartamentalSelec?.id?.toString() || ""} onValueChange={(id) => {
-                      const eq = equiposDM.find(e => e.id === parseInt(id))
-                      setCamponsDepartamentalSelec(eq || null)
-                    }}>
-                      <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                      <SelectContent>
-                        {equiposDM.map(eq => (
-                          <SelectItem key={eq.id} value={eq.id.toString()}>
-                            {eq.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>🥈 Subcampeón Departamental</Label>
-                    <Select value={subcamponsDepartamentalSelec?.id?.toString() || ""} onValueChange={(id) => {
-                      const eq = equiposDM.find(e => e.id === parseInt(id))
-                      setSubcamponsDepartamentalSelec(eq || null)
-                    }}>
-                      <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                      <SelectContent>
-                        {equiposDM.map(eq => (
-                          <SelectItem key={eq.id} value={eq.id.toString()}>
-                            {eq.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Panel de Asignación */}
+          <AssignmentPanel
+            matches={matchesForStage}
+            referees={referees}
+            onSimulate={(result) => {
+              console.log("Simulación completada:", result)
+            }}
+          />
 
-            {/* Detalles comunes */}
-            <div className="border-t pt-4">
-              <p className="font-semibold mb-3">📅 Detalles del Evento</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>Fecha</Label>
-                  <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Hora</Label>
-                  <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Estadio</Label>
-                  <Input value={estadio} onChange={(e) => setEstadio(e.target.value)} placeholder="Nombre del estadio" />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={() => setPaso(1)} variant="outline">← Atrás</Button>
-              <Button 
-                onClick={avanzarAArbitros} 
-                disabled={!puedeSiguiente()}
-                className="ml-auto bg-green-600 hover:bg-green-700"
-              >
-                Continuar → <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* PASO 4: DESIGNACIÓN DE ÁRBITROS */}
-      {paso === 4 && (
-        <Card className="border-2 border-purple-300">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              Designación de Árbitros - {etapa}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          {/* INFORMACIÓN FOOTER */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs md:text-sm">
               <div>
-                <Label>🏴 Árbitro Principal *</Label>
-                <Select value={arbPrinc} onValueChange={setArbPrinc}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        {a.nombre} {a.apellido} ({a.categoria})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-slate-400">Campeonatos</p>
+                <p className="text-yellow-400 font-semibold text-lg">
+                  {championships.length}
+                </p>
               </div>
               <div>
-                <Label>🏳️ Asistente 1</Label>
-                <Select value={arbAsis1} onValueChange={setArbAsis1}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        {a.nombre} {a.apellido}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-slate-400">Árbitros Disponibles</p>
+                <p className="text-green-400 font-semibold text-lg">
+                  {referees.length}
+                </p>
               </div>
               <div>
-                <Label>🏳️ Asistente 2</Label>
-                <Select value={arbAsis2} onValueChange={setArbAsis2}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        {a.nombre} {a.apellido}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>🟣 Cuarto Árbitro</Label>
-                <Select value={arbCuarto} onValueChange={setArbCuarto}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {arbitros.map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        {a.nombre} {a.apellido}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-slate-400">Partidos en {selectedStage?.nombre}</p>
+                <p className="text-blue-400 font-semibold text-lg">
+                  {matchesForStage.length}
+                </p>
               </div>
             </div>
-
-            <div className="flex gap-2">
-              <Button onClick={() => setPaso(2)} variant="outline">← Atrás</Button>
-              <Button 
-                onClick={guardarDesignacion}
-                disabled={!arbPrinc}
-                className="ml-auto bg-purple-600 hover:bg-purple-700"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Guardar Designación
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

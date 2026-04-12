@@ -159,7 +159,7 @@ export interface Campeonato {
 
 export async function getCampeonatos(): Promise<Campeonato[]> {
     try {
-        const response = await fetch(buildUrl("/campeonatos"));
+        const response = await fetch(buildUrl("/campeonato"));
         if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
         console.log("✅ Campeonatos obtenidos:", data);
@@ -172,7 +172,7 @@ export async function getCampeonatos(): Promise<Campeonato[]> {
 
 export async function getCampeonatoById(id: number): Promise<Campeonato | null> {
     try {
-        const response = await fetch(buildUrl(`/campeonatos/${id}`));
+        const response = await fetch(buildUrl(`/campeonato/${id}`));
         if (!response.ok) throw new Error("Error HTTP");
         return await response.json();
     } catch (error) {
@@ -182,7 +182,7 @@ export async function getCampeonatoById(id: number): Promise<Campeonato | null> 
 }
 
 export async function createCampeonato(data: Campeonato): Promise<Campeonato> {
-    const response = await fetch(buildUrl("/campeonatos"), {
+    const response = await fetch(buildUrl("/campeonato"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -196,7 +196,7 @@ export async function createCampeonato(data: Campeonato): Promise<Campeonato> {
 }
 
 export async function updateCampeonato(id: number, data: Campeonato): Promise<Campeonato> {
-    const response = await fetch(buildUrl(`/campeonatos/${id}`), {
+    const response = await fetch(buildUrl(`/campeonato/${id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -211,7 +211,7 @@ export async function updateCampeonato(id: number, data: Campeonato): Promise<Ca
 
 export async function deleteCampeonato(id: number): Promise<boolean> {
     try {
-        const response = await fetch(buildUrl(`/campeonatos/${id}`), {
+        const response = await fetch(buildUrl(`/campeonato/${id}`), {
             method: "DELETE",
         });
         return response.ok;
@@ -392,6 +392,35 @@ export async function deleteDesignacion(id: number): Promise<boolean> {
         return response.ok;
     } catch {
         return false;
+    }
+}
+
+export async function getDesignacionesByCampeonato(campeonatoId: number): Promise<Designacion[]> {
+    try {
+        const response = await fetch(buildUrl(`/designaciones/campeonato/${campeonatoId}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log(`✅ Designaciones del campeonato ${campeonatoId}:`, data);
+        return data;
+    } catch (error) {
+        console.error(`❌ Error getDesignacionesByCampeonato:`, error);
+        return [];
+    }
+}
+
+export async function getEquiposByCampeonato(campeonatoId: number): Promise<Equipo[]> {
+    try {
+        const campeonato = await getCampeonatoById(campeonatoId);
+        if (!campeonato || !campeonato.equipos) return [];
+        
+        // Si la API devuelve IDs de equipos, obtener equipos
+        const equiposPromises = campeonato.equipos.map(equipoId => getEquipoById(equipoId));
+        const equipos = await Promise.all(equiposPromises);
+        
+        return equipos.filter(e => e !== null) as Equipo[];
+    } catch (error) {
+        console.error("❌ Error getEquiposByCampeonato:", error);
+        return [];
     }
 }
 
