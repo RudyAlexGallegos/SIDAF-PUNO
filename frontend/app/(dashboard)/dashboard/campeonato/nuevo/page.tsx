@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users, AlertCircle } from "lucide-react"
+import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users, AlertCircle, Plus, Trash2 } from "lucide-react"
 import { createCampeonato, getEquipos, type Equipo } from "@/services/api"
 import { toast } from "@/hooks/use-toast"
 
@@ -97,6 +97,17 @@ export default function NuevoCampeonatoPage() {
       nuevosErrores.diasJuego = "Debe seleccionar al menos un día de juego"
     }
 
+    // Validar etapas (mínimo 1)
+    if (formData.etapas.length === 0) {
+      nuevosErrores.etapas = "Debe definir al menos una etapa"
+    } else {
+      // Validar que ninguna etapa tenga nombre vacío
+      const etapasSinNombre = formData.etapas.some(e => !e.nombre.trim())
+      if (etapasSinNombre) {
+        nuevosErrores.etapas = "Todas las etapas deben tener un nombre"
+      }
+    }
+
     // Validar contacto (formato básico de teléfono)
     if (formData.contacto && !/^\+?[\d\s\-\(\)]+$/.test(formData.contacto)) {
       nuevosErrores.contacto = "Formato de teléfono inválido"
@@ -122,6 +133,13 @@ export default function NuevoCampeonatoPage() {
     horaInicio: "",
     horaFin: "",
     diasJuego: [] as string[],
+    etapas: [] as Array<{ nombre: string; orden: number }>,
+    nivelDificultad: "Medio",
+    numeroEquipos: 0,
+    formato: "",
+    reglas: "",
+    premios: "",
+    observaciones: "",
   })
 
   const handleDiaChange = (diaId: string, checked: boolean) => {
@@ -158,6 +176,33 @@ export default function NuevoCampeonatoPage() {
     })
   }, [equipos, busquedaEquipo, filtroProvincia, filtroDivision])
 
+  const handleAgregarEtapa = () => {
+    const nuevaEtapa = {
+      nombre: "",
+      orden: formData.etapas.length + 1
+    }
+    setFormData({
+      ...formData,
+      etapas: [...formData.etapas, nuevaEtapa]
+    })
+  }
+
+  const handleEliminarEtapa = (index: number) => {
+    setFormData({
+      ...formData,
+      etapas: formData.etapas.filter((_, i) => i !== index).map((e, i) => ({ ...e, orden: i + 1 }))
+    })
+  }
+
+  const handleActualizarEtapa = (index: number, campo: "nombre" | "orden", valor: string | number) => {
+    const nuevasEtapas = [...formData.etapas]
+    nuevasEtapas[index] = { ...nuevasEtapas[index], [campo]: valor }
+    setFormData({
+      ...formData,
+      etapas: nuevasEtapas
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -189,7 +234,14 @@ export default function NuevoCampeonatoPage() {
         horaInicio: formData.horaInicio,
         horaFin: formData.horaFin,
         diasJuego: formData.diasJuego.join(","),
+        etapas: JSON.stringify(formData.etapas),
         equipos: equiposSeleccionados,
+        nivelDificultad: formData.nivelDificultad,
+        numeroEquipos: formData.numeroEquipos,
+        formato: formData.formato,
+        reglas: formData.reglas,
+        premios: formData.premios,
+        observaciones: formData.observaciones,
       })
 
       toast({
@@ -487,6 +539,87 @@ export default function NuevoCampeonatoPage() {
                     </p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Definir Etapas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Definir Etapas
+                </CardTitle>
+                <CardDescription>Define las etapas del campeonato ({formData.etapas.length})</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.etapas.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                    <Trophy className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-500 mb-4">No hay etapas definidas</p>
+                    <Button
+                      type="button"
+                      onClick={handleAgregarEtapa}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar Primera Etapa
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.etapas.map((etapa, index) => (
+                      <div key={index} className="flex items-end gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-sm">Nombre de la Etapa</Label>
+                          <Input
+                            placeholder="Ej: Etapa Distrital"
+                            value={etapa.nombre}
+                            onChange={(e) => handleActualizarEtapa(index, "nombre", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+
+                        <div className="w-16 space-y-1">
+                          <Label className="text-sm">Orden</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={etapa.orden}
+                            onChange={(e) => handleActualizarEtapa(index, "orden", parseInt(e.target.value))}
+                            className="text-sm text-center"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEliminarEtapa(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAgregarEtapa}
+                      className="w-full gap-2 mt-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar Etapa
+                    </Button>
+                  </div>
+                )}
+
+                {errores.etapas && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errores.etapas}
+                  </p>
+                )}
               </CardContent>
             </Card>
 

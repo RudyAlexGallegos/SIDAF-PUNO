@@ -56,49 +56,21 @@ import { useDesignationStore } from "./hooks/useDesignationStore"
 // ============================================================
 
 const mapCampeonatoToChampionship = (camp: Campeonato): Championship => {
-  // Etapas específicas del sistema de designación
-  const etapas: Stage[] = [
-    {
-      id: 1,
-      nombre: "🏘️ ETAPA DISTRITAL",
+  // Mapear SOLO etapas customizadas del campeonato (sin fallback a etapas por defecto)
+  let etapas: Stage[] = []
+  if (camp.etapas && camp.etapas.length > 0) {
+    // Usar etapas customizadas del campeonato
+    etapas = camp.etapas.map((etapa, index) => ({
+      id: etapa.id || index + 1,
+      nombre: etapa.nombre || `Etapa ${etapa.orden || index + 1}`,
       idCampeonato: camp.id || 0,
-      fecha_inicio: camp.fechaInicio || new Date().toISOString(),
-      fecha_fin: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-      status: camp.estado === "ACTIVO" ? StageStatus.ACTIVE : StageStatus.PLANNING,
-      orden: 1,
-      descripcion: "Fase distrital - Primera etapa competitiva",
-    },
-    {
-      id: 2,
-      nombre: "🏛️ ETAPA PROVINCIAL",
-      idCampeonato: camp.id || 0,
-      fecha_inicio: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000).toISOString(),
-      fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      status: StageStatus.PLANNING,
-      orden: 2,
-      descripcion: "Fase provincial - Segunda etapa",
-    },
-    {
-      id: 3,
-      nombre: "🏰 ETAPA DEPARTAMENTAL",
-      idCampeonato: camp.id || 0,
-      fecha_inicio: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString(),
-      fecha_fin: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-      status: StageStatus.PLANNING,
-      orden: 3,
-      descripcion: "Fase departamental - Tercera etapa",
-    },
-    {
-      id: 4,
-      nombre: "🏆 ETAPA NACIONAL",
-      idCampeonato: camp.id || 0,
-      fecha_inicio: new Date(Date.now() + 46 * 24 * 60 * 60 * 1000).toISOString(),
-      fecha_fin: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-      status: StageStatus.PLANNING,
-      orden: 4,
-      descripcion: "Fase nacional - Final",
-    },
-  ]
+      fecha_inicio: etapa.fechaInicio || camp.fechaInicio || new Date().toISOString(),
+      fecha_fin: etapa.fechaFin || camp.fechaFin || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      status: camp.estado === "ACTIVO" && index === 0 ? StageStatus.ACTIVE : StageStatus.PLANNING,
+      orden: etapa.orden || index + 1,
+      descripcion: `Etapa ${etapa.orden || index + 1} - ${etapa.nombre}`,
+    }))
+  }
 
   return {
     id: camp.id || 0,

@@ -3,6 +3,7 @@ package com.sidaf.backend.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
@@ -69,11 +70,13 @@ public class Campeonato {
     @Column(name = "fecha_creacion")
     private LocalDate fechaCreacion;
     
-    @JsonIgnore
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "campeonato_equipos", joinColumns = @JoinColumn(name = "campeonato_id"))
     @Column(name = "equipo_id")
-    private List<Long> equipos;
+    private List<Long> equipos = new ArrayList<>();
+    
+    @Column(columnDefinition = "TEXT")
+    private String etapas;
 
     // COPA PERÚ 2026: Estructura Jerárquica
     @ManyToOne(fetch = FetchType.LAZY)
@@ -300,6 +303,14 @@ public class Campeonato {
     
     public void setEquipos(List<Long> equipos) {
         this.equipos = equipos;
+    }
+    
+    public String getEtapas() {
+        return etapas;
+    }
+    
+    public void setEtapas(String etapas) {
+        this.etapas = etapas;
     }
 
     // Getters y Setters para estructura jerárquica COPA PERÚ

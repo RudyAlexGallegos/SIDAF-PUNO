@@ -1,598 +1,808 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save, Trophy, MapPin, Calendar, Users, Clock, Shield, Check, Plus, Search, Filter, Trash2 } from "lucide-react"
-import { useDataStore, type Campeonato } from "@/lib/data-store"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users, AlertCircle, Plus, Trash2 } from "lucide-react"
+import { updateCampeonato, getEquipos, type Equipo } from "@/services/api"
+import { toast } from "@/hooks/use-toast"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
+
+const DIAS_SEMANA = [
+  { id: "lunes", label: "Lunes" },
+  { id: "martes", label: "Martes" },
+  { id: "miercoles", label: "Miércoles" },
+  { id: "jueves", label: "Jueves" },
+  { id: "viernes", label: "Viernes" },
+  { id: "sabado", label: "Sábado" },
+  { id: "domingo", label: "Domingo" },
+]
 
 export default function EditarCampeonatoPage() {
-    const router = useRouter()
-    const params = useParams()
-    const { campeonatos, equipos, updateCampeonato, deleteCampeonato, loadData } = useDataStore()
-    const [loading, setLoading] = useState(true)
-    const [formData, setFormData] = useState<Partial<Campeonato>>({})
-    const [searchEquipos, setSearchEquipos] = useState("")
-    const [championship, setChampionship] = useState<Campeonato | null>(null)
+  const router = useRouter()
+  const params = useParams()
+  const campeonatoId = params.id as string
 
-    const championshipId = params.id as string
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingCampeonato, setIsLoadingCampeonato] = useState(true)
+  const [equiposLoading, setEquiposLoading] = useState(true)
+  const [equipos, setEquipos] = useState<Equipo[]>([])
+  const [busquedaEquipo, setBusquedaEquipo] = useState("")
+  const [filtroProvincia, setFiltroProvincia] = useState("todas")
+  const [filtroDivision, setFiltroDivision] = useState("todas")
+  const [equiposSeleccionados, setEquiposSeleccionados] = useState<number[]>([])
+  const [errores, setErrores] = useState<Record<string, string>>({})
 
-    useEffect(() => {
-        const loadCampeonato = async () => {
-            setLoading(true)
-            try {
-                // Primero intenta buscar en el store
-                let champ = campeonatos.find((c) => c.id === championshipId)
-                
-                // Si no está en el store, carga todos los datos
-                if (!champ && campeonatos.length === 0) {
-                    await loadData()
-                    champ = campeonatos.find((c) => c.id === championshipId)
-                }
-                
-                // Si aún no encuentra, intenta obtener del API backend
-                if (!champ) {
-                    try {
-                        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
-                        const res = await fetch(`${API_URL}/campeonatos/${championshipId}`)
-                        if (res.ok) {
-                            const data = await res.json()
-                            champ = { ...data, id: String(data.id) }
-                        }
-                    } catch (apiError) {
-                        console.error("Error fetching from API:", apiError)
-                    }
-                }
-                
-                if (champ) {
-                    setChampionship(champ)
-                    setFormData(champ)
-                } else {
-                    // Si no consigue nada, muestra la página de "no encontrado"
-                    setChampionship(null)
-                }
-            } catch (error) {
-                console.error("Error cargando campeonato:", error)
-                setChampionship(null)
-            } finally {
-                setLoading(false)
-            }
-        }
-        
-        if (championshipId) {
-            loadCampeonato()
-        }
-    }, [championshipId])
+  // Cargar campeonato y equipos al montar el componente
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setIsLoadingCampeonato(true)
+        setEquiposLoading(true)
 
-    // Cargar equipos al montar si no existen
-    useEffect(() => {
-        if (equipos.length === 0) {
-            loadData()
-        }
-    }, [])
+        // Cargar equipos
+        const equiposData = await getEquipos()
+        setEquipos(equiposData)
 
-    const diasOptions = [
-        { value: "lunes", label: "Lunes" },
-        { value: "martes", label: "Martes" },
-        { value: "miercoles", label: "Miércoles" },
-        { value: "jueves", label: "Jueves" },
-        { value: "viernes", label: "Viernes" },
-        { value: "sabado", label: "Sábado" },
-        { value: "domingo", label: "Domingo" },
-    ]
+        // Cargar campeonato existente
+        const response = await fetch(`${API_BASE_URL}/campeonato/${campeonatoId}`)
+        if (!response.ok) throw new Error("No se pudo cargar el campeonato")
 
-    // Filtrar equipos
-    const filteredEquipos = equipos.filter(eq =>
-        eq.nombre.toLowerCase().includes(searchEquipos.toLowerCase()) ||
-        eq.provincia?.toLowerCase().includes(searchEquipos.toLowerCase())
-    )
+        const campeonato = await response.json()
 
-    // Agrupar por división
-    const equiposPrimera = filteredEquipos.filter(eq => eq.categoria === "Primera División")
-    const equiposSegunda = filteredEquipos.filter(eq => eq.categoria === "Segunda División")
-    const equiposSinDivision = filteredEquipos.filter(eq => !eq.categoria || (!eq.categoria.includes("Primera") && !eq.categoria.includes("Segunda")))
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type } = e.target
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === "number" ? parseInt(value) || 0 : value
-        }))
-    }
-
-    const handleSelectChange = (name: string, value: string) => {
-        setFormData(prev => ({ ...prev, [name]: value }))
-    }
-
-    const toggleDia = (dia: string) => {
-        setFormData(prev => {
-            const current = prev.diasJuego || []
-            if (current.includes(dia as any)) {
-                return { ...prev, diasJuego: current.filter(d => d !== dia) }
-            } else {
-                return { ...prev, diasJuego: [...current, dia] }
-            }
+        // Llenar el formulario con los datos COMPLETOS del campeonato
+        setFormData({
+          nombre: campeonato.nombre || "",
+          categoria: campeonato.categoria || "Primera División",
+          tipo: campeonato.tipo || "Liga",
+          estado: campeonato.estado || "PROGRAMADO",
+          fechaInicio: campeonato.fechaInicio ? campeonato.fechaInicio.split("T")[0] : "",
+          fechaFin: campeonato.fechaFin ? campeonato.fechaFin.split("T")[0] : "",
+          organizador: campeonato.organizador || "",
+          contacto: campeonato.contacto || "",
+          ciudad: campeonato.ciudad || "Puno",
+          provincia: campeonato.provincia || "Puno",
+          direccion: campeonato.direccion || "",
+          estadio: campeonato.estadio || "",
+          horaInicio: campeonato.horaInicio || "",
+          horaFin: campeonato.horaFin || "",
+          diasJuego: campeonato.diasJuego ? campeonato.diasJuego.split(",").map(d => d.trim()) : [],
+          etapas: campeonato.etapas ? JSON.parse(campeonato.etapas) : [],
+          nivelDificultad: campeonato.nivelDificultad || "Medio",
+          numeroEquipos: campeonato.numeroEquipos || 0,
+          formato: campeonato.formato || "",
+          reglas: campeonato.reglas || "",
+          premios: campeonato.premios || "",
+          observaciones: campeonato.observaciones || "",
         })
-    }
 
-    const toggleEquipo = (equipoId: string) => {
-        setFormData(prev => {
-            const current = prev.equipoIds || []
-            if (current.includes(equipoId)) {
-                return { ...prev, equipoIds: current.filter(id => id !== equipoId) }
-            } else {
-                return { ...prev, equipoIds: [...current, equipoId] }
-            }
+        // Cargar equipos seleccionados
+        if (campeonato.equipos && Array.isArray(campeonato.equipos)) {
+          setEquiposSeleccionados(campeonato.equipos.map(e => e.id || e))
+        }
+      } catch (error) {
+        console.error("Error al cargar datos:", error)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los datos del campeonato",
+          variant: "destructive"
         })
+        router.push("/dashboard/campeonatos")
+      } finally {
+        setIsLoadingCampeonato(false)
+        setEquiposLoading(false)
+      }
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        try {
-            await updateCampeonato(championshipId, {
-                ...formData,
-                numeroEquipos: formData.equipoIds?.length || formData.numeroEquipos || 0,
-            })
-            router.push("/dashboard/campeonatos")
-        } catch (error) {
-            console.error("Error actualizando campeonato:", error)
-            alert("Error al guardar los cambios. Por favor intenta de nuevo.")
-        }
+    if (campeonatoId) {
+      cargarDatos()
+    }
+  }, [campeonatoId, router])
+
+  // Función de validación
+  const validarFormulario = () => {
+    const nuevosErrores: Record<string, string> = {}
+
+    // Validar campos requeridos
+    if (!formData.nombre.trim()) {
+      nuevosErrores.nombre = "El nombre del campeonato es requerido"
     }
 
-    const handleDelete = async () => {
-        if (confirm("¿Estás seguro de eliminar este campeonato? Esta acción no se puede deshacer.")) {
-            try {
-                await deleteCampeonato(championshipId)
-                router.push("/dashboard/campeonatos")
-            } catch (error) {
-                console.error("Error eliminando campeonato:", error)
-                alert("Error al eliminar el campeonato. Por favor intenta de nuevo.")
-            }
-        }
+    if (!formData.fechaInicio) {
+      nuevosErrores.fechaInicio = "La fecha de inicio es requerida"
     }
 
-    if (loading) {
-        return (
-            <div className="container mx-auto py-8 px-4">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-12 bg-slate-200 rounded w-1/3" />
-                    <div className="h-64 bg-slate-200 rounded" />
-                    <div className="h-96 bg-slate-200 rounded" />
-                </div>
-            </div>
-        )
+    if (!formData.fechaFin) {
+      nuevosErrores.fechaFin = "La fecha de fin es requerida"
     }
 
-    if (!championship) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md mx-4">
-                    <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-                        <Trophy className="h-8 w-8 text-amber-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Campeonato no encontrado</h2>
-                    <p className="text-slate-600 mb-6">El campeonato que buscas no existe, ha sido eliminado o el ID es inválido.</p>
-                    <div className="flex gap-3">
-                        <Button asChild className="flex-1 bg-amber-500 hover:bg-amber-600">
-                            <Link href="/dashboard/campeonatos">Volver a Campeonatos</Link>
-                        </Button>
-                        <Button asChild variant="outline" className="flex-1">
-                            <Link href="/dashboard">Ir al Dashboard</Link>
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        )
+    // Validar lógica de fechas
+    if (formData.fechaInicio && formData.fechaFin) {
+      const fechaInicio = new Date(formData.fechaInicio)
+      const fechaFin = new Date(formData.fechaFin)
+      if (fechaFin <= fechaInicio) {
+        nuevosErrores.fechaFin = "La fecha de fin debe ser posterior a la fecha de inicio"
+      }
     }
 
+    // Validar lógica de horas
+    if (formData.horaInicio && formData.horaFin) {
+      if (formData.horaFin <= formData.horaInicio) {
+        nuevosErrores.horaFin = "La hora de fin debe ser posterior a la hora de inicio"
+      }
+    }
+
+    // Validar equipos (mínimo 2)
+    if (equiposSeleccionados.length < 2) {
+      nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
+    }
+
+    // Validar días de juego
+    if (formData.diasJuego.length === 0) {
+      nuevosErrores.diasJuego = "Debe seleccionar al menos un día de juego"
+    }
+
+    // Validar etapas (mínimo 1)
+    if (formData.etapas.length === 0) {
+      nuevosErrores.etapas = "Debe definir al menos una etapa"
+    } else {
+      // Validar que ninguna etapa tenga nombre vacío
+      const etapasSinNombre = formData.etapas.some(e => !e.nombre.trim())
+      if (etapasSinNombre) {
+        nuevosErrores.etapas = "Todas las etapas deben tener un nombre"
+      }
+    }
+
+    // Validar contacto (formato básico de teléfono)
+    if (formData.contacto && !/^\+?[\d\s\-\(\)]+$/.test(formData.contacto)) {
+      nuevosErrores.contacto = "Formato de teléfono inválido"
+    }
+
+    setErrores(nuevosErrores)
+    return Object.keys(nuevosErrores).length === 0
+  }
+
+  const [formData, setFormData] = useState({
+    nombre: "",
+    categoria: "Primera División",
+    tipo: "Liga",
+    estado: "PROGRAMADO",
+    fechaInicio: "",
+    fechaFin: "",
+    organizador: "",
+    contacto: "",
+    ciudad: "Puno",
+    provincia: "Puno",
+    direccion: "",
+    estadio: "",
+    horaInicio: "",
+    horaFin: "",
+    diasJuego: [] as string[],
+    etapas: [] as Array<{ nombre: string; orden: number }>,
+    nivelDificultad: "Medio",
+    numeroEquipos: 0,
+    formato: "",
+    reglas: "",
+    premios: "",
+    observaciones: "",
+  })
+
+  const handleDiaChange = (diaId: string, checked: boolean) => {
+    if (checked) {
+      setFormData({
+        ...formData,
+        diasJuego: [...formData.diasJuego, diaId],
+      })
+    } else {
+      setFormData({
+        ...formData,
+        diasJuego: formData.diasJuego.filter((d) => d !== diaId),
+      })
+    }
+  }
+
+  const handleEquipoToggle = useCallback((equipoId: number) => {
+    setEquiposSeleccionados(prev => {
+      if (prev.includes(equipoId)) {
+        return prev.filter((id) => id !== equipoId)
+      } else if (prev.length < 16) {
+        return [...prev, equipoId]
+      }
+      return prev
+    })
+  }, [])
+
+  const equiposFiltrados = useMemo(() => {
+    return equipos.filter((equipo) => {
+      const matchBusqueda = equipo.nombre.toLowerCase().includes(busquedaEquipo.toLowerCase())
+      const matchProvincia = filtroProvincia === "todas" || equipo.provincia === filtroProvincia
+      const matchDivision = filtroDivision === "todas" || equipo.categoria === filtroDivision
+      return matchBusqueda && matchProvincia && matchDivision
+    })
+  }, [equipos, busquedaEquipo, filtroProvincia, filtroDivision])
+
+  const handleAgregarEtapa = () => {
+    const nuevaEtapa = {
+      nombre: "",
+      orden: formData.etapas.length + 1
+    }
+    setFormData({
+      ...formData,
+      etapas: [...formData.etapas, nuevaEtapa]
+    })
+  }
+
+  const handleEliminarEtapa = (index: number) => {
+    setFormData({
+      ...formData,
+      etapas: formData.etapas.filter((_, i) => i !== index).map((e, i) => ({ ...e, orden: i + 1 }))
+    })
+  }
+
+  const handleActualizarEtapa = (index: number, campo: "nombre" | "orden", valor: string | number) => {
+    const nuevasEtapas = [...formData.etapas]
+    nuevasEtapas[index] = { ...nuevasEtapas[index], [campo]: valor }
+    setFormData({
+      ...formData,
+      etapas: nuevasEtapas
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validarFormulario()) {
+      toast({
+        title: "Errores de validación",
+        description: "Corrige los errores marcados antes de continuar",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      await updateCampeonato(parseInt(campeonatoId), {
+        nombre: formData.nombre,
+        categoria: formData.categoria,
+        tipo: formData.tipo,
+        fechaInicio: formData.fechaInicio,
+        fechaFin: formData.fechaFin,
+        estado: formData.estado,
+        organizador: formData.organizador,
+        contacto: formData.contacto,
+        ciudad: formData.ciudad,
+        provincia: formData.provincia,
+        direccion: formData.direccion,
+        estadio: formData.estadio,
+        horaInicio: formData.horaInicio,
+        horaFin: formData.horaFin,
+        diasJuego: formData.diasJuego.join(","),
+        etapas: JSON.stringify(formData.etapas),
+        equipos: equiposSeleccionados,
+        nivelDificultad: formData.nivelDificultad,
+        numeroEquipos: formData.numeroEquipos,
+        formato: formData.formato,
+        reglas: formData.reglas,
+        premios: formData.premios,
+        observaciones: formData.observaciones,
+      })
+
+      toast({
+        title: "Campeonato actualizado",
+        description: `El campeonato "${formData.nombre}" se ha actualizado exitosamente`,
+      })
+
+      router.push(`/dashboard/campeonatos/${campeonatoId}`)
+    } catch (error) {
+      console.error("Error al actualizar campeonato:", error)
+      toast({
+        title: "Error al guardar cambios",
+        description: "Ocurrió un error al guardar el campeonato. Inténtalo de nuevo.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoadingCampeonato) {
     return (
-        <div className="min-h-screen bg-slate-50">
-            {/* Header */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link
-                                href="/dashboard/campeonatos"
-                                className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-                            >
-                                <ArrowLeft className="h-5 w-5" />
-                                <span className="hidden sm:inline">Campeonatos</span>
-                            </Link>
-                            <div className="h-6 w-px bg-slate-200" />
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
-                                    <Trophy className="h-6 w-6 text-white" />
-                                </div>
-                                <div>
-                                    <h1 className="text-lg font-semibold text-slate-900">Editar Campeonato</h1>
-                                    <p className="text-xs text-slate-500">{championship.nombre}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                onClick={handleDelete}
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Eliminar
-                            </Button>
-                            <Button
-                                type="submit"
-                                form="championship-form"
-                                className="bg-amber-500 hover:bg-amber-600 text-white"
-                            >
-                                <Save className="h-4 w-4 mr-2" />
-                                Guardar
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <form id="championship-form" onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-                {/* Sección 1: Información Básica */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-1 h-8 bg-amber-500 rounded-full" />
-                        <h2 className="text-xl font-semibold text-slate-900">Información del Campeonato</h2>
-                    </div>
-
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="nombre">Nombre del Campeonato *</Label>
-                                    <Input
-                                        id="nombre"
-                                        name="nombre"
-                                        value={formData.nombre}
-                                        onChange={handleChange}
-                                        placeholder="Campeonato Departamental 2024"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="categoria">Categoría</Label>
-                                    <Input
-                                        id="categoria"
-                                        name="categoria"
-                                        value={formData.categoria}
-                                        onChange={handleChange}
-                                        placeholder="Primera División"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="nivelDificultad">Nivel de Dificultad</Label>
-                                    <Select
-                                        value={formData.nivelDificultad}
-                                        onValueChange={(v) => handleSelectChange("nivelDificultad", v)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Bajo">Bajo</SelectItem>
-                                            <SelectItem value="Medio">Medio</SelectItem>
-                                            <SelectItem value="Alto">Alto</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="estado">Estado</Label>
-                                    <Select
-                                        value={formData.estado}
-                                        onValueChange={(v) => handleSelectChange("estado", v)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="programado">Programado</SelectItem>
-                                            <SelectItem value="activo">Activo</SelectItem>
-                                            <SelectItem value="finalizado">Finalizado</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </section>
-
-                {/* Sección 2: Equipos Participantes */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-1 h-8 bg-blue-500 rounded-full" />
-                        <h2 className="text-xl font-semibold text-slate-900">Equipos Participantes</h2>
-                    </div>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Users className="h-5 w-5 text-blue-500" />
-                                Selecciona los equipos que participarán
-                            </CardTitle>
-                            <CardDescription className="flex items-center justify-between">
-                                <span>Selecciona los equipos para este campeonato</span>
-                                <Button asChild variant="link" className="text-blue-500 p-0">
-                                    <Link href="/dashboard/campeonatos/equipos">
-                                        <Plus className="h-4 w-4 mr-1" />
-                                        Crear nuevo equipo
-                                    </Link>
-                                </Button>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {/* Filtros de equipos */}
-                            <div className="flex flex-wrap gap-3 mb-6 p-4 bg-slate-50 rounded-lg">
-                                <div className="flex-1 min-w-[200px]">
-                                    <Label className="text-xs mb-1 flex items-center gap-1">
-                                        <Search className="h-3 w-3" />
-                                        Buscar equipo
-                                    </Label>
-                                    <Input
-                                        placeholder="Buscar por nombre o provincia..."
-                                        value={searchEquipos}
-                                        onChange={(e) => setSearchEquipos(e.target.value)}
-                                        className="h-9"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Contador */}
-                            <div className="flex items-center justify-between mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                <span className="text-sm font-medium text-blue-800">
-                                    <strong>{formData.equipoIds?.length || 0}</strong> equipos seleccionados
-                                </span>
-                            </div>
-
-                            {/* Lista de equipos */}
-                            {equipos.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                    <p className="text-slate-500 mb-4">No hay equipos registrados aún</p>
-                                    <Button asChild className="bg-blue-500 hover:bg-blue-600">
-                                        <Link href="/dashboard/campeonatos/equipos">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Crear Primer Equipo
-                                        </Link>
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="h-[400px] overflow-y-auto pr-4">
-                                    <EquipoGrupo
-                                        title="PRIMERA DIVISIÓN"
-                                        equiposList={equiposPrimera}
-                                        badgeColor="bg-amber-500"
-                                    />
-                                    <EquipoGrupo
-                                        title="SEGUNDA DIVISIÓN"
-                                        equiposList={equiposSegunda}
-                                        badgeColor="bg-green-500"
-                                    />
-                                    {equiposSinDivision.length > 0 && (
-                                        <EquipoGrupo
-                                            title="SIN DIVISIÓN"
-                                            equiposList={equiposSinDivision}
-                                            badgeColor="bg-slate-400"
-                                        />
-                                    )}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </section>
-
-                {/* Sección 3: Estructura del Torneo */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-1 h-8 bg-emerald-500 rounded-full" />
-                        <h2 className="text-xl font-semibold text-slate-900">Estructura del Torneo</h2>
-                    </div>
-
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="grid gap-6 md:grid-cols-3">
-                                <div className="space-y-2">
-                                    <Label htmlFor="formato">Formato</Label>
-                                    <Select
-                                        value={formData.formato}
-                                        onValueChange={(v) => handleSelectChange("formato", v)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Liga">Liga</SelectItem>
-                                            <SelectItem value="Eliminatoria">Eliminatoria</SelectItem>
-                                            <SelectItem value="Liga + Eliminatoria">Liga + Eliminatoria</SelectItem>
-                                            <SelectItem value="Torneo Relámpago">Torneo Relámpago</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="numeroJornadas">Número de Jornadas</Label>
-                                    <Input
-                                        id="numeroJornadas"
-                                        name="numeroJornadas"
-                                        type="number"
-                                        min="0"
-                                        value={formData.numeroJornadas}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="numeroArbitrosRequeridos">Árbitros por Partido</Label>
-                                    <Input
-                                        id="numeroArbitrosRequeridos"
-                                        name="numeroArbitrosRequeridos"
-                                        type="number"
-                                        min="1"
-                                        max="6"
-                                        value={formData.numeroArbitrosRequeridos}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </section>
-
-                {/* Sección 4: Sede y Calendario */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-1 h-8 bg-orange-500 rounded-full" />
-                        <h2 className="text-xl font-semibold text-slate-900">Sede y Calendario</h2>
-                    </div>
-
-                    <Card>
-                        <CardContent className="pt-6 space-y-6">
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="ciudad">Ciudad / Provincia</Label>
-                                    <Input
-                                        id="ciudad"
-                                        name="ciudad"
-                                        value={formData.ciudad}
-                                        onChange={handleChange}
-                                        placeholder="Puno"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="direccion">Estadio / Campo Deportivo</Label>
-                                    <Input
-                                        id="direccion"
-                                        name="direccion"
-                                        value={formData.direccion}
-                                        onChange={handleChange}
-                                        placeholder="Estadio Enrique Torres Belón"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label className="mb-3 block">Días de Juego</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {diasOptions.map((dia) => {
-                                        const isSelected = formData.diasJuego?.includes(dia.value as any)
-                                        return (
-                                            <Button
-                                                key={dia.value}
-                                                type="button"
-                                                variant={isSelected ? "default" : "outline"}
-                                                size="sm"
-                                                onClick={() => toggleDia(dia.value)}
-                                                className={isSelected ? "bg-slate-900" : ""}
-                                            >
-                                                {dia.label}
-                                            </Button>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="horaInicio">Hora de Inicio</Label>
-                                    <Input
-                                        id="horaInicio"
-                                        name="horaInicio"
-                                        type="time"
-                                        value={formData.horaInicio}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="horaFin">Hora de Fin</Label>
-                                    <Input
-                                        id="horaFin"
-                                        name="horaFin"
-                                        type="time"
-                                        value={formData.horaFin}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fechaInicio">Fecha de Inicio</Label>
-                                    <Input
-                                        id="fechaInicio"
-                                        name="fechaInicio"
-                                        type="date"
-                                        value={formData.fechaInicio}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="fechaFin">Fecha de Finalización</Label>
-                                    <Input
-                                        id="fechaFin"
-                                        name="fechaFin"
-                                        type="date"
-                                        value={formData.fechaFin}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </section>
-
-                {/* Resumen */}
-                <Card className="bg-slate-900 text-white">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Trophy className="h-5 w-5 text-amber-400" />
-                            <h3 className="font-semibold">Resumen del Campeonato</h3>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-5 text-sm">
-                            <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-slate-400" />
-                                <span>{formData.equipoIds?.length || formData.numeroEquipos || 0} equipos</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-slate-400" />
-                                <span>{formData.numeroJornadas || 0} jornadas</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Shield className="h-4 w-4 text-slate-400" />
-                                <span>{formData.numeroArbitrosRequeridos || 0} árbitros/partido</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-slate-400" />
-                                <span>{formData.ciudad || "Sin definir"}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-slate-400" />
-                                <span>{formData.diasJuego?.length || 0} días/semana</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Botones */}
-                <div className="flex gap-4 justify-end pb-8">
-                    <Button type="button" variant="outline" asChild>
-                        <Link href="/dashboard/campeonatos">Cancelar</Link>
-                    </Button>
-                    <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white">
-                        <Save className="h-4 w-4 mr-2" />
-                        Guardar Cambios
-                    </Button>
-                </div>
-            </form>
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span>Cargando campeonato...</span>
         </div>
+      </div>
     )
+  }
+
+  return (
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <Link href={`/dashboard/campeonatos/${campeonatoId}`} className="flex items-center gap-2 font-semibold">
+          <ArrowLeft className="h-5 w-5" aria-hidden />
+          <span>Volver a Detalles</span>
+        </Link>
+        <div className="ml-auto flex items-center gap-4">
+          <Trophy className="h-6 w-6 text-blue-600" />
+          <span className="text-lg font-semibold">Editar Campeonato</span>
+        </div>
+      </header>
+
+      <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8">
+        <div className="max-w-4xl mx-auto w-full">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Editar Campeonato</h1>
+            <p className="text-muted-foreground mt-1">Modifica los detalles del torneo</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Información del Campeonato */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Información del Campeonato
+                </CardTitle>
+                <CardDescription>Completa los datos principales del torneo</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre del Campeonato *</Label>
+                  <Input
+                    id="nombre"
+                    placeholder="Ej: Copa Puno 2026"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                    className={errores.nombre ? "border-red-500" : ""}
+                  />
+                  {errores.nombre && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errores.nombre}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="categoria">Categoría</Label>
+                    <Select
+                      value={formData.categoria}
+                      onValueChange={(value) => setFormData({ ...formData, categoria: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Primera División">Primera División</SelectItem>
+                        <SelectItem value="Segunda División">Segunda División</SelectItem>
+                        <SelectItem value="Tercera División">Tercera División</SelectItem>
+                        <SelectItem value="Sub-19">Sub-19</SelectItem>
+                        <SelectItem value="Sub-17">Sub-17</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tipo">Tipo</Label>
+                    <Select
+                      value={formData.tipo}
+                      onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Liga">Liga</SelectItem>
+                        <SelectItem value="Copa">Copa</SelectItem>
+                        <SelectItem value="Torneo">Torneo</SelectItem>
+                        <SelectItem value="Amistoso">Amistoso</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="estado">Estado</Label>
+                  <Select
+                    value={formData.estado}
+                    onValueChange={(value) => setFormData({ ...formData, estado: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PROGRAMADO">PROGRAMADO</SelectItem>
+                      <SelectItem value="ACTIVO">ACTIVO</SelectItem>
+                      <SelectItem value="FINALIZADO">FINALIZADO</SelectItem>
+                      <SelectItem value="CANCELADO">CANCELADO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fechaInicio">Fecha de Inicio *</Label>
+                    <Input
+                      id="fechaInicio"
+                      type="date"
+                      value={formData.fechaInicio}
+                      onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                      required
+                      className={errores.fechaInicio ? "border-red-500" : ""}
+                    />
+                    {errores.fechaInicio && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.fechaInicio}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="fechaFin">Fecha de Fin *</Label>
+                    <Input
+                      id="fechaFin"
+                      type="date"
+                      value={formData.fechaFin}
+                      onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
+                      required
+                      className={errores.fechaFin ? "border-red-500" : ""}
+                    />
+                    {errores.fechaFin && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.fechaFin}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="organizador">Organizador</Label>
+                    <Input
+                      id="organizador"
+                      placeholder="Ej: CODAR Puno"
+                      value={formData.organizador}
+                      onChange={(e) => setFormData({ ...formData, organizador: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contacto">Contacto</Label>
+                    <Input
+                      id="contacto"
+                      placeholder="Ej: +51 999 999 999"
+                      value={formData.contacto}
+                      onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+                      className={errores.contacto ? "border-red-500" : ""}
+                    />
+                    {errores.contacto && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.contacto}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ubicación y Horarios */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Ubicación y Horarios
+                </CardTitle>
+                <CardDescription>Define dónde y cuándo se jugará</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ciudad">Ciudad</Label>
+                    <Input
+                      id="ciudad"
+                      value={formData.ciudad}
+                      onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="provincia">Provincia</Label>
+                    <Input
+                      id="provincia"
+                      value={formData.provincia}
+                      onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="direccion">Dirección</Label>
+                  <Input
+                    id="direccion"
+                    placeholder="Ej: Av. Principal 123"
+                    value={formData.direccion}
+                    onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="estadio">Estadio Principal</Label>
+                  <Input
+                    id="estadio"
+                    placeholder="Ej: Estadio Municipal"
+                    value={formData.estadio}
+                    onChange={(e) => setFormData({ ...formData, estadio: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="horaInicio">Hora Inicio</Label>
+                    <Input
+                      id="horaInicio"
+                      type="time"
+                      value={formData.horaInicio}
+                      onChange={(e) => setFormData({ ...formData, horaInicio: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="horaFin">Hora Fin</Label>
+                    <Input
+                      id="horaFin"
+                      type="time"
+                      value={formData.horaFin}
+                      onChange={(e) => setFormData({ ...formData, horaFin: e.target.value })}
+                      className={errores.horaFin ? "border-red-500" : ""}
+                    />
+                    {errores.horaFin && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.horaFin}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Días de Juego</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {DIAS_SEMANA.map((dia) => (
+                      <div key={dia.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={dia.id}
+                          checked={formData.diasJuego.includes(dia.id)}
+                          onCheckedChange={(checked) => handleDiaChange(dia.id, checked as boolean)}
+                        />
+                        <Label htmlFor={dia.id} className="font-normal cursor-pointer">
+                          {dia.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  {errores.diasJuego && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errores.diasJuego}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Definir Etapas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Definir Etapas
+                </CardTitle>
+                <CardDescription>Define las etapas del campeonato ({formData.etapas.length})</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.etapas.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                    <Trophy className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-500 mb-4">No hay etapas definidas</p>
+                    <Button
+                      type="button"
+                      onClick={handleAgregarEtapa}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar Primera Etapa
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.etapas.map((etapa, index) => (
+                      <div key={index} className="flex items-end gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-sm">Nombre de la Etapa</Label>
+                          <Input
+                            placeholder="Ej: Etapa Distrital"
+                            value={etapa.nombre}
+                            onChange={(e) => handleActualizarEtapa(index, "nombre", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+
+                        <div className="w-16 space-y-1">
+                          <Label className="text-sm">Orden</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={etapa.orden}
+                            onChange={(e) => handleActualizarEtapa(index, "orden", parseInt(e.target.value))}
+                            className="text-sm text-center"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEliminarEtapa(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAgregarEtapa}
+                      className="w-full gap-2 mt-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar Etapa
+                    </Button>
+                  </div>
+                )}
+
+                {errores.etapas && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errores.etapas}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Selección de Equipos */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Selección de Equipos
+                </CardTitle>
+                <CardDescription>
+                  Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
+                  {equiposSeleccionados.length < 2 && (
+                    <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {equiposLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2">Cargando equipos...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar equipos..."
+                          value={busquedaEquipo}
+                          onChange={(e) => setBusquedaEquipo(e.target.value)}
+                          className="pl-8"
+                        />
+                      </div>
+
+                      <Select value={filtroProvincia} onValueChange={setFiltroProvincia}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <SelectValue placeholder="Todas las provincias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todas">Todas las provincias</SelectItem>
+                          <SelectItem value="Puno">Puno</SelectItem>
+                          <SelectItem value="Azángaro">Azángaro</SelectItem>
+                          <SelectItem value="Melgar">Melgar</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={filtroDivision} onValueChange={setFiltroDivision}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <SelectValue placeholder="Todas las categorías" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todas">Todas las categorías</SelectItem>
+                          <SelectItem value="Primera División">Primera División</SelectItem>
+                          <SelectItem value="Segunda División">Segunda División</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="border rounded-lg divide-y">
+                      {equiposFiltrados.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          No se encontraron equipos
+                        </div>
+                      ) : (
+                        equiposFiltrados.map((equipo) => (
+                          <div
+                            key={equipo.id}
+                            className="flex items-center justify-between p-4 hover:bg-muted/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={equipo.id ? equiposSeleccionados.includes(equipo.id) : false}
+                                onCheckedChange={() => equipo.id && handleEquipoToggle(equipo.id)}
+                              />
+                              <div>
+                                <p className="font-medium">{equipo.nombre}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {equipo.categoria} • {equipo.provincia}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    {errores.equipos && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errores.equipos}
+                      </p>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Botones */}
+            <div className="flex gap-4 justify-end">
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/dashboard/campeonatos/${campeonatoId}`}>Cancelar</Link>
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Guardar Cambios
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  )
 }

@@ -127,6 +127,14 @@ export async function deleteArbitro(id: number): Promise<boolean> {
 // CAMPEONATOS
 // ============================================================
 
+export interface Etapa {
+    id?: number;
+    nombre: string;
+    orden: number;
+    fechaInicio?: string;
+    fechaFin?: string;
+}
+
 export interface Campeonato {
     id?: number;
     nombre: string;
@@ -150,6 +158,7 @@ export interface Campeonato {
     horaInicio?: string;
     horaFin?: string;
     equipos?: number[];
+    etapas?: Etapa[];
     reglas?: string;
     premios?: string;
     observaciones?: string;

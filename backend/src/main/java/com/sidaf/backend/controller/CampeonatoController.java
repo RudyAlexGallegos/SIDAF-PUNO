@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/campeonato")
@@ -18,21 +19,7 @@ public class CampeonatoController {
     @Autowired
     private CampeonatoRepository campeonatoRepository;
     
-    // GET all campeonatos
-    @GetMapping
-    public List<Campeonato> getAllCampeonatos() {
-        return campeonatoRepository.findAll();
-    }
-    
-    // GET campeonato by id
-    @GetMapping("/{id}")
-    public ResponseEntity<Campeonato> getCampeonatoById(@PathVariable Long id) {
-        Optional<Campeonato> campeonato = campeonatoRepository.findById(id);
-        return campeonato.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    
-    // GET campeonatos by estado
+    // GET campeonatos by estado - RUTAS ESPECÍFICAS PRIMERO
     @GetMapping("/estado/{estado}")
     public List<Campeonato> getCampeonatosByEstado(@PathVariable String estado) {
         try {
@@ -67,6 +54,20 @@ public class CampeonatoController {
         return campeonatoRepository.findByCategoria(categoria);
     }
     
+    // GET all campeonatos
+    @GetMapping
+    public List<Campeonato> getAllCampeonatos() {
+        return campeonatoRepository.findAll();
+    }
+    
+    // GET campeonato by id - RUTA GENÉRICA AL FINAL
+    @GetMapping("/{id}")
+    public ResponseEntity<Campeonato> getCampeonatoById(@PathVariable Long id) {
+        Optional<Campeonato> campeonato = campeonatoRepository.findById(id);
+        return campeonato.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
     // POST create campeonato
     @PostMapping
     public Campeonato createCampeonato(@RequestBody Campeonato campeonato) {
@@ -76,6 +77,7 @@ public class CampeonatoController {
     // PUT update campeonato
     @PutMapping("/{id}")
     public ResponseEntity<Campeonato> updateCampeonato(@PathVariable Long id, @RequestBody Campeonato campeonatoDetails) {
+        System.out.println("🔍 DEBUG: Equipos recibidos del frontend: " + campeonatoDetails.getEquipos());
         Optional<Campeonato> campeonato = campeonatoRepository.findById(id);
         if (campeonato.isPresent()) {
             Campeonato updatedCampeonato = campeonato.get();
@@ -101,8 +103,22 @@ public class CampeonatoController {
             updatedCampeonato.setPremios(campeonatoDetails.getPremios());
             updatedCampeonato.setObservaciones(campeonatoDetails.getObservaciones());
             updatedCampeonato.setLogo(campeonatoDetails.getLogo());
-            updatedCampeonato.setEquipos(campeonatoDetails.getEquipos());
-            return ResponseEntity.ok(campeonatoRepository.save(updatedCampeonato));
+            
+            // Clear and update equipos - critical for ElementCollection
+            if (updatedCampeonato.getEquipos() == null) {
+                updatedCampeonato.setEquipos(new ArrayList<>());
+            }
+            updatedCampeonato.getEquipos().clear();
+            
+            if (campeonatoDetails.getEquipos() != null && !campeonatoDetails.getEquipos().isEmpty()) {
+                updatedCampeonato.getEquipos().addAll(campeonatoDetails.getEquipos());
+            }
+            System.out.println("🔍 DEBUG: Equipos antes de guardar: " + updatedCampeonato.getEquipos());
+            
+            updatedCampeonato.setEtapas(campeonatoDetails.getEtapas());
+            Campeonato saved = campeonatoRepository.save(updatedCampeonato);
+            System.out.println("🔍 DEBUG: Equipos después de guardar: " + saved.getEquipos());
+            return ResponseEntity.ok(saved);
         }
         return ResponseEntity.notFound().build();
     }
