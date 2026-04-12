@@ -56,27 +56,47 @@ import { useDesignationStore } from "./hooks/useDesignationStore"
 // ============================================================
 
 const mapCampeonatoToChampionship = (camp: Campeonato): Championship => {
-  // Generar etapas de ejemplo si no existen
+  // Etapas específicas del sistema de designación
   const etapas: Stage[] = [
     {
       id: 1,
-      nombre: "Fase 1: Grupos",
+      nombre: "🏘️ ETAPA DISTRITAL",
       idCampeonato: camp.id || 0,
-      fecha_inicio: camp.estado ? new Date().toISOString() : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_inicio: camp.fechaInicio || new Date().toISOString(),
+      fecha_fin: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
       status: camp.estado === "ACTIVO" ? StageStatus.ACTIVE : StageStatus.PLANNING,
       orden: 1,
-      descripcion: "Fase de grupos",
+      descripcion: "Fase distrital - Primera etapa competitiva",
     },
     {
       id: 2,
-      nombre: "Fase 2: Eliminación Directa",
+      nombre: "🏛️ ETAPA PROVINCIAL",
       idCampeonato: camp.id || 0,
-      fecha_inicio: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString(),
-      fecha_fin: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_inicio: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       status: StageStatus.PLANNING,
       orden: 2,
-      descripcion: "Fase eliminación",
+      descripcion: "Fase provincial - Segunda etapa",
+    },
+    {
+      id: 3,
+      nombre: "🏰 ETAPA DEPARTAMENTAL",
+      idCampeonato: camp.id || 0,
+      fecha_inicio: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_fin: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+      status: StageStatus.PLANNING,
+      orden: 3,
+      descripcion: "Fase departamental - Tercera etapa",
+    },
+    {
+      id: 4,
+      nombre: "🏆 ETAPA NACIONAL",
+      idCampeonato: camp.id || 0,
+      fecha_inicio: new Date(Date.now() + 46 * 24 * 60 * 60 * 1000).toISOString(),
+      fecha_fin: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      status: StageStatus.PLANNING,
+      orden: 4,
+      descripcion: "Fase nacional - Final",
     },
   ]
 
@@ -522,14 +542,18 @@ export default function NuevaDesignacionPage() {
                     </span>
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${
-                        selectedStage.status === "active"
+                        selectedStage.status === StageStatus.ACTIVE
                           ? "bg-green-600 text-white"
+                          : selectedStage.status === StageStatus.FINISHED
+                          ? "bg-slate-600 text-white"
                           : "bg-blue-600 text-white"
                       }`}
                     >
-                      {selectedStage.status === "active"
-                        ? "Activa"
-                        : "Planificación"}
+                      {selectedStage.status === StageStatus.ACTIVE
+                        ? "✓ Activa"
+                        : selectedStage.status === StageStatus.FINISHED
+                        ? "✓ Finalizada"
+                        : "○ Planificación"}
                     </span>
                   </div>
                 </div>

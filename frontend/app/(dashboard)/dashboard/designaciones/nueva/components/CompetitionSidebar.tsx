@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Trophy, ChevronDown, ChevronRight } from "lucide-react"
-import { Championship, Stage } from "../lib/types"
+import { Championship, Stage, StageStatus } from "../lib/types"
 import { useDesignationStore } from "../hooks/useDesignationStore"
 
 interface CompetitionSidebarProps {
@@ -112,18 +112,18 @@ export const CompetitionSidebar: React.FC<CompetitionSidebarProps> = ({
                           <Badge
                             variant="outline"
                             className={`ml-1 text-xs flex-shrink-0 ${
-                              stage.status === "active"
+                              stage.status === StageStatus.ACTIVE
                                 ? "border-green-600 text-green-400"
-                                : stage.status === "finished"
+                                : stage.status === StageStatus.FINISHED
                                   ? "border-slate-600 text-slate-400"
                                   : "border-blue-600 text-blue-400"
                             }`}
                           >
-                            {stage.status === "active"
-                              ? "Activa"
-                              : stage.status === "finished"
-                                ? "Finalizada"
-                                : "Planeación"}
+                            {stage.status === StageStatus.ACTIVE
+                              ? "✓ Activa"
+                              : stage.status === StageStatus.FINISHED
+                                ? "✓ Finalizada"
+                                : "○ Plan"}
                           </Badge>
                         </Button>
                       )
