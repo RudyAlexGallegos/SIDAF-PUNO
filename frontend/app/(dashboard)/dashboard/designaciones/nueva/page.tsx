@@ -493,7 +493,14 @@ export default function NuevaDesignacionPage() {
                 {/* Error Panel */}
                 <ErrorPanel />
 
-                {/* PANEL DE ASIGNACIÓN MANUAL - PRINCIPAL */}
+                {/* 1. CREAR PARTIDOS - OBLIGATORIO PRIMERO */}
+                <TeamSelector
+                  teams={teams}
+                  championship={selectedChampionship}
+                  stage={selectedStage}
+                />
+
+                {/* 2. PANEL DE ASIGNACIÓN MANUAL - PRINCIPAL */}
                 <div className="border-3 border-green-600 bg-green-500/15 rounded-lg p-6 shadow-lg">
                   <div className="mb-6 flex items-center gap-3">
                     <div className="w-4 h-4 rounded-full bg-green-500 animate-pulse" />
@@ -510,14 +517,7 @@ export default function NuevaDesignacionPage() {
                   />
                 </div>
 
-                {/* Team Selector para crear partidos - Debajo de Asignación */}
-                <TeamSelector
-                  teams={teams}
-                  championship={selectedChampionship}
-                  stage={selectedStage}
-                />
-
-                {/* SECCIÓN ASIGNACIÓN AUTOMÁTICA - COLAPSIBLE */}
+                {/* 3. SECCIÓN ASIGNACIÓN AUTOMÁTICA - COLAPSIBLE (OPCIONAL) */}
                 <div className="space-y-4">
                   <button
                     onClick={() => setShowIntelligentMode(!showIntelligentMode)}

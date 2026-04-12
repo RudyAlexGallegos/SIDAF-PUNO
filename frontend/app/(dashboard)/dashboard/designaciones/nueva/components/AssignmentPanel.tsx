@@ -25,6 +25,7 @@ import { Match, RefereeRole, Referee } from "../lib/types"
 import { useDesignationStore } from "../hooks/useDesignationStore"
 import { assignReferees } from "../lib/algorithm"
 import { RefereeSelector } from "./RefereeSelector"
+import { RefereeTeamDeployment } from "./RefereeTeamDeployment"
 import {
   Tooltip,
   TooltipContent,
@@ -216,104 +217,12 @@ export const AssignmentPanel: React.FC<AssignmentPanelProps> = ({
             </p>
           </TabsContent>
 
-          {/* MODE: MANUAL */}
+          {/* MODE: MANUAL - TERNA ARBITRAL */}
           <TabsContent value="manual" className="space-y-3">
-            <div className="bg-blue-500/10 border border-blue-600/30 rounded-lg p-3 space-y-2">
-              <p className="text-xs sm:text-sm text-blue-300 font-semibold flex items-center gap-2">
-                <MousePointer className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                Asignación Manual
-              </p>
-              <p className="text-xs text-blue-400">
-                Selecciona partido → rol → árbitro manualmente.
-              </p>
-            </div>
-
-            {/* Seleccionar Partido - Responsive */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-slate-300">
-                1. Selecciona un Partido
-              </label>
-              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
-                {matchesToProcess.map((match) => (
-                  <Button
-                    key={match.id}
-                    variant="outline"
-                    onClick={() => selectMatchForManual(match)}
-                    className={`justify-start text-xs sm:text-sm h-auto p-2 ${
-                      selectedMatchForManual?.id === match.id
-                        ? "border-yellow-400 bg-yellow-400/10 text-yellow-300"
-                        : "border-slate-600 text-slate-300 hover:bg-slate-700"
-                    }`}
-                  >
-                    <div className="text-left w-full">
-                      <p className="font-semibold line-clamp-1">
-                        {match.equipoLocal.nombre} vs{" "}
-                        {match.equipoVisitante.nombre}
-                      </p>
-                      <p className="text-slate-400 text-xs">
-                        {new Date(match.fecha).toLocaleDateString("es-PE", {
-                          month: "short",
-                          day: "numeric",
-                        })} @ {match.hora}
-                      </p>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Seleccionar Rol - Responsive */}
-            {selectedMatchForManual && (
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-300">
-                  2. Selecciona un Rol
-                </label>
-                <div className="grid grid-cols-2 gap-1 sm:gap-2">
-                  {(selectedMatchForManual.rolesRequeridos ||
-                    defaultRoles).map((role) => (
-                    <Button
-                      key={role}
-                      variant="outline"
-                      onClick={() => selectRoleForManual(role)}
-                      className={`text-xs h-auto p-2 ${
-                        selectedRoleForManual === role
-                          ? "border-blue-400 bg-blue-400/10 text-blue-300"
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
-                      }`}
-                    >
-                      <div className="text-left">
-                        {role === RefereeRole.PRINCIPAL && "👨‍⚖️ Principal"}
-                        {role === RefereeRole.ASISTENTE_1 && "🚩 Asist.1"}
-                        {role === RefereeRole.ASISTENTE_2 && "🚩 Asist.2"}
-                        {role === RefereeRole.CUARTO && "🔄 Cuarto"}
-                        {role === RefereeRole.VAR && "📹 VAR"}
-                        {role === RefereeRole.AVAR && "📹 AVAR"}
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Selector de Árbitros - Responsive */}
-            {selectedMatchForManual && selectedRoleForManual && (
-              <div className="pt-2 border-t border-slate-700">
-                <label className="text-xs sm:text-sm font-semibold text-slate-300 block mb-2">
-                  3. Selecciona un Árbitro
-                </label>
-                <RefereeSelector
-                  referees={referees}
-                  match={selectedMatchForManual}
-                  role={selectedRoleForManual}
-                  onSelectReferee={(referee) => {
-                    console.log(
-                      `Asignado: ${referee.nombres} como ${selectedRoleForManual}`
-                    )
-                    // Aquí se podría guardar la asignación
-                  }}
-                />
-              </div>
-            )}
+            <RefereeTeamDeployment 
+              matches={matchesToProcess} 
+              referees={referees} 
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
