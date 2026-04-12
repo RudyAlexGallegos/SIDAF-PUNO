@@ -193,20 +193,4 @@ export const MatchList: React.FC<MatchListProps> = ({ matches }) => {
       </CardContent>
     </Card>
   )
-
-                    {/* Estadio */}
-                    {match.estadio && (
-                      <p className="text-xs text-slate-400 mt-2">
-                        📍 {match.estadio}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  )
 }
