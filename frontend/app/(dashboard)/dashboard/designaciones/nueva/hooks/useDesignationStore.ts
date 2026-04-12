@@ -9,6 +9,7 @@ import {
   Stage,
   Match,
   Referee,
+  Team,
   UIState,
   AlgorithmConfig,
   AlgorithmPreset,
@@ -23,6 +24,7 @@ interface DesignationStore extends UIState {
   championships: Championship[]
   referees: Referee[]
   allMatches: Match[]
+  teams: Team[]
   validationErrors: ValidationError[]
   
   // Ensure UIState properties are explicitly available for destructuring
@@ -42,6 +44,7 @@ interface DesignationStore extends UIState {
   setChampionships: (data: Championship[]) => void
   setReferees: (data: Referee[]) => void
   setMatches: (data: Match[]) => void
+  setTeams: (data: Team[]) => void
 
   // Actions - Selection
   selectChampionship: (championship: Championship | null) => void
@@ -90,12 +93,14 @@ export const useDesignationStore = create<DesignationStore>((set, get) => ({
   championships: [],
   referees: [],
   allMatches: [],
+  teams: [],
   validationErrors: [],
 
   // Actions - Data Management
   setChampionships: (data: Championship[]) => set({ championships: data }),
   setReferees: (data: Referee[]) => set({ referees: data }),
   setMatches: (data: Match[]) => set({ allMatches: data }),
+  setTeams: (data: Team[]) => set({ teams: data }),
 
   // Actions - Selection
   selectChampionship: (championship: Championship | null) => {

@@ -42,7 +42,10 @@ import {
 
 // IMPORTAR COMPONENTES
 import { CompetitionSidebar } from "./components/CompetitionSidebar"
+import { DesignationDashboard } from "./components/DesignationDashboard"
+import { StageProgressPanel } from "./components/StageProgressPanel"
 import { MatchList } from "./components/MatchList"
+import { TeamSelector } from "./components/TeamSelector"
 import { AssignmentPanel } from "./components/AssignmentPanel"
 import { AlgorithmConfigPanel } from "./components/AlgorithmConfigPanel"
 import { SimulationResultComponent } from "./components/SimulationResult"
@@ -58,9 +61,27 @@ import { useDesignationStore } from "./hooks/useDesignationStore"
 const mapCampeonatoToChampionship = (camp: Campeonato): Championship => {
   // Mapear SOLO etapas customizadas del campeonato (sin fallback a etapas por defecto)
   let etapas: Stage[] = []
-  if (camp.etapas && camp.etapas.length > 0) {
+  
+  // Parsear etapas desde JSON string si es necesario
+  let etapasArray: any[] = []
+  if (camp.etapas) {
+    try {
+      // Si es string, hace JSON.parse; si es array, lo usa directamente
+      etapasArray = typeof camp.etapas === 'string' 
+        ? JSON.parse(camp.etapas) 
+        : Array.isArray(camp.etapas) 
+          ? camp.etapas 
+          : []
+    } catch (error) {
+      console.error(`Error parseando etapas del campeonato ${camp.id}:`, error)
+      etapasArray = []
+    }
+  }
+
+  // Mapear etapas si existen
+  if (etapasArray && Array.isArray(etapasArray) && etapasArray.length > 0) {
     // Usar etapas customizadas del campeonato
-    etapas = camp.etapas.map((etapa, index) => ({
+    etapas = etapasArray.map((etapa, index) => ({
       id: etapa.id || index + 1,
       nombre: etapa.nombre || `Etapa ${etapa.orden || index + 1}`,
       idCampeonato: camp.id || 0,
@@ -210,12 +231,14 @@ const generateExampleMatches = (championship: Championship): Match[] => {
 export default function NuevaDesignacionPage() {
   const [loading, setLoading] = useState(true)
   const [errorState, setErrorState] = useState<string | null>(null)
+  const [showIntelligentMode, setShowIntelligentMode] = useState(false)
 
   // ZUSTAND STORE
   const {
     championships,
     referees,
     allMatches,
+    teams,
     selectedStage,
     selectedChampionship,
     showSimulationResult,
@@ -223,6 +246,7 @@ export default function NuevaDesignacionPage() {
     setChampionships,
     setReferees,
     setMatches,
+    setTeams,
     getMatchesforStage,
   } = useDesignationStore()
 
@@ -281,6 +305,37 @@ export default function NuevaDesignacionPage() {
     loadData()
   }, [setChampionships, setReferees, setMatches])
 
+  // CARGAR EQUIPOS cuando se selecciona un campeonato
+  useEffect(() => {
+    async function loadTeams() {
+      if (!selectedChampionship) {
+        setTeams([])
+        return
+      }
+
+      try {
+        const equiposData = await getEquiposByCampeonato(selectedChampionship.id)
+        
+        // Mapear equipos a formato interno
+        const mappedTeams = equiposData.map((eq) => ({
+          id: eq.id || 0,
+          nombre: eq.nombre || "Sin nombre",
+          categoria: eq.categoria,
+          provincia: eq.provincia,
+          estadio: eq.estadio || eq.nombreEstadio,
+        }))
+
+        setTeams(mappedTeams)
+        console.log(`✅ ${mappedTeams.length} equipos cargados para ${selectedChampionship.nombre}`)
+      } catch (error) {
+        console.error("Error cargando equipos:", error)
+        setTeams([])
+      }
+    }
+
+    loadTeams()
+  }, [selectedChampionship, setTeams])
+
   // OBTENER PARTIDOS DE LA ETAPA ACTUAL
   const matchesForStage = getMatchesforStage()
 
@@ -297,73 +352,30 @@ export default function NuevaDesignacionPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* HEADER - Responsive */}
-      <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-3">
+      {/* HEADER - Simplificado para usuarios mayores */}
+      <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b-2 border-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex items-center justify-between gap-4">
             {/* Back Button + Title */}
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex items-center gap-3 flex-1">
               <Link href="/dashboard/designaciones">
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="hover:bg-white/10 flex-shrink-0"
+                  size="lg"
+                  className="hover:bg-blue-600/20 flex-shrink-0 h-12 w-12"
                 >
-                  <ChevronLeft className="w-5 h-5 text-slate-400" />
+                  <ChevronLeft className="w-6 h-6 text-blue-400" />
                 </Button>
               </Link>
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-2xl font-bold text-white truncate">
-                  🤖 Designación de Árbitros
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-400 hidden sm:block">
-                  Sistema inteligente con algoritmo heurístico
-                </p>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                Designación de Árbitros
+              </h1>
             </div>
 
-            {/* Mobile Stats */}
-            <div className="flex gap-3 lg:hidden">
-              <div className="text-center">
-                <p className="text-xs text-slate-400">Campeonatos</p>
-                <p className="text-sm font-semibold text-yellow-400">
-                  {championships.length}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-slate-400">Árbitros</p>
-                <p className="text-sm font-semibold text-green-400">
-                  {referees.length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats Desktop */}
-        <div className="hidden lg:block border-t border-slate-700 bg-slate-800/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400">Campeonatos:</span>
-                <span className="font-semibold text-yellow-400">
-                  {championships.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400">Árbitros:</span>
-                <span className="font-semibold text-green-400">
-                  {referees.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400">
-                  Partidos en {selectedStage?.nombre || "selecciona etapa"}:
-                </span>
-                <span className="font-semibold text-blue-400">
-                  {getMatchesforStage().length}
-                </span>
-              </div>
+            {/* Contador de Árbitros disponibles */}
+            <div className="text-center bg-blue-600/20 rounded-lg px-4 py-2 border border-blue-600/50">
+              <p className="text-xs text-blue-300 uppercase tracking-wide">Árbitros Disponibles</p>
+              <p className="text-2xl font-bold text-blue-400">{referees.length}</p>
             </div>
           </div>
         </div>
@@ -380,159 +392,191 @@ export default function NuevaDesignacionPage() {
         </div>
       )}
 
-      {/* MAIN CONTENT - Responsive Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        {/* Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* SIDEBAR - Hidden on mobile, 25% on desktop */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="sticky top-20">
-              <CompetitionSidebar championships={championships} />
+      {/* MAIN CONTENT - Dashboard Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* DASHBOARD PRINCIPAL - Vista General */}
+        {!selectedChampionship ? (
+          <div className="animate-in fade-in">
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold text-white mb-2">
+                Selecciona un Campeonato
+              </h2>
+              <p className="text-base text-slate-300">
+                Haz clic en un campeonato para gestionar sus designaciones semanales
+              </p>
             </div>
+            <DesignationDashboard
+              championships={championships}
+              selectedChampionship={selectedChampionship}
+              onSelectChampionship={(camp) => {
+                useDesignationStore.setState({ selectedChampionship: camp })
+              }}
+            />
           </div>
+        ) : (
+          /* VISTA DE CAMPEONATO SELECCIONADO */
+          <div className="space-y-6 animate-in fade-in">
+            {/* Header con campeonato seleccionado */}
+            <div className="flex items-center justify-between gap-4 bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold text-white truncate">
+                  ⚽ {selectedChampionship.nombre}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                  {selectedChampionship.categoria && `${selectedChampionship.categoria} • `}
+                  {selectedChampionship.etapas?.length || 0} etapas
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  useDesignationStore.setState({
+                    selectedChampionship: null,
+                    selectedStage: null,
+                  })
+                }}
+                className="px-4 py-2 rounded text-sm bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors flex-shrink-0"
+              >
+                ← Atrás
+              </button>
+            </div>
 
-          {/* MAIN CONTENT - Full width mobile, 75% desktop */}
-          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
-            {/* Mobile Championship Selector */}
-            <div className="lg:hidden">
-              {selectedChampionship ? (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-                  <p className="text-xs text-slate-400 mb-2">
-                    Campeonato Seleccionado
-                  </p>
-                  <p className="text-sm sm:text-base font-semibold text-yellow-400 mb-3">
-                    {selectedChampionship.nombre}
-                  </p>
-                  <div className="space-y-2">
-                    {selectedChampionship.etapas?.map((stage) => (
+            {/* Estado de designación por etapa */}
+            <StageProgressPanel
+              championship={selectedChampionship}
+              matches={getMatchesforStage()}
+            />
+
+            {/* Selector de Etapa */}
+            {selectedChampionship.etapas && selectedChampionship.etapas.length > 0 && (
+              <div className="bg-slate-800 border-2 border-slate-700 rounded-lg p-6">
+                <p className="text-lg font-bold text-white mb-4">
+                  Selecciona una Etapa
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {selectedChampionship.etapas.map((stage) => {
+                    const isSelected = selectedStage?.id === stage.id
+                    const stageMatches = allMatches.filter(
+                      (m) => m.idEtapa === stage.id
+                    )
+                    const completedMatches = stageMatches.filter(
+                      (m) => m.designaciones?.principal !== null
+                    )
+
+                    return (
                       <button
                         key={stage.id}
                         onClick={() => {
                           useDesignationStore.setState({ selectedStage: stage })
                         }}
-                        className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                          selectedStage?.id === stage.id
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        className={`p-4 rounded-lg border-2 transition-all text-left font-semibold ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-600 text-white"
+                            : "border-slate-600 bg-slate-700/50 text-slate-200 hover:bg-slate-700 hover:border-slate-500"
                         }`}
                       >
-                        {stage.nombre}
+                        <p className="text-base font-bold">
+                          {stage.nombre}
+                        </p>
+                        <p className="text-sm mt-2">
+                          {completedMatches.length}/{stageMatches.length} designados
+                        </p>
                       </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() =>
-                      useDesignationStore.setState({ selectedChampionship: null })
-                    }
-                    className="w-full mt-3 px-3 py-2 rounded text-sm bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
-                  >
-                    Cambiar Campeonato
-                  </button>
+                    )
+                  })}
                 </div>
-              ) : (
-                <CompetitionSidebar championships={championships} />
-              )}
-            </div>
-
-            {/* Error Panel */}
-            <ErrorPanel />
-
-            {/* Simulation Result */}
-            {showSimulationResult && simulationResult && (
-              <div className="animate-in fade-in slide-in-from-top-2">
-                <SimulationResultComponent
-                  result={simulationResult}
-                  onApply={() => {
-                    toast({
-                      title: "✅ Asignaciones aplicadas",
-                      description: `${simulationResult.successCount} designaciones confirmadas`,
-                    })
-                  }}
-                  onDiscard={() => {
-                    toast({
-                      title: "❌ Simulación descartada",
-                      description: "Puedes ejecutar una nueva simulación",
-                    })
-                  }}
-                />
               </div>
             )}
 
-            {/* Matches and Algorithm - Responsive */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-              {/* Match List - Takes 2 cols on desktop, full on mobile */}
-              <div className="lg:col-span-2">
-                <MatchList matches={getMatchesforStage()} />
-              </div>
+            {/* Contenido cuando hay etapa seleccionada */}
+            {selectedStage && (
+              <div className="space-y-6 animate-in fade-in">
+                {/* Error Panel */}
+                <ErrorPanel />
 
-              {/* Algorithm Config - Takes 1 col on desktop, full on mobile */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-20 sm:top-32 lg:top-20">
-                  <AlgorithmConfigPanel />
-                </div>
-              </div>
-            </div>
-
-            {/* Assignment Panel - Full width */}
-            <AssignmentPanel
-              matches={getMatchesforStage()}
-              referees={referees}
-              onSimulate={(result) => {
-                console.log("Simulación completada:", result)
-              }}
-            />
-
-            {/* Footer Info - Responsive */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs sm:text-sm">
-                <div className="min-w-0">
-                  <p className="text-slate-400 truncate">Campeonatos</p>
-                  <p className="text-lg sm:text-xl font-semibold text-yellow-400">
-                    {championships.length}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-slate-400 truncate">Árbitros</p>
-                  <p className="text-lg sm:text-xl font-semibold text-green-400">
-                    {referees.length}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-slate-400 truncate">Partidos</p>
-                  <p className="text-lg sm:text-xl font-semibold text-blue-400">
-                    {getMatchesforStage().length}
-                  </p>
-                </div>
-              </div>
-
-              {selectedStage && (
-                <div className="mt-4 pt-4 border-t border-slate-700 text-xs sm:text-sm">
-                  <p className="text-slate-400 mb-2">Etapa Seleccionada</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-white truncate">
-                      {selectedStage.nombre}
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        selectedStage.status === StageStatus.ACTIVE
-                          ? "bg-green-600 text-white"
-                          : selectedStage.status === StageStatus.FINISHED
-                          ? "bg-slate-600 text-white"
-                          : "bg-blue-600 text-white"
-                      }`}
-                    >
-                      {selectedStage.status === StageStatus.ACTIVE
-                        ? "✓ Activa"
-                        : selectedStage.status === StageStatus.FINISHED
-                        ? "✓ Finalizada"
-                        : "○ Planificación"}
-                    </span>
+                {/* PANEL DE ASIGNACIÓN MANUAL - PRINCIPAL */}
+                <div className="border-3 border-green-600 bg-green-500/15 rounded-lg p-6 shadow-lg">
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full bg-green-500 animate-pulse" />
+                    <h3 className="text-2xl font-bold text-green-200">
+                      Designar Árbitros
+                    </h3>
                   </div>
+                  <AssignmentPanel
+                    matches={getMatchesforStage()}
+                    referees={referees}
+                    onSimulate={(result) => {
+                      console.log("Simulación completada:", result)
+                    }}
+                  />
                 </div>
-              )}
-            </div>
+
+                {/* Team Selector para crear partidos - Debajo de Asignación */}
+                <TeamSelector
+                  teams={teams}
+                  championship={selectedChampionship}
+                  stage={selectedStage}
+                />
+
+                {/* SECCIÓN ASIGNACIÓN AUTOMÁTICA - COLAPSIBLE */}
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setShowIntelligentMode(!showIntelligentMode)}
+                    className="w-full px-6 py-4 rounded-lg bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 transition-all text-white font-bold text-lg flex items-center justify-between gap-3 group shadow-lg"
+                  >
+                    <span className="flex items-center gap-2">
+                      Asignación Automática (Avanzado)
+                    </span>
+                    <span className={`transform transition-transform text-xl ${
+                      showIntelligentMode ? 'rotate-180' : ''
+                    }`}>
+                      ▼
+                    </span>
+                  </button>
+
+                  {showIntelligentMode && (
+                    <div className="animate-in fade-in slide-in-from-top-2 space-y-4">
+                      {/* Simulation Result */}
+                      {showSimulationResult && simulationResult && (
+                        <div>
+                          <SimulationResultComponent
+                            result={simulationResult}
+                            onApply={() => {
+                              toast({
+                                title: "✅ Asignaciones aplicadas",
+                                description: `${simulationResult.successCount} designaciones confirmadas`,
+                              })
+                            }}
+                            onDiscard={() => {
+                              toast({
+                                title: "❌ Simulación descartada",
+                                description: "Puedes ejecutar una nueva simulación",
+                              })
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Partidos y Configuración del Algoritmo */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                        {/* Match List - 2 cols desktop */}
+                        <div className="lg:col-span-2">
+                          <MatchList matches={getMatchesforStage()} />
+                        </div>
+
+                        {/* Algorithm Config - 1 col desktop */}
+                        <div className="lg:col-span-1">
+                          <div className="sticky top-20 sm:top-32 lg:top-20">
+                            <AlgorithmConfigPanel />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
