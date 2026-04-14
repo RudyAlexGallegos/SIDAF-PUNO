@@ -76,4 +76,16 @@ public class EquipoController {
     public List<Equipo> getEquiposByCategoria(@PathVariable String categoria) {
         return equipoRepository.findByCategoria(categoria);
     }
+    
+    // GET equipos by distrito
+    @GetMapping("/distrito/{distrito}")
+    public List<Equipo> getEquiposByDistrito(@PathVariable String distrito) {
+        return equipoRepository.findByDistrito(distrito);
+    }
+    
+    // GET equipos by provincia and distrito
+    @GetMapping("/provincia/{provincia}/distrito/{distrito}")
+    public List<Equipo> getEquiposByProvinciaAndDistrito(@PathVariable String provincia, @PathVariable String distrito) {
+        return equipoRepository.findByProvinciaAndDistrito(provincia, distrito);
+    }
 }

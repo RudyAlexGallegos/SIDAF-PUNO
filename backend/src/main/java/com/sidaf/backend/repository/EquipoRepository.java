@@ -10,4 +10,6 @@ public interface EquipoRepository extends JpaRepository<Equipo, Integer> {
     List<Equipo> findByProvincia(String provincia);
     List<Equipo> findByCategoria(String categoria);
     List<Equipo> findByProvinciaAndCategoria(String provincia, String categoria);
+    List<Equipo> findByDistrito(String distrito);
+    List<Equipo> findByProvinciaAndDistrito(String provincia, String distrito);
 }

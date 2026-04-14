@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Search, X, Eye, Edit, Trash2, AlertCircle } from "lucide-react"
+import { ArrowLeft, Plus, Search, X, Eye, Edit, Trash2, AlertCircle, Lock } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +54,42 @@ export default function CampeonadosPage() {
   })
   const [error, setError] = useState<string>("")
 
+  // Crear COPA PERÚ 2026 si no existe
+  const crearCopaPeru = async () => {
+    try {
+      const res = await fetch(`${API_URL}/campeonato`)
+      if (!res.ok) return
+      const campeonatos = await res.json()
+      const existeCopa = campeonatos.some((c: any) => c.nombre === "COPA PERÚ 2026")
+      
+      if (!existeCopa) {
+        const nuevoCampeonato = {
+          nombre: "COPA PERÚ 2026",
+          categoria: "Profesional",
+          tipo: "Torneo",
+          estado: "ACTIVO",
+          fechaInicio: "2026-04-01",
+          fechaFin: "2026-12-31",
+          organizador: "FPF",
+          contacto: "+51 1 2200080",
+          ciudad: "Lima",
+          provincia: "Lima",
+          nivelDificultad: "Alto",
+          numeroEquipos: 32,
+          formato: "Regional",
+          observaciones: "Campeonato nacional principal 2026. No puede ser eliminado.",
+        }
+        await fetch(`${API_URL}/campeonato`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(nuevoCampeonato),
+        })
+      }
+    } catch (error) {
+      console.error("Error creando COPA PERÚ:", error)
+    }
+  }
+
   const cargarCampeones = async () => {
     try {
       setIsLoading(true)
@@ -72,10 +108,15 @@ export default function CampeonadosPage() {
   }
 
   useEffect(() => {
-    cargarCampeones()
+    crearCopaPeru().then(() => cargarCampeones())
   }, [])
 
   const handleDeleteClick = (id: number, nombre: string) => {
+    // Proteger COPA PERÚ 2026
+    if (nombre === "COPA PERÚ 2026") {
+      setError("No se puede eliminar 'COPA PERÚ 2026'. Este es un campeonato protegido del sistema.")
+      return
+    }
     setDeleteDialog({ open: true, id, nombre })
   }
 
@@ -199,7 +240,12 @@ export default function CampeonadosPage() {
                   ) : (
                     filtered.map(c => (
                       <TableRow key={c.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 transition-colors">
-                        <TableCell className="font-medium max-w-[220px] truncate">{c.nombre}</TableCell>
+                        <TableCell className="font-medium max-w-[220px] truncate flex items-center gap-2">
+                          {c.nombre}
+                          {c.nombre === "COPA PERÚ 2026" && (
+                            <Lock className="h-4 w-4 text-yellow-600 flex-shrink-0" title="Campeonato protegido" />
+                          )}
+                        </TableCell>
                         <TableCell className="text-center">
                           <DifficultyBadge difficulty={c.nivelDificultad} />
                         </TableCell>
@@ -227,8 +273,9 @@ export default function CampeonadosPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteClick(c.id, c.nombre)}
-                              disabled={isDeleting}
-                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                              disabled={isDeleting || c.nombre === "COPA PERÚ 2026"}
+                              className={c.nombre === "COPA PERÚ 2026" ? "text-gray-400 cursor-not-allowed opacity-50" : "text-red-600 hover:bg-red-50 hover:text-red-700"}
+                              title={c.nombre === "COPA PERÚ 2026" ? "Este campeonato está protegido y no puede ser eliminado" : ""}
                             >
                               <Trash2 className="h-4 w-4" aria-hidden />
                               <span className="hidden md:inline">Eliminar</span>

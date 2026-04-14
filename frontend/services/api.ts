@@ -311,6 +311,30 @@ export async function deleteEquipo(id: number): Promise<boolean> {
     }
 }
 
+export async function getEquiposByDistrito(distrito: string): Promise<Equipo[]> {
+    try {
+        const response = await fetch(buildUrl(`/equipos/distrito/${encodeURIComponent(distrito)}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getEquiposByDistrito:", error);
+        return [];
+    }
+}
+
+export async function getEquiposByProvinciaAndDistrito(provincia: string, distrito: string): Promise<Equipo[]> {
+    try {
+        const response = await fetch(
+            buildUrl(`/equipos/provincia/${encodeURIComponent(provincia)}/distrito/${encodeURIComponent(distrito)}`)
+        );
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getEquiposByProvinciaAndDistrito:", error);
+        return [];
+    }
+}
+
 // ============================================================
 // DESIGNACIONES
 // ============================================================

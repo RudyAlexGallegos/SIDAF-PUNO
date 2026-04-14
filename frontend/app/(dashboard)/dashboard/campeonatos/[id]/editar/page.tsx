@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users, AlertCircle, Plus, Trash2 } from "lucide-react"
 import { updateCampeonato, getEquipos, type Equipo } from "@/services/api"
+import ElegirEquiposCampeonato from "@/components/campeonato/ElegirEquiposCampeonato"
 import { toast } from "@/hooks/use-toast"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
@@ -686,97 +687,28 @@ export default function EditarCampeonatoPage() {
               </CardContent>
             </Card>
 
-            {/* Selección de Equipos */}
+            {/* Selección de Equipos por Provincia/Distrito */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Selección de Equipos
+                  Seleccionar Equipos Participantes
                 </CardTitle>
                 <CardDescription>
-                  Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
-                  {equiposSeleccionados.length < 2 && (
-                    <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
-                  )}
+                  Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {equiposLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span className="ml-2">Cargando equipos...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar equipos..."
-                          value={busquedaEquipo}
-                          onChange={(e) => setBusquedaEquipo(e.target.value)}
-                          className="pl-8"
-                        />
-                      </div>
-
-                      <Select value={filtroProvincia} onValueChange={setFiltroProvincia}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                          <SelectValue placeholder="Todas las provincias" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="todas">Todas las provincias</SelectItem>
-                          <SelectItem value="Puno">Puno</SelectItem>
-                          <SelectItem value="Azángaro">Azángaro</SelectItem>
-                          <SelectItem value="Melgar">Melgar</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={filtroDivision} onValueChange={setFiltroDivision}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                          <SelectValue placeholder="Todas las categorías" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="todas">Todas las categorías</SelectItem>
-                          <SelectItem value="Primera División">Primera División</SelectItem>
-                          <SelectItem value="Segunda División">Segunda División</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="border rounded-lg divide-y">
-                      {equiposFiltrados.length === 0 ? (
-                        <div className="p-4 text-center text-muted-foreground">
-                          No se encontraron equipos
-                        </div>
-                      ) : (
-                        equiposFiltrados.map((equipo) => (
-                          <div
-                            key={equipo.id}
-                            className="flex items-center justify-between p-4 hover:bg-muted/50"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Checkbox
-                                checked={equipo.id ? equiposSeleccionados.includes(equipo.id) : false}
-                                onCheckedChange={() => equipo.id && handleEquipoToggle(equipo.id)}
-                              />
-                              <div>
-                                <p className="font-medium">{equipo.nombre}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {equipo.categoria} • {equipo.provincia}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    {errores.equipos && (
-                      <p className="text-sm text-red-500 flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        {errores.equipos}
-                      </p>
-                    )}
-                  </>
+              <CardContent>
+                <ElegirEquiposCampeonato
+                  campeonatoId={campeonatoId}
+                  equiposSeleccionados={equiposSeleccionados}
+                  onEquiposChange={setEquiposSeleccionados}
+                />
+                {errores.equipos && (
+                  <p className="text-sm text-red-500 flex items-center gap-1 mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    {errores.equipos}
+                  </p>
                 )}
               </CardContent>
             </Card>
