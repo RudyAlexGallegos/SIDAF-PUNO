@@ -3,6 +3,8 @@ package com.sidaf.backend.controller;
 import com.sidaf.backend.model.Arbitro;
 import com.sidaf.backend.repository.ArbitroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/arbitros") // <-- coincide con NEXT_PUBLIC_API_URL + "/arbitros"
+@RequestMapping("/api/arbitros")
 @CrossOrigin(origins = "*")
 public class ArbitroController {
 
@@ -18,17 +20,20 @@ public class ArbitroController {
     private ArbitroRepository arbitroRepository;
 
     @GetMapping
+    @Cacheable(value = "arbitros", unless = "#result.size() == 0")
     public List<Arbitro> listar() {
         return arbitroRepository.findAll();
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "arbitros", key = "#id")
     public ResponseEntity<Arbitro> obtener(@PathVariable Long id) {
         Optional<Arbitro> o = arbitroRepository.findById(id);
         return o.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
+    @CacheEvict(value = "arbitros", allEntries = true)
     public ResponseEntity<Arbitro> crear(@RequestBody Arbitro arbitro) {
         if (arbitro.getFechaRegistro() == null) {
             // fechaRegistro ya tiene valor por defecto en la entidad,

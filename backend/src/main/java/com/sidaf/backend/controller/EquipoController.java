@@ -3,6 +3,8 @@ package com.sidaf.backend.controller;
 import com.sidaf.backend.model.Equipo;
 import com.sidaf.backend.repository.EquipoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -18,12 +20,14 @@ public class EquipoController {
     
     // GET all equipos
     @GetMapping
+    @Cacheable(value = "equipos", unless = "#result.size() == 0")
     public List<Equipo> getAllEquipos() {
         return equipoRepository.findAll();
     }
     
     // GET equipo by id
     @GetMapping("/{id}")
+    @Cacheable(value = "equipos", key = "#id")
     public ResponseEntity<Equipo> getEquipoById(@PathVariable Integer id) {
         Optional<Equipo> equipo = equipoRepository.findById(id);
         return equipo.map(ResponseEntity::ok)
@@ -32,12 +36,14 @@ public class EquipoController {
     
     // POST create equipo
     @PostMapping
+    @CacheEvict(value = "equipos", allEntries = true)
     public Equipo createEquipo(@RequestBody Equipo equipo) {
         return equipoRepository.save(equipo);
     }
     
     // PUT update equipo
     @PutMapping("/{id}")
+    @CacheEvict(value = "equipos", allEntries = true)
     public ResponseEntity<Equipo> updateEquipo(@PathVariable Integer id, @RequestBody Equipo equipoDetails) {
         Optional<Equipo> equipo = equipoRepository.findById(id);
         if (equipo.isPresent()) {
