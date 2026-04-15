@@ -19,7 +19,7 @@ export const PROVINCIAS_PUNO: Provincia[] = [
     nombre: "Puno",
     codigo: "PUN",
     distritos: [
-      { nombre: "Puno" },
+      { nombre: "Puno (Capital)" },
       { nombre: "Acora" },
       { nombre: "Amantaní" },
       { nombre: "Atuncolla" },

@@ -108,9 +108,14 @@ export default function NuevoCampeonatoPage() {
       }
     }
 
-    // Validar contacto (formato básico de teléfono)
-    if (formData.contacto && !/^\+?[\d\s\-\(\)]+$/.test(formData.contacto)) {
-      nuevosErrores.contacto = "Formato de teléfono inválido"
+    // Validar contacto - aceptar teléfono o email
+    if (formData.contacto) {
+      const esEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contacto)
+      const esTelefono = /^\+?[\d\s\-\(\)]+$/.test(formData.contacto)
+      
+      if (!esEmail && !esTelefono) {
+        nuevosErrores.contacto = "Ingresa un teléfono o email válido"
+      }
     }
 
     setErrores(nuevosErrores)
@@ -418,10 +423,10 @@ export default function NuevoCampeonatoPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="contacto">Contacto</Label>
+                    <Label htmlFor="contacto">Contacto (Teléfono o Email)</Label>
                     <Input
                       id="contacto"
-                      placeholder="Ej: +51 999 999 999"
+                      placeholder="Ej: +51 999 999 999 o correo@ejemplo.com"
                       value={formData.contacto}
                       onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
                       className={errores.contacto ? "border-red-500" : ""}
@@ -539,87 +544,6 @@ export default function NuevoCampeonatoPage() {
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Definir Etapas */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  Definir Etapas
-                </CardTitle>
-                <CardDescription>Define las etapas del campeonato ({formData.etapas.length})</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {formData.etapas.length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                    <Trophy className="h-12 w-12 mx-auto text-gray-300 mb-2" />
-                    <p className="text-gray-500 mb-4">No hay etapas definidas</p>
-                    <Button
-                      type="button"
-                      onClick={handleAgregarEtapa}
-                      className="gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Agregar Primera Etapa
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {formData.etapas.map((etapa, index) => (
-                      <div key={index} className="flex items-end gap-3 p-3 border rounded-lg hover:bg-muted/50">
-                        <div className="flex-1 space-y-1">
-                          <Label className="text-sm">Nombre de la Etapa</Label>
-                          <Input
-                            placeholder="Ej: Etapa Distrital"
-                            value={etapa.nombre}
-                            onChange={(e) => handleActualizarEtapa(index, "nombre", e.target.value)}
-                            className="text-sm"
-                          />
-                        </div>
-
-                        <div className="w-16 space-y-1">
-                          <Label className="text-sm">Orden</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={etapa.orden}
-                            onChange={(e) => handleActualizarEtapa(index, "orden", parseInt(e.target.value))}
-                            className="text-sm text-center"
-                          />
-                        </div>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEliminarEtapa(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAgregarEtapa}
-                      className="w-full gap-2 mt-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Agregar Etapa
-                    </Button>
-                  </div>
-                )}
-
-                {errores.etapas && (
-                  <p className="text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    {errores.etapas}
-                  </p>
-                )}
               </CardContent>
             </Card>
 

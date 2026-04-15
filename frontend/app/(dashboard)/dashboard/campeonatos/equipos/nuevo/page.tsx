@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Shield, Save, Building, MapPin, Phone, Mail, Palette } from "lucide-react"
+import { ArrowLeft, Shield, Save, Building, MapPin, Phone, Mail, Palette, CheckCircle2 } from "lucide-react"
 import { createEquipo, type Equipo } from "@/services/api"
-import { getDistritosPorProvincia } from "@/lib/distritos-puno"
+import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 
 export default function NuevoEquipoPage() {
     const router = useRouter()
@@ -19,7 +19,7 @@ export default function NuevoEquipoPage() {
     const [form, setForm] = useState<Equipo>({
         nombre: "",
         categoria: "Primera División",
-        provincia: "Puno",
+        provincia: "",
         distrito: "",
         nombreEstadio: "",
         estadio: "",
@@ -30,7 +30,8 @@ export default function NuevoEquipoPage() {
     })
     
     const distritosDisponibles = useMemo(() => {
-        return getDistritosPorProvincia(form.provincia)
+        if (!form.provincia) return []
+        return getDistritosByProvincia(form.provincia).map(d => d.nombre)
     }, [form.provincia])
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -38,8 +39,21 @@ export default function NuevoEquipoPage() {
         setLoading(true)
         setError("")
 
+        // Validaciones
         if (!form.nombre?.trim()) {
             setError("El nombre del equipo es requerido")
+            setLoading(false)
+            return
+        }
+
+        if (!form.provincia?.trim()) {
+            setError("La provincia es requerida")
+            setLoading(false)
+            return
+        }
+
+        if (!form.distrito?.trim()) {
+            setError("El distrito es requerido")
             setLoading(false)
             return
         }
@@ -57,23 +71,16 @@ export default function NuevoEquipoPage() {
     }
 
     const categorias = ["Primera División", "Segunda División"]
-    
-    const provincias = [
-        { nombre: "Azángaro" },
-        { nombre: "Carabaya" },
-        { nombre: "Chucuito" },
-        { nombre: "El Collao" },
-        { nombre: "Huancané" },
-        { nombre: "Lampa" },
-        { nombre: "Melgar" },
-        { nombre: "Moho"},
-        { nombre: "Puno" },
-        { nombre: "San Antonio de Putina" },
-        { nombre: "San Román" },
-        { nombre: "Sandia"},
-        { nombre: "Yunguyo"}
-    ]
 
+    // Validar si el formulario tiene todos los campos requeridos
+    const camposRequeridos = {
+        nombre: !!form.nombre?.trim(),
+        provincia: !!form.provincia?.trim(),
+        distrito: !!form.distrito?.trim(),
+    }
+    
+    const tieneTodoRequerido = Object.values(camposRequeridos).every(Boolean)
+    
     const colores = [
         { value: "Rojo", label: "Rojo", bg: "bg-red-500" },
         { value: "Azul", label: "Azul", bg: "bg-blue-500" },
@@ -152,36 +159,39 @@ export default function NuevoEquipoPage() {
                             </Label>
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="provincia">Provincia</Label>
+                                    <Label htmlFor="provincia">Provincia *</Label>
                                     <select
                                         id="provincia"
                                         value={form.provincia}
                                         onChange={(e) => setForm({ ...form, provincia: e.target.value, distrito: "" })}
                                         className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required
                                     >
-                                        {provincias.map((prov) => (
+                                        <option value="">Seleccione una provincia</option>
+                                        {PROVINCIAS_PUNO.map((prov) => (
                                             <option key={prov.nombre} value={prov.nombre}>
-                                                {prov.nombre} - Capital: {prov.capital}
+                                                {prov.nombre}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="distrito">Distrito</Label>
+                                    <Label htmlFor="distrito">Distrito *</Label>
                                     <select
                                         id="distrito"
                                         value={form.distrito}
                                         onChange={(e) => setForm({ ...form, distrito: e.target.value })}
                                         className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         disabled={distritosDisponibles.length === 0}
+                                        required
                                     >
                                         <option value="">Seleccione un distrito</option>
                                         {distritosDisponibles.map((dist) => (
                                             <option key={dist} value={dist}>{dist}</option>
                                         ))}
                                     </select>
-                                    {distritosDisponibles.length === 0 && form.provincia !== "" && (
+                                    {distritosDisponibles.length === 0 && form.provincia && (
                                         <p className="text-xs text-slate-500 mt-1">
                                             Distritos no disponibles para esta provincia
                                         </p>
@@ -265,6 +275,31 @@ export default function NuevoEquipoPage() {
                             </div>
                         </div>
 
+                        {/* Resumen de Campos Requeridos */}
+                        <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
+                            <p className="text-sm font-semibold text-slate-900 mb-2">Campos Requeridos:</p>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <CheckCircle2 className={`h-4 w-4 ${camposRequeridos.nombre ? "text-green-500" : "text-slate-300"}`} />
+                                    <span className={camposRequeridos.nombre ? "text-slate-700 font-medium" : "text-slate-500"}>
+                                        Nombre del equipo
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    <CheckCircle2 className={`h-4 w-4 ${camposRequeridos.provincia ? "text-green-500" : "text-slate-300"}`} />
+                                    <span className={camposRequeridos.provincia ? "text-slate-700 font-medium" : "text-slate-500"}>
+                                        Provincia
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    <CheckCircle2 className={`h-4 w-4 ${camposRequeridos.distrito ? "text-green-500" : "text-slate-300"}`} />
+                                    <span className={camposRequeridos.distrito ? "text-slate-700 font-medium" : "text-slate-500"}>
+                                        Distrito
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Botones */}
                         <div className="flex gap-4 pt-4 border-t">
                             <Button
@@ -277,16 +312,18 @@ export default function NuevoEquipoPage() {
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || !tieneTodoRequerido}
                                 className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600"
                             >
                                 {loading ? (
                                     "Guardando..."
-                                ) : (
+                                ) : tieneTodoRequerido ? (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
                                         Guardar Equipo
                                     </>
+                                ) : (
+                                    "Completa los campos requeridos"
                                 )}
                             </Button>
                         </div>
