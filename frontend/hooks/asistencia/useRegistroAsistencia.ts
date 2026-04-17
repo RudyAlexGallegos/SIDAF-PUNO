@@ -13,6 +13,7 @@ export function useRegistroAsistencia() {
     const [loadingDia, setLoadingDia] = useState(true)
     const [existeRegistroHoy, setExisteRegistroHoy] = useState(false)
     const [idRegistroExistente, setIdRegistroExistente] = useState<number | null>(null)
+    const [registroExistenteInfo, setRegistroExistenteInfo] = useState<any>(null)
 
     // Cargar información del día actual
     useEffect(() => {
@@ -35,9 +36,17 @@ export function useRegistroAsistencia() {
             try {
                 const registros = await getAsistenciasByFecha(hoy)
                 if (registros && registros.length > 0) {
+                    const primerRegistro = registros[0]
                     setExisteRegistroHoy(true)
-                    setIdRegistroExistente(registros[0].id || null)
-                    console.log("✅ Ya existe registro para hoy:", registros[0].id)
+                    setIdRegistroExistente(primerRegistro.id || null)
+                    setRegistroExistenteInfo({
+                        id: primerRegistro.id,
+                        responsable: primerRegistro.responsable || 'Sin responsable',
+                        createdAt: primerRegistro.createdAt,
+                        actividad: primerRegistro.actividad,
+                        horaEntrada: primerRegistro.horaEntrada
+                    })
+                    console.log("✅ Ya existe registro para hoy:", primerRegistro.id, "Responsable:", primerRegistro.responsable)
                 }
             } catch (e) {
                 console.warn("Error verificando registro existente:", e)
@@ -132,6 +141,7 @@ export function useRegistroAsistencia() {
             actividad: updated.tipoActividad,
             evento: updated.descripcion,
             estado: "completado",
+            responsable: updated.responsable || 'Sistema',
             observaciones: JSON.stringify(updated.arbitros)
         }
 
@@ -188,6 +198,7 @@ export function useRegistroAsistencia() {
         getTipoDiaActual,
         getNombreDiaActual,
         existeRegistroHoy,
-        idRegistroExistente
+        idRegistroExistente,
+        registroExistenteInfo
     }
 }
