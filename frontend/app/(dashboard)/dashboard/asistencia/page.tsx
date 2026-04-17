@@ -194,29 +194,29 @@ export default function AsistenciaPage() {
 
           {/* Notificación de registro existente */}
           {existeRegistroHoy && registroExistenteInfo && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-r-lg">
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
               <div className="flex items-start gap-3">
-                <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="font-semibold text-green-800">✓ Registro de hoy ya existe</p>
-                  <p className="text-sm text-green-700 mt-2">
+                  <p className="font-semibold text-blue-900">⚠️ Ya existe un registro de asistencia para hoy</p>
+                  <p className="text-sm text-blue-800 mt-2">
                     <span className="font-medium">Responsable:</span> {registroExistenteInfo.responsable}
                   </p>
-                  <p className="text-sm text-green-700">
+                  <p className="text-sm text-blue-800">
                     <span className="font-medium">Actividad:</span> {registroExistenteInfo.actividad?.replace('_', ' ') || 'No especificada'}
                   </p>
                   {registroExistenteInfo.createdAt && (
-                    <p className="text-sm text-green-700">
+                    <p className="text-sm text-blue-800">
                       <span className="font-medium">Creado:</span> {new Date(registroExistenteInfo.createdAt).toLocaleString('es-PE', { 
                         dateStyle: 'short', 
                         timeStyle: 'short' 
                       })}
                     </p>
                   )}
-                  <p className="text-xs text-green-600 mt-2 italic">
-                    ID: {idRegistroExistente} — Los cambios se guardarán al finalizar.
+                  <p className="text-xs text-blue-700 mt-2 font-medium">
+                    ✓ Solo puedes editar este registro. No se puede crear uno nuevo.
                   </p>
                 </div>
               </div>
@@ -225,7 +225,7 @@ export default function AsistenciaPage() {
 
           <p className="text-sm text-gray-600 mb-6">
             {existeRegistroHoy 
-              ? "Ya existe un registro para hoy. Continúa editándolo para actualizar la asistencia."
+              ? "Ya existe un registro para hoy. Solo puedes editar la asistencia de los árbitros registrados."
               : "Inicia un nuevo registro haciendo clic en el botón de abajo."}
           </p>
 
@@ -325,19 +325,19 @@ export default function AsistenciaPage() {
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {!existeRegistroHoy ? (
+            {existeRegistroHoy ? (
               <div className="flex-1">
                 <button
                   disabled
                   className="w-full inline-flex items-center justify-center gap-2 bg-gray-400 cursor-not-allowed text-white py-3 px-6 rounded-xl font-semibold shadow-lg opacity-60"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  No hay registro para editar hoy
+                  Ya existe un registro - No se puede crear uno nuevo
                 </button>
                 <p className="text-xs text-gray-500 mt-2 text-center">
-                  Debes tener un registro existente para poder editarlo. Contacta al administrador.
+                  Solo tienes la opción de editar el registro existente. Haz clic en "Editar Registro" abajo.
                 </p>
               </div>
             ) : (
@@ -346,9 +346,26 @@ export default function AsistenciaPage() {
                   const ahora = new Date().toISOString()
                   setFechaHoraInicio(ahora)
                   iniciarRegistro(actividad, responsable, fechaSeleccionada); 
-                  toast({ title: 'Registro cargado', description: `Editando registro de ${registroExistenteInfo?.responsable || 'hoy'}` })
+                  toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'}` })
                 }}
                 className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Iniciar Nuevo Registro
+              </button>
+            )}
+
+            {existeRegistroHoy && (
+              <button
+                onClick={() => { 
+                  const ahora = new Date().toISOString()
+                  setFechaHoraInicio(ahora)
+                  iniciarRegistro(actividad, responsable, fechaSeleccionada); 
+                  toast({ title: 'Registro cargado', description: `Editando registro de ${registroExistenteInfo?.responsable || 'hoy'}` })
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
