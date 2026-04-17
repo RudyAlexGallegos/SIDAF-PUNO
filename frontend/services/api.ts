@@ -824,3 +824,152 @@ export function getStoredToken(): string | null {
         return null;
     }
 }
+
+// ============================================================
+// GESTIÓN DE USUARIOS (SOLO ADMIN/PRESIDENCIA_CODAR)
+// ============================================================
+
+/**
+ * Obtiene todos los usuarios pendientes de aprobación
+ * GET /api/usuarios/pendientes
+ */
+export async function getUsuariosPendientes(): Promise<Usuario[]> {
+    try {
+        const response = await fetch(buildUrl("/usuarios/pendientes"));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Usuarios pendientes obtenidos:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getUsuariosPendientes:", error);
+        return [];
+    }
+}
+
+/**
+ * Obtiene todos los usuarios del sistema
+ * GET /api/usuarios
+ */
+export async function getTodosUsuarios(): Promise<Usuario[]> {
+    try {
+        const response = await fetch(buildUrl("/usuarios"));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Todos los usuarios obtenidos:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getTodosUsuarios:", error);
+        return [];
+    }
+}
+
+/**
+ * Aprueba un usuario pendiente y le asigna un rol
+ * POST /api/usuarios/{id}/aprobar
+ */
+export async function aprobarUsuario(
+    id: number,
+    rol: string,
+    permisos: string
+): Promise<Usuario> {
+    try {
+        const response = await fetch(buildUrl(`/usuarios/${id}/aprobar`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rol, permisos }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Error al aprobar usuario");
+        }
+
+        const data = await response.json();
+        console.log("✅ Usuario aprobado:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error aprobarUsuario:", error);
+        throw error;
+    }
+}
+
+/**
+ * Cambia el estado de un usuario
+ * PUT /api/usuarios/{id}/estado
+ */
+export async function cambiarEstadoUsuario(
+    id: number,
+    estado: string
+): Promise<Usuario> {
+    try {
+        const response = await fetch(buildUrl(`/usuarios/${id}/estado`), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ estado }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Error al cambiar estado");
+        }
+
+        const data = await response.json();
+        console.log("✅ Estado actualizado:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error cambiarEstadoUsuario:", error);
+        throw error;
+    }
+}
+
+/**
+ * Elimina un usuario del sistema
+ * DELETE /api/usuarios/{id}
+ */
+export async function eliminarUsuario(id: number): Promise<boolean> {
+    try {
+        const response = await fetch(buildUrl(`/usuarios/${id}`), {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Error al eliminar usuario");
+        }
+
+        console.log("✅ Usuario eliminado");
+        return true;
+    } catch (error) {
+        console.error("❌ Error eliminarUsuario:", error);
+        throw error;
+    }
+}
+
+/**
+ * Asigna permisos a un usuario
+ * PUT /api/usuarios/{id}/permisos
+ */
+export async function asignarPermisos(
+    id: number,
+    permisos: string[]
+): Promise<Usuario> {
+    try {
+        const response = await fetch(buildUrl(`/usuarios/${id}/permisos`), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ permisos }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Error al asignar permisos");
+        }
+
+        const data = await response.json();
+        console.log("✅ Permisos asignados:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error asignarPermisos:", error);
+        throw error;
+    }
+}

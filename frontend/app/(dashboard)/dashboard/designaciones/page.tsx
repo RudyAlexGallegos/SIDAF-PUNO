@@ -24,51 +24,77 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useCache } from "@/hooks/useCache"
+import { TableSkeleton } from "@/components/Skeletons"
 
 export default function DesignacionesPage() {
   const router = useRouter()
   const printRef = useRef<HTMLDivElement>(null)
   
-  const [designaciones, setDesignaciones] = useState<Designacion[]>([])
-  const [arbitros, setArbitros] = useState<Arbitro[]>([])
-  const [championships, setCampeonatos] = useState<Campeonato[]>([])
-  const [equipos, setEquipos] = useState<Equipo[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [weekFilter, setWeekFilter] = useState<string>("actual")
   const [championshipFilter, setChampionshipFilter] = useState<string>("todos")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("todas")
   const [expandedProvincias, setExpandedProvincias] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Fetcher functions for useCache hook
+  const fetchDesignaciones = async () => {
+    const data = await getDesignaciones()
+    return data || []
+  }
+
+  const fetchArbitros = async () => {
+    const data = await getArbitros()
+    return data || []
+  }
+
+  const fetchCampeonatos = async () => {
+    const data = await getCampeonatos()
+    return data || []
+  }
+
+  const fetchEquipos = async () => {
+    const data = await getEquipos()
+    return data || []
+  }
+
+  // Use cache hooks for data fetching with 5-minute TTL
+  const { data: designaciones = [], isLoading: loadingDesignaciones, refetch: refetchDesignaciones } = useCache(
+    "designaciones",
+    fetchDesignaciones,
+    { ttl: 5 * 60 * 1000 }
+  )
+
+  const { data: arbitros = [], isLoading: loadingArbitros } = useCache(
+    "arbitros",
+    fetchArbitros,
+    { ttl: 5 * 60 * 1000 }
+  )
+
+  const { data: championships = [], isLoading: loadingCampeonatos } = useCache(
+    "campeonatos",
+    fetchCampeonatos,
+    { ttl: 5 * 60 * 1000 }
+  )
+
+  const { data: equipos = [], isLoading: loadingEquipos } = useCache(
+    "equipos",
+    fetchEquipos,
+    { ttl: 5 * 60 * 1000 }
+  )
+
+  const loading = loadingDesignaciones || loadingArbitros || loadingCampeonatos || loadingEquipos
+
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [desigData, arbitData, campData, equipData] = await Promise.all([
-          getDesignaciones(),
-          getArbitros(),
-          getCampeonatos(),
-          getEquipos()
-        ])
-        setDesignaciones(desigData)
-        setArbitros(arbitData)
-        setCampeonatos(campData)
-        setEquipos(equipData)
-        // Inicialmente expandir la primera provincia
-        const provincias = [...new Set(equipData.map((e: Equipo) => e.provincia).filter(Boolean))] as string[]
-        if (provincias.length > 0) {
-          setExpandedProvincias(new Set([provincias[0]]))
-        }
-      } catch (error) {
-        console.error("Error cargando datos:", error)
-      } finally {
-        setLoading(false)
-      }
+    // Initialize expanded provincias when equipos load
+    const provincias = [...new Set(equipos.map((e: Equipo) => e.provincia).filter(Boolean))] as string[]
+    if (provincias.length > 0 && expandedProvincias.size === 0) {
+      setExpandedProvincias(new Set([provincias[0]]))
     }
-    loadData()
-  }, [])
+  }, [equipos])
 
   // Filtrar designaciones
   const designacionesFiltradas = useMemo(() => {
@@ -166,7 +192,7 @@ export default function DesignacionesPage() {
     try {
       const success = await deleteDesignacion(deleteId)
       if (success) {
-        setDesignaciones((prev) => prev.filter((d) => d.id !== deleteId))
+        refetchDesignaciones()
         toast({ title: "✅ Designación eliminada", description: "La designación fue eliminada exitosamente" })
       } else {
         toast({ title: "❌ Error", description: "No se pudo eliminar la designación", variant: "destructive" })
@@ -473,10 +499,15 @@ export default function DesignacionesPage() {
     }
   }
 
-  if (loading) {
+  if (loading && designaciones.length === 0) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">Gestión de Designaciones</h1>
+          <div className="space-y-4">
+            <TableSkeleton rows={10} />
+          </div>
+        </div>
       </div>
     )
   }

@@ -42,11 +42,16 @@ function NavLink({
 }) {
     const pathname = usePathname()
     const isActive = pathname === href
+    const router = useRouter()
 
     return (
         <Link
             href={href}
-            onClick={onClick}
+            onClick={() => {
+                router.prefetch(href)
+                onClick?.()
+            }}
+            onMouseEnter={() => router.prefetch(href)}
             className={`flex items-center gap-3 text-sm px-3 py-2 rounded-xl transition-all
         ${
             isActive

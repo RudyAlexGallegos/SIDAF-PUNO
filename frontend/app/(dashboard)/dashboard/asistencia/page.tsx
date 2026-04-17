@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useArbitros } from "@/hooks/asistencia/useArbitros"
 import { useRegistroAsistencia } from "@/hooks/asistencia/useRegistroAsistencia"
 import ListaArbitros from "@/components/asistencia/ListaArbitros"
-import { format, getDay } from "date-fns"
+import { format, getDay, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import {
   Dialog,
@@ -42,7 +42,7 @@ export default function AsistenciaPage() {
    
    // Obtener actividades permitidas para la fecha seleccionada
    const getActividadesPermitidas = (fechaString: string): Array<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria"> => {
-     const fecha = new Date(fechaString)
+     const fecha = parseISO(fechaString)
      const diaSemana = fecha.getDay() // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
      
      switch (diaSemana) {
@@ -77,15 +77,15 @@ export default function AsistenciaPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  // Verificar si hoy es un día obligatorio
-  const esDiaObligatorioHoy = () => {
-    const hoy = new Date()
-    const diaSemana = hoy.getDay() // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
+  // Verificar si una fecha es un día obligatorio
+  const esDiaObligatorioHoy = (fechaString?: string) => {
+    const fecha = fechaString ? parseISO(fechaString) : new Date()
+    const diaSemana = fecha.getDay() // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
     const diasObligatorios = [1, 2, 4, 5, 6] // Lun(1), Mar(2), Jue(4), Vie(5), Sáb(6)
     return diasObligatorios.includes(diaSemana)
   }
 
-  const diaObligatorio = esDiaObligatorioHoy()
+  const diaObligatorio = esDiaObligatorioHoy(fechaSeleccionada)
 
   // Auto-detectar el usuario actual como responsable
   React.useEffect(() => {
@@ -217,7 +217,7 @@ export default function AsistenciaPage() {
           {/* Main card with improved styling */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
             <div className="text-sm text-gray-600 mb-4">
-              Fecha: {format(new Date(fechaSeleccionada), 'dd/MM/yyyy', { locale: es })}
+              Fecha: {format(parseISO(fechaSeleccionada), 'dd/MM/yyyy', { locale: es })}
             </div>
 
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -230,11 +230,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'analisis_partido'}
-                  aria-disabled={!actividadesPermitidas.includes('analisis_partido') || !diaObligatorio}
+                  aria-disabled={!actividadesPermitidas.includes('analisis_partido')}
                   type="button"
-                  onClick={() => actividadesPermitidas.includes('analisis_partido') && diaObligatorio && setActividad('analisis_partido')}
-                  disabled={!actividadesPermitidas.includes('analisis_partido') || !diaObligatorio}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('analisis_partido') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'analisis_partido' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('analisis_partido') && setActividad('analisis_partido')}
+                  disabled={!actividadesPermitidas.includes('analisis_partido')}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('analisis_partido') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'analisis_partido' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Análisis de partido</div>
                     <div className={`text-xs ${actividad === 'analisis_partido' ? 'text-blue-100' : 'text-gray-500'}`}>Lunes - 18:00</div>
@@ -247,11 +247,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'preparacion_fisica'}
-                  aria-disabled={!actividadesPermitidas.includes('preparacion_fisica') || !diaObligatorio}
+                  aria-disabled={!actividadesPermitidas.includes('preparacion_fisica')}
                   type="button"
-                  onClick={() => actividadesPermitidas.includes('preparacion_fisica') && diaObligatorio && setActividad('preparacion_fisica')}
-                  disabled={!actividadesPermitidas.includes('preparacion_fisica') || !diaObligatorio}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('preparacion_fisica') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'preparacion_fisica' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('preparacion_fisica') && setActividad('preparacion_fisica')}
+                  disabled={!actividadesPermitidas.includes('preparacion_fisica')}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('preparacion_fisica') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'preparacion_fisica' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Preparación física</div>
                     <div className={`text-xs ${actividad === 'preparacion_fisica' ? 'text-blue-100' : 'text-gray-500'}`}>Mar, Jue, Sáb - 05:00</div>
@@ -264,11 +264,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'reunion_ordinaria'}
-                  aria-disabled={!actividadesPermitidas.includes('reunion_ordinaria') || !diaObligatorio}
+                  aria-disabled={!actividadesPermitidas.includes('reunion_ordinaria')}
                   type="button"
-                  onClick={() => actividadesPermitidas.includes('reunion_ordinaria') && diaObligatorio && setActividad('reunion_ordinaria')}
-                  disabled={!actividadesPermitidas.includes('reunion_ordinaria') || !diaObligatorio}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_ordinaria') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_ordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('reunion_ordinaria') && setActividad('reunion_ordinaria')}
+                  disabled={!actividadesPermitidas.includes('reunion_ordinaria')}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_ordinaria') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_ordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión ordinaria</div>
                     <div className={`text-xs ${actividad === 'reunion_ordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Viernes - 19:00</div>
@@ -281,11 +281,11 @@ export default function AsistenciaPage() {
                 <button
                   role="radio"
                   aria-checked={actividad === 'reunion_extraordinaria'}
-                  aria-disabled={!actividadesPermitidas.includes('reunion_extraordinaria') || !diaObligatorio}
+                  aria-disabled={!actividadesPermitidas.includes('reunion_extraordinaria')}
                   type="button"
-                  onClick={() => actividadesPermitidas.includes('reunion_extraordinaria') && diaObligatorio && setActividad('reunion_extraordinaria')}
-                  disabled={!actividadesPermitidas.includes('reunion_extraordinaria') || !diaObligatorio}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_extraordinaria') || !diaObligatorio ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_extraordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  onClick={() => actividadesPermitidas.includes('reunion_extraordinaria') && setActividad('reunion_extraordinaria')}
+                  disabled={!actividadesPermitidas.includes('reunion_extraordinaria')}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_extraordinaria') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_extraordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión extraordinaria</div>
                     <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Mié, Dom - Urgente</div>
@@ -297,7 +297,7 @@ export default function AsistenciaPage() {
               </div>
             </div>
 
-            <div className={diaObligatorio ? '' : 'opacity-50 pointer-events-none'}>
+            <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Responsable</label>
               <input
                 id="responsable-quick"
@@ -310,29 +310,20 @@ export default function AsistenciaPage() {
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {!diaObligatorio ? (
-              <div className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-400 text-white py-3 px-6 rounded-xl font-semibold cursor-not-allowed">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Registro no disponible (día no obligatorio)
-              </div>
-            ) : (
-              <button
-                onClick={() => { 
-                  const ahora = new Date().toISOString()
-                  setFechaHoraInicio(ahora)
-                  iniciarRegistro(actividad, responsable, fechaSeleccionada); 
-                  toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'} - Fecha: ${format(new Date(fechaSeleccionada), 'dd MMM yyyy', { locale: es })}` }) 
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                {existeRegistroHoy ? "Continuar Editando" : "Iniciar Registro"}
-              </button>
-            )}
+            <button
+              onClick={() => { 
+                const ahora = new Date().toISOString()
+                setFechaHoraInicio(ahora)
+                iniciarRegistro(actividad, responsable, fechaSeleccionada); 
+                  toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'} - Fecha: ${format(parseISO(fechaSeleccionada), 'dd MMM yyyy', { locale: es })}` })
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              {existeRegistroHoy ? "Continuar Editando" : "Iniciar Registro"}
+            </button>
 
             <button
               onClick={() => router.push("/dashboard/asistencia/historial")}
@@ -351,9 +342,11 @@ export default function AsistenciaPage() {
 
   function handleFinalizar() {
     // si el hook implementa finalizarRegistro, se llamará desde el diálogo
+    console.log("🔄 Finalizando registro con arbitros:", arbitros?.length || 0)
+    console.log("📊 Registro actual:", registro)
     finalizarRegistro(arbitros)
     setOpenFinalize(false)
-    toast({ title: 'Registro finalizado', description: `Se guardó el registro localmente` })
+    toast({ title: 'Registro finalizado', description: `Se guardó el registro - ${arbitros?.length || 0} árbitros registrados` })
   }
 
   return (

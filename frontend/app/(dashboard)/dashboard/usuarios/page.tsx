@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
+import { useCache } from "@/hooks/useCache"
+import { TableSkeleton } from "@/components/Skeletons"
+
 type Rol = "ADMIN" | "PRESIDENCIA_CODAR" | "UNIDAD_TECNICA_CODAR"
 type Estado = "PENDING" | "ACTIVO" | "INACTIVO"
 
@@ -26,9 +29,6 @@ const PERMISOS_DISPONIBLES = [
 export default function GestionUsuariosPage() {
     const router = useRouter()
     const [usuario, setUsuario] = useState<Usuario | null>(null)
-    const [pendientes, setPendientes] = useState<Usuario[]>([])
-    const [todosUsuarios, setTodosUsuarios] = useState<Usuario[]>([])
-    const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const [tabActiva, setTabActiva] = useState<"pendientes" | "todos">("pendientes")
@@ -37,38 +37,53 @@ export default function GestionUsuariosPage() {
     const [rolSeleccionado, setRolSeleccionado] = useState<string>("UNIDAD_TECNICA_CODAR")
     const [usuarioParaAprobar, setUsuarioParaAprobar] = useState<Usuario | null>(null)
 
-    useEffect(() => {
-        const user = getStoredUser()
-        if (!user) {
-            router.push("/login")
-            return
-        }
-        setUsuario(user)
-        
-        // Verificar que tenga permisos
-        if (user.rol !== "ADMIN" && user.rol !== "PRESIDENCIA_CODAR") {
-            setError("No tienes permisos para acceder a esta página")
-            setLoading(false)
-            return
-        }
-        
-        cargarDatos()
-    }, [router])
-
-    const cargarDatos = async () => {
-        try {
-            const [pend, todos] = await Promise.all([
-                getUsuariosPendientes(),
-                getTodosUsuarios()
-            ])
-            setPendientes(pend)
-            setTodosUsuarios(todos)
-        } catch (err: any) {
-            setError("Error al cargar datos: " + err.message)
-        } finally {
-            setLoading(false)
-        }
+    // Fetcher functions for useCache hook
+    const fetchPendientes = async () => {
+        const data = await getUsuariosPendientes().catch(() => [])
+        return data || []
     }
+
+    const fetchTodos = async () => {
+        const data = await getTodosUsuarios().catch(() => [])
+        return data || []
+    }
+
+    // Use cache hooks for data fetching with 5-minute TTL
+    const { data: pendientes = [], isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
+        "usuariosPendientes",
+        fetchPendientes,
+        { ttl: 5 * 60 * 1000 }
+    )
+
+    const { data: todosUsuarios = [], isLoading: loadingTodos, refetch: refetchTodos } = useCache(
+        "todosUsuarios",
+        fetchTodos,
+        { ttl: 5 * 60 * 1000 }
+    )
+
+    const isLoading = loadingPendientes || loadingTodos
+
+    useEffect(() => {
+        try {
+            const user = getStoredUser()
+            if (!user) {
+                router.push("/login")
+                return
+            }
+            setUsuario(user)
+            
+            // Verificar que tenga permisos
+            if (user.rol !== "ADMIN" && user.rol !== "PRESIDENCIA_CODAR") {
+                setError("No tienes permisos para acceder a esta página")
+                return
+            }
+            
+            // Cache hook loads automatically
+        } catch (err: any) {
+            console.error("Error en useEffect:", err)
+            setError("Error al cargar la página")
+        }
+    }, [router])
 
     const handleAprobar = async (id: number) => {
         if (!rolSeleccionado) {
@@ -81,7 +96,8 @@ export default function GestionUsuariosPage() {
             setError("")
             setUsuarioParaAprobar(null)
             setRolSeleccionado("UNIDAD_TECNICA_CODAR")
-            cargarDatos()
+            refetchPendientes()
+            refetchTodos()
         } catch (err: any) {
             setError("Error al aprobar: " + err.message)
         }
@@ -97,7 +113,8 @@ export default function GestionUsuariosPage() {
             await cambiarEstadoUsuario(id, estado)
             setSuccess("Estado actualizado")
             setError("")
-            cargarDatos()
+            refetchPendientes()
+            refetchTodos()
         } catch (err: any) {
             setError("Error: " + err.message)
         }
@@ -111,7 +128,8 @@ export default function GestionUsuariosPage() {
             await eliminarUsuario(id)
             setSuccess("Usuario eliminado exitosamente")
             setError("")
-            cargarDatos()
+            refetchPendientes()
+            refetchTodos()
         } catch (err: any) {
             setError("Error al eliminar: " + err.message)
         }
@@ -121,12 +139,12 @@ export default function GestionUsuariosPage() {
         if (!usuarioSeleccionado) return
         
         try {
-            const permisosJSON = JSON.stringify(permisosSeleccionados)
-            await asignarPermisos(usuarioSeleccionado.id!, permisosJSON)
+            await asignarPermisos(usuarioSeleccionado.id!, permisosSeleccionados)
             setSuccess("Permisos actualizados")
             setError("")
             setUsuarioSeleccionado(null)
-            cargarDatos()
+            refetchPendientes()
+            refetchTodos()
         } catch (err: any) {
             setError("Error: " + err.message)
         }
@@ -136,9 +154,16 @@ export default function GestionUsuariosPage() {
         setUsuarioSeleccionado(user)
         // Parsear permisos existentes
         try {
-            const permisos = JSON.parse(user.permisosEspecificos || "[]")
-            setPermisosSeleccionados(permisos)
-        } catch {
+            if (user.permisosEspecificos) {
+                const permisos = typeof user.permisosEspecificos === 'string' 
+                    ? JSON.parse(user.permisosEspecificos)
+                    : user.permisosEspecificos
+                setPermisosSeleccionados(Array.isArray(permisos) ? permisos : [])
+            } else {
+                setPermisosSeleccionados([])
+            }
+        } catch (err) {
+            console.error("Error al parsear permisos:", err)
             setPermisosSeleccionados([])
         }
     }
@@ -151,16 +176,8 @@ export default function GestionUsuariosPage() {
         }
     }
 
-    const getBadgeColor = (estado: string) => {
-        switch (estado) {
-            case "ACTIVO": return "bg-green-500"
-            case "PENDING": return "bg-yellow-500"
-            case "INACTIVO": return "bg-red-500"
-            default: return "bg-gray-500"
-        }
-    }
-
-    const getRolLabel = (rol: string) => {
+    const getRolLabel = (rol: string | undefined) => {
+        if (!rol) return "Sin rol"
         switch (rol) {
             case "ADMIN": return "Administrador"
             case "PRESIDENCIA_CODAR": return "Presidente CODAR"
@@ -169,17 +186,28 @@ export default function GestionUsuariosPage() {
         }
     }
 
+    const getBadgeColor = (estado: string | undefined) => {
+        switch (estado) {
+            case "ACTIVO": return "bg-green-500"
+            case "PENDING": return "bg-yellow-500"
+            case "INACTIVO": return "bg-red-500"
+            default: return "bg-gray-500"
+        }
+    }
+
     const handleLogout = () => {
         logout()
         router.push("/login")
     }
 
-    if (loading) {
+    if (isLoading && pendientes.length === 0 && todosUsuarios.length === 0) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando...</p>
+            <div className="min-h-screen bg-gray-50 p-6">
+                <div className="max-w-7xl mx-auto">
+                    <h1 className="text-3xl font-bold mb-8">Gestión de Usuarios</h1>
+                    <div className="space-y-4">
+                        <TableSkeleton rows={8} />
+                    </div>
                 </div>
             </div>
         )
@@ -192,12 +220,16 @@ export default function GestionUsuariosPage() {
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
-                        <p className="text-gray-600">
-                            Bienvenido, {usuario?.nombre} ({getRolLabel(usuario?.rol || "")})
-                        </p>
-                        <p className="text-sm text-gray-500">
-                            Unidad: {usuario?.unidadOrganizacional}
-                        </p>
+                        {usuario && (
+                            <>
+                                <p className="text-gray-600">
+                                    Bienvenido, {usuario.nombre} ({getRolLabel(usuario.rol || "")})
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Unidad: {usuario.unidadOrganizacional || "N/A"}
+                                </p>
+                            </>
+                        )}
                     </div>
                     <Button variant="outline" onClick={handleLogout}>
                         Cerrar Sesión
@@ -239,7 +271,7 @@ export default function GestionUsuariosPage() {
                             <CardTitle>Usuarios Pendientes de Aprobación</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {pendientes.length === 0 ? (
+                            {!pendientes || pendientes.length === 0 ? (
                                 <p className="text-gray-500 text-center py-8">No hay usuarios pendientes</p>
                             ) : (
                                 <div className="space-y-4">
@@ -248,8 +280,8 @@ export default function GestionUsuariosPage() {
                                             <div>
                                                 <p className="font-semibold">{user.nombre} {user.apellido}</p>
                                                 <p className="text-sm text-gray-600">DNI: {user.dni}</p>
-                                                <p className="text-sm text-gray-600">Email: {user.email}</p>
-                                                <p className="text-sm text-gray-600">Unidad: {user.unidadOrganizacional}</p>
+                                                <p className="text-sm text-gray-600">Email: {user.email || "N/A"}</p>
+                                                <p className="text-sm text-gray-600">Unidad: {user.unidadOrganizacional || "N/A"}</p>
                                             </div>
                                             <div className="flex gap-2 items-center">
                                                 <select
@@ -265,10 +297,10 @@ export default function GestionUsuariosPage() {
                                                         </>
                                                     )}
                                                 </select>
-                                                <Button onClick={() => handleAprobar(user.id!)}>
+                                                <Button onClick={() => user.id && handleAprobar(user.id)}>
                                                     Aprobar
                                                 </Button>
-                                                <Button variant="outline" onClick={() => handleCambiarEstado(user.id!, "INACTIVO")}>
+                                                <Button variant="outline" onClick={() => user.id && handleCambiarEstado(user.id, "INACTIVO")}>
                                                     Rechazar
                                                 </Button>
                                             </div>
@@ -300,56 +332,64 @@ export default function GestionUsuariosPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {todosUsuarios.map(user => (
-                                            <tr key={user.id} className="border-b hover:bg-gray-50">
-                                                <td className="p-2">{user.nombre} {user.apellido}</td>
-                                                <td className="p-2">{user.dni}</td>
-                                                <td className="p-2">{getRolLabel(user.rol)}</td>
-                                                <td className="p-2">
-                                                    <Badge className={getBadgeColor(user.estado)}>
-                                                        {user.estado}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-2">{user.unidadOrganizacional}</td>
-                                                <td className="p-2">
-                                                    <div className="flex gap-2">
-                                                        <Button 
-                                                            variant="outline" 
-                                                            size="sm"
-                                                            onClick={() => abrirModalPermisos(user)}
-                                                        >
-                                                            Permisos
-                                                        </Button>
-                                                        {user.estado === "ACTIVO" ? (
+                                        {todosUsuarios && todosUsuarios.length > 0 ? (
+                                            todosUsuarios.map(user => (
+                                                <tr key={user.id} className="border-b hover:bg-gray-50">
+                                                    <td className="p-2">{user.nombre} {user.apellido}</td>
+                                                    <td className="p-2">{user.dni}</td>
+                                                    <td className="p-2">{getRolLabel(user.rol)}</td>
+                                                    <td className="p-2">
+                                                        <Badge className={getBadgeColor(user.estado)}>
+                                                            {user.estado || "DESCONOCIDO"}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-2">{user.unidadOrganizacional || "N/A"}</td>
+                                                    <td className="p-2">
+                                                        <div className="flex gap-2">
                                                             <Button 
                                                                 variant="outline" 
                                                                 size="sm"
-                                                                onClick={() => handleCambiarEstado(user.id!, "INACTIVO")}
+                                                                onClick={() => abrirModalPermisos(user)}
                                                             >
-                                                                Desactivar
+                                                                Permisos
                                                             </Button>
-                                                        ) : (
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="sm"
-                                                                onClick={() => handleCambiarEstado(user.id!, "ACTIVO")}
-                                                            >
-                                                                Activar
-                                                            </Button>
-                                                        )}
-                                                        {usuario?.rol === "ADMIN" && user.id !== usuario.id && (
-                                                            <Button 
-                                                                variant="destructive" 
-                                                                size="sm"
-                                                                onClick={() => handleEliminar(user.id!)}
-                                                            >
-                                                                Eliminar
-                                                            </Button>
-                                                        )}
-                                                    </div>
+                                                            {user.estado === "ACTIVO" ? (
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="sm"
+                                                                    onClick={() => user.id && handleCambiarEstado(user.id, "INACTIVO")}
+                                                                >
+                                                                    Desactivar
+                                                                </Button>
+                                                            ) : (
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="sm"
+                                                                    onClick={() => user.id && handleCambiarEstado(user.id, "ACTIVO")}
+                                                                >
+                                                                    Activar
+                                                                </Button>
+                                                            )}
+                                                            {usuario?.rol === "ADMIN" && user.id !== usuario?.id && (
+                                                                <Button 
+                                                                    variant="destructive" 
+                                                                    size="sm"
+                                                                    onClick={() => user.id && handleEliminar(user.id)}
+                                                                >
+                                                                    Eliminar
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={6} className="p-4 text-center text-gray-500">
+                                                    No hay usuarios registrados
                                                 </td>
                                             </tr>
-                                        ))}
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -359,13 +399,13 @@ export default function GestionUsuariosPage() {
 
                 {/* Modal de Permisos */}
                 {usuarioSeleccionado && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg max-w-md w-full p-6">
                             <h2 className="text-xl font-bold mb-4">
-                                Permisos de {usuarioSeleccionado.nombre}
+                                Permisos de {usuarioSeleccionado.nombre || "Usuario"}
                             </h2>
                             <div className="space-y-2 mb-4">
-                                {PERMISOS_DISPONIBLES.map(permiso => (
+                                {PERMISOS_DISPONIBLES && PERMISOS_DISPONIBLES.map(permiso => (
                                     <label key={permiso.valor} className="flex items-center gap-2">
                                         <input
                                             type="checkbox"

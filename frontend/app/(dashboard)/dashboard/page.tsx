@@ -84,7 +84,8 @@ export default function DashboardPage() {
                         todayAsistencias: todayAsistCount,
                     })
                     
-                    // Success - exit the retry loop
+                    // Success - set loading to false and exit the retry loop
+                    setLoading(false)
                     return
                 } catch (error) {
                     console.error(`Attempt failed (${3 - retries + 1}/3):`, error)
@@ -108,16 +109,16 @@ export default function DashboardPage() {
     }, [])
 
     return (
-        <div className="space-y-6 md:space-y-8">
+        <div className="space-y-4 md:space-y-6 lg:space-y-8">
             {/* Header */}
-            <section className="border-b pb-4 md:pb-6">
-                <p className="text-sm font-medium text-blue-600">
+            <section className="border-b pb-3 md:pb-4 lg:pb-6">
+                <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
                     Comisión Departamental de Árbitros · Puno
                 </p>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
                     Panel de Control
                 </h1>
-                <p className="text-slate-500 mt-2 max-w-3xl text-sm md:text-base">
+                <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
                     Bienvenido al sistema de gestión arbitral. Aquí encontrará un resumen de la actividad actual.
                 </p>
             </section>
@@ -155,7 +156,7 @@ export default function DashboardPage() {
             {!loading && apiStatus === "ok" && (
                 <>
                     {/* Primary Stats Row */}
-                    <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
                         <StatCard 
                             label="Árbitros"
                             value={stats.arbitros}
@@ -191,7 +192,7 @@ export default function DashboardPage() {
                     </section>
 
                     {/* System Status Row */}
-                    <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <section className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
                         <SystemStatus status={apiStatus} />
                         <QuickStats 
                             designacionesPendientes={stats.designacionesPendientes}
@@ -201,10 +202,10 @@ export default function DashboardPage() {
 
                     {/* Module Cards */}
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-800 mb-4">
+                        <h2 className="text-base md:text-lg font-semibold text-slate-800 mb-3 md:mb-4">
                             Módulos del Sistema
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
                             <ModuleCard
                                 title="Árbitros"
                                 description="Gestión del padrón arbitral."
@@ -243,10 +244,10 @@ export default function DashboardPage() {
 
                     {/* Quick Actions */}
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-800 mb-4">
+                        <h2 className="text-base md:text-lg font-semibold text-slate-800 mb-3 md:mb-4">
                             Acceso Rápido
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4">
                             <QuickActionCard
                                 title="Nueva Designación"
                                 description="Crear una nueva asignación arbitral"
@@ -318,16 +319,16 @@ function StatCard({
     const colors = colorMap[color]
 
     const content = (
-        <div className={`rounded-xl ${colors.bg} p-4 md:p-5 hover:shadow-md transition-all duration-200`}>
+        <div className={`rounded-xl ${colors.bg} p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200`}>
             <div className="flex items-start justify-between">
-                <div className={`h-10 w-10 rounded-lg ${colors.iconBg} flex items-center justify-center`}>
-                    <Icon className={`h-5 w-5 ${colors.icon}`} />
+                <div className={`h-9 w-9 md:h-10 md:w-10 rounded-lg ${colors.iconBg} flex items-center justify-center`}>
+                    <Icon className={`h-4 md:h-5 w-4 md:w-5 ${colors.icon}`} />
                 </div>
                 {href && <ChevronRight className="h-4 w-4 text-slate-400" />}
             </div>
-            <div className="mt-3">
-                <p className="text-2xl md:text-3xl font-bold text-slate-900">{value}</p>
-                <p className="text-sm text-slate-600 mt-0.5">{label}</p>
+            <div className="mt-2 md:mt-3">
+                <p className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-900">{value}</p>
+                <p className="text-xs md:text-sm text-slate-600 mt-0.5">{label}</p>
                 {subValue && <p className="text-xs text-slate-500 mt-1">{subValue}</p>}
             </div>
         </div>
@@ -369,14 +370,14 @@ function SystemStatus({ status }: { status: ApiStatus }) {
     const config = statusConfig[status]
 
     return (
-        <div className="rounded-xl border bg-card p-4 md:p-5">
-            <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${config.bg}`}>
-                    <Server className={`h-5 w-5 ${config.icon}`} />
+        <div className="rounded-xl border bg-card p-3 md:p-4 lg:p-5">
+            <div className="flex items-center gap-2 md:gap-3">
+                <div className={`h-9 w-9 md:h-10 md:w-10 rounded-lg flex items-center justify-center ${config.bg}`}>
+                    <Server className={`h-4 md:h-5 w-4 md:w-5 ${config.icon}`} />
                 </div>
                 <div>
-                    <p className="text-sm text-slate-500">Estado del sistema</p>
-                    <p className="font-semibold text-slate-900">
+                    <p className="text-xs md:text-sm text-slate-500">Estado del sistema</p>
+                    <p className="font-semibold text-slate-900 text-xs md:text-sm">
                         {config.text}
                     </p>
                 </div>
@@ -394,14 +395,14 @@ function QuickStats({
     arbitrosActivos: number 
 }) {
     return (
-        <div className="rounded-xl border bg-card p-4 md:p-5">
-            <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <AlertCircle className="h-5 w-5 text-amber-600" />
+        <div className="rounded-xl border bg-card p-3 md:p-4 lg:p-5">
+            <div className="flex items-start gap-2 md:gap-3">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-4 md:h-5 w-4 md:w-5 text-amber-600" />
                 </div>
-                <div>
-                    <p className="text-sm text-slate-500">Resumen rápido</p>
-                    <p className="font-semibold text-slate-900">
+                <div className="min-w-0">
+                    <p className="text-xs md:text-sm text-slate-500">Resumen rápido</p>
+                    <p className="font-semibold text-slate-900 text-xs md:text-sm">
                         {designacionesPendientes} designaciones pendientes
                     </p>
                     <p className="text-xs text-slate-500">
@@ -456,15 +457,15 @@ function ModuleCard({
     const colors = colorMap[color]
 
     const content = (
-        <div className={`group rounded-xl border bg-card p-4 md:p-5 hover:shadow-lg transition-all duration-200 ${colors.hover}`}>
-            <div className="flex justify-between items-start mb-3">
-                <div className={`h-11 w-11 rounded-lg ${colors.bg} flex items-center justify-center`}>
-                    <Icon className={`h-5 w-5 ${colors.icon}`} />
+        <div className={`group rounded-xl border bg-card p-3 md:p-4 lg:p-5 hover:shadow-lg transition-all duration-200 ${colors.hover}`}>
+            <div className="flex justify-between items-start mb-2 md:mb-3">
+                <div className={`h-10 w-10 md:h-11 md:w-11 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`h-4 md:h-5 w-4 md:w-5 ${colors.icon}`} />
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors flex-shrink-0" />
             </div>
-            <h3 className="font-semibold text-slate-900">{title}</h3>
-            <p className="text-sm text-slate-500 mt-1">{description}</p>
+            <h3 className="font-semibold text-slate-900 text-sm md:text-base">{title}</h3>
+            <p className="text-xs md:text-sm text-slate-500 mt-1">{description}</p>
             {count !== undefined && (
                 <div className="mt-2 inline-flex items-center px-2 py-1 rounded-full bg-slate-100">
                     <span className="text-xs font-medium text-slate-600">
@@ -499,14 +500,14 @@ function QuickActionCard({
 }) {
     return (
         <Link href={href} className="block">
-            <div className="rounded-xl border bg-card p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-blue-50 transition-colors">
-                        <Icon className="h-5 w-5 text-slate-600 group-hover:text-blue-600 transition-colors" />
+            <div className="rounded-xl border bg-card p-3 md:p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group">
+                <div className="flex items-start gap-2 md:gap-3">
+                    <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-blue-50 transition-colors flex-shrink-0 mt-0.5">
+                        <Icon className="h-4 md:h-5 w-4 md:w-5 text-slate-600 group-hover:text-blue-600 transition-colors" />
                     </div>
-                    <div>
-                        <h3 className="font-medium text-slate-900">{title}</h3>
-                        <p className="text-sm text-slate-500">{description}</p>
+                    <div className="min-w-0">
+                        <h3 className="font-medium text-slate-900 text-sm md:text-base">{title}</h3>
+                        <p className="text-xs md:text-sm text-slate-500">{description}</p>
                     </div>
                 </div>
             </div>

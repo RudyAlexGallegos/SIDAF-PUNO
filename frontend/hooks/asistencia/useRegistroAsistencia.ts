@@ -135,22 +135,30 @@ export function useRegistroAsistencia() {
             observaciones: JSON.stringify(updated.arbitros)
         }
 
+        console.log("📤 Enviando asistenciaData al backend:", {
+            fecha: asistenciaData.fecha,
+            actividad: asistenciaData.actividad,
+            observacionesLength: asistenciaData.observaciones.length,
+            arbitros: updated.arbitros.length
+        })
+
         // Enviar al backend - actualizar si existe, crear si no
         try {
             if (idRegistroExistente) {
-                await updateAsistencia(idRegistroExistente, asistenciaData)
-                console.log("✅ Asistencia actualizada en backend")
+                const result = await updateAsistencia(idRegistroExistente, asistenciaData)
+                console.log("✅ Asistencia actualizada en backend:", result)
             } else {
-                await createAsistencia(asistenciaData)
-                console.log("✅ Nueva asistencia guardada en backend")
+                const result = await createAsistencia(asistenciaData)
+                console.log("✅ Nueva asistencia guardada en backend:", result)
             }
         } catch (e) {
-            console.warn("No se pudo guardar asistencia en backend", e)
+            console.error("❌ Error al guardar asistencia en backend:", e)
         }
         
         // Guardar localmente como backup
         try {
             localStorage.setItem("sidaf_registro_last", JSON.stringify(updated))
+            console.log("💾 Registro guardado localmente")
         } catch (e) {
             console.warn("No se pudo guardar registro final", e)
         }

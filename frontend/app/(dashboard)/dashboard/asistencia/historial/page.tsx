@@ -104,11 +104,42 @@ export default function HistorialAsistenciaPage() {
           getAsistencias(),
           getArbitros()
         ])
-        console.log('DEBUG - Asistencias cargadas:', asistenciasData?.length)
+        console.log('DEBUG - Asistencias cargadas del backend:', asistenciasData?.length)
         console.log('DEBUG - Primera asistencia:', JSON.stringify(asistenciasData?.[0], null, 2))
         console.log('DEBUG - Arbitros cargados:', arbitrosData?.length)
         console.log('DEBUG - Primer arbitro:', JSON.stringify(arbitrosData?.[0], null, 2))
         console.log('>>>>>> ARBITROS IDs:', arbitrosData?.map((a: any) => a.id) || 'none')
+        
+        // Verificar si hay datos guardados localmente que no estén en el backend
+        try {
+          const lastRegistro = localStorage.getItem("sidaf_registro_last")
+          if (lastRegistro) {
+            const reg = JSON.parse(lastRegistro)
+            const fechaReg = reg.fecha
+            console.log("📝 Registro local encontrado para fecha:", fechaReg)
+            
+            // Ver si este registro ya existe en asistenciasData
+            const yaExiste = asistenciasData?.some((a: any) => 
+              a.fecha?.startsWith(fechaReg) 
+            )
+            if (!yaExiste && reg.arbitros && reg.arbitros.length > 0) {
+              console.log("⚠️ Registro local no está en backend, añadiendo a la lista")
+              asistenciasData?.push({
+                id: `local-${Date.now()}`,
+                fecha: reg.fecha + "T00:00:00",
+                horaEntrada: reg.horaInicio,
+                horaSalida: reg.horaFin,
+                actividad: reg.tipoActividad,
+                evento: reg.descripcion,
+                estado: reg.estado || "completado",
+                observaciones: JSON.stringify(reg.arbitros)
+              })
+            }
+          }
+        } catch (e) {
+          console.warn("Error verificando datos locales:", e)
+        }
+        
         setAsistencias(asistenciasData)
         setArbitros(arbitrosData)
       } catch (error) {
@@ -123,13 +154,21 @@ export default function HistorialAsistenciaPage() {
   const parsearRegistros = (asistencia: Asistencia): RegistroArbitro[] => {
     try {
       if (asistencia.observaciones) {
-        const parsed = JSON.parse(asistencia.observaciones)
         console.log('DEBUG parsearRegistros - observaciones:', asistencia.observaciones?.substring(0, 200))
+        const parsed = JSON.parse(asistencia.observaciones)
         console.log('DEBUG parsearRegistros - parsed:', parsed)
-        return parsed
+        
+        // Validar que sea un array
+        if (Array.isArray(parsed)) {
+          return parsed
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          // Si es un objeto, convertirlo a array con ese objeto
+          console.warn('DEBUG parsearRegistros - observaciones es un objeto, convirtiéndolo a array')
+          return [parsed]
+        }
       }
     } catch (e) {
-      console.warn("Error parseando:", e)
+      console.warn("Error parseando observaciones:", e)
     }
     return []
   }
@@ -138,15 +177,24 @@ export default function HistorialAsistenciaPage() {
     if (!id) return "General"
     // Normalizar el ID a string para la comparación
     const idStr = String(id)
-    // Buscar en la lista de árbitros comparando como string
+    const idNum = Number(id)
+    
+    // Buscar en la lista de árbitros comparando como string y número
     const arb = arbitros.find(a => 
       String(a.id) === idStr || 
       a.id?.toString() === idStr ||
-      Number(a.id) === Number(idStr)
+      Number(a.id) === idNum ||
+      a.id === id
     )
+    
     if (arb) {
-      return `${arb.nombre || ""} ${arb.apellido || ""}`.trim() || `Árbitro ${id}`
+      const nombre = `${arb.nombre || ""} ${arb.apellido || ""}`.trim()
+      if (nombre) return nombre
+      return `${arb.nombres || ""} ${arb.apellidoPaterno || ""}`.trim() || `Árbitro ${id}`
     }
+    
+    // Debug logging
+    console.log(`DEBUG getNombreArbitro - No encontrado para id: ${id}, árbitros disponibles:`, arbitros.map(a => ({ id: a.id, nombre: a.nombre })))
     return `Árbitro ${id}`
   }
 
