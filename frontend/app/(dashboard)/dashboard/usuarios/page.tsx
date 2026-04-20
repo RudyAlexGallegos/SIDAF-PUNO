@@ -49,17 +49,21 @@ export default function GestionUsuariosPage() {
     }
 
     // Use cache hooks for data fetching with 5-minute TTL
-    const { data: pendientes = [], isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
+    const { data: pendientesRaw = [], isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
         "usuariosPendientes",
         fetchPendientes,
         { ttl: 5 * 60 * 1000 }
     )
+    
+    const pendientes = pendientesRaw || []
 
-    const { data: todosUsuarios = [], isLoading: loadingTodos, refetch: refetchTodos } = useCache(
+    const { data: todosUsuariosRaw = [], isLoading: loadingTodos, refetch: refetchTodos } = useCache(
         "todosUsuarios",
         fetchTodos,
         { ttl: 5 * 60 * 1000 }
     )
+    
+    const todosUsuarios = todosUsuariosRaw || []
 
     const isLoading = loadingPendientes || loadingTodos
 
@@ -332,7 +336,7 @@ export default function GestionUsuariosPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {todosUsuarios && todosUsuarios.length > 0 ? (
+                                        {todosUsuarios.length > 0 ? (
                                             todosUsuarios.map(user => (
                                                 <tr key={user.id} className="border-b hover:bg-gray-50">
                                                     <td className="p-2">{user.nombre} {user.apellido}</td>
