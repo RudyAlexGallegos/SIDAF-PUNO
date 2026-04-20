@@ -13,6 +13,7 @@ interface PageStructureProps {
     backHref?: string
     actions?: React.ReactNode
     maxWidth?: "sm" | "md" | "lg" | "xl" | "full"
+    icon?: LucideIcon
 }
 
 /**
@@ -25,7 +26,8 @@ export default function PageStructure({
     showBackButton = true,
     backHref = "/dashboard",
     actions,
-    maxWidth = "full"
+    maxWidth = "full",
+    icon: Icon
 }: PageStructureProps) {
     
     const maxWidthClasses = {
@@ -37,39 +39,57 @@ export default function PageStructure({
     }
 
     return (
-        <div className="container mx-auto px-3 md:px-6 py-4 md:py-8">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-                <div className="flex items-center gap-3">
-                    {showBackButton && (
-                        <Link href={backHref}>
-                            <Button variant="ghost" size="sm" className="hover:bg-slate-100">
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                        </Link>
-                    )}
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-                            {title}
-                        </h1>
-                        {description && (
-                            <p className="text-sm text-slate-500 mt-0.5">
-                                {description}
-                            </p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+            {/* Header section with gradient */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50">
+                <div className="container mx-auto px-4 md:px-6 py-8">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+                        <div className="flex items-center gap-4">
+                            {showBackButton && (
+                                <Link href={backHref}>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="hover:bg-slate-700 text-slate-300 hover:text-white"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            )}
+                            <div className="flex items-center gap-3">
+                                {Icon && (
+                                    <div className="p-2.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+                                        <Icon className="h-5 w-5 text-white" />
+                                    </div>
+                                )}
+                                <div>
+                                    <h1 className="text-2xl md:text-3xl font-bold text-white">
+                                        {title}
+                                    </h1>
+                                    {description && (
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            {description}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {actions && (
+                            <div className="flex items-center gap-2 sm:ml-4 flex-wrap">
+                                {actions}
+                            </div>
                         )}
                     </div>
                 </div>
-                
-                {actions && (
-                    <div className="flex items-center gap-2 sm:ml-4">
-                        {actions}
-                    </div>
-                )}
             </div>
 
-            {/* Content */}
-            <div className={maxWidthClasses[maxWidth]}>
-                {children}
+            {/* Content section */}
+            <div className="container mx-auto px-4 md:px-6 py-8">
+                <div className={`${maxWidthClasses[maxWidth]} mx-auto`}>
+                    {children}
+                </div>
             </div>
         </div>
     )
