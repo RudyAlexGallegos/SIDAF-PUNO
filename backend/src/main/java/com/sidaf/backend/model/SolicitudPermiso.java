@@ -2,9 +2,15 @@ package com.sidaf.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "solicitud_permiso")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SolicitudPermiso {
     
     @Id
@@ -20,86 +26,47 @@ public class SolicitudPermiso {
     @Column(name = "permiso_solicitado", nullable = false, length = 100)
     private String permisoSolicitado;
     
+    @Column(name = "descripcion", columnDefinition = "TEXT")
+    private String descripcion;
+    
     @Column(name = "estado", nullable = false, length = 20)
     private String estado; // PENDIENTE, APROBADO, RECHAZADO
     
     @Column(name = "fecha_solicitud", nullable = false)
     private LocalDateTime fechaSolicitud;
     
+    @Column(name = "solicitado_en")
+    private LocalDateTime solicitadoEn;
+    
     @Column(name = "fecha_respuesta")
     private LocalDateTime fechaRespuesta;
+    
+    @Column(name = "respondido_en")
+    private LocalDateTime respondidoEn;
+    
+    @Column(name = "respondido_por")
+    private Long respondidoPor;
+    
+    @Column(name = "razon_rechazo", columnDefinition = "TEXT")
+    private String razonRechazo;
     
     @Column(name = "notas")
     private String notas;
     
-    // Constructors
-    public SolicitudPermiso() {
+    public SolicitudPermiso(Long usuarioId, String permisoSolicitado) {
+        this.usuarioId = usuarioId;
+        this.permisoSolicitado = permisoSolicitado;
         this.estado = "PENDIENTE";
         this.fechaSolicitud = LocalDateTime.now();
+        this.solicitadoEn = LocalDateTime.now();
     }
     
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    // Getters específicos para compatibilidad
+    public Long getUsuario() {
+        return this.usuarioId;
     }
     
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-    
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
-    }
-    
-    public String getUsuarioNombre() {
-        return usuarioNombre;
-    }
-    
-    public void setUsuarioNombre(String usuarioNombre) {
-        this.usuarioNombre = usuarioNombre;
-    }
-    
-    public String getPermisoSolicitado() {
-        return permisoSolicitado;
-    }
-    
-    public void setPermisoSolicitado(String permisoSolicitado) {
-        this.permisoSolicitado = permisoSolicitado;
-    }
-    
-    public String getEstado() {
-        return estado;
-    }
-    
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-    
-    public LocalDateTime getFechaSolicitud() {
-        return fechaSolicitud;
-    }
-    
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
-        this.fechaSolicitud = fechaSolicitud;
-    }
-    
-    public LocalDateTime getFechaRespuesta() {
-        return fechaRespuesta;
-    }
-    
-    public void setFechaRespuesta(LocalDateTime fechaRespuesta) {
-        this.fechaRespuesta = fechaRespuesta;
-    }
-    
-    public String getNotas() {
-        return notas;
-    }
-    
-    public void setNotas(String notas) {
-        this.notas = notas;
+    public String getPermiso() {
+        return this.permisoSolicitado;
     }
 }

@@ -4,9 +4,13 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "asistencia")
+@Data
+@NoArgsConstructor
 public class Asistencia {
 
     @Id
@@ -80,160 +84,4 @@ public class Asistencia {
      */
     @Column(name = "dia_semana")
     private Integer diaSemana;
-
-    // ---------- getters y setters ----------
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDate getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(LocalDate fecha) {
-        this.fecha = fecha;
-    }
-
-    public LocalDateTime getHoraEntrada() {
-        return horaEntrada;
-    }
-
-    public void setHoraEntrada(LocalDateTime horaEntrada) {
-        this.horaEntrada = horaEntrada;
-    }
-
-    public LocalDateTime getHoraSalida() {
-        return horaSalida;
-    }
-
-    public void setHoraSalida(LocalDateTime horaSalida) {
-        this.horaSalida = horaSalida;
-    }
-
-    public String getActividad() {
-        return actividad;
-    }
-
-    public void setActividad(String actividad) {
-        this.actividad = actividad;
-    }
-
-    public String getEvento() {
-        return evento;
-    }
-
-    public void setEvento(String evento) {
-        this.evento = evento;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
-
-    public String getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(String latitude) {
-        this.latitude = latitude;
-    }
-
-    public String getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(String longitude) {
-        this.longitude = longitude;
-    }
-
-    public Long getResponsableId() {
-        return responsableId;
-    }
-
-    public void setResponsableId(Long responsableId) {
-        this.responsableId = responsableId;
-    }
-
-    public String getResponsable() {
-        return responsable;
-    }
-
-    public void setResponsable(String responsable) {
-        this.responsable = responsable;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    // ========== GETTERS Y SETTERS PARA NUEVOS CAMPOS ==========
-
-    public String getTipoDia() {
-        return tipoDia;
-    }
-
-    public void setTipoDia(String tipoDia) {
-        this.tipoDia = tipoDia;
-    }
-
-    public Boolean getTieneRetraso() {
-        return tieneRetraso;
-    }
-
-    public void setTieneRetraso(Boolean tieneRetraso) {
-        this.tieneRetraso = tieneRetraso;
-    }
-
-    public Integer getMinutosRetraso() {
-        return minutosRetraso;
-    }
-
-    public void setMinutosRetraso(Integer minutosRetraso) {
-        this.minutosRetraso = minutosRetraso;
-    }
-
-    public LocalDate getFechaLimiteRegistro() {
-        return fechaLimiteRegistro;
-    }
-
-    public void setFechaLimiteRegistro(LocalDate fechaLimiteRegistro) {
-        this.fechaLimiteRegistro = fechaLimiteRegistro;
-    }
-
-    public LocalTime getHoraProgramada() {
-        return horaProgramada;
-    }
-
-    public void setHoraProgramada(LocalTime horaProgramada) {
-        this.horaProgramada = horaProgramada;
-    }
-
-    public Integer getDiaSemana() {
-        return diaSemana;
-    }
-
-    public void setDiaSemana(Integer diaSemana) {
-        this.diaSemana = diaSemana;
-    }
 }

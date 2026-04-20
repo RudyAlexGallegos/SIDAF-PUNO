@@ -121,7 +121,7 @@ public class AuthController {
         }
 
         // Todos los usuarios nuevos quedan en PENDING - el Admin asignará el rol
-        Usuario.RolUsuario rol = Usuario.RolUsuario.UNIDAD_TECNICA_CODAR;
+        Usuario.RolUsuario rol = Usuario.RolUsuario.UNIDAD_TECNICA;
         String estado = "PENDING";
         String permisos = "[]";
         
@@ -298,7 +298,7 @@ public class AuthController {
         // Asignar permisos según el rol
         if (permisos != null && !permisos.isEmpty()) {
             usuario.setPermisosEspecificos(permisos);
-        } else if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
+        } else if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA) {
             // Presidentes tienen todos los permisos de su unidad
             usuario.setPermisosEspecificos("[\"GESTION_ARBITROS\",\"GESTION_ASISTENCIA\",\"GESTION_DESIGNACIONES\",\"GESTION_CAMPEONATOS\",\"GESTION_EQUIPOS\",\"VER_REPORTES\"]");
         }
@@ -319,28 +319,28 @@ public class AuthController {
                 return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
             }
             
-            // Solo ADMIN y PRESIDENCIA_CODAR pueden ver usuarios CODAR
+            // Solo ADMIN y PRESIDENCIA pueden ver usuarios UNIDAD_TECNICA
             if (usuarioActual.getRol() != Usuario.RolUsuario.ADMIN && 
-                usuarioActual.getRol() != Usuario.RolUsuario.PRESIDENCIA_CODAR) {
+                usuarioActual.getRol() != Usuario.RolUsuario.PRESIDENCIA) {
                 return ResponseEntity.status(403).body(Map.of("error", "No tienes permisos"));
             }
             
-            List<Usuario> usuariosCODAR;
+            List<Usuario> usuariosUnidadTecnica;
             if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN) {
-                // Admin ve todos los CODAR
-                usuariosCODAR = usuarioRepository.findAll().stream()
-                    .filter(u -> u.getRol() == Usuario.RolUsuario.CODAR)
+                // Admin ve todos los UNIDAD_TECNICA
+                usuariosUnidadTecnica = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getRol() == Usuario.RolUsuario.UNIDAD_TECNICA)
                     .collect(Collectors.toList());
             } else {
-                // PRESIDENCIA_CODAR ve solo los de su unidad
-                usuariosCODAR = usuarioRepository.findAll().stream()
-                    .filter(u -> u.getRol() == Usuario.RolUsuario.CODAR)
+                // PRESIDENCIA ve solo los de su unidad
+                usuariosUnidadTecnica = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getRol() == Usuario.RolUsuario.UNIDAD_TECNICA)
                     .filter(u -> u.getUnidadOrganizacional() != null && 
                                u.getUnidadOrganizacional().equals(usuarioActual.getUnidadOrganizacional()))
                     .collect(Collectors.toList());
             }
             
-            return ResponseEntity.ok(usuariosCODAR.stream().map(this::usuarioToMap).collect(Collectors.toList()));
+            return ResponseEntity.ok(usuariosUnidadTecnica.stream().map(this::usuarioToMap).collect(Collectors.toList()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Error interno: " + e.getMessage()));
@@ -392,7 +392,7 @@ public class AuthController {
             List<Usuario> usuarios;
             if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN) {
                 usuarios = usuarioRepository.findAll();
-            } else if (usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
+            } else if (usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA) {
                 usuarios = usuarioRepository.findByUnidadOrganizacional(usuarioActual.getUnidadOrganizacional());
             } else {
                 return ResponseEntity.status(403).body(Map.of("error", "No tienes permisos para ver usuarios"));
@@ -494,11 +494,9 @@ public class AuthController {
     
     private boolean puedeGestionarUsuarios(Usuario usuario) {
         if (usuario == null) return false;
-        // ADMIN y PRESIDENTE_SIDAF pueden gestionar usuarios
-        // PRESIDENCIA_CODAR también puede gestionar usuarios CODAR
+        // ADMIN y PRESIDENCIA pueden gestionar usuarios
         return usuario.getRol() == Usuario.RolUsuario.ADMIN || 
-               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR ||
-               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA;
     }
     
     private Map<String, Object> usuarioToMap(Usuario usuario) {
@@ -589,9 +587,9 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Solicitud no encontrada"));
             }
             
-            // ADMIN y PRESIDENTE_SIDAF pueden aprobar o rechazar solicitudes
+            // ADMIN y PRESIDENCIA pueden aprobar o rechazar solicitudes
             boolean isAdmin = usuarioActual.getRol() == Usuario.RolUsuario.ADMIN;
-            boolean isPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
+            boolean isPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA;
             
             if (!isAdmin && !isPresidencia) {
                 return ResponseEntity.status(403).body(Map.of("error", "No tienes permisos para gestionar solicitudes"));

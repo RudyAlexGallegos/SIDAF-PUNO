@@ -2,11 +2,15 @@ package com.sidaf.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "copa_peru_resultados", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"campeonato_id", "etapa", "posicion", "equipo_id"})
 })
+@Data
+@NoArgsConstructor
 public class CopaPeruResultado {
     
     @Id
@@ -32,76 +36,6 @@ public class CopaPeruResultado {
     
     @Column
     private LocalDateTime fechaActualizacion;
-    
-    public CopaPeruResultado() {
-        this.fechaCreacion = LocalDateTime.now();
-        this.fechaActualizacion = LocalDateTime.now();
-    }
-    
-    public CopaPeruResultado(Campeonato campeonato, String etapa, Integer posicion, Equipo equipo) {
-        this();
-        this.campeonato = campeonato;
-        this.etapa = etapa;
-        this.posicion = posicion;
-        this.equipo = equipo;
-    }
-    
-    // Getters y Setters
-    public Long getId() {
-        return id;
-    }
-    
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
-    public Campeonato getCampeonato() {
-        return campeonato;
-    }
-    
-    public void setCampeonato(Campeonato campeonato) {
-        this.campeonato = campeonato;
-    }
-    
-    public String getEtapa() {
-        return etapa;
-    }
-    
-    public void setEtapa(String etapa) {
-        this.etapa = etapa;
-    }
-    
-    public Integer getPosicion() {
-        return posicion;
-    }
-    
-    public void setPosicion(Integer posicion) {
-        this.posicion = posicion;
-    }
-    
-    public Equipo getEquipo() {
-        return equipo;
-    }
-    
-    public void setEquipo(Equipo equipo) {
-        this.equipo = equipo;
-    }
-    
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-    
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-    
-    public LocalDateTime getFechaActualizacion() {
-        return fechaActualizacion;
-    }
-    
-    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
-        this.fechaActualizacion = fechaActualizacion;
-    }
     
     @PreUpdate
     protected void onUpdate() {

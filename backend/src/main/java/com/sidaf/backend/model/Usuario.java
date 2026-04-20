@@ -2,9 +2,15 @@ package com.sidaf.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "usuarios")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Usuario {
     
     @Id
@@ -29,7 +35,7 @@ public class Usuario {
     // Roles del sistema
     @Column(name = "rol", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private RolUsuario rol = RolUsuario.UNIDAD_TECNICA_CODAR;
+    private RolUsuario rol = RolUsuario.UNIDAD_TECNICA;
     
     // Estados: PENDING, ACTIVO, INACTIVO
     @Column(name = "activo", length = 20)
@@ -89,80 +95,42 @@ public class Usuario {
     @Column(name = "especialidad", length = 150)
     private String especialidad;
     
-    // Enum para roles jerárquicos
+    // Fecha de aprobación del usuario
+    @Column(name = "fecha_aprobacion")
+    private LocalDateTime fechaAprobacion;
+    
+    // Usuario que aprobó este usuario
+    @Column(name = "aprobado_por")
+    private Long aprobadoPor;
+    
+    // Enum para roles jerárquicos con propiedades
     public enum RolUsuario {
-        ADMIN,                    // Administrador del sistema (ROOT) - Acceso total
-        PRESIDENCIA_CODAR,       // Presidencia CODAR - Gestiona permisos de CODAR
-        CODAR,                   // Usuario CODAR - Acceso según permisos asignados
-        UNIDAD_TECNICA_CODAR     // Unidad Técnica CODAR - Dirigente/Ex-árbitro
+        ADMIN(1L, "ADMIN", 1),
+        PRESIDENCIA(2L, "PRESIDENCIA", 2),
+        UNIDAD_TECNICA(3L, "UNIDAD_TECNICA", 3);
+        
+        private final Long id;
+        private final String nombre;
+        private final Integer jerarquia;
+        
+        RolUsuario(Long id, String nombre, Integer jerarquia) {
+            this.id = id;
+            this.nombre = nombre;
+            this.jerarquia = jerarquia;
+        }
+        
+        public Long getId() {
+            return id;
+        }
+        
+        public String getNombre() {
+            return nombre;
+        }
+        
+        public Integer getJerarquia() {
+            return jerarquia;
+        }
     }
-    
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    
-    public String getDni() { return dni; }
-    public void setDni(String dni) { this.dni = dni; }
-    
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    
-    public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
-    
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-    
-    public RolUsuario getRol() { return rol; }
-    public void setRol(RolUsuario rol) { this.rol = rol; }
-    
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
-    
-    public String getUnidadOrganizacional() { return unidadOrganizacional; }
-    public void setUnidadOrganizacional(String unidadOrganizacional) { this.unidadOrganizacional = unidadOrganizacional; }
-    
-    public String getPermisosEspecificos() { return permisosEspecificos; }
-    public void setPermisosEspecificos(String permisosEspecificos) { this.permisosEspecificos = permisosEspecificos; }
-    
-    public Long getArbitroId() { return arbitroId; }
-    public void setArbitroId(Long arbitroId) { this.arbitroId = arbitroId; }
-    
-    public Long getCreadoPor() { return creadoPor; }
-    public void setCreadoPor(Long creadoPor) { this.creadoPor = creadoPor; }
-    
-    public LocalDateTime getFechaRegistro() { return fechaRegistro; }
-    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
-    
-    public LocalDateTime getUltimoAcceso() { return ultimoAcceso; }
-    public void setUltimoAcceso(LocalDateTime ultimoAcceso) { this.ultimoAcceso = ultimoAcceso; }
-    
-    public String getFoto() { return foto; }
-    public void setFoto(String foto) { this.foto = foto; }
-    
-    public String getTelefono() { return telefono; }
-    public void setTelefono(String telefono) { this.telefono = telefono; }
-    
-    public Boolean getPerfilCompleto() { return perfilCompleto; }
-    public void setPerfilCompleto(Boolean perfilCompleto) { this.perfilCompleto = perfilCompleto; }
-    
-    public String getCargoCodar() { return cargoCodar; }
-    public void setCargoCodar(String cargoCodar) { this.cargoCodar = cargoCodar; }
-    
-    public String getAreaCodar() { return areaCodar; }
-    public void setAreaCodar(String areaCodar) { this.areaCodar = areaCodar; }
-    
-    public String getFechaNacimiento() { return fechaNacimiento; }
-    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
-    
-    public Boolean getEsExArbitro() { return esExArbitro; }
-    public void setEsExArbitro(Boolean esExArbitro) { this.esExArbitro = esExArbitro; }
-    
-    public String getEspecialidad() { return especialidad; }
-    public void setEspecialidad(String especialidad) { this.especialidad = especialidad; }
     
     // Método auxiliar para verificar permisos
     public boolean tienePermiso(String permiso) {

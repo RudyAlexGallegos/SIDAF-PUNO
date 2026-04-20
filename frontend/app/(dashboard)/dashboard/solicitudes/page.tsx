@@ -55,8 +55,8 @@ export default function SolicitudesPage() {
         setSuccess("")
 
         try {
-            await responderSolicitud(id, accion)
-            if (accion === "APROBAR") {
+            await responderSolicitud(id, accion, usuario?.id)
+            if (accion === "APROBADO") {
                 setSuccess(`Permiso concedido al usuario`)
             } else {
                 setSuccess(`Solicitud rechazada`)

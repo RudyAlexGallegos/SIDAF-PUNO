@@ -973,3 +973,64 @@ export async function asignarPermisos(
         throw error;
     }
 }
+
+// ============================================================
+// SOLICITUDES DE PERMISOS
+// ============================================================
+
+export interface SolicitudPermiso {
+    id?: number;
+    usuarioId?: number;
+    usuarioNombre?: string;
+    permisoSolicitado?: string;
+    descripcion?: string;
+    estado?: string; // PENDIENTE, APROBADO, RECHAZADO
+    fechaSolicitud?: string;
+    fechaRespuesta?: string;
+    respondidoPor?: number;
+    razonRechazo?: string;
+    notas?: string;
+}
+
+/**
+ * Obtiene solicitudes de permisos pendientes
+ * GET /api/solicitudes/pendientes
+ */
+export async function getSolicitudesPendientes(): Promise<SolicitudPermiso[]> {
+    try {
+        const response = await fetch(buildUrl("/solicitudes/pendientes"));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Solicitudes pendientes obtenidas:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getSolicitudesPendientes:", error);
+        return [];
+    }
+}
+
+/**
+ * Responde a una solicitud de permiso (APROBAR o RECHAZAR)
+ * POST /api/solicitudes/{id}/responder
+ */
+export async function responderSolicitud(id: number, accion: string, respondidoPor?: number, razonRechazo?: string): Promise<SolicitudPermiso> {
+    try {
+        const response = await fetch(buildUrl(`/solicitudes/${id}/responder`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion, respondidoPor, razonRechazo }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Error al responder solicitud");
+        }
+
+        const data = await response.json();
+        console.log("✅ Solicitud respondida:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error responderSolicitud:", error);
+        throw error;
+    }
+}

@@ -83,8 +83,8 @@ export default function LoginPage() {
                             SIDAF PUNO
                         </CardTitle>
                         <CardDescription className="text-sm text-slate-400 leading-relaxed">
-                            Sistema Integral de Designación<br />
-                            <span className="text-blue-400 font-medium">Árbitros de Fútbol - Puno</span>
+                            Sistema Inteligente de Desiganación de Arbitros de Fútbol<br />
+                            <span className="text-blue-400 font-medium">Comisión Departamental de Árbitros - PUNO</span>
                         </CardDescription>
                     </div>
                 </CardHeader>
