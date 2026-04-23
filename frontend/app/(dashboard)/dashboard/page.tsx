@@ -14,6 +14,7 @@ import {
     AlertCircle,
     Flag,
     ClipboardList,
+    ArrowRight,
 } from "lucide-react"
 import { getArbitros, getDesignaciones, getCampeonatos, getEquipos, getAsistencias, type Designacion, type Arbitro, type Campeonato, type Equipo, type Asistencia } from "@/services/api"
 
@@ -111,14 +112,14 @@ export default function DashboardPage() {
     return (
         <div className="space-y-4 md:space-y-6 lg:space-y-8">
             {/* Header */}
-            <section className="border-b pb-3 md:pb-4 lg:pb-6">
-                <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            <section className="border-b border-slate-700/50 pb-3 md:pb-4 lg:pb-6">
+                <p className="text-xs md:text-sm font-medium text-indigo-400 uppercase tracking-wide">
                     Comisión Departamental de Árbitros · Puno
                 </p>
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mt-1">
                     Panel de Control
                 </h1>
-                <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
+                <p className="text-slate-300 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
                     Bienvenido al sistema de gestión arbitral. Aquí encontrará un resumen de la actividad actual.
                 </p>
             </section>
@@ -126,24 +127,24 @@ export default function DashboardPage() {
             {/* Loading State */}
             {loading && (
                 <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <span className="ml-3 text-slate-500">Cargando datos del sistema...</span>
+                    <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="ml-3 text-slate-300">Cargando datos del sistema...</span>
                 </div>
             )}
 
             {/* Error State */}
             {!loading && apiStatus === "error" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
                         <div>
-                            <p className="font-medium text-amber-800">Backend en modo suspensión</p>
-                            <p className="text-sm text-amber-700 mt-1">
+                            <p className="font-medium text-red-300">Backend en modo suspensión</p>
+                            <p className="text-sm text-red-300/80 mt-1">
                                 El servidor puede tardar 30-60 segundos en despertar. Por favor, espere un momento y actualice la página.
                             </p>
                             <button 
                                 onClick={() => window.location.reload()}
-                                className="mt-3 px-4 py-2 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 transition-colors"
+                                className="mt-3 px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-all duration-200 font-medium shadow-lg shadow-red-500/25"
                             >
                                 Actualizar página
                             </button>
@@ -279,7 +280,7 @@ function StatCard({
     value,
     subValue,
     icon: Icon,
-    color = "blue",
+    color = "indigo",
     href
 }: {
     label: string
@@ -291,45 +292,64 @@ function StatCard({
 }) {
     const colorMap = {
         blue: {
-            bg: "bg-blue-50",
-            iconBg: "bg-blue-100",
-            icon: "text-blue-600",
-            text: "text-blue-600",
+            gradient: "from-blue-600 to-cyan-600",
+            bg: "bg-gradient-to-br from-blue-500/15 to-cyan-500/15",
+            border: "border-blue-500/40",
+            icon: "text-blue-300",
+            iconGradient: "from-blue-500/30 to-cyan-500/30",
+            glow: "shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40",
+            accent: "text-blue-400"
         },
         indigo: {
-            bg: "bg-indigo-50",
-            iconBg: "bg-indigo-100",
-            icon: "text-indigo-600",
-            text: "text-indigo-600",
+            gradient: "from-indigo-600 to-purple-600",
+            bg: "bg-gradient-to-br from-indigo-500/15 to-purple-500/15",
+            border: "border-indigo-500/40",
+            icon: "text-indigo-300",
+            iconGradient: "from-indigo-500/30 to-purple-500/30",
+            glow: "shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40",
+            accent: "text-indigo-400"
         },
         emerald: {
-            bg: "bg-emerald-50",
-            iconBg: "bg-emerald-100",
-            icon: "text-emerald-600",
-            text: "text-emerald-600",
+            gradient: "from-emerald-600 to-teal-600",
+            bg: "bg-gradient-to-br from-emerald-500/15 to-teal-500/15",
+            border: "border-emerald-500/40",
+            icon: "text-emerald-300",
+            iconGradient: "from-emerald-500/30 to-teal-500/30",
+            glow: "shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40",
+            accent: "text-emerald-400"
         },
         amber: {
-            bg: "bg-amber-50",
-            iconBg: "bg-amber-100",
-            icon: "text-amber-600",
-            text: "text-amber-600",
+            gradient: "from-amber-600 to-orange-600",
+            bg: "bg-gradient-to-br from-amber-500/15 to-orange-500/15",
+            border: "border-amber-500/40",
+            icon: "text-amber-300",
+            iconGradient: "from-amber-500/30 to-orange-500/30",
+            glow: "shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40",
+            accent: "text-amber-400"
         },
     }
 
     const colors = colorMap[color]
 
     const content = (
-        <div className={`rounded-xl ${colors.bg} p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200`}>
-            <div className="flex items-start justify-between">
-                <div className={`h-9 w-9 md:h-10 md:w-10 rounded-lg ${colors.iconBg} flex items-center justify-center`}>
-                    <Icon className={`h-4 md:h-5 w-4 md:w-5 ${colors.icon}`} />
+        <div className={`group relative rounded-xl ${colors.bg} border ${colors.border} p-4 md:p-5 lg:p-6 backdrop-blur-sm transition-all duration-300 ${colors.glow} hover:border-opacity-60 hover:-translate-y-1 cursor-pointer overflow-hidden`}>
+            {/* Gradient accent line */}
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${colors.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+            
+            {/* Animated background glow */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-xl pointer-events-none`} />
+
+            <div className="relative flex items-start justify-between">
+                <div className={`h-12 w-12 md:h-14 md:w-14 rounded-lg bg-gradient-to-br ${colors.iconGradient} border ${colors.border} flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className={`h-5 md:h-6 w-5 md:w-6 ${colors.icon}`} />
                 </div>
-                {href && <ChevronRight className="h-4 w-4 text-slate-400" />}
+                {href && <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-200 group-hover:translate-x-1 transition-all duration-300" />}
             </div>
-            <div className="mt-2 md:mt-3">
-                <p className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-900">{value}</p>
-                <p className="text-xs md:text-sm text-slate-600 mt-0.5">{label}</p>
-                {subValue && <p className="text-xs text-slate-500 mt-1">{subValue}</p>}
+            
+            <div className="mt-4 md:mt-5 relative">
+                <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">{value}</p>
+                <p className={`text-xs md:text-sm font-semibold mt-1 ${colors.accent}`}>{label}</p>
+                {subValue && <p className="text-xs text-slate-400 mt-2 font-medium">{subValue}</p>}
             </div>
         </div>
     )
@@ -348,40 +368,53 @@ function StatCard({
 function SystemStatus({ status }: { status: ApiStatus }) {
     const statusConfig = {
         checking: {
-            bg: "bg-slate-100",
-            icon: "text-slate-500",
-            text: "Verificando conexión",
-            color: "bg-slate-500"
+            gradient: "from-slate-600 to-slate-500",
+            bg: "bg-gradient-to-br from-slate-600/15 to-slate-500/15",
+            border: "border-slate-600/40",
+            icon: "text-slate-300",
+            glow: "shadow-slate-500/20",
+            text: "Verificando conexión"
         },
         ok: {
-            bg: "bg-emerald-50",
-            icon: "text-emerald-600",
+            gradient: "from-emerald-600 to-teal-600",
+            bg: "bg-gradient-to-br from-emerald-500/15 to-teal-500/15",
+            border: "border-emerald-500/40",
+            icon: "text-emerald-300",
+            glow: "shadow-emerald-500/20",
             text: "Sistema operativo",
-            color: "bg-emerald-500"
+            badge: "bg-emerald-500/20 text-emerald-300"
         },
         error: {
-            bg: "bg-red-50",
-            icon: "text-red-600",
+            gradient: "from-red-600 to-pink-600",
+            bg: "bg-gradient-to-br from-red-500/15 to-pink-500/15",
+            border: "border-red-500/40",
+            icon: "text-red-300",
+            glow: "shadow-red-500/20",
             text: "Backend no disponible",
-            color: "bg-red-500"
+            badge: "bg-red-500/20 text-red-300"
         }
     }
 
     const config = statusConfig[status]
 
     return (
-        <div className="rounded-xl border bg-card p-3 md:p-4 lg:p-5">
-            <div className="flex items-center gap-2 md:gap-3">
-                <div className={`h-9 w-9 md:h-10 md:w-10 rounded-lg flex items-center justify-center ${config.bg}`}>
-                    <Server className={`h-4 md:h-5 w-4 md:w-5 ${config.icon}`} />
+        <div className={`group relative rounded-xl ${config.bg} border ${config.border} p-4 md:p-5 backdrop-blur-sm transition-all duration-300 shadow-lg ${config.glow} overflow-hidden`}>
+            {/* Top gradient line */}
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} opacity-60`} />
+            
+            <div className="relative flex items-center gap-3 md:gap-4">
+                <div className={`h-11 w-11 rounded-lg bg-gradient-to-br ${config.gradient}/20 border ${config.border} flex items-center justify-center flex-shrink-0`}>
+                    <Server className={`h-5 w-5 ${config.icon}`} />
                 </div>
-                <div>
-                    <p className="text-xs md:text-sm text-slate-500">Estado del sistema</p>
-                    <p className="font-semibold text-slate-900 text-xs md:text-sm">
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs md:text-sm text-slate-400 font-medium">Estado del Sistema</p>
+                    <p className="font-semibold text-white text-xs md:text-sm mt-0.5">
                         {config.text}
                     </p>
                 </div>
-                <div className={`ml-auto h-2.5 w-2.5 rounded-full ${config.color} ${status === 'checking' ? 'animate-pulse' : ''}`} />
+                <div className={`h-3 w-3 rounded-full ${status === 'checking' ? 'animate-pulse' : ''} flex-shrink-0`}>
+                    <div className={`h-full w-full rounded-full bg-gradient-to-r ${config.gradient}`} />
+                </div>
             </div>
         </div>
     )
@@ -395,18 +428,21 @@ function QuickStats({
     arbitrosActivos: number 
 }) {
     return (
-        <div className="rounded-xl border bg-card p-3 md:p-4 lg:p-5">
-            <div className="flex items-start gap-2 md:gap-3">
-                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="h-4 md:h-5 w-4 md:w-5 text-amber-600" />
+        <div className="group relative rounded-xl bg-gradient-to-br from-amber-500/15 to-orange-500/15 border border-amber-500/40 p-4 md:p-5 backdrop-blur-sm transition-all duration-300 shadow-lg shadow-amber-500/20 overflow-hidden hover:-translate-y-1">
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-600 to-orange-600 opacity-60" />
+            
+            <div className="relative flex items-start gap-3 md:gap-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-amber-500/30 to-orange-500/30 border border-amber-500/40 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-amber-300" />
                 </div>
-                <div className="min-w-0">
-                    <p className="text-xs md:text-sm text-slate-500">Resumen rápido</p>
-                    <p className="font-semibold text-slate-900 text-xs md:text-sm">
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs md:text-sm text-slate-400 font-medium">Actividad Pendiente</p>
+                    <p className="font-bold text-white text-xs md:text-sm mt-1">
                         {designacionesPendientes} designaciones pendientes
                     </p>
-                    <p className="text-xs text-slate-500">
-                        {arbitrosActivos} árbitros activos disponibles
+                    <p className="text-xs text-amber-300 font-medium mt-2">
+                        ✓ {arbitrosActivos} árbitros disponibles
                     </p>
                 </div>
             </div>
@@ -419,7 +455,7 @@ function ModuleCard({
     description,
     icon: Icon,
     href,
-    color = "blue",
+    color = "indigo",
     count,
     countLabel
 }: {
@@ -433,46 +469,70 @@ function ModuleCard({
 }) {
     const colorMap = {
         blue: {
-            bg: "bg-blue-50",
-            icon: "text-blue-600",
-            hover: "hover:border-blue-300"
+            gradient: "from-blue-600 to-cyan-600",
+            bg: "bg-gradient-to-br from-blue-500/15 to-cyan-500/15",
+            border: "border-blue-500/40",
+            icon: "text-blue-300",
+            iconGradient: "from-blue-500/30 to-cyan-500/30",
+            glow: "shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40",
+            badge: "bg-blue-500/20 border-blue-500/30 text-blue-300"
         },
         indigo: {
-            bg: "bg-indigo-50",
-            icon: "text-indigo-600",
-            hover: "hover:border-indigo-300"
+            gradient: "from-indigo-600 to-purple-600",
+            bg: "bg-gradient-to-br from-indigo-500/15 to-purple-500/15",
+            border: "border-indigo-500/40",
+            icon: "text-indigo-300",
+            iconGradient: "from-indigo-500/30 to-purple-500/30",
+            glow: "shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40",
+            badge: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300"
         },
         emerald: {
-            bg: "bg-emerald-50",
-            icon: "text-emerald-600",
-            hover: "hover:border-emerald-300"
+            gradient: "from-emerald-600 to-teal-600",
+            bg: "bg-gradient-to-br from-emerald-500/15 to-teal-500/15",
+            border: "border-emerald-500/40",
+            icon: "text-emerald-300",
+            iconGradient: "from-emerald-500/30 to-teal-500/30",
+            glow: "shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40",
+            badge: "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
         },
         amber: {
-            bg: "bg-amber-50",
-            icon: "text-amber-600",
-            hover: "hover:border-amber-300"
+            gradient: "from-amber-600 to-orange-600",
+            bg: "bg-gradient-to-br from-amber-500/15 to-orange-500/15",
+            border: "border-amber-500/40",
+            icon: "text-amber-300",
+            iconGradient: "from-amber-500/30 to-orange-500/30",
+            glow: "shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40",
+            badge: "bg-amber-500/20 border-amber-500/30 text-amber-300"
         }
     }
 
     const colors = colorMap[color]
 
     const content = (
-        <div className={`group rounded-xl border bg-card p-3 md:p-4 lg:p-5 hover:shadow-lg transition-all duration-200 ${colors.hover}`}>
-            <div className="flex justify-between items-start mb-2 md:mb-3">
-                <div className={`h-10 w-10 md:h-11 md:w-11 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`h-4 md:h-5 w-4 md:w-5 ${colors.icon}`} />
+        <div className={`group relative rounded-xl ${colors.bg} border ${colors.border} p-4 md:p-5 transition-all duration-300 ${colors.glow} hover:border-opacity-70 hover:-translate-y-1 overflow-hidden cursor-pointer`}>
+            {/* Gradient accent line */}
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${colors.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+            
+            {/* Animated background glow */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-xl pointer-events-none`} />
+
+            <div className="relative flex justify-between items-start mb-3 md:mb-4">
+                <div className={`h-12 w-12 md:h-13 md:w-13 rounded-lg bg-gradient-to-br ${colors.iconGradient} border ${colors.border} flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6`}>
+                    <Icon className={`h-5 md:h-6 w-5 md:w-6 ${colors.icon}`} />
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-200 group-hover:translate-x-1 transition-all duration-300" />
             </div>
-            <h3 className="font-semibold text-slate-900 text-sm md:text-base">{title}</h3>
-            <p className="text-xs md:text-sm text-slate-500 mt-1">{description}</p>
-            {count !== undefined && (
-                <div className="mt-2 inline-flex items-center px-2 py-1 rounded-full bg-slate-100">
-                    <span className="text-xs font-medium text-slate-600">
+            
+            <div className="relative">
+                <h3 className="font-bold text-white text-sm md:text-base leading-tight">{title}</h3>
+                <p className="text-xs md:text-sm text-slate-300 mt-1.5 leading-relaxed">{description}</p>
+                
+                {count !== undefined && (
+                    <div className={`mt-3 inline-flex items-center px-3 py-1.5 rounded-full border ${colors.badge} font-semibold text-xs`}>
                         {count} {countLabel || "total"}
-                    </span>
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
         </div>
     )
 
@@ -500,14 +560,23 @@ function QuickActionCard({
 }) {
     return (
         <Link href={href} className="block">
-            <div className="rounded-xl border bg-card p-3 md:p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group">
-                <div className="flex items-start gap-2 md:gap-3">
-                    <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-blue-50 transition-colors flex-shrink-0 mt-0.5">
-                        <Icon className="h-4 md:h-5 w-4 md:w-5 text-slate-600 group-hover:text-blue-600 transition-colors" />
+            <div className="group relative rounded-xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/40 p-4 md:p-5 transition-all duration-300 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-1 overflow-hidden">
+                {/* Top gradient line */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-xl pointer-events-none" />
+                
+                <div className="relative flex items-start gap-3 md:gap-4">
+                    <div className="h-11 w-11 rounded-lg bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                        <Icon className="h-5 w-5 text-indigo-300" />
                     </div>
-                    <div className="min-w-0">
-                        <h3 className="font-medium text-slate-900 text-sm md:text-base">{title}</h3>
-                        <p className="text-xs md:text-sm text-slate-500">{description}</p>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-white text-sm md:text-base">{title}</h3>
+                        <p className="text-xs md:text-sm text-slate-300 mt-1">{description}</p>
+                    </div>
+                    <div className="flex-shrink-0">
+                        <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-300 group-hover:translate-x-1 transition-all duration-300" />
                     </div>
                 </div>
             </div>

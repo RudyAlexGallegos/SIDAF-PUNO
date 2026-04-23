@@ -152,12 +152,12 @@ const ProgressIndicator = ({ currentStep }: { currentStep: number }) => {
   return (
     <div className="mb-8">
       <div className="flex justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-700">Progreso del registro</h3>
-        <span className="text-sm font-medium text-blue-600">Paso {currentStep} de 5</span>
+        <h3 className="text-sm font-semibold text-slate-300">Progreso del registro</h3>
+        <span className="text-sm font-medium text-indigo-400">Paso {currentStep} de 5</span>
       </div>
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-blue-600 to-blue-800 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-500"
           style={{ width: `${(currentStep / 5) * 100}%` }}
         />
       </div>
@@ -165,10 +165,10 @@ const ProgressIndicator = ({ currentStep }: { currentStep: number }) => {
         {steps.map((step) => (
           <div key={step.number} className="flex flex-col items-center">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 border-2 ${step.number === currentStep
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'bg-indigo-600 text-white border-indigo-600'
                 : step.number < currentStep
-                  ? 'bg-green-100 text-green-600 border-green-600'
-                  : 'bg-gray-100 text-gray-400 border-gray-300'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                  : 'bg-slate-700/50 text-slate-400 border-slate-600'
               }`}>
               {step.number < currentStep ? (
                 <span className="font-bold">✓</span>
@@ -176,7 +176,7 @@ const ProgressIndicator = ({ currentStep }: { currentStep: number }) => {
                 <span className="font-bold">{step.number}</span>
               )}
             </div>
-            <span className={`text-xs font-medium ${step.number <= currentStep ? 'text-gray-900' : 'text-gray-500'
+            <span className={`text-xs font-medium ${step.number <= currentStep ? 'text-slate-200' : 'text-slate-500'
               }`}>
               {step.label}
             </span>
@@ -203,21 +203,21 @@ const SectionCard = ({
   if (stepNumber !== currentStep) return null
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
-      <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl border border-slate-700/50 shadow-lg shadow-slate-900/50 overflow-hidden">
+      <div className="border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 to-purple-600/10">
         <div className="px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <span className="text-lg font-bold text-blue-700">{stepNumber}</span>
+                <div className="w-10 h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center">
+                  <span className="text-lg font-bold text-indigo-400">{stepNumber}</span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+                <h2 className="text-2xl font-bold text-white">{title}</h2>
               </div>
-              <p className="text-gray-600">{description}</p>
+              <p className="text-slate-400">{description}</p>
             </div>
             <div className="text-right">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-medium border border-indigo-500/30">
                 Obligatorio
               </div>
             </div>
@@ -243,12 +243,12 @@ const InputField = ({
   children: React.ReactNode
 }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700">
+    <label className="block text-sm font-medium text-white">
       {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
+      {required && <span className="text-red-400 ml-1">*</span>}
     </label>
     {children}
-    {error && <p className="text-sm text-red-600">{error}</p>}
+    {error && <p className="text-sm text-red-400">{error}</p>}
   </div>
 )
 
@@ -267,7 +267,7 @@ const CustomInput = ({
     onChange={onChange}
     placeholder={placeholder}
     required={required}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${className}`}
+    className={`w-full px-4 py-3 border border-slate-600/50 rounded-lg bg-slate-700/50 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${className}`}
     {...props}
   />
 )
@@ -284,7 +284,7 @@ const CustomSelect = ({
     value={value}
     onChange={onChange}
     required={required}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white ${className}`}
+    className={`w-full px-4 py-3 border border-slate-600/50 rounded-lg bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${className}`}
     {...props}
   >
     {children}
@@ -750,17 +750,17 @@ export default function NuevoArbitroPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* HEADER CORPORATIVO */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-gradient-to-r from-slate-800 to-slate-900 border-b border-slate-700/50 shadow-lg shadow-slate-900/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="h-auto py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <div className="flex items-center gap-3 order-2 sm:order-1">
               <Link
                 href="/dashboard/arbitros"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center">
                   <span className="text-lg">←</span>
                 </div>
                 <span className="font-medium hidden sm:inline">Volver</span>
@@ -768,14 +768,14 @@ export default function NuevoArbitroPage() {
             </div>
 
             <div className="text-center order-1 sm:order-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Comisión Departamental de Árbitros</h1>
-              <p className="text-xs sm:text-sm text-gray-600">Departamento de Puno • Sistema de Registro</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">Comisión Departamental de Árbitros</h1>
+              <p className="text-xs sm:text-sm text-slate-400">Departamento de Puno • Sistema de Registro</p>
             </div>
 
             <div className="text-center sm:text-right order-3">
               <div className="inline-flex flex-col sm:items-end">
-                <span className="text-xs font-medium text-gray-500">Código CODAR</span>
-                <span className="text-lg font-bold text-blue-700 font-mono">{generarCodigoCODAR()}</span>
+                <span className="text-xs font-medium text-slate-400">Código CODAR</span>
+                <span className="text-lg font-bold text-indigo-400 font-mono">{generarCodigoCODAR()}</span>
               </div>
             </div>
           </div>

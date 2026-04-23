@@ -151,41 +151,44 @@ export default function AsistenciaPage() {
       <div className="min-h-[60vh] flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-2xl">
           {/* Header gradient card */}
-          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-500/30 mb-6 border border-indigo-500/30 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/40 to-purple-600/20 pointer-events-none" />
+            <div className="relative flex items-center gap-4">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-indigo-500/40 to-purple-500/40 backdrop-blur-md flex items-center justify-center border border-indigo-400/30">
                 <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold">Control de Asistencia</h2>
-                <p className="text-blue-100 text-sm">Comisión Departamental de Árbitros - Puno</p>
+                <p className="text-indigo-100 text-sm">Comisión Departamental de Árbitros - Puno</p>
               </div>
             </div>
           </div>
 
           {/* Aviso de día obligatorio */}
-          <div className={`rounded-lg p-4 mb-6 ${diaObligatorio ? 'bg-blue-50 border border-blue-200' : 'bg-gray-100 border border-gray-200'}`}>
+          <div className={`rounded-xl p-4 mb-6 border backdrop-blur-sm transition-all duration-300 ${diaObligatorio 
+            ? 'bg-gradient-to-br from-emerald-500/15 to-teal-500/15 border-emerald-500/40' 
+            : 'bg-gradient-to-br from-slate-600/15 to-slate-500/15 border-slate-600/40'}`}>
             <div className="flex items-center gap-3">
               {diaObligatorio ? (
-                <Calendar className="w-5 h-5 text-blue-600" />
+                <Calendar className="w-5 h-5 text-emerald-300" />
               ) : (
-                <Clock className="w-5 h-5 text-gray-500" />
+                <Clock className="w-5 h-5 text-slate-300" />
               )}
               <div className="flex-1">
-                <p className={`font-medium ${diaObligatorio ? 'text-blue-800' : 'text-gray-600'}`}>
+                <p className={`font-medium ${diaObligatorio ? 'text-emerald-300' : 'text-slate-300'}`}>
                   {diaObligatorio 
                     ? `Hoy es ${format(new Date(), 'EEEE', { locale: es })} - Día obligatorio`
                     : `Hoy es ${format(new Date(), 'EEEE', { locale: es })} - Día no obligatorio`}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-400">
                   Los días obligatorios desde 01/01/2026 son: Lunes, Martes, Jueves, Viernes y Sábado
                 </p>
               </div>
               <Link 
                 href="/dashboard/asistencia/historial"
-                className="text-sm text-blue-600 hover:text-blue-800 underline"
+                className="text-sm text-indigo-300 hover:text-indigo-200 underline"
               >
                 Ver historial
               </Link>
@@ -194,9 +197,9 @@ export default function AsistenciaPage() {
 
           {/* Notificación de registro existente */}
           {existeRegistroHoy && registroExistenteInfo && (
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+            <div className="bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-l-2 border-l-indigo-500 p-4 mb-6 rounded-r-xl backdrop-blur-sm">
               <div className="flex items-start gap-3">
-                <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-indigo-300 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
@@ -230,17 +233,17 @@ export default function AsistenciaPage() {
           </p>
 
           {/* Main card with improved styling */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-            <div className="text-sm text-gray-600 mb-4">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-xl shadow-slate-900/50 border border-slate-700/50 p-6 sm:p-8 backdrop-blur-sm">
+            <div className="text-sm text-slate-400 mb-4">
               Fecha: {format(parseISO(fechaSeleccionada), 'dd/MM/yyyy', { locale: es })}
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <span className="w-1 h-6 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-full"></span>
               Selecciona la actividad
             </h3>
             <div>
-              <div className="text-xs text-gray-500 mb-2">Selecciona la actividad</div>
+              <div className="text-xs text-slate-400 mb-2">Selecciona la actividad</div>
               <div role="radiogroup" aria-label="Tipo de actividad" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <button
                   role="radio"

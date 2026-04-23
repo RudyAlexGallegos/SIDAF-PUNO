@@ -715,12 +715,15 @@ export interface Usuario {
     nombre?: string;
     apellido?: string;
     email?: string;
+    telefono?: string;
     rol?: string;
     estado?: string;
     token?: string;
     perfilCompleto?: boolean;
     cargoCodar?: string;
     areaCodar?: string;
+    fechaNacimiento?: string;
+    especialidad?: string;
     unidadOrganizacional?: string;
     permisosEspecificos?: string;
 }
@@ -793,6 +796,75 @@ export async function verificarDni(dni: string): Promise<boolean> {
 export async function logout(): Promise<void> {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+}
+
+/**
+ * Actualiza el perfil del usuario
+ * PUT /api/usuarios/perfil
+ */
+export async function actualizarPerfil(datos: {
+    nombre?: string;
+    apellido?: string;
+    email?: string;
+    telefono?: string;
+    cargoCodar?: string;
+    areaCodar?: string;
+    fechaNacimiento?: string;
+    especialidad?: string;
+}): Promise<Usuario> {
+    const response = await fetch(buildUrl("/usuarios/perfil"), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al actualizar perfil");
+    }
+
+    return await response.json();
+}
+
+/**
+ * Completa el perfil de un usuario (para usuarios CODAR pendientes)
+ * PUT /api/usuarios/completar-perfil
+ */
+export async function completarPerfil(datos: {
+    dni: string;
+    telefono: string;
+    cargoCodar: string;
+    areaCodar: string;
+}): Promise<Usuario> {
+    const response = await fetch(buildUrl("/usuarios/completar-perfil"), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al completar perfil");
+    }
+
+    return await response.json();
+}
+
+/**
+ * Cambia la contraseña del usuario
+ * POST /api/auth/cambiar-password
+ */
+export async function cambiarPassword(passwordActual: string, nuevaPassword: string): Promise<void> {
+    const response = await fetch(buildUrl("/auth/cambiar-password"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passwordActual, nuevaPassword }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al cambiar contraseña");
+    }
 }
 
 /**

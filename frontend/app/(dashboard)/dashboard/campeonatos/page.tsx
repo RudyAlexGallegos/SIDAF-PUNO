@@ -158,18 +158,18 @@ export default function CampeonadosPage() {
   }, [query, campeonatos])
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+    <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-slate-900 to-slate-800">
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 backdrop-blur-md px-4 md:px-6 shadow-lg shadow-slate-900/50">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-slate-300 hover:text-white transition-colors">
           <ArrowLeft className="h-5 w-5" aria-hidden />
           <span>Volver al Dashboard</span>
         </Link>
         <div className="ml-auto flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Total</span>
-            <Badge className="bg-slate-100 text-slate-800 px-2 py-1">{campeonatos.length}</Badge>
+            <span className="text-sm text-slate-400">Total</span>
+            <Badge className="bg-gradient-to-r from-indigo-500/30 to-purple-500/30 text-indigo-200 px-3 py-1 border-indigo-500/30">{campeonatos.length}</Badge>
           </div>
-          <Button asChild>
+          <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white border-0 font-medium">
             <Link href="/dashboard/campeonato/nuevo" className="flex items-center">
               <Plus className="mr-2 h-4 w-4" aria-hidden />
               Nuevo Campeonato
@@ -180,14 +180,17 @@ export default function CampeonadosPage() {
 
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Gestión de Campeonatos</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-white">Gestión de Campeonatos</h1>
+            <p className="text-sm text-slate-400 mt-1">Administra todos los campeonatos registrados</p>
+          </div>
           <div className="flex items-center gap-2">
             <label htmlFor="buscar-campeonato" className="sr-only">Buscar</label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
-              <Input id="buscar-campeonato" value={query} onChange={e => setQuery(e.target.value)} type="search" placeholder="Buscar..." className="w-[200px] pl-8 md:w-[320px]" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" aria-hidden />
+              <Input id="buscar-campeonato" value={query} onChange={e => setQuery(e.target.value)} type="search" placeholder="Buscar..." className="w-[200px] pl-8 md:w-[320px] bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500" />
               {query && (
-                <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-slate-100">
+                <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors">
                   <X className="h-4 w-4" aria-hidden />
                 </button>
               )}
@@ -196,21 +199,21 @@ export default function CampeonadosPage() {
         </div>
 
         {error && (
-          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+          <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-gradient-to-r from-red-500/15 to-red-500/5 p-4 text-red-300 backdrop-blur-sm">
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
             <p className="text-sm">{error}</p>
-            <button onClick={() => setError("")} className="ml-auto text-red-600 hover:text-red-800">
+            <button onClick={() => setError("")} className="ml-auto text-red-400 hover:text-red-300 transition-colors">
               <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Campeonatos Activos</CardTitle>
-            <CardDescription>Listado de certificados registrados</CardDescription>
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700/50 shadow-xl shadow-slate-900/50 backdrop-blur-sm">
+          <CardHeader className="border-b border-slate-700/50">
+            <CardTitle className="text-white">Campeonatos Activos</CardTitle>
+            <CardDescription className="text-slate-400">Listado de campeonatos registrados</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="space-y-2">
                 <TableSkeleton rows={5} />
@@ -219,53 +222,53 @@ export default function CampeonadosPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-48">Nombre</TableHead>
-                      <TableHead className="text-center">Nivel</TableHead>
-                      <TableHead className="text-center">Categoría</TableHead>
-                      <TableHead className="text-center">Equipos</TableHead>
-                      <TableHead className="text-center">Fecha Inicio</TableHead>
-                      <TableHead className="text-center">Estado</TableHead>
-                      <TableHead className="text-center">Acciones</TableHead>
+                    <TableRow className="border-slate-700/50 hover:bg-slate-800/50 bg-slate-800/30">
+                      <TableHead className="w-48 text-slate-300 font-semibold">Nombre</TableHead>
+                      <TableHead className="text-center text-slate-300 font-semibold">Nivel</TableHead>
+                      <TableHead className="text-center text-slate-300 font-semibold">Categoría</TableHead>
+                      <TableHead className="text-center text-slate-300 font-semibold">Equipos</TableHead>
+                      <TableHead className="text-center text-slate-300 font-semibold">Fecha Inicio</TableHead>
+                      <TableHead className="text-center text-slate-300 font-semibold">Estado</TableHead>
+                      <TableHead className="text-center text-slate-300 font-semibold">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-6">
-                          No se encontraron.
+                      <TableRow className="border-slate-700/50">
+                        <TableCell colSpan={7} className="text-center text-sm text-slate-400 py-8">
+                          No se encontraron campeonatos.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filtered.map(c => (
-                        <TableRow key={c.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 transition-colors">
-                          <TableCell className="font-medium max-w-[220px] truncate flex items-center gap-2">
+                        <TableRow key={c.id} className="border-slate-700/30 hover:bg-slate-800/50 transition-colors">
+                          <TableCell className="font-medium max-w-[220px] truncate flex items-center gap-2 text-slate-200">
                             {c.nombre}
                             {c.nombre === "COPA PERÚ 2026" && (
-                              <Lock className="h-4 w-4 text-yellow-600 flex-shrink-0" title="Campeonato protegido" />
+                              <Lock className="h-4 w-4 text-amber-500 flex-shrink-0" title="Campeonato protegido" />
                             )}
                           </TableCell>
                           <TableCell className="text-center">
                             <DifficultyBadge difficulty={c.nivelDificultad} />
                           </TableCell>
-                          <TableCell className="text-center text-sm text-muted-foreground">{c.categoria}</TableCell>
-                          <TableCell className="text-center">{c.numeroEquipos}</TableCell>
-                          <TableCell className="text-center">{c.fechaInicio ? formatDate(c.fechaInicio) : '-'}</TableCell>
+                          <TableCell className="text-center text-sm text-slate-400">{c.categoria}</TableCell>
+                          <TableCell className="text-center text-slate-300">{c.numeroEquipos}</TableCell>
+                          <TableCell className="text-center text-slate-400">{c.fechaInicio ? formatDate(c.fechaInicio) : '-'}</TableCell>
                           <TableCell className="text-center">
                             <StatusBadge estado={c.estado} />
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button asChild variant="ghost" size="sm">
+                              <Button asChild variant="ghost" size="sm" className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50">
                                 <Link href={`/dashboard/campeonatos/${c.id}`} className="flex items-center gap-2">
                                   <Eye className="h-4 w-4" aria-hidden />
-                                  <span className="hidden md:inline">Ver</span>
+                                  <span className="hidden md:inline text-xs">Ver</span>
                                 </Link>
                               </Button>
-                              <Button asChild variant="ghost" size="sm">
+                              <Button asChild variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/20">
                                 <Link href={`/dashboard/campeonatos/${c.id}/editar`} className="flex items-center gap-2">
                                   <Edit className="h-4 w-4" aria-hidden />
-                                  <span className="hidden md:inline">Editar</span>
+                                  <span className="hidden md:inline text-xs">Editar</span>
                                 </Link>
                               </Button>
                               <Button
@@ -273,11 +276,11 @@ export default function CampeonadosPage() {
                                 size="sm"
                                 onClick={() => handleDeleteClick(c.id, c.nombre)}
                                 disabled={isDeleting || c.nombre === "COPA PERÚ 2026"}
-                                className={c.nombre === "COPA PERÚ 2026" ? "text-gray-400 cursor-not-allowed opacity-50" : "text-red-600 hover:bg-red-50 hover:text-red-700"}
+                                className={c.nombre === "COPA PERÚ 2026" ? "text-slate-600 cursor-not-allowed opacity-50" : "text-red-400 hover:bg-red-500/20 hover:text-red-300"}
                                 title={c.nombre === "COPA PERÚ 2026" ? "Este campeonato está protegido y no puede ser eliminado" : ""}
                               >
                                 <Trash2 className="h-4 w-4" aria-hidden />
-                                <span className="hidden md:inline">Eliminar</span>
+                                <span className="hidden md:inline text-xs">Eliminar</span>
                               </Button>
                             </div>
                           </TableCell>

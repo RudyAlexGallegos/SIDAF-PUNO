@@ -90,42 +90,42 @@ export default function SolicitarPermisoPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-6 max-w-4xl">
-            <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Solicitar Permisos</h1>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container mx-auto p-4 md:p-6 max-w-4xl">
+            <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-white">Solicitar Permisos</h1>
 
             {/* Información del usuario */}
-            <Card className="mb-6">
+            <Card className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700/50 shadow-lg shadow-slate-900/50">
                 <CardHeader>
-                    <CardTitle>Mi Cuenta</CardTitle>
+                    <CardTitle className="text-white">Mi Cuenta</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p><strong>Nombre:</strong> {usuario?.nombre} {usuario?.apellido}</p>
-                    <p><strong>Rol:</strong> {usuario?.rol}</p>
-                    <p><strong>Mis permisos actuales:</strong> {usuario?.permisosEspecificos || "Sin permisos específicos"}</p>
+                    <p className="text-slate-300"><strong>Nombre:</strong> {usuario?.nombre} {usuario?.apellido}</p>
+                    <p className="text-slate-300"><strong>Rol:</strong> {usuario?.rol}</p>
+                    <p className="text-slate-300"><strong>Mis permisos actuales:</strong> {usuario?.permisosEspecificos || "Sin permisos específicos"}</p>
                 </CardContent>
             </Card>
 
             {/* Formulario de solicitud */}
-            <Card className="mb-6">
+            <Card className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700/50 shadow-lg shadow-slate-900/50">
                 <CardHeader>
-                    <CardTitle>Nueva Solicitud</CardTitle>
+                    <CardTitle className="text-white">Nueva Solicitud</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-slate-400 mb-4">
                         Selecciona el permiso que deseas solicitar. Tu solicitud será revisada por la Présidencia o el Administrador, quienes podrán aprobarla o rechazarla.
                     </p>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-2">Permiso solicitado:</label>
+                            <label className="block text-sm font-medium mb-2 text-white">Permiso solicitado:</label>
                             <select
                                 value={permisoSeleccionado}
                                 onChange={(e) => setPermisoSeleccionado(e.target.value)}
-                                className="w-full p-2 border rounded-md"
+                                className="w-full p-2 border rounded-md bg-slate-700/50 border-slate-600/50 text-white"
                             >
-                                <option value="">-- Seleccionar --</option>
+                                <option value="" className="bg-slate-900 text-white">-- Seleccionar --</option>
                                 {PERMISOS_DISPONIBLES.map(p => (
-                                    <option key={p.valor} value={p.valor}>
+                                    <option key={p.valor} value={p.valor} className="bg-slate-900 text-white">
                                         {p.etiqueta}
                                     </option>
                                 ))}

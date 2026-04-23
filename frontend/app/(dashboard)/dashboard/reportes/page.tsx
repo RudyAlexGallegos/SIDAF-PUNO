@@ -220,24 +220,24 @@ export default function ReportesPage() {
   }).length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <div className="bg-white border-b border-sky-200 shadow-sm">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 border-b border-slate-700/50 shadow-lg shadow-slate-900/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link href="/dashboard" className="text-sky-600 hover:text-sky-800 flex items-center gap-1">
+              <Link href="/dashboard" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
                 <ArrowLeft className="h-5 w-5" />
                 <span className="text-sm">Dashboard</span>
               </Link>
-              <span className="text-sky-300">/</span>
-              <h1 className="text-xl font-bold text-sky-800 flex items-center gap-2">
-                <BarChart3 className="h-6 w-6" />
+              <span className="text-slate-600">/</span>
+              <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                <BarChart3 className="h-6 w-6 text-indigo-400" />
                 Reportes y Estadísticas
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-sky-700 border-sky-300">
+              <Badge variant="outline" className="text-indigo-300 border-indigo-500/30 bg-indigo-500/10">
                 {totalAsistencias} registros
               </Badge>
             </div>
@@ -248,38 +248,38 @@ export default function ReportesPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* KPI Cards rápidas */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-sky-500 to-sky-600 text-white border-0">
+          <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0 shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sky-100 text-sm">Total Asistencias</p>
-                  <p className="text-3xl font-bold">{totalAsistencias}</p>
+                  <p className="text-indigo-100 text-sm">Total Asistencias</p>
+                  <p className="text-3xl font-bold mt-1">{totalAsistencias}</p>
                 </div>
-                <Users className="h-10 w-10 text-sky-200" />
+                <Users className="h-10 w-10 text-indigo-200" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-slate-600/50 shadow-xl shadow-slate-900/20">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Designaciones</p>
-                  <p className="text-3xl font-bold text-sky-700">{totalDesignaciones}</p>
+                  <p className="text-slate-400 text-sm">Designaciones</p>
+                  <p className="text-3xl font-bold text-slate-100 mt-1">{totalDesignaciones}</p>
                 </div>
-                <Trophy className="h-10 w-10 text-muted-foreground" />
+                <Trophy className="h-10 w-10 text-slate-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-emerald-500/15 to-teal-500/15 border-emerald-500/30 shadow-xl shadow-emerald-500/10">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Esta Semana</p>
-                  <p className="text-3xl font-bold text-green-600">{asistenciasUltimaSemana}</p>
+                  <p className="text-emerald-300 text-sm">Esta Semana</p>
+                  <p className="text-3xl font-bold text-emerald-100 mt-1">{asistenciasUltimaSemana}</p>
                 </div>
-                <Activity className="h-10 w-10 text-muted-foreground" />
+                <Activity className="h-10 w-10 text-emerald-400" />
               </div>
             </CardContent>
           </Card>
@@ -287,16 +287,16 @@ export default function ReportesPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 bg-sky-50 border border-sky-200">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white">
+          <TabsList className="mb-6 bg-slate-800 border border-slate-700/50">
+            <TabsTrigger value="dashboard" className="text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4 mr-2" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="generar" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white">
+            <TabsTrigger value="generar" className="text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
               <FileText className="h-4 w-4 mr-2" />
               Generar Reportes
             </TabsTrigger>
-            <TabsTrigger value="rapidos" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white">
+            <TabsTrigger value="rapidos" className="text-slate-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
               <FileDown className="h-4 w-4 mr-2" />
               Reportes Rápidos
             </TabsTrigger>

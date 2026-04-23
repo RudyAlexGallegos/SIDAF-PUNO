@@ -101,23 +101,56 @@ public class AuthController {
         String especialidad = datos.get("especialidad");
         String unidadOrganizacional = datos.get("unidadOrganizacional");
 
-        // Validaciones
+        // Validaciones más robustas
         if (dni == null || nombre == null || email == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Todos los campos son requeridos"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Todos los campos requeridos deben ser completados"));
+        }
+
+        // Validar DNI (debe ser exactamente 8 dígitos)
+        if (!dni.matches("\\d{8}")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El DNI debe contener exactamente 8 dígitos numéricos"));
+        }
+
+        // Validar nombre (mínimo 2 caracteres)
+        if (nombre.trim().length() < 2) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El nombre debe tener al menos 2 caracteres"));
+        }
+
+        // Validar email
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El formato del correo electrónico es inválido"));
+        }
+
+        // Validar contraseña (mínimo 6 caracteres)
+        if (password.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La contraseña debe tener al menos 6 caracteres"));
+        }
+
+        if (password.length() > 50) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La contraseña no debe exceder 50 caracteres"));
         }
 
         // Si no hay apellido, usar cadena vacía
         if (apellido == null || apellido.isEmpty()) {
             apellido = "";
+        } else if (apellido.trim().length() < 2) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El apellido debe tener al menos 2 caracteres"));
+        }
+
+        // Validar teléfono
+        if (telefono != null && !telefono.trim().isEmpty()) {
+            if (telefono.trim().length() < 7) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El teléfono debe tener al menos 7 dígitos"));
+            }
         }
 
         // Verificar si ya existe
         if (usuarioRepository.existsByDni(dni)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe un usuario con este DNI"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe un usuario registrado con este DNI"));
         }
 
         if (usuarioRepository.existsByEmail(email)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe un usuario con este email"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe un usuario registrado con este correo electrónico"));
         }
 
         // Todos los usuarios nuevos quedan en PENDING - el Admin asignará el rol
@@ -132,16 +165,16 @@ public class AuthController {
         // Crear usuario
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setDni(dni);
-        nuevoUsuario.setNombre(nombre);
-        nuevoUsuario.setApellido(apellido);
-        nuevoUsuario.setEmail(email);
-        nuevoUsuario.setPassword(password);
-        nuevoUsuario.setTelefono(telefono != null ? telefono : "");
-        nuevoUsuario.setCargoCodar(cargoCodar != null ? cargoCodar : "");
-        nuevoUsuario.setAreaCodar(areaCodar != null ? areaCodar : "");
+        nuevoUsuario.setNombre(nombre.trim());
+        nuevoUsuario.setApellido(apellido.trim());
+        nuevoUsuario.setEmail(email.toLowerCase().trim());
+        nuevoUsuario.setPassword(password); // En producción, hashear la contraseña
+        nuevoUsuario.setTelefono(telefono != null ? telefono.trim() : "");
+        nuevoUsuario.setCargoCodar(cargoCodar != null ? cargoCodar.trim() : "");
+        nuevoUsuario.setAreaCodar(areaCodar != null ? areaCodar.trim() : "");
         nuevoUsuario.setFechaNacimiento(fechaNacimiento != null ? fechaNacimiento : "");
         nuevoUsuario.setEsExArbitro("true".equals(esExArbitroStr));
-        nuevoUsuario.setEspecialidad(especialidad != null ? especialidad : "");
+        nuevoUsuario.setEspecialidad(especialidad != null ? especialidad.trim() : "");
         nuevoUsuario.setRol(rol);
         nuevoUsuario.setEstado(estado);
         nuevoUsuario.setUnidadOrganizacional(unidadOrganizacional);
@@ -163,7 +196,7 @@ public class AuthController {
         response.put("unidadOrganizacional", guardado.getUnidadOrganizacional());
         
         if ("PENDING".equals(estado)) {
-            response.put("mensaje", "Usuario registrado. Tu cuenta está pendiente de aprobación por un Presidente.");
+            response.put("mensaje", "Usuario registrado. Tu cuenta está pendiente de aprobación por un Administrador.");
         } else {
             response.put("mensaje", "Usuario registrado exitosamente");
         }

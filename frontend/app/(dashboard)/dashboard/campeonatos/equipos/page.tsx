@@ -133,26 +133,26 @@ export default function EquiposPage() {
     }
 
     return (
-        <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/campeonatos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                    <Link href="/dashboard/campeonatos" className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300">
                         <ArrowLeft className="h-5 w-5" />
                         <span className="hidden sm:inline">Volver</span>
                     </Link>
-                    <div className="h-6 w-px bg-slate-300" />
+                    <div className="h-6 w-px bg-slate-700" />
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                             <Shield className="h-7 w-7 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900">Equipos</h1>
-                            <p className="text-slate-500">Gestiona los equipos participantes</p>
+                            <h1 className="text-2xl font-bold text-white">Equipos</h1>
+                            <p className="text-slate-400">Gestiona los equipos participantes</p>
                         </div>
                     </div>
                 </div>
-                <Button asChild className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30">
                     <Link href="/dashboard/campeonatos/equipos/nuevo">
                         <Plus className="h-4 w-4 mr-2" />
                         Nuevo Equipo
@@ -163,8 +163,8 @@ export default function EquiposPage() {
             {/* Stats por Provincia - Preparado para COPAR */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
-                    <LayoutGrid className="h-5 w-5 text-slate-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Equipos por Provincia</h2>
+                    <LayoutGrid className="h-5 w-5 text-indigo-400" />
+                    <h2 className="text-lg font-semibold text-white">Equipos por Provincia</h2>
                 </div>
                 <div className="grid gap-3 md:grid-cols-7">
                     {provincias.map((prov) => {

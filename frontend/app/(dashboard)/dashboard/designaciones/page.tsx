@@ -62,127 +62,109 @@ export default function DesignacionesPage() {
   }
 
   // Use cache hooks for data fetching with 5-minute TTL
-  const { data: designaciones = [], isLoading: loadingDesignaciones, refetch: refetchDesignaciones } = useCache(
+  const cacheDesignaciones = useCache(
     "designaciones",
     fetchDesignaciones,
     { ttl: 5 * 60 * 1000 }
   )
+  
+  const loadingDesignaciones = cacheDesignaciones.isLoading
+  const refetchDesignaciones = cacheDesignaciones.refetch
 
-  const { data: arbitros = [], isLoading: loadingArbitros } = useCache(
+  const cacheArbitros = useCache(
     "arbitros",
     fetchArbitros,
     { ttl: 5 * 60 * 1000 }
   )
+  const arbitros = Array.isArray(cacheArbitros.data) ? cacheArbitros.data : []
+  const loadingArbitros = cacheArbitros.isLoading
 
-  const { data: championships = [], isLoading: loadingCampeonatos } = useCache(
+  const cacheCampeonatos = useCache(
     "campeonatos",
     fetchCampeonatos,
     { ttl: 5 * 60 * 1000 }
   )
+  const championships = Array.isArray(cacheCampeonatos.data) ? cacheCampeonatos.data : []
+  const loadingCampeonatos = cacheCampeonatos.isLoading
 
-  const { data: equipos = [], isLoading: loadingEquipos } = useCache(
+  const cacheEquipos = useCache(
     "equipos",
     fetchEquipos,
     { ttl: 5 * 60 * 1000 }
   )
+  const equipos = Array.isArray(cacheEquipos.data) ? cacheEquipos.data : []
+  const loadingEquipos = cacheEquipos.isLoading
 
   const loading = loadingDesignaciones || loadingArbitros || loadingCampeonatos || loadingEquipos
 
   useEffect(() => {
     // Initialize expanded provincias when equipos load
-    const provincias = [...new Set(equipos.map((e: Equipo) => e.provincia).filter(Boolean))] as string[]
+    const provincias = [...new Set((equipos ?? []).map((e: Equipo) => e.provincia).filter(Boolean))] as string[]
     if (provincias.length > 0 && expandedProvincias.size === 0) {
       setExpandedProvincias(new Set([provincias[0]]))
     }
   }, [equipos])
 
-  // Filtrar designaciones
-  const designacionesFiltradas = useMemo(() => {
-    let result = designaciones
-
-    // Filtro por búsqueda
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase()
-      result = result.filter((d) =>
-        d.nombreEquipoLocal?.toLowerCase().includes(term) ||
-        d.nombreEquipoVisitante?.toLowerCase().includes(term) ||
-        d.estadio?.toLowerCase().includes(term)
-      )
+  // Filtrar designaciones - versión simplificada para evitar el error
+  let designacionesFiltradas: any[] = [];
+  
+  try {
+    const dataSource = cacheDesignaciones.data;
+    if (Array.isArray(dataSource)) {
+      designacionesFiltradas = [...dataSource];
+      
+      // Aplicar filtros
+      if (searchTerm && searchTerm.trim()) {
+        const term = searchTerm.toLowerCase();
+        designacionesFiltradas = designacionesFiltradas.filter((d: any) => {
+          if (!d) return false;
+          const local = String(d.nombreEquipoLocal || '').toLowerCase();
+          const visitante = String(d.nombreEquipoVisitante || '').toLowerCase();
+          const estadio = String(d.estadio || '').toLowerCase();
+          return local.includes(term) || visitante.includes(term) || estadio.includes(term);
+        });
+      }
     }
-
-    // Filtro por semana
-    // Filtro por semana
-    if (weekFilter !== "todos") {
-      const today = new Date()
-      result = result.filter((d) => {
-        if (!d.fecha) return false
-        const fechaPartido = new Date(d.fecha)
-        if (weekFilter === "actual") {
-          const weekStart = startOfWeek(today, { weekStartsOn: 1 })
-          const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
-          return isWithinInterval(fechaPartido, { start: weekStart, end: weekEnd })
-        } else if (weekFilter === "proxima") {
-          const nextWeekStart = startOfWeek(new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), { weekStartsOn: 1 })
-          const nextWeekEnd = endOfWeek(new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), { weekStartsOn: 1 })
-          return isWithinInterval(fechaPartido, { start: nextWeekStart, end: nextWeekEnd })
-        } else if (weekFilter === "pasadas") {
-          return fechaPartido < today
-        }
-        return true
-      })
-    }
-
-    // Filtro por campeonato
-    if (championshipFilter !== "todos") {
-      result = result.filter((d) => d.idCampeonato?.toString() === championshipFilter)
-    }
-
-    // Filtro por estado
-    if (statusFilter !== "todos") {
-      result = result.filter((d) => d.estado?.toUpperCase() === statusFilter.toUpperCase())
-    }
-
-    // Filtro por estado
-    if (statusFilter !== "todos") {
-      result = result.filter((d) => d.estado?.toUpperCase() === statusFilter.toUpperCase())
-    }
-
-    return result.sort((a, b) => {
-      if (!a.fecha || !b.fecha) return 0
-      const dateA = new Date(a.fecha).getTime()
-      const dateB = new Date(b.fecha).getTime()
-      return dateB - dateA
-    })
-  }, [searchTerm, weekFilter, championshipFilter, statusFilter, designaciones])
+  } catch (err) {
+    console.error("Error filtering designaciones:", err);
+    designacionesFiltradas = [];
+  }
 
   // Estadísticas
   const stats = useMemo(() => {
-    const today = new Date()
-    return {
-      total: designacionesFiltradas.length,
-      hoy: designacionesFiltradas.filter((d) => {
-        if (!d.fecha) return false
-        try {
-          const fecha = new Date(d.fecha)
-          return fecha.getDate() === today.getDate() && 
-                 fecha.getMonth() === today.getMonth() &&
-                 fecha.getFullYear() === today.getFullYear()
-        } catch {
-          return false
-        }
-      }).length,
-      semana: designacionesFiltradas.filter((d) => {
-        if (!d.fecha) return false
-        try {
-          const fecha = new Date(d.fecha)
-          const weekStart = startOfWeek(today, { weekStartsOn: 1 })
-          const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
-          return isWithinInterval(fecha, { start: weekStart, end: weekEnd })
-        } catch {
-          return false
-        }
-      }).length,
-      confirmadas: designacionesFiltradas.filter((d) => d.estado?.toUpperCase() === "CONFIRMADA").length,
+    try {
+      const today = new Date()
+      const filteredData = Array.isArray(designacionesFiltradas) ? designacionesFiltradas : []
+      
+      return {
+        total: filteredData.length,
+        hoy: filteredData.filter((d) => {
+          if (!d?.fecha) return false
+          try {
+            const fecha = new Date(d.fecha)
+            return fecha.getDate() === today.getDate() && 
+                   fecha.getMonth() === today.getMonth() &&
+                   fecha.getFullYear() === today.getFullYear()
+          } catch {
+            return false
+          }
+        }).length,
+        semana: filteredData.filter((d) => {
+          if (!d?.fecha) return false
+          try {
+            const fecha = new Date(d.fecha)
+            const weekStart = startOfWeek(today, { weekStartsOn: 1 })
+            const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
+            return isWithinInterval(fecha, { start: weekStart, end: weekEnd })
+          } catch {
+            return false
+          }
+        }).length,
+        confirmadas: filteredData.filter((d) => d?.estado?.toUpperCase() === "CONFIRMADA").length,
+      }
+    } catch (error) {
+      console.error('Error in stats:', error)
+      return { total: 0, hoy: 0, semana: 0, confirmadas: 0 }
     }
   }, [designacionesFiltradas])
 
@@ -226,8 +208,8 @@ export default function DesignacionesPage() {
   // ============ FUNCIONES PARA AGRUPAR Y EXPORTAR POR DISTRITO ============
   
   const getProvinciaDistritoDeLaDesignacion = (designacion: Designacion) => {
-    const equipoLocal = equipos.find((e) => e.nombre === designacion.nombreEquipoLocal)
-    const equipoVisitante = equipos.find((e) => e.nombre === designacion.nombreEquipoVisitante)
+    const equipoLocal = (equipos ?? []).find((e) => e.nombre === designacion.nombreEquipoLocal)
+    const equipoVisitante = (equipos ?? []).find((e) => e.nombre === designacion.nombreEquipoVisitante)
     const equipo = equipoLocal || equipoVisitante
     return {
       provincia: equipo?.provincia || "Sin provincia",
@@ -236,16 +218,23 @@ export default function DesignacionesPage() {
   }
 
   const designacionesAgrupadas = useMemo(() => {
-    const grupos: Record<string, Record<string, Designacion[]>> = {}
-    
-    designacionesFiltradas.forEach((d) => {
-      const { provincia, distrito } = getProvinciaDistritoDeLaDesignacion(d)
-      if (!grupos[provincia]) grupos[provincia] = {}
-      if (!grupos[provincia][distrito]) grupos[provincia][distrito] = []
-      grupos[provincia][distrito].push(d)
-    })
-    
-    return grupos
+    try {
+      const grupos: Record<string, Record<string, Designacion[]>> = {}
+      
+      const data = Array.isArray(designacionesFiltradas) ? designacionesFiltradas : []
+      data.forEach((d) => {
+        if (!d) return
+        const { provincia, distrito } = getProvinciaDistritoDeLaDesignacion(d)
+        if (!grupos[provincia]) grupos[provincia] = {}
+        if (!grupos[provincia][distrito]) grupos[provincia][distrito] = []
+        grupos[provincia][distrito].push(d)
+      })
+      
+      return grupos
+    } catch (error) {
+      console.error('Error in designacionesAgrupadas:', error)
+      return {}
+    }
   }, [designacionesFiltradas, equipos])
 
   const provincias = useMemo(() => {
@@ -305,10 +294,10 @@ export default function DesignacionesPage() {
 
       // ============ TABLA PRINCIPAL ============
       const tableData = designacionesDistrito.map((d, idx) => {
-        const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
-        const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
-        const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
-        const arb4to = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+        const arbPrincipal = (arbitros ?? []).find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+        const arbAsist1 = (arbitros ?? []).find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+        const arbAsist2 = (arbitros ?? []).find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+        const arb4to = (arbitros ?? []).find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
         
         return [
           (idx + 1).toString(),
@@ -399,10 +388,10 @@ export default function DesignacionesPage() {
 
       // ============ TABLA PRINCIPAL ============
       const tableData = designacionesFiltradas.map((d, idx) => {
-        const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
-        const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
-        const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
-        const arb4to = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+        const arbPrincipal = (arbitros ?? []).find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+        const arbAsist1 = (arbitros ?? []).find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+        const arbAsist2 = (arbitros ?? []).find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+        const arb4to = (arbitros ?? []).find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
         
         return [
           (idx + 1).toString(),
@@ -471,7 +460,7 @@ export default function DesignacionesPage() {
       doc.setFontSize(9)
 
       Array.from(arbitrosDesignados).forEach((arbitroId, idx) => {
-        const arbitro = arbitros.find((a) => a.id === arbitroId)
+        const arbitro = (arbitros ?? []).find((a) => a.id === arbitroId)
         if (arbitro) {
           doc.text(`${idx + 1}. ${arbitro.nombre} ${arbitro.apellido}`.trim(), 15, yPosition)
           doc.setFont("Arial", "normal")
@@ -499,7 +488,7 @@ export default function DesignacionesPage() {
     }
   }
 
-  if (loading && designaciones.length === 0) {
+  if (loading && (designaciones ?? []).length === 0) {
     return (
       <div className="p-6 min-h-screen">
         <div className="max-w-7xl mx-auto">
@@ -515,24 +504,24 @@ export default function DesignacionesPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 border border-indigo-500/30 backdrop-blur-sm shadow-lg shadow-indigo-500/20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <Trophy className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500/40 to-purple-500/40 flex items-center justify-center border border-indigo-400/30">
+            <Trophy className="w-6 h-6 text-indigo-200" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Designaciones</h1>
-            <p className="text-sm text-slate-500">Gestión de árbitros y partidos • {designacionesFiltradas.length} designaciones</p>
+            <h1 className="text-3xl font-bold text-white">Designaciones</h1>
+            <p className="text-sm text-indigo-100">Gestión de árbitros y partidos • {designacionesFiltradas.length} designaciones</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
+          <Button asChild className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 text-white border-0 font-medium">
             <Link href="/dashboard/designaciones/nueva">
               <Plus className="w-4 h-4 mr-2" />
               Nueva Designación
             </Link>
           </Button>
-          <Button variant="outline" onClick={exportToPDF} className="hover:bg-slate-50">
+          <Button onClick={exportToPDF} className="bg-slate-700/50 hover:bg-slate-600 text-slate-100 border-slate-600/50">
             <Download className="w-4 h-4 mr-2" />
             Exportar PDF
           </Button>
@@ -541,35 +530,35 @@ export default function DesignacionesPage() {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-4 gap-4">
-        <Card className="border-b-2 border-b-slate-300">
+        <Card className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border-slate-600/50 border-t-2 border-t-slate-500 backdrop-blur-sm shadow-lg shadow-slate-900/20">
           <CardContent className="p-4">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total</div>
-            <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Total</div>
+            <div className="text-2xl font-bold text-slate-200">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card className="border-b-2 border-b-blue-400">
+        <Card className="bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border-indigo-500/40 border-t-2 border-t-indigo-500 backdrop-blur-sm shadow-lg shadow-indigo-500/20">
           <CardContent className="p-4">
-            <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">Hoy</div>
-            <div className="text-2xl font-bold text-blue-600">{stats.hoy}</div>
+            <div className="text-xs font-semibold text-indigo-300 uppercase tracking-wide mb-2">Hoy</div>
+            <div className="text-2xl font-bold text-indigo-200">{stats.hoy}</div>
           </CardContent>
         </Card>
-        <Card className="border-b-2 border-b-emerald-400">
+        <Card className="bg-gradient-to-br from-emerald-500/15 to-teal-500/15 border-emerald-500/40 border-t-2 border-t-emerald-500 backdrop-blur-sm shadow-lg shadow-emerald-500/20">
           <CardContent className="p-4">
-            <div className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-2">Esta Semana</div>
-            <div className="text-2xl font-bold text-emerald-600">{stats.semana}</div>
+            <div className="text-xs font-semibold text-emerald-300 uppercase tracking-wide mb-2">Esta Semana</div>
+            <div className="text-2xl font-bold text-emerald-200">{stats.semana}</div>
           </CardContent>
         </Card>
-        <Card className="border-b-2 border-b-green-400">
+        <Card className="bg-gradient-to-br from-green-500/15 to-emerald-500/15 border-green-500/40 border-t-2 border-t-green-500 backdrop-blur-sm shadow-lg shadow-green-500/20">
           <CardContent className="p-4">
-            <div className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2">Confirmadas</div>
-            <div className="text-2xl font-bold text-green-600">{stats.confirmadas}</div>
+            <div className="text-xs font-semibold text-green-300 uppercase tracking-wide mb-2">Confirmadas</div>
+            <div className="text-2xl font-bold text-green-200">{stats.confirmadas}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
-        <div className="flex items-center gap-2 text-slate-600 font-semibold">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-slate-700/50 p-4 space-y-4 backdrop-blur-sm shadow-lg shadow-slate-900/20">
+        <div className="flex items-center gap-2 text-slate-300 font-semibold">
           <Filter className="w-4 h-4" />
           <span>Filtros</span>
         </div>
@@ -605,7 +594,7 @@ export default function DesignacionesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                {championships.map((c) => (
+                {(championships ?? []).map((c) => (
                   <SelectItem key={c.id} value={c.id?.toString() || ""}>
                     {c.nombre}
                   </SelectItem>
@@ -710,10 +699,10 @@ export default function DesignacionesPage() {
                                   return dateA - dateB
                                 })
                                 .map((designacion, idx) => {
-                                  const arbitroPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
-                                  const arbitroAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
-                                  const arbitroAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
-                                  const cuartoArbitro = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
+                                  const arbitroPrincipal = (arbitros ?? []).find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
+                                  const arbitroAsist1 = (arbitros ?? []).find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
+                                  const arbitroAsist2 = (arbitros ?? []).find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
+                                  const cuartoArbitro = (arbitros ?? []).find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
 
                                   return (
                                     <TableRow

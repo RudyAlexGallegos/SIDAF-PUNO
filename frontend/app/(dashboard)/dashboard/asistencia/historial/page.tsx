@@ -795,36 +795,36 @@ export default function HistorialAsistenciaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-sky-800 flex items-center gap-3">
-              <Calendar className="w-8 h-8" />
+            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+              <Calendar className="w-8 h-8 text-indigo-400" />
               Historial de Asistencia
             </h1>
-            <p className="text-sky-600 mt-1">Registro histórico de asistencia de árbitros</p>
+            <p className="text-slate-400 mt-1">Registro histórico de asistencia de árbitros</p>
           </div>
-          <Button onClick={() => handleExportarPDF('resumen')} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={() => handleExportarPDF('resumen')} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
             <FileDown className="w-4 h-4 mr-2" />
             Exportar PDF
           </Button>
-          <Button onClick={handleExportarExcel} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleExportarExcel} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
             <FileDown className="w-4 h-4 mr-2" />
             Exportar Excel
           </Button>
-          <Button onClick={generarReporteSemanal} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={generarReporteSemanal} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
             <BarChart3 className="w-4 h-4 mr-2" />
             Reporte Semanal
           </Button>
         </div>
 
         {/* Filtros */}
-        <Card className="border-sky-200 shadow-md">
+        <Card className="border-slate-700/50 shadow-lg shadow-slate-900/50 bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg text-sky-800 flex items-center gap-2">
-              <Filter className="w-5 h-5" />
+            <CardTitle className="text-lg text-white flex items-center gap-2">
+              <Filter className="w-5 h-5 text-indigo-400" />
               Filtros
             </CardTitle>
           </CardHeader>

@@ -103,16 +103,16 @@ export default function SolicitudesPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-6 max-w-4xl">
-            <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Gestionar Solicitudes de Permisos</h1>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container mx-auto p-4 md:p-6 max-w-4xl">
+            <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-white">Gestionar Solicitudes de Permisos</h1>
 
             {/* Información del rol */}
-            <Card className="mb-6">
+            <Card className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700/50 shadow-lg shadow-slate-900/50">
                 <CardContent className="pt-6">
-                    <p className="text-sm">
-                        <strong>Tu rol:</strong> <span className="font-mono bg-gray-100 px-2 py-1 rounded">{usuario?.rol}</span>
+                    <p className="text-sm text-slate-300">
+                        <strong>Tu rol:</strong> <span className="font-mono bg-indigo-500/20 border border-indigo-500/30 px-2 py-1 rounded text-indigo-200">{usuario?.rol}</span>
                     </p>
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-slate-400 mt-2">
                         {usuario?.rol === "ADMIN" 
                             ? "Puedes aprobar o rechazar solicitudes de permisos. Por ética, considera que la Présidencia debería ser quien otorgue los permisos."
                             : "Puedes aprobar o rechazar solicitudes de permisos de usuarios."}

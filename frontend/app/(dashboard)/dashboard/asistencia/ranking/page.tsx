@@ -180,17 +180,17 @@ export default function RankingSemanalPage() {
   const arbitrosSinDesignaciones = ranking.filter(r => r.totalDesignaciones === 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-sky-800 flex items-center gap-3">
-              <Trophy className="w-8 h-8 text-amber-500" />
+            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+              <Trophy className="w-8 h-8 text-amber-400" />
               Ranking Semanal
             </h1>
-            <p className="text-sky-600 mt-1">
+            <p className="text-slate-400 mt-1">
               Designaciones de árbitros por semana
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function RankingSemanalPage() {
             <Button 
               onClick={irSemanaActual}
               variant="outline"
-              className="border-sky-300 text-sky-700 hover:bg-sky-50"
+              className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-500/50"
             >
               Volver a semana actual
             </Button>
@@ -207,14 +207,14 @@ export default function RankingSemanalPage() {
         </div>
 
         {/* Navegación de semanas */}
-        <Card className="border-sky-200 shadow-md">
+        <Card className="border-slate-700/50 shadow-lg shadow-slate-900/50 bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => cambiarSemana(-1)}
-                className="text-sky-600 hover:bg-sky-100"
+                className="text-slate-400 hover:bg-slate-700/50"
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>

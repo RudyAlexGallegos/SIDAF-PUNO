@@ -55,8 +55,8 @@ function NavLink({
             className={`flex items-center gap-3 text-sm px-3 py-2 rounded-xl transition-all
         ${
             isActive
-                ? "bg-blue-600 text-white shadow"
-                : "text-slate-200 hover:bg-white/10"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25"
+                : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
         }`}
         >
             <Icon className="h-5 w-5 shrink-0" />
@@ -467,7 +467,7 @@ export default function DashboardLayout({
     const sidebarWidth = isMobile ? (mobileMenuOpen ? "w-72" : "w-0") : (isOpen ? "w-64" : "w-20")
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="flex min-h-screen bg-slate-950">
             {/* Mobile menu backdrop */}
             {mobileMenuOpen && isMobile && (
                 <div 
@@ -478,15 +478,18 @@ export default function DashboardLayout({
 
             {/* SIDEBAR */}
             <aside
-                className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col
-          transition-all duration-300 ease-in-out fixed md:relative z-50 overflow-hidden
+                className={`bg-slate-900 text-white flex flex-col
+          transition-all duration-300 ease-in-out fixed md:relative z-50 overflow-hidden border-r border-slate-700/50
           ${isMobile ? (mobileMenuOpen ? "translate-x-0" : "-translate-x-full") : ""}
           ${isMobile ? "h-full" : ""}
           ${!isMobile ? sidebarWidth : "w-72"}
         `}
             >
+                {/* Header accent line */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+
                 {/* HEADER / LOGO */}
-                <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between min-h-[72px]">
+                <div className="px-4 py-4 border-b border-slate-700/50 flex items-center justify-between min-h-[72px]">
                     {showLabels ? (
                         <div className="flex items-center gap-3">
                             <img
@@ -495,7 +498,7 @@ export default function DashboardLayout({
                                 className="h-10 w-10 rounded-xl object-cover bg-white p-1"
                             />
                             <div>
-                                <h1 className="text-sm font-bold">SIDAF PUNO</h1>
+                                <h1 className="text-sm font-bold text-white">SIDAF PUNO</h1>
                                 <p className="text-[10px] text-slate-400">Comisión de Árbitros</p>
                             </div>
                         </div>
@@ -514,7 +517,7 @@ export default function DashboardLayout({
 
                     <button
                         onClick={() => isMobile ? setMobileMenuOpen(!mobileMenuOpen) : setIsOpen(!isOpen)}
-                        className="p-2 rounded-lg hover:bg-white/10 transition"
+                        className="p-2 rounded-lg hover:bg-slate-700/50 transition"
                     >
                         <Menu className="h-5 w-5" />
                     </button>
@@ -546,28 +549,28 @@ export default function DashboardLayout({
 
                 {/* USUARIO LOGUEADO */}
                 {usuario && (
-                    <div className="p-3 border-t border-white/10">
+                    <div className="p-3 border-t border-slate-700/50">
                         {showLabels || (isMobile && mobileMenuOpen) ? (
                             <div className="flex items-center gap-3 px-2 py-2">
-                                <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/25">
                                     <Shield className="h-5 w-5 text-white" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">
+                                    <p className="text-sm font-medium truncate text-white">
                                         {usuario.nombre} {usuario.apellido}
                                     </p>
                                     <p className="text-xs text-slate-400">
                                         {getRolLabel(usuario.rol)}
                                     </p>
                                     {usuario.cargoCodar && (
-                                        <p className="text-xs text-blue-400 truncate">
+                                        <p className="text-xs text-indigo-400 truncate">
                                             {usuario.cargoCodar} - {usuario.areaCodar}
                                         </p>
                                     )}
                                 </div>
                                 <button
                                     onClick={handleLogout}
-                                    className="p-1.5 rounded-lg hover:bg-white/10 transition"
+                                    className="p-1.5 rounded-lg hover:bg-slate-700/50 transition"
                                     title="Cerrar sesión"
                                 >
                                     <LogOut className="h-4 w-4 text-slate-400" />
@@ -576,7 +579,7 @@ export default function DashboardLayout({
                         ) : (
                             <button
                                 onClick={handleLogout}
-                                className="w-full p-2 rounded-lg hover:bg-white/10 transition flex items-center justify-center"
+                                className="w-full p-2 rounded-lg hover:bg-slate-700/50 transition flex items-center justify-center"
                                 title="Cerrar sesión"
                             >
                                 <LogOut className="h-5 w-5" />
@@ -592,7 +595,7 @@ export default function DashboardLayout({
                 {isMobile && !mobileMenuOpen && (
                     <button
                         onClick={() => setMobileMenuOpen(true)}
-                        className="fixed bottom-6 right-6 z-30 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition"
+                        className="fixed bottom-6 right-6 z-30 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition"
                     >
                         <Menu className="h-6 w-6" />
                     </button>

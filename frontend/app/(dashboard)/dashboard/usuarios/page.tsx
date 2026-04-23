@@ -218,24 +218,24 @@ export default function GestionUsuariosPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+                        <h1 className="text-2xl font-bold text-white">Gestión de Usuarios</h1>
                         {usuario && (
                             <>
-                                <p className="text-gray-600">
+                                <p className="text-slate-400">
                                     Bienvenido, {usuario.nombre} ({getRolLabel(usuario.rol || "")})
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-slate-500">
                                     Unidad: {usuario.unidadOrganizacional || "N/A"}
                                 </p>
                             </>
                         )}
                     </div>
-                    <Button variant="outline" onClick={handleLogout}>
+                    <Button variant="outline" onClick={handleLogout} className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10">
                         Cerrar Sesión
                     </Button>
                 </div>

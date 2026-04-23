@@ -47,11 +47,13 @@ export default function ArbitrosPage() {
   }
 
   // Use cache hook for data fetching with 5-minute TTL
-  const { data: arbitros = [], isLoading, error: cacheError, refetch } = useCache(
+  const cacheResult = useCache(
     "arbitros",
     fetchArbitros,
     { ttl: 5 * 60 * 1000 }
   )
+  const { data: arbitrosRaw, isLoading, error: cacheError, refetch } = cacheResult
+  const arbitros: Arbitro[] = arbitrosRaw ?? []
 
   // Verificar si hay filtros activos
   useEffect(() => {
@@ -407,17 +409,45 @@ function ArbitroCard({
   onDelete: () => void
   isDeleting: boolean
 }) {
+  const getCategoryGradient = (categoria?: string) => {
+    switch (categoria) {
+      case "FIFA":
+        return "from-indigo-600 to-purple-600"
+      case "Nacional":
+        return "from-blue-600 to-cyan-600"
+      case "Regional":
+        return "from-emerald-600 to-teal-600"
+      default:
+        return "from-amber-600 to-orange-600"
+    }
+  }
+
+  const getCategoryBg = (categoria?: string) => {
+    switch (categoria) {
+      case "FIFA":
+        return "bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border-indigo-500/40"
+      case "Nacional":
+        return "bg-gradient-to-br from-blue-500/15 to-cyan-500/15 border-blue-500/40"
+      case "Regional":
+        return "bg-gradient-to-br from-emerald-500/15 to-teal-500/15 border-emerald-500/40"
+      default:
+        return "bg-gradient-to-br from-amber-500/15 to-orange-500/15 border-amber-500/40"
+    }
+  }
+
+  const gradient = getCategoryGradient(arbitro.categoria)
+
   return (
     <Card 
-      className="h-full hover:shadow-lg dark:hover:shadow-lg/50 transition-all duration-300 border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col group"
+      className={`h-full transition-all duration-300 border ${getCategoryBg(arbitro.categoria)} backdrop-blur-sm overflow-hidden flex flex-col group hover:shadow-xl hover:shadow-slate-900/20 hover:-translate-y-1 cursor-pointer`}
     >
-      {/* Encabezado degradado */}
-      <div className="h-1.5 md:h-2 bg-gradient-to-r from-blue-500 to-indigo-500" />
+      {/* Top gradient accent line */}
+      <div className={`h-1.5 md:h-2 bg-gradient-to-r ${gradient} opacity-100`} />
       
-      <CardContent className="p-3 md:p-4 flex-1 flex flex-col">
-        {/* Foto y nombre */}
-        <div className="flex flex-col items-center text-center mb-3 md:mb-4">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 overflow-hidden flex items-center justify-center mb-2 md:mb-3 border-2 border-slate-200 dark:border-slate-700 group-hover:border-blue-400 transition-colors">
+      <CardContent className="p-4 md:p-5 flex-1 flex flex-col">
+        {/* Avatar section */}
+        <div className="flex flex-col items-center text-center mb-4 md:mb-5">
+          <div className={`w-18 h-18 md:w-22 md:h-22 rounded-full bg-gradient-to-br ${gradient}/20 border-2 ${getCategoryBg(arbitro.categoria).split(' ')[1]} overflow-hidden flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300`}>
             {arbitro.foto ? (
               <img
                 src={arbitro.foto}
@@ -426,59 +456,59 @@ function ArbitroCard({
                 loading="lazy"
               />
             ) : (
-              <User className="w-6 h-6 md:w-8 md:h-8 text-slate-400 dark:text-slate-500" />
+              <User className="w-7 h-7 md:w-9 md:h-9 text-slate-300" />
             )}
           </div>
 
-          <h3 className="font-semibold text-sm md:text-base text-slate-900 dark:text-white line-clamp-2">
+          <h3 className="font-bold text-sm md:text-base text-white line-clamp-2 leading-tight">
             {getNombreCompleto(arbitro)}
           </h3>
 
           {arbitro.categoria && (
-            <span className={`inline-block px-2 md:px-2.5 py-1 rounded-full text-xs font-medium mt-2 ${getCategoriaColor(arbitro.categoria)}`}>
+            <span className={`inline-block px-3 md:px-3.5 py-1.5 rounded-full text-xs font-semibold mt-2.5 ${getCategoriaColor(arbitro.categoria)}`}>
               {arbitro.categoria}
             </span>
           )}
         </div>
 
         {/* Información de contacto */}
-        <div className="space-y-2 text-xs md:text-sm mb-3 md:mb-4 flex-1">
-          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+        <div className="space-y-2.5 text-xs md:text-sm mb-4 md:mb-5 flex-1">
+          <div className="flex items-center gap-2.5 text-slate-300">
             {arbitro.disponible ? (
               <>
-                <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-500 flex-shrink-0" />
-                <span className="text-green-700 dark:text-green-400 font-medium">Disponible</span>
+                <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-300 font-semibold">Disponible</span>
               </>
             ) : (
               <>
-                <XCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-500 flex-shrink-0" />
-                <span className="text-red-700 dark:text-red-400 font-medium">No disponible</span>
+                <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                <span className="text-red-300 font-semibold">No disponible</span>
               </>
             )}
           </div>
 
           {arbitro.telefono && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 min-w-0">
-              <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-              <span className="truncate">{arbitro.telefono}</span>
+            <div className="flex items-center gap-2.5 text-slate-300 min-w-0">
+              <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 flex-shrink-0" />
+              <span className="truncate text-xs">{arbitro.telefono}</span>
             </div>
           )}
 
           {arbitro.email && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 min-w-0">
-              <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+            <div className="flex items-center gap-2.5 text-slate-300 min-w-0">
+              <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 flex-shrink-0" />
               <span className="truncate text-xs">{arbitro.email}</span>
             </div>
           )}
         </div>
 
         {/* Acciones */}
-        <div className="flex gap-1.5 md:gap-2 pt-3 md:pt-4 border-t border-slate-100 dark:border-slate-700">
+        <div className="flex gap-2 pt-4 md:pt-5 border-t border-slate-700/50">
           <Button
             asChild
             variant="outline"
             size="sm"
-            className="flex-1 h-8 md:h-9 text-xs md:text-sm"
+            className="flex-1 h-8 md:h-9 text-xs md:text-sm bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700 hover:text-white transition-all"
           >
             <Link href={`/dashboard/arbitros/${arbitro.id}`}>
               <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
@@ -489,7 +519,7 @@ function ArbitroCard({
           <Button 
             asChild 
             size="sm" 
-            className="flex-1 h-8 md:h-9 text-xs md:text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+            className={`flex-1 h-8 md:h-9 text-xs md:text-sm bg-gradient-to-r ${gradient} hover:opacity-90 text-white border-0 font-medium transition-all`}
           >
             <Link href={`/dashboard/arbitros/${arbitro.id}/editar`}>
               <Edit className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
@@ -500,7 +530,7 @@ function ArbitroCard({
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 md:h-9 w-8 md:w-9 p-0"
+            className="text-red-400 hover:text-red-300 hover:bg-red-500/20 h-8 md:h-9 w-8 md:w-9 p-0 transition-all"
             onClick={onDelete}
             disabled={isDeleting}
             title="Eliminar"
