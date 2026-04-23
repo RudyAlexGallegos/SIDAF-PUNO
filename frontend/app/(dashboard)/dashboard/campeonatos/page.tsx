@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import React, { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -60,7 +62,8 @@ export default function CampeonadosPage() {
       const res = await fetch(`${API_URL}/campeonato`)
       if (!res.ok) return
       const campeonatos = await res.json()
-      const existeCopa = campeonatos.some((c: any) => c.nombre === "COPA PERÚ 2026")
+      const campeonatosArray = Array.isArray(campeonatos) ? campeonatos : []
+      const existeCopa = campeonatosArray.some((c: any) => c.nombre === "COPA PERÚ 2026")
       
       if (!existeCopa) {
         const nuevoCampeonato = {

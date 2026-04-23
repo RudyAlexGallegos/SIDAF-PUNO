@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import React, { useMemo, useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -488,7 +490,7 @@ export default function DesignacionesPage() {
     }
   }
 
-  if (loading && (designaciones ?? []).length === 0) {
+  if (loading && (designacionesFiltradas ?? []).length === 0) {
     return (
       <div className="p-6 min-h-screen">
         <div className="max-w-7xl mx-auto">
