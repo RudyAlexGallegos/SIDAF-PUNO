@@ -140,15 +140,15 @@ export default function AsistenciaPage() {
   const faltasCount = Math.max(0, totalArbitros - asistentesCount - excusadosCount)
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-gray-600">Cargando...</div>
+      <div>
+        <div className="text-slate-300">Cargando...</div>
       </div>
     )
   }
 
   if (!registro) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center p-4 sm:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-2xl">
           {/* Header gradient card */}
           <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-500/30 mb-6 border border-indigo-500/30 overflow-hidden">
@@ -203,22 +203,22 @@ export default function AsistenciaPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="font-semibold text-blue-900">⚠️ Ya existe un registro de asistencia para hoy</p>
-                  <p className="text-sm text-blue-800 mt-2">
+                  <p className="font-semibold text-slate-100">⚠️ Ya existe un registro de asistencia para hoy</p>
+                  <p className="text-sm text-slate-200 mt-2">
                     <span className="font-medium">Responsable:</span> {registroExistenteInfo.responsable}
                   </p>
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-slate-200">
                     <span className="font-medium">Actividad:</span> {registroExistenteInfo.actividad?.replace('_', ' ') || 'No especificada'}
                   </p>
                   {registroExistenteInfo.createdAt && (
-                    <p className="text-sm text-blue-800">
+                    <p className="text-sm text-slate-200">
                       <span className="font-medium">Creado:</span> {new Date(registroExistenteInfo.createdAt).toLocaleString('es-PE', { 
                         dateStyle: 'short', 
                         timeStyle: 'short' 
                       })}
                     </p>
                   )}
-                  <p className="text-xs text-blue-700 mt-2 font-medium">
+                  <p className="text-xs text-slate-300 mt-2 font-medium">
                     ✓ Solo puedes editar este registro. No se puede crear uno nuevo.
                   </p>
                 </div>
@@ -226,7 +226,7 @@ export default function AsistenciaPage() {
             </div>
           )}
 
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-slate-300 mb-6">
             {existeRegistroHoy 
               ? "Ya existe un registro para hoy. Solo puedes editar la asistencia de los árbitros registrados."
               : "Inicia un nuevo registro haciendo clic en el botón de abajo."}
@@ -252,13 +252,13 @@ export default function AsistenciaPage() {
                   type="button"
                   onClick={() => actividadesPermitidas.includes('analisis_partido') && setActividad('analisis_partido')}
                   disabled={!actividadesPermitidas.includes('analisis_partido')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('analisis_partido') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'analisis_partido' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${!actividadesPermitidas.includes('analisis_partido') ? 'opacity-40 cursor-not-allowed bg-slate-700/30 border-slate-700/50' : actividad === 'analisis_partido' ? 'bg-indigo-500/30 border-indigo-500/50 text-indigo-100 shadow-lg shadow-indigo-500/20' : 'bg-slate-700/50 border-slate-600/50 text-slate-200 hover:bg-slate-700/70'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Análisis de partido</div>
-                    <div className={`text-xs ${actividad === 'analisis_partido' ? 'text-blue-100' : 'text-gray-500'}`}>Lunes - 18:00</div>
+                    <div className={`text-xs ${actividad === 'analisis_partido' ? 'text-indigo-100' : 'text-slate-400'}`}>Lunes - 18:00</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'analisis_partido' ? 'opacity-100' : 'opacity-0'}`}>
-                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'analisis_partido' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
+                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'analisis_partido' ? 'scale-100 text-indigo-300' : 'scale-75 text-slate-500'}`} aria-hidden />
                   </div>
                 </button>
 
@@ -269,13 +269,13 @@ export default function AsistenciaPage() {
                   type="button"
                   onClick={() => actividadesPermitidas.includes('preparacion_fisica') && setActividad('preparacion_fisica')}
                   disabled={!actividadesPermitidas.includes('preparacion_fisica')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('preparacion_fisica') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'preparacion_fisica' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${!actividadesPermitidas.includes('preparacion_fisica') ? 'opacity-40 cursor-not-allowed bg-slate-700/30 border-slate-700/50' : actividad === 'preparacion_fisica' ? 'bg-indigo-500/30 border-indigo-500/50 text-indigo-100 shadow-lg shadow-indigo-500/20' : 'bg-slate-700/50 border-slate-600/50 text-slate-200 hover:bg-slate-700/70'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Preparación física</div>
-                    <div className={`text-xs ${actividad === 'preparacion_fisica' ? 'text-blue-100' : 'text-gray-500'}`}>Mar, Jue, Sáb - 05:00</div>
+                    <div className={`text-xs ${actividad === 'preparacion_fisica' ? 'text-indigo-100' : 'text-slate-400'}`}>Mar, Jue, Sáb - 05:00</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'preparacion_fisica' ? 'opacity-100' : 'opacity-0'}`}>
-                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'preparacion_fisica' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
+                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'preparacion_fisica' ? 'scale-100 text-indigo-300' : 'scale-75 text-slate-500'}`} aria-hidden />
                   </div>
                 </button>
 
@@ -286,13 +286,13 @@ export default function AsistenciaPage() {
                   type="button"
                   onClick={() => actividadesPermitidas.includes('reunion_ordinaria') && setActividad('reunion_ordinaria')}
                   disabled={!actividadesPermitidas.includes('reunion_ordinaria')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_ordinaria') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_ordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${!actividadesPermitidas.includes('reunion_ordinaria') ? 'opacity-40 cursor-not-allowed bg-slate-700/30 border-slate-700/50' : actividad === 'reunion_ordinaria' ? 'bg-indigo-500/30 border-indigo-500/50 text-indigo-100 shadow-lg shadow-indigo-500/20' : 'bg-slate-700/50 border-slate-600/50 text-slate-200 hover:bg-slate-700/70'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión ordinaria</div>
-                    <div className={`text-xs ${actividad === 'reunion_ordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Viernes - 19:00</div>
+                    <div className={`text-xs ${actividad === 'reunion_ordinaria' ? 'text-indigo-100' : 'text-slate-400'}`}>Viernes - 19:00</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'reunion_ordinaria' ? 'opacity-100' : 'opacity-0'}`}>
-                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'reunion_ordinaria' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
+                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'reunion_ordinaria' ? 'scale-100 text-indigo-300' : 'scale-75 text-slate-500'}`} aria-hidden />
                   </div>
                 </button>
 
@@ -303,26 +303,26 @@ export default function AsistenciaPage() {
                   type="button"
                   onClick={() => actividadesPermitidas.includes('reunion_extraordinaria') && setActividad('reunion_extraordinaria')}
                   disabled={!actividadesPermitidas.includes('reunion_extraordinaria')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${!actividadesPermitidas.includes('reunion_extraordinaria') ? 'opacity-40 cursor-not-allowed bg-gray-100' : actividad === 'reunion_extraordinaria' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white hover:shadow-sm'}`}>
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${!actividadesPermitidas.includes('reunion_extraordinaria') ? 'opacity-40 cursor-not-allowed bg-slate-700/30 border-slate-700/50' : actividad === 'reunion_extraordinaria' ? 'bg-indigo-500/30 border-indigo-500/50 text-indigo-100 shadow-lg shadow-indigo-500/20' : 'bg-slate-700/50 border-slate-600/50 text-slate-200 hover:bg-slate-700/70'}`}>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">Reunión extraordinaria</div>
-                    <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-blue-100' : 'text-gray-500'}`}>Mié, Dom - Urgente</div>
+                    <div className={`text-xs ${actividad === 'reunion_extraordinaria' ? 'text-indigo-100' : 'text-slate-400'}`}>Mié, Dom - Urgente</div>
                   </div>
                   <div className={`ml-3 flex items-center justify-center transition-opacity duration-200 ${actividad === 'reunion_extraordinaria' ? 'opacity-100' : 'opacity-0'}`}>
-                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'reunion_extraordinaria' ? 'scale-100 text-white' : 'scale-75 text-blue-600'}`} aria-hidden />
+                    <Check className={`h-5 w-5 transition-transform duration-200 transform ${actividad === 'reunion_extraordinaria' ? 'scale-100 text-indigo-300' : 'scale-75 text-slate-500'}`} aria-hidden />
                   </div>
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Responsable</label>
+              <label className="text-sm font-medium text-slate-300 block mb-2">Responsable</label>
               <input
                 id="responsable-quick"
                 value={responsable}
                 onChange={(e) => setResponsable(e.target.value)}
                 placeholder="Nombre del responsable"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                className="w-full px-4 py-3 border border-slate-600/50 bg-slate-700/50 rounded-xl text-slate-200 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-shadow"
               />
             </div>
           </div>
@@ -332,14 +332,14 @@ export default function AsistenciaPage() {
               <div className="flex-1">
                 <button
                   disabled
-                  className="w-full inline-flex items-center justify-center gap-2 bg-gray-400 cursor-not-allowed text-white py-3 px-6 rounded-xl font-semibold shadow-lg opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-slate-600/50 cursor-not-allowed text-slate-300 py-3 px-6 rounded-xl font-semibold shadow-lg opacity-60"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   Ya existe un registro - No se puede crear uno nuevo
                 </button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-slate-300 mt-2 text-center">
                   Solo tienes la opción de editar el registro existente. Haz clic en "Editar Registro" abajo.
                 </p>
               </div>
@@ -386,7 +386,7 @@ export default function AsistenciaPage() {
             </button>
           </div>
 
-          <p className="mt-4 text-sm text-gray-500 text-center sm:text-left">Los datos mostrados provienen directamente de la base de datos en tiempo real.</p>
+          <p className="mt-4 text-sm text-slate-400 text-center sm:text-left">Los datos mostrados provienen directamente de la base de datos en tiempo real.</p>
         </div>
       </div>
     )
@@ -402,20 +402,20 @@ export default function AsistenciaPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 pb-28">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 p-4 sm:p-6 pb-28">
       <header className="mb-6">
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h1 className="text-2xl font-bold">Registro en curso</h1>
-            <p className="text-sm text-gray-500 mt-1">Marca la asistencia de los árbitros — los cambios se guardan localmente hasta enviar.</p>
+            <h1 className="text-2xl font-bold text-white">Registro en curso</h1>
+            <p className="text-sm text-slate-300 mt-1">Marca la asistencia de los árbitros — los cambios se guardan localmente hasta enviar.</p>
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
-            <div className="text-sm text-gray-600">Total árbitros</div>
-            <div className="px-3 py-1 bg-slate-100 rounded-md font-medium">{arbitros?.length ?? 0}</div>
+            <div className="text-sm text-slate-300">Total árbitros</div>
+            <div className="px-3 py-1 bg-slate-700/50 rounded-md font-medium text-slate-100">{arbitros?.length ?? 0}</div>
             <button
               onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }}
-              className="px-3 py-1 rounded-md border text-sm bg-white hover:bg-slate-50"
+              className="px-3 py-1 rounded-md border border-slate-600/50 text-sm bg-slate-700/50 text-slate-200 hover:bg-slate-600/50"
             >
               Nuevo registro
             </button>
@@ -428,19 +428,19 @@ export default function AsistenciaPage() {
         <div className="sm:hidden mb-4 px-2">
           <button
             onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }}
-            className="w-full px-3 py-3 bg-white border rounded-lg text-sm"
+            className="w-full px-3 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-slate-200 text-sm hover:bg-slate-600/50"
           >
             Nuevo registro
           </button>
         </div>
       )}
 
-      <div className="bg-white shadow rounded-2xl overflow-hidden -mx-4 sm:mx-0 w-[calc(100vw-32px)] sm:w-auto mx-auto ring-1 ring-slate-50">
-        <div className="p-4 border-b">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 shadow-xl shadow-slate-900/50 rounded-2xl overflow-hidden -mx-4 sm:mx-0 w-[calc(100vw-32px)] sm:w-auto mx-auto ring-1 ring-slate-700/50 border border-slate-700/50">
+        <div className="p-4 border-b border-slate-700/50">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">{actividad.replace('_', ' ')}</div>
-              <div className="text-sm text-gray-600">Responsable: <span className="font-medium">{responsable || '—'}</span></div>
+              <div className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm font-medium">{actividad.replace('_', ' ')}</div>
+              <div className="text-sm text-slate-300">Responsable: <span className="font-medium text-slate-100">{responsable || '—'}</span></div>
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
@@ -450,9 +450,9 @@ export default function AsistenciaPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar árbitro por nombre o DNI"
-                  className="w-full px-4 py-3 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 shadow-sm"
+                  className="w-full px-4 py-3 border border-slate-600/50 bg-slate-700/50 text-slate-200 placeholder:text-slate-500 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path></svg></span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path></svg></span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -471,24 +471,24 @@ export default function AsistenciaPage() {
                       <p className="text-sm">Actividad: <span className="font-medium">{actividad.replace('_', ' ')}</span></p>
                       <p className="text-sm">Responsable: <span className="font-medium">{responsable || '—'}</span></p>
                       {fechaHoraInicio && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-slate-300">
                           Fecha y hora de inicio: <span className="font-medium">{new Date(fechaHoraInicio).toLocaleString('es-PE', { dateStyle: 'long', timeStyle: 'short' })}</span>
                         </p>
                       )}
 
                       <div className="grid grid-cols-3 gap-4 mt-3 text-center">
                         <div>
-                          <div className="text-xs text-gray-500">Total</div>
+                          <div className="text-xs text-slate-400">Total</div>
                           <div className="font-medium">{totalArbitros}</div>
                         </div>
 
                         <div>
-                          <div className="text-xs text-gray-500">Asistentes</div>
+                          <div className="text-xs text-slate-400">Asistentes</div>
                           <div className="font-medium text-emerald-600">{asistentesCount}</div>
                         </div>
 
                         <div>
-                          <div className="text-xs text-gray-500">Faltas</div>
+                          <div className="text-xs text-slate-400">Faltas</div>
                           <div className="font-medium text-rose-600">{faltasCount}</div>
                         </div>
                       </div>
@@ -510,7 +510,7 @@ export default function AsistenciaPage() {
 
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="px-3 py-2 bg-white border rounded-md text-sm hidden md:inline-flex"
+                  className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-md text-slate-200 text-sm hidden md:inline-flex"
                 >Ir arriba</button>
               </div>
             </div>
@@ -535,13 +535,13 @@ export default function AsistenciaPage() {
           </DialogTrigger>
         </Dialog>
 
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-white border px-4 py-3 rounded-full shadow">↑</button>
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-slate-700/50 border border-slate-600/50 text-slate-200 px-4 py-3 rounded-full shadow-lg hover:bg-slate-700">↑</button>
       </div>
 
       {/* Mobile fixed action bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t sm:hidden z-50">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-br from-slate-800 to-slate-900 border-t border-slate-700/50 sm:hidden z-50">
         <div className="max-w-[1000px] mx-auto w-[calc(100vw-32px)] sm:w-auto flex gap-3">
-          <button onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }} className="flex-1 bg-white border rounded-lg py-3">Descartar</button>
+          <button onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }} className="flex-1 bg-slate-600 hover:bg-slate-700 text-white border border-slate-600/50 rounded-lg py-3">Descartar</button>
           <button onClick={() => setOpenFinalize(true)} className="flex-1 bg-green-600 text-white rounded-lg py-3 font-semibold">Finalizar</button>
         </div>
       </div>
