@@ -152,8 +152,9 @@ export default function CampeonadosPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return campeonatos
-    return campeonatos.filter(c => 
+    const campeonatosArray = Array.isArray(campeonatos) ? campeonatos : []
+    if (!q) return campeonatosArray
+    return campeonatosArray.filter(c => 
       c.nombre?.toLowerCase().includes(q) || 
       c.categoria?.toLowerCase().includes(q) || 
       c.nivelDificultad?.toLowerCase().includes(q)
@@ -170,7 +171,7 @@ export default function CampeonadosPage() {
         <div className="ml-auto flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-3">
             <span className="text-sm text-slate-400">Total</span>
-            <Badge className="bg-gradient-to-r from-indigo-500/30 to-purple-500/30 text-indigo-200 px-3 py-1 border-indigo-500/30">{campeonatos.length}</Badge>
+            <Badge className="bg-gradient-to-r from-indigo-500/30 to-purple-500/30 text-indigo-200 px-3 py-1 border-indigo-500/30">{Array.isArray(campeonatos) ? campeonatos.length : 0}</Badge>
           </div>
           <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white border-0 font-medium">
             <Link href="/dashboard/campeonato/nuevo" className="flex items-center">
