@@ -351,7 +351,7 @@ export default function AsistenciaPage() {
                   iniciarRegistro(actividad, responsable, fechaSeleccionada); 
                   toast({ title: 'Registro iniciado', description: `${actividad.replace('_',' ')} — ${responsable || 'Sin responsable'}` })
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-3 px-6 rounded-xl font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all active:scale-95 border border-indigo-500/30"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -368,7 +368,7 @@ export default function AsistenciaPage() {
                   iniciarRegistro(actividad, responsable, fechaSeleccionada); 
                   toast({ title: 'Registro cargado', description: `Editando registro de ${registroExistenteInfo?.responsable || 'hoy'}` })
                 }}
-                className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 px-6 rounded-xl font-semibold shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all active:scale-95 border border-purple-500/30"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -379,7 +379,7 @@ export default function AsistenciaPage() {
 
             <button
               onClick={() => router.push("/dashboard/asistencia/historial")}
-              className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 px-6 rounded-xl font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all active:scale-95 border border-emerald-500/30"
             >
               <BarChart3 className="h-5 w-5" />
               Reportes
@@ -412,10 +412,12 @@ export default function AsistenciaPage() {
 
           <div className="hidden sm:flex items-center gap-3">
             <div className="text-sm text-slate-300">Total árbitros</div>
-            <div className="px-3 py-1 bg-slate-700/50 rounded-md font-medium text-slate-100">{arbitros?.length ?? 0}</div>
+            <div className="px-3 py-1 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-md font-medium text-slate-100 border border-slate-600/50">
+              {arbitros?.length ?? 0}
+            </div>
             <button
               onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }}
-              className="px-3 py-1 rounded-md border border-slate-600/50 text-sm bg-slate-700/50 text-slate-200 hover:bg-slate-600/50"
+              className="px-3 py-1 rounded-md border border-slate-600/50 text-sm bg-gradient-to-r from-slate-700/50 to-slate-600/50 text-slate-200 hover:from-slate-700 hover:to-slate-600 transition-all font-medium"
             >
               Nuevo registro
             </button>
@@ -428,7 +430,7 @@ export default function AsistenciaPage() {
         <div className="sm:hidden mb-4 px-2">
           <button
             onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }}
-            className="w-full px-3 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-slate-200 text-sm hover:bg-slate-600/50"
+            className="w-full px-3 py-3 bg-gradient-to-r from-slate-700/50 to-slate-600/50 border border-slate-600/50 rounded-lg text-slate-200 text-sm hover:from-slate-700 hover:to-slate-600 transition-all font-medium"
           >
             Nuevo registro
           </button>
@@ -458,7 +460,7 @@ export default function AsistenciaPage() {
               <div className="flex items-center gap-2">
                 <Dialog open={openFinalize} onOpenChange={(v) => setOpenFinalize(v)}>
                   <DialogTrigger asChild>
-                    <button className="hidden md:inline-flex px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md">Finalizar</button>
+                    <button className="hidden md:inline-flex px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-md font-medium shadow-lg shadow-emerald-500/20">Finalizar</button>
                   </DialogTrigger>
 
                   <DialogContent>
@@ -496,11 +498,11 @@ export default function AsistenciaPage() {
 
                     <DialogFooter className="mt-6">
                       <DialogClose asChild>
-                        <button className="px-4 py-2 rounded-md border">Cancelar</button>
+                        <button className="px-4 py-2 rounded-md border border-slate-600/50 bg-slate-700/50 text-slate-200 hover:bg-slate-600/50 transition-colors">Cancelar</button>
                       </DialogClose>
                       <button
                         onClick={handleFinalizar}
-                        className="px-4 py-2 rounded-md bg-green-600 text-white ml-2"
+                        className="px-4 py-2 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 text-white ml-2 font-medium shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 transition-all"
                       >
                         Confirmar y finalizar
                       </button>
@@ -510,8 +512,8 @@ export default function AsistenciaPage() {
 
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-md text-slate-200 text-sm hidden md:inline-flex"
-                >Ir arriba</button>
+                  className="px-3 py-2 bg-gradient-to-r from-slate-700/50 to-slate-600/50 border border-slate-600/50 rounded-md text-slate-200 text-sm hidden md:inline-flex hover:from-slate-700 hover:to-slate-600 transition-all shadow-sm"
+                >↑ Ir arriba</button>
               </div>
             </div>
           </div>
@@ -531,18 +533,18 @@ export default function AsistenciaPage() {
       <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-40 hidden sm:flex">
         <Dialog open={openFinalize} onOpenChange={(v) => setOpenFinalize(v)}>
           <DialogTrigger asChild>
-            <button className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-4 rounded-full shadow-lg text-sm">Finalizar</button>
+            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-4 rounded-full shadow-lg shadow-emerald-500/30 text-sm font-medium transition-all border border-emerald-500/30">Finalizar</button>
           </DialogTrigger>
         </Dialog>
 
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-slate-700/50 border border-slate-600/50 text-slate-200 px-4 py-3 rounded-full shadow-lg hover:bg-slate-700">↑</button>
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-gradient-to-r from-slate-700/50 to-slate-600/50 border border-slate-600/50 text-slate-200 px-4 py-3 rounded-full shadow-lg hover:from-slate-700 hover:to-slate-600 transition-all">↑</button>
       </div>
 
       {/* Mobile fixed action bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-br from-slate-800 to-slate-900 border-t border-slate-700/50 sm:hidden z-50">
         <div className="max-w-[1000px] mx-auto w-[calc(100vw-32px)] sm:w-auto flex gap-3">
-          <button onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }} className="flex-1 bg-slate-600 hover:bg-slate-700 text-white border border-slate-600/50 rounded-lg py-3">Descartar</button>
-          <button onClick={() => setOpenFinalize(true)} className="flex-1 bg-green-600 text-white rounded-lg py-3 font-semibold">Finalizar</button>
+          <button onClick={() => { if (confirm('Descartar el registro en curso y crear uno nuevo?')) cancelarRegistro() }} className="flex-1 bg-gradient-to-r from-slate-700/50 to-slate-600/50 hover:from-slate-700 hover:to-slate-600 text-slate-200 border border-slate-600/50 rounded-lg py-3 font-medium transition-all">Descartar</button>
+          <button onClick={() => setOpenFinalize(true)} className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg py-3 font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 transition-all">Finalizar</button>
         </div>
       </div>
     </div>
