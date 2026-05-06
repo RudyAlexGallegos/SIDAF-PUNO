@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { getStoredUser, getUsuariosPendientes, getTodosUsuarios, aprobarUsuario, asignarPermisos, cambiarEstadoUsuario, logout, eliminarUsuario, Usuario } from "@/services/api"
 import { useRouter } from "next/navigation"
@@ -49,17 +51,21 @@ export default function GestionUsuariosPage() {
     }
 
     // Use cache hooks for data fetching with 5-minute TTL
-    const { data: pendientes = [], isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
+    const { data: pendientesData, isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
         "usuariosPendientes",
         fetchPendientes,
         { ttl: 5 * 60 * 1000 }
     )
 
-    const { data: todosUsuarios = [], isLoading: loadingTodos, refetch: refetchTodos } = useCache(
+    const { data: todosUsuariosData, isLoading: loadingTodos, refetch: refetchTodos } = useCache(
         "todosUsuarios",
         fetchTodos,
         { ttl: 5 * 60 * 1000 }
     )
+
+    // Ensure arrays are never null
+    const pendientes = pendientesData || []
+    const todosUsuarios = todosUsuariosData || []
 
     const isLoading = loadingPendientes || loadingTodos
 
@@ -195,9 +201,17 @@ export default function GestionUsuariosPage() {
         }
     }
 
-    const handleLogout = () => {
-        logout()
-        router.push("/login")
+    const handleLogout = async () => {
+        try {
+            await logout()
+            setUsuario(null)
+            setPermisosSeleccionados([])
+            setUsuarioSeleccionado(null)
+            router.push("/login")
+        } catch (error) {
+            console.error("Error en logout:", error)
+            router.push("/login")
+        }
     }
 
     if (isLoading && pendientes.length === 0 && todosUsuarios.length === 0) {

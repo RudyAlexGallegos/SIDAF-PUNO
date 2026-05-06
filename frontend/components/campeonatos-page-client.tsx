@@ -1,7 +1,5 @@
 "use client"
 
-export const dynamic = 'force-dynamic'
-
 import React, { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -43,11 +41,10 @@ function StatusBadge({ estado }: { estado: string | undefined }) {
   const base = "px-2 py-0.5 rounded-md text-sm font-medium"
   if (estado === "ACTIVO") return <Badge className={`${base} bg-green-500 text-white`}>En Curso</Badge>
   if (estado === "PROGRAMADO") return <Badge className={`${base} bg-blue-50 text-blue-700`}>Próximamente</Badge>
-  return <Badge className={`${base} bg-gray-100 text-gray-700`}>Finalizado</Badge>
+  return <Badge className={`${base} bg-slate-100 text-slate-700`}>Finalizado</Badge>
 }
 
 export default function CampeonadosPage() {
-  const [mounted, setMounted] = useState(false)
   const [query, setQuery] = useState<string>("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; nombre: string }>({
@@ -56,10 +53,6 @@ export default function CampeonadosPage() {
     nombre: "",
   })
   const [error, setError] = useState<string>("")
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Crear COPA PERÚ 2026 si no existe
   const crearCopaPeru = async () => {
@@ -108,17 +101,11 @@ export default function CampeonadosPage() {
   }
 
   // Use cache hook for data fetching with 5-minute TTL
-  const { data: campeonatosData, isLoading, error: cacheError, refetch } = useCache(
+  const { data: campeonatos = [], isLoading, error: cacheError, refetch } = useCache(
     "campeonatos",
     fetchCampeonatos,
     { ttl: 5 * 60 * 1000 }
   )
-  
-  // Garantizar que campeonatos siempre sea un array
-  const campeonatos = useMemo(() => {
-    if (!mounted || isLoading) return []
-    return campeonatosData || []
-  }, [mounted, isLoading, campeonatosData])
 
   useEffect(() => {
     crearCopaPeru().then(() => {
@@ -161,7 +148,6 @@ export default function CampeonadosPage() {
   }
 
   const filtered = useMemo(() => {
-    if (!campeonatos || campeonatos.length === 0) return []
     const q = query.trim().toLowerCase()
     if (!q) return campeonatos
     return campeonatos.filter(c => 
@@ -171,28 +157,17 @@ export default function CampeonadosPage() {
     )
   }, [query, campeonatos])
 
-  if (!mounted || isLoading) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-          <p className="text-gray-600">Cargando campeonatos...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-4 md:px-6">
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <ArrowLeft className="h-5 w-5" aria-hidden />
           <span>Volver al Dashboard</span>
         </Link>
         <div className="ml-auto flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-3">
-            <span className="text-sm text-gray-600">Total</span>
-            <Badge className="bg-gray-100 text-gray-800 px-2 py-1">{campeonatos.length}</Badge>
+            <span className="text-sm text-muted-foreground">Total</span>
+            <Badge className="bg-slate-100 text-slate-800 px-2 py-1">{campeonatos.length}</Badge>
           </div>
           <Button asChild>
             <Link href="/dashboard/campeonato/nuevo" className="flex items-center">
@@ -209,10 +184,10 @@ export default function CampeonadosPage() {
           <div className="flex items-center gap-2">
             <label htmlFor="buscar-campeonato" className="sr-only">Buscar</label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-600" aria-hidden />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
               <Input id="buscar-campeonato" value={query} onChange={e => setQuery(e.target.value)} type="search" placeholder="Buscar..." className="w-[200px] pl-8 md:w-[320px]" />
               {query && (
-                <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-gray-600 hover:bg-gray-100">
+                <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-slate-100">
                   <X className="h-4 w-4" aria-hidden />
                 </button>
               )}
@@ -230,7 +205,7 @@ export default function CampeonadosPage() {
           </div>
         )}
 
-        <Card className="border-gray-200 bg-white shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle>Campeonatos Activos</CardTitle>
             <CardDescription>Listado de certificados registrados</CardDescription>
@@ -257,23 +232,23 @@ export default function CampeonadosPage() {
                   <TableBody>
                     {filtered.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-sm text-gray-600 py-6">
+                        <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-6">
                           No se encontraron.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filtered.map(c => (
-                        <TableRow key={c.id} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <TableRow key={c.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 transition-colors">
                           <TableCell className="font-medium max-w-[220px] truncate flex items-center gap-2">
                             {c.nombre}
                             {c.nombre === "COPA PERÚ 2026" && (
-                              <Lock className="h-4 w-4 text-blue-600 flex-shrink-0" title="Campeonato protegido" />
+                              <Lock className="h-4 w-4 text-yellow-600 flex-shrink-0" title="Campeonato protegido" />
                             )}
                           </TableCell>
                           <TableCell className="text-center">
                             <DifficultyBadge difficulty={c.nivelDificultad} />
                           </TableCell>
-                          <TableCell className="text-center text-sm text-gray-600">{c.categoria}</TableCell>
+                          <TableCell className="text-center text-sm text-muted-foreground">{c.categoria}</TableCell>
                           <TableCell className="text-center">{c.numeroEquipos}</TableCell>
                           <TableCell className="text-center">{c.fechaInicio ? formatDate(c.fechaInicio) : '-'}</TableCell>
                           <TableCell className="text-center">

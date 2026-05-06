@@ -150,34 +150,34 @@ const ProgressIndicator = ({ currentStep }: { currentStep: number }) => {
   ]
 
   return (
-    <div className="mb-8">
-      <div className="flex justify-between mb-2">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+      <div className="flex justify-between items-center mb-6">
         <h3 className="text-sm font-semibold text-gray-700">Progreso del registro</h3>
-        <span className="text-sm font-medium text-blue-600">Paso {currentStep} de 5</span>
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium">
+          Paso {currentStep} de 5
+        </span>
       </div>
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-6">
         <div
-          className="h-full bg-gradient-to-r from-blue-600 to-blue-800 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
           style={{ width: `${(currentStep / 5) * 100}%` }}
         />
       </div>
-      <div className="flex justify-between mt-6">
-        {steps.map((step) => (
-          <div key={step.number} className="flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 border-2 ${step.number === currentStep
-                ? 'bg-blue-600 text-white border-blue-600'
+      <div className="flex justify-between">
+        {steps.map((step, index) => (
+          <div key={step.number} className="flex flex-col items-center flex-1">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 font-semibold text-sm transition-all ${
+              step.number === currentStep
+                ? 'bg-blue-600 text-white border-2 border-blue-600'
                 : step.number < currentStep
-                  ? 'bg-green-100 text-green-600 border-green-600'
-                  : 'bg-gray-100 text-gray-400 border-gray-300'
-              }`}>
-              {step.number < currentStep ? (
-                <span className="font-bold">✓</span>
-              ) : (
-                <span className="font-bold">{step.number}</span>
-              )}
+                  ? 'bg-green-100 text-green-700 border-2 border-green-300'
+                  : 'bg-gray-100 text-gray-400 border-2 border-gray-200'
+            }`}>
+              {step.number < currentStep ? '✓' : step.number}
             </div>
-            <span className={`text-xs font-medium ${step.number <= currentStep ? 'text-gray-900' : 'text-gray-500'
-              }`}>
+            <span className={`text-xs font-medium text-center ${
+              step.number <= currentStep ? 'text-gray-900' : 'text-gray-400'
+            }`}>
               {step.label}
             </span>
           </div>
@@ -203,28 +203,24 @@ const SectionCard = ({
   if (stepNumber !== currentStep) return null
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
-      <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <span className="text-lg font-bold text-blue-700">{stepNumber}</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div className="border-b border-gray-100 bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                {stepNumber}
               </div>
-              <p className="text-gray-600">{description}</p>
+              <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
             </div>
-            <div className="text-right">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium">
-                Obligatorio
-              </div>
-            </div>
+            <p className="text-gray-600 text-sm">{description}</p>
           </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold uppercase tracking-wide">
+            Paso {stepNumber}
+          </span>
         </div>
       </div>
-      <div className="p-8">
+      <div className="p-6 md:p-8">
         {children}
       </div>
     </div>
@@ -248,7 +244,7 @@ const InputField = ({
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {children}
-    {error && <p className="text-sm text-red-600">{error}</p>}
+    {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
   </div>
 )
 
@@ -267,7 +263,7 @@ const CustomInput = ({
     onChange={onChange}
     placeholder={placeholder}
     required={required}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${className}`}
+    className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm ${className}`}
     {...props}
   />
 )
@@ -284,7 +280,7 @@ const CustomSelect = ({
     value={value}
     onChange={onChange}
     required={required}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white ${className}`}
+    className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-sm ${className}`}
     {...props}
   >
     {children}
@@ -304,7 +300,7 @@ const CustomTextarea = ({
     onChange={onChange}
     placeholder={placeholder}
     rows={rows}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none ${className}`}
+    className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-sm ${className}`}
     {...props}
   />
 )
@@ -322,20 +318,24 @@ const CheckboxOption = ({
   onChange: (checked: boolean) => void
   description?: string
 }) => (
-  <div className="flex items-start space-x-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors cursor-pointer">
+  <div className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-all ${
+    checked 
+      ? 'border-blue-500 bg-blue-50' 
+      : 'border-gray-200 hover:border-gray-300'
+  }`}>
     <input
       type="checkbox"
       id={id}
       checked={checked}
       onChange={(e) => onChange(e.target.checked)}
-      className="mt-1 h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+      className="mt-1 h-4 w-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
     />
     <div className="flex-1">
       <label htmlFor={id} className="block text-sm font-medium text-gray-900 cursor-pointer">
         {label}
       </label>
       {description && (
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <p className="text-xs text-gray-500 mt-1">{description}</p>
       )}
     </div>
   </div>
@@ -367,13 +367,13 @@ const RadioOption = ({
         id={id}
         checked={checked}
         onChange={onChange}
-        className="mt-1 h-4 w-4 text-blue-600"
+        className="mt-1 h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
       />
       <div className="ml-3 flex-1">
         <label htmlFor={id} className="block text-sm font-medium text-gray-900 cursor-pointer">
           {label}
         </label>
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <p className="text-xs text-gray-500 mt-1">{description}</p>
       </div>
     </div>
   </div>
@@ -394,12 +394,12 @@ const Button = ({
   variant?: "primary" | "secondary" | "outline"
   className?: string
 }) => {
-  const baseClasses = "px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+  const baseClasses = "px-6 py-2.5 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-sm"
 
   const variants = {
-    primary: "bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900 focus:ring-blue-500",
-    secondary: "bg-gradient-to-r from-gray-600 to-gray-800 text-white hover:from-gray-700 hover:to-gray-900 focus:ring-gray-500",
-    outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500"
+    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    secondary: "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500",
+    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500"
   }
 
   return (
@@ -750,32 +750,30 @@ export default function NuevoArbitroPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gray-50">
       {/* HEADER CORPORATIVO */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="h-auto py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <div className="flex items-center gap-3 order-2 sm:order-1">
+      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="h-auto py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/dashboard/arbitros"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
-                <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center">
-                  <span className="text-lg">←</span>
-                </div>
-                <span className="font-medium hidden sm:inline">Volver</span>
+                <span className="text-lg">←</span>
+                <span className="font-medium hidden sm:inline text-sm">Volver</span>
               </Link>
             </div>
 
-            <div className="text-center order-1 sm:order-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Comisión Departamental de Árbitros</h1>
-              <p className="text-xs sm:text-sm text-gray-600">Departamento de Puno • Sistema de Registro</p>
+            <div className="text-center">
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Comisión Departamental de Árbitros</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">Registrar Nuevo Árbitro</h1>
             </div>
 
-            <div className="text-center sm:text-right order-3">
-              <div className="inline-flex flex-col sm:items-end">
+            <div className="text-center sm:text-right">
+              <div className="inline-flex flex-col items-center sm:items-end">
                 <span className="text-xs font-medium text-gray-500">Código CODAR</span>
-                <span className="text-lg font-bold text-blue-700 font-mono">{generarCodigoCODAR()}</span>
+                <span className="text-lg font-bold text-blue-600 font-mono">{generarCodigoCODAR()}</span>
               </div>
             </div>
           </div>
@@ -783,10 +781,10 @@ export default function NuevoArbitroPage() {
       </header>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ProgressIndicator currentStep={currentStep} />
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* SECCIÓN 1: IDENTIFICACIÓN */}
           <SectionCard
             title="Identificación del Árbitro"
@@ -794,110 +792,91 @@ export default function NuevoArbitroPage() {
             stepNumber={1}
             currentStep={currentStep}
           >
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Columna izquierda - Foto */}
-              <div className="lg:w-1/3">
-                <div className="sticky top-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Foto de Perfil</h3>
-                  <div className="p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-500 font-medium">Esta función estará disponible proximamente</p>
-                    <p className="text-xs text-gray-400 mt-2">Pronto podrás subir fotos de perfil</p>
-                  </div>
-                </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <InputField label="Apellido Paterno" required error={errors.apellidoPaterno}>
+                  <CustomInput
+                    value={form.apellidoPaterno}
+                    onChange={(e) => updateForm({ apellidoPaterno: e.target.value })}
+                    placeholder="Ingrese apellido paterno"
+                  />
+                </InputField>
+
+                <InputField label="Apellido Materno">
+                  <CustomInput
+                    value={form.apellidoMaterno}
+                    onChange={(e) => updateForm({ apellidoMaterno: e.target.value })}
+                    placeholder="Ingrese apellido materno"
+                  />
+                </InputField>
+
+                <InputField label="Nombres Completos" required error={errors.nombres}>
+                  <CustomInput
+                    value={form.nombres}
+                    onChange={(e) => updateForm({ nombres: e.target.value })}
+                    placeholder="Ingrese nombres completos"
+                  />
+                </InputField>
               </div>
 
-              {/* Columna derecha - Formulario */}
-              <div className="lg:w-2/3 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <InputField label="Apellido Paterno" required error={errors.apellidoPaterno}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <InputField label="DNI" required error={errors.dni}>
+                  <CustomInput
+                    value={form.dni}
+                    onChange={(e) => updateForm({ dni: e.target.value })}
+                    placeholder="Número de 8 dígitos"
+                    pattern="[0-9]{8}"
+                  />
+                </InputField>
+
+                <InputField label="Fecha de Nacimiento" required error={errors.fechaNacimiento}>
+                  <div className="space-y-2">
                     <CustomInput
-                      value={form.apellidoPaterno}
-                      onChange={(e) => updateForm({ apellidoPaterno: e.target.value })}
-                      placeholder="Ingrese apellido paterno"
+                      type="date"
+                      value={form.fechaNacimiento}
+                      onChange={(e) => updateForm({ fechaNacimiento: e.target.value })}
+                      max={new Date().toISOString().split('T')[0]}
                     />
-                  </InputField>
+                    {form.fechaNacimiento && (
+                      <div className="text-xs text-blue-600 font-medium">
+                        Edad calculada: {edad} años
+                      </div>
+                    )}
+                  </div>
+                </InputField>
 
-                  <InputField label="Apellido Materno">
-                    <CustomInput
-                      value={form.apellidoMaterno}
-                      onChange={(e) => updateForm({ apellidoMaterno: e.target.value })}
-                      placeholder="Ingrese apellido materno"
-                    />
-                  </InputField>
+                <InputField label="Lugar de Nacimiento" required error={errors.lugarNacimiento}>
+                  <CustomInput
+                    value={form.lugarNacimiento}
+                    onChange={(e) => updateForm({ lugarNacimiento: e.target.value })}
+                    placeholder="Ciudad, Departamento"
+                  />
+                </InputField>
+              </div>
 
-                  <InputField label="Nombres Completos" required error={errors.nombres}>
-                    <CustomInput
-                      value={form.nombres}
-                      onChange={(e) => updateForm({ nombres: e.target.value })}
-                      placeholder="Ingrese nombres completos"
-                    />
-                  </InputField>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField label="Sexo" required error={errors.sexo}>
+                  <CustomSelect
+                    value={form.sexo}
+                    onChange={(e) => updateForm({ sexo: e.target.value as Sexo })}
+                  >
+                    <option value="">Seleccionar sexo</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="femenino">Femenino</option>
+                  </CustomSelect>
+                </InputField>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <InputField label="DNI" required error={errors.dni}>
-                    <CustomInput
-                      value={form.dni}
-                      onChange={(e) => updateForm({ dni: e.target.value })}
-                      placeholder="Número de 8 dígitos"
-                      pattern="[0-9]{8}"
-                    />
-                  </InputField>
-
-                  <InputField label="Fecha de Nacimiento" required error={errors.fechaNacimiento}>
-                    <div className="space-y-2">
-                      <CustomInput
-                        type="date"
-                        value={form.fechaNacimiento}
-                        onChange={(e) => updateForm({ fechaNacimiento: e.target.value })}
-                        max={new Date().toISOString().split('T')[0]}
-                      />
-                      {form.fechaNacimiento && (
-                        <div className="text-sm text-blue-600 font-medium">
-                          Edad calculada: {edad} años
-                        </div>
-                      )}
-                    </div>
-                  </InputField>
-
-                  <InputField label="Lugar de Nacimiento" required error={errors.lugarNacimiento}>
-                    <CustomInput
-                      value={form.lugarNacimiento}
-                      onChange={(e) => updateForm({ lugarNacimiento: e.target.value })}
-                      placeholder="Ciudad, Departamento"
-                    />
-                  </InputField>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InputField label="Sexo" required error={errors.sexo}>
-                    <CustomSelect
-                      value={form.sexo}
-                      onChange={(e) => updateForm({ sexo: e.target.value as Sexo })}
-                    >
-                      <option value="">Seleccionar sexo</option>
-                      <option value="masculino">Masculino</option>
-                      <option value="femenino">Femenino</option>
-                    </CustomSelect>
-                  </InputField>
-
-                  <InputField label="Estatura (cm)" required error={errors.estatura}>
-                    <CustomInput
-                      value={form.estatura}
-                      onChange={(e) => updateForm({ estatura: e.target.value })}
-                      placeholder="Ej: 175"
-                      type="number"
-                      min="100"
-                      max="250"
-                      step="0.1"
-                    />
-                  </InputField>
-                </div>
+                <InputField label="Estatura (cm)" required error={errors.estatura}>
+                  <CustomInput
+                    value={form.estatura}
+                    onChange={(e) => updateForm({ estatura: e.target.value })}
+                    placeholder="Ej: 175"
+                    type="number"
+                    min="100"
+                    max="250"
+                    step="0.1"
+                  />
+                </InputField>
               </div>
             </div>
           </SectionCard>
@@ -983,8 +962,8 @@ export default function NuevoArbitroPage() {
           >
             <div className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Categoría</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Categoría</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {CATEGORIAS_CODAR.map((cat) => (
                     <RadioOption
                       key={cat.value}
@@ -1007,7 +986,7 @@ export default function NuevoArbitroPage() {
                       onChange={(e) => updateForm({ fechaAfiliacion: e.target.value })}
                     />
                     {form.fechaAfiliacion && (
-                      <div className="text-sm text-blue-600 font-medium">
+                      <div className="text-xs text-blue-600 font-medium">
                         Tiempo como árbitro: {aniosComoArbitro} años
                       </div>
                     )}
@@ -1050,8 +1029,8 @@ export default function NuevoArbitroPage() {
           >
             <div className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Roles Arbitrales</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Roles Arbitrales</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {ROLES_CODAR.map((role) => (
                     <CheckboxOption
                       key={role.id}
@@ -1071,8 +1050,8 @@ export default function NuevoArbitroPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Especialidades</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Especialidades</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {ESPECIALIDADES.map((esp) => (
                     <CheckboxOption
                       key={esp.id}
@@ -1102,8 +1081,8 @@ export default function NuevoArbitroPage() {
           >
             <div className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado Inicial del Árbitro</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Estado Inicial del Árbitro</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[
                     { value: "activo", label: "Activo", desc: "Habilitado para designaciones" },
                     { value: "inactivo", label: "Inactivo", desc: "No disponible temporalmente" },
@@ -1131,21 +1110,21 @@ export default function NuevoArbitroPage() {
                 />
               </InputField>
 
-              <div className="border-t border-gray-200 pt-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <div className="flex items-start space-x-4">
+              <div className="border-t border-gray-100 pt-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
                     <input
                       type="checkbox"
                       id="declaracionJurada"
                       checked={form.declaracionJurada}
                       onChange={(e) => updateForm({ declaracionJurada: e.target.checked })}
-                      className="mt-1 h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                      className="mt-1 h-4 w-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
                     <div>
                       <label htmlFor="declaracionJurada" className="block text-sm font-medium text-gray-900 mb-2">
                         Declaración Jurada CODAR-Puno
                       </label>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs text-gray-600">
                         Como administrador autorizado de la Comisión Departamental de Árbitros de Fútbol de Puno,
                         declaro bajo juramento que toda la información proporcionada en este formulario es verídica
                         y que el árbitro cumple con los requisitos establecidos en el reglamento interno del CODAR.
@@ -1158,23 +1137,23 @@ export default function NuevoArbitroPage() {
 
               {/* RESUMEN DE DATOS CALCULADOS */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del Registro</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Resumen del Registro</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Edad calculada</p>
-                    <p className="text-lg font-semibold text-blue-700">{edad} años</p>
+                    <p className="text-xs text-gray-600 mb-1">Edad calculada</p>
+                    <p className="text-lg font-semibold text-blue-600">{edad} años</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Tiempo como árbitro</p>
-                    <p className="text-lg font-semibold text-blue-700">{aniosComoArbitro} años</p>
+                    <p className="text-xs text-gray-600 mb-1">Tiempo como árbitro</p>
+                    <p className="text-lg font-semibold text-blue-600">{aniosComoArbitro} años</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Código CODAR</p>
-                    <p className="text-lg font-semibold text-blue-700 font-mono">{generarCodigoCODAR()}</p>
+                    <p className="text-xs text-gray-600 mb-1">Código CODAR</p>
+                    <p className="text-lg font-semibold text-blue-600 font-mono">{generarCodigoCODAR()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Foto/avatar</p>
-                    <p className="text-lg font-semibold text-blue-700">
+                    <p className="text-xs text-gray-600 mb-1">Foto/avatar</p>
+                    <p className="text-lg font-semibold text-blue-600">
                       {form.foto ? "Subida/Generada" : "Pendiente"}
                     </p>
                   </div>
@@ -1184,7 +1163,7 @@ export default function NuevoArbitroPage() {
           </SectionCard>
 
           {/* NAVEGACIÓN */}
-          <div className="mt-8 flex justify-between items-center">
+          <div className="mt-8 flex justify-between items-center gap-4">
             <Button
               type="button"
               variant="outline"
@@ -1195,7 +1174,7 @@ export default function NuevoArbitroPage() {
             </Button>
 
             <div className="text-center">
-              <span className="text-sm text-gray-600">
+              <span className="text-xs text-gray-600">
                 {currentStep === 5 ? "Finalizar registro" : `Paso ${currentStep} de 5`}
               </span>
             </div>
@@ -1206,7 +1185,7 @@ export default function NuevoArbitroPage() {
                 onClick={nextStep}
                 variant="primary"
               >
-                Continuar al siguiente paso
+                Continuar
               </Button>
             ) : (
               <Button
@@ -1217,10 +1196,10 @@ export default function NuevoArbitroPage() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="animate-spin">↻</span>
-                    Procesando registro...
+                    Procesando...
                   </span>
                 ) : (
-                  "Completar registro del árbitro"
+                  "Registrar Árbitro"
                 )}
               </Button>
             )}
@@ -1230,11 +1209,11 @@ export default function NuevoArbitroPage() {
         {/* PIE CORPORATIVO */}
         <div className="mt-12 pt-8 border-t border-gray-200">
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-xs text-gray-600">
               Comisión Departamental de Árbitros de Fútbol • Departamento de Puno
             </p>
             <p className="text-xs text-gray-500 mt-2">
-              Sistema de Gestión Arbitral • Versión 1.0 • {new Date().getFullYear()}
+              Sistema de Gestión Arbitral • {new Date().getFullYear()}
             </p>
           </div>
         </div>

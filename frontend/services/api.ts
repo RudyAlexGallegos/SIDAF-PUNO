@@ -791,8 +791,22 @@ export async function verificarDni(dni: string): Promise<boolean> {
  * Cierra sesión del usuario
  */
 export async function logout(): Promise<void> {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    try {
+        if (typeof window === "undefined") return;
+        
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        
+        // Clear all cache entries
+        const keys = Object.keys(localStorage);
+        for (let i = 0; i < keys.length; i++) {
+            if (keys[i] && keys[i].startsWith("sidaf_cache_")) {
+                localStorage.removeItem(keys[i]);
+            }
+        }
+    } catch (error) {
+        console.error("Error durante logout:", error);
+    }
 }
 
 /**

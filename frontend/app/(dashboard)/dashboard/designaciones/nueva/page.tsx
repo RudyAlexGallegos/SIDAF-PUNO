@@ -260,10 +260,10 @@ export default function NuevaDesignacionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-4">
-          <Loader className="w-16 h-16 animate-spin text-yellow-400 mx-auto" />
-          <p className="text-slate-300 text-lg">Cargando sistema de designación...</p>
+          <Loader className="w-16 h-16 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-600 text-lg">Cargando sistema de designación...</p>
         </div>
       </div>
     )
@@ -275,20 +275,20 @@ export default function NuevaDesignacionPage() {
 
   if (currentStep === "campeonato") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <Link href="/dashboard/designaciones">
-              <Button variant="ghost" size="icon" className="mb-4 hover:bg-white/10">
+              <Button variant="ghost" size="icon" className="mb-4 hover:bg-gray-100">
                 <ChevronLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-              <Trophy className="w-10 h-10 text-yellow-400" />
+            <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+              <Trophy className="w-10 h-10 text-blue-600" />
               Nueva Designación
             </h1>
-            <p className="text-slate-400 text-lg">Paso 1 de 7: Selecciona un campeonato</p>
+            <p className="text-gray-600 text-lg">Paso 1 de 7: Selecciona un campeonato</p>
           </div>
 
           {/* Grid de campeonatos */}
@@ -309,12 +309,12 @@ export default function NuevaDesignacionPage() {
                   }}
                   className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
                 >
-                  <Card className="h-full border-2 border-slate-600 bg-slate-800/50 hover:border-yellow-400/50 transition-all">
+                  <Card className="h-full border-2 border-gray-200 bg-white hover:border-blue-600/50 shadow-sm transition-all">
                     <CardContent className="p-6 h-full flex flex-col justify-between">
                       {/* Header */}
                       <div>
                         <div className="flex items-start justify-between mb-4">
-                          <Trophy className="w-8 h-8 text-yellow-400" />
+                          <Trophy className="w-8 h-8 text-blue-600" />
                           {esCopaPeruProtegida && (
                             <div title="Campeonato protegido">
                               <Lock className="w-5 h-5 text-red-400" />
@@ -323,15 +323,15 @@ export default function NuevaDesignacionPage() {
                         </div>
 
                         {/* Nombre */}
-                        <h3 className="text-xl font-bold text-white mb-2">
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">
                           {camp.nombre}
                         </h3>
 
                         {/* Detalles */}
-                        <div className="space-y-2 text-sm text-slate-300">
+                        <div className="space-y-2 text-sm text-gray-600">
                           {camp.categoria && (
                             <p className="flex items-center gap-2">
-                              <Badge className="bg-blue-600 text-white">{camp.categoria}</Badge>
+                              <Badge className="bg-blue-600 text-slate-900">{camp.categoria}</Badge>
                             </p>
                           )}
                           {camp.numeroEquipos && (
@@ -344,11 +344,11 @@ export default function NuevaDesignacionPage() {
                       </div>
 
                       {/* Estado */}
-                      <div className="mt-4 pt-4 border-t border-slate-700">
+                      <div className="mt-4 pt-4 border-t border-gray-200">
                         <Badge className={`${
                           camp.estado === "ACTIVO"
-                            ? "bg-green-600 text-white"
-                            : "bg-slate-600 text-slate-200"
+                            ? "bg-green-600 text-slate-900"
+                            : "bg-slate-600 text-gray-600"
                         }`}>
                           {camp.estado || "Sin estado"}
                         </Badge>
@@ -370,7 +370,7 @@ export default function NuevaDesignacionPage() {
 
   if (currentStep === "etapa" && campeonatoSeleccionado) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -378,23 +378,23 @@ export default function NuevaDesignacionPage() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentStep("campeonato")}
-              className="mb-4 hover:bg-white/10"
+              className="mb-4 hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-4xl font-bold text-white mb-2">Etapas del Campeonato</h1>
-            <p className="text-slate-400 text-lg">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Etapas del Campeonato</h1>
+            <p className="text-gray-600 text-lg">
               {campeonatoSeleccionado.nombre} • Paso 2 de 7
             </p>
 
             {/* 🔐 ADVERTENCIA DE DESBLOQUEO (COPA PERÚ) */}
             {esCopaPeruActual && !validarDistritosCompletos() && (
-              <div className="mt-4 p-4 bg-yellow-500/20 border border-yellow-600 rounded-lg">
-                <p className="text-yellow-300 text-sm">
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-700 text-sm">
                   ⚠️ Debes completar la <strong>Etapa Distrital</strong> seleccionando los campeones de todos los distritos para desbloquear las siguientes etapas.
                 </p>
                 {obtenerDistritosPendientes().length > 0 && (
-                  <p className="text-yellow-200 text-xs mt-2">
+                  <p className="text-blue-600 text-xs mt-2">
                     Distritos pendientes: <strong>{obtenerDistritosPendientes().join(", ")}</strong>
                   </p>
                 )}
@@ -440,9 +440,9 @@ export default function NuevaDesignacionPage() {
                   <Card
                     className={`h-32 border-2 ${
                       estaDesbloqueada
-                        ? "border-slate-600 bg-slate-800/50 hover:border-yellow-400/50"
-                        : "border-red-600/30 bg-slate-900/50"
-                    } flex items-center justify-center relative transition-all`}
+                        ? "border-gray-200 bg-white hover:border-blue-600/50"
+                        : "border-red-200 bg-red-50"
+                    } flex items-center justify-center relative transition-all shadow-sm`}
                   >
                     {!estaDesbloqueada && esCopaPeruActual && (
                       <div className="absolute top-2 right-2">
@@ -459,7 +459,7 @@ export default function NuevaDesignacionPage() {
                     <CardContent className="text-center p-6">
                       <div className="flex flex-col items-center gap-2">
                         <h3 className={`text-2xl font-bold ${
-                          estaDesbloqueada ? "text-slate-100" : "text-slate-400"
+                          estaDesbloqueada ? "text-slate-900" : "text-gray-400"
                         }`}>
                           {etapa}
                         </h3>
@@ -484,7 +484,7 @@ export default function NuevaDesignacionPage() {
 
   if (currentStep === "provincia" && campeonatoSeleccionado && etapaSeleccionada) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -492,15 +492,15 @@ export default function NuevaDesignacionPage() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentStep("etapa")}
-              className="mb-4 hover:bg-white/10"
+              className="mb-4 hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-              <MapPin className="w-10 h-10 text-blue-400" />
+            <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <MapPin className="w-10 h-10 text-blue-600" />
               Provincias de Puno
             </h1>
-            <p className="text-slate-400 text-lg">
+            <p className="text-gray-600 text-lg">
               {etapaSeleccionada} • Paso 3 de 7
             </p>
           </div>
@@ -516,10 +516,10 @@ export default function NuevaDesignacionPage() {
                 }}
                 className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
               >
-                <Card className="h-24 border-2 border-slate-600 bg-slate-800/50 hover:border-blue-400/50 transition-all flex items-center justify-center">
+                <Card className="h-24 border-2 border-gray-200 bg-white hover:border-blue-600/50 shadow-sm transition-all flex items-center justify-center">
                   <CardContent className="text-center p-4">
-                    <h3 className="text-lg font-bold text-slate-100 flex items-center justify-center gap-2">
-                      <MapPin className="w-4 h-4" />
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center justify-center gap-2">
+                      <MapPin className="w-4 h-4 text-blue-600" />
                       {provincia}
                     </h3>
                   </CardContent>
@@ -542,7 +542,7 @@ export default function NuevaDesignacionPage() {
     )
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -550,14 +550,14 @@ export default function NuevaDesignacionPage() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentStep("provincia")}
-              className="mb-4 hover:bg-white/10"
+              className="mb-4 hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-4xl font-bold text-white mb-2">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">
               Clasificación Provincial - {provinciaSeleccionada}
             </h1>
-            <p className="text-slate-400 text-lg">
+            <p className="text-gray-500 text-lg">
               Selecciona campeones y subcampeones de los distritos • Paso 3B de 7
             </p>
 
@@ -576,10 +576,10 @@ export default function NuevaDesignacionPage() {
               const tieneCompletado = !!campeones?.campeón
 
               return (
-                <div key={distrito} className="bg-slate-800 border-2 border-slate-700 rounded-lg p-6">
+                <div key={distrito} className="bg-slate-800 border-2 border-gray-200 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-xl font-bold text-white">{distrito}</h3>
+                      <h3 className="text-xl font-bold text-slate-900">{distrito}</h3>
                       {tieneCompletado ? (
                         <CheckCircle2 className="w-6 h-6 text-green-500" />
                       ) : (
@@ -611,7 +611,7 @@ export default function NuevaDesignacionPage() {
                             },
                           }))
                         }}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:border-yellow-500"
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-600"
                       >
                         <option value="">-- Selecciona campeón --</option>
                         {equiposFiltrados.map((eq) => (
@@ -624,7 +624,7 @@ export default function NuevaDesignacionPage() {
 
                     {/* SUBCAMPEÓN (OPCIONAL) */}
                     <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
                         🥈 Equipo Subcampeón (Opcional)
                       </label>
                       <select
@@ -641,7 +641,7 @@ export default function NuevaDesignacionPage() {
                             },
                           }))
                         }}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-600"
                       >
                         <option value="">-- Selecciona subcampeón --</option>
                         {equiposFiltrados
@@ -706,7 +706,7 @@ export default function NuevaDesignacionPage() {
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
             <div className="mb-8">
@@ -714,14 +714,14 @@ export default function NuevaDesignacionPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setCurrentStep("provincia")}
-                className="mb-4 hover:bg-white/10"
+                className="mb-4 hover:bg-gray-100"
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className="text-4xl font-bold text-slate-900 mb-2">
                 Clasificación Provincial - {provinciaSeleccionada}
               </h1>
-              <p className="text-slate-400 text-lg">
+              <p className="text-gray-500 text-lg">
                 Selecciona campeones y subcampeones de los distritos • Paso 4 de 7
               </p>
 
@@ -740,10 +740,10 @@ export default function NuevaDesignacionPage() {
                 const tieneCompletado = !!campeones?.campeón
 
                 return (
-                  <div key={distrito} className="bg-slate-800 border-2 border-slate-700 rounded-lg p-6">
+                  <div key={distrito} className="bg-slate-800 border-2 border-gray-200 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-white">{distrito}</h3>
+                        <h3 className="text-xl font-bold text-slate-900">{distrito}</h3>
                         {tieneCompletado ? (
                           <CheckCircle2 className="w-6 h-6 text-green-500" />
                         ) : (
@@ -775,7 +775,7 @@ export default function NuevaDesignacionPage() {
                               },
                             }))
                           }}
-                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:border-yellow-500"
+                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-600"
                         >
                           <option value="">-- Selecciona campeón --</option>
                           {equiposFiltrados.map((eq) => (
@@ -788,7 +788,7 @@ export default function NuevaDesignacionPage() {
 
                       {/* SUBCAMPEÓN (OPCIONAL) */}
                       <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2">
+                        <label className="block text-sm font-bold text-gray-600 mb-2">
                           🥈 Equipo Subcampeón (Opcional)
                         </label>
                         <select
@@ -805,7 +805,7 @@ export default function NuevaDesignacionPage() {
                               },
                             }))
                           }}
-                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-600"
                         >
                           <option value="">-- Selecciona subcampeón --</option>
                           {equiposFiltrados
@@ -859,7 +859,7 @@ export default function NuevaDesignacionPage() {
 
     // VISTA POR DEFECTO (ETAPA DISTRITAL - SIN SELECTORES)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -867,14 +867,14 @@ export default function NuevaDesignacionPage() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentStep("provincia")}
-              className="mb-4 hover:bg-white/10"
+              className="mb-4 hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-2">
               Distritos de {provinciaSeleccionada}
             </h1>
-            <p className="text-slate-400 text-lg">Paso 4 de 7</p>
+            <p className="text-gray-500 text-lg">Paso 4 de 7</p>
           </div>
 
           {/* Grid de distritos */}
@@ -888,9 +888,9 @@ export default function NuevaDesignacionPage() {
                 }}
                 className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
               >
-                <Card className="h-24 border-2 border-slate-600 bg-slate-800/50 hover:border-green-400/50 transition-all flex items-center justify-center">
+                <Card className="h-24 border-2 border-gray-200 bg-white hover:border-green-400/50 transition-all flex items-center justify-center">
                   <CardContent className="text-center p-4">
-                    <h3 className="text-lg font-bold text-slate-100">
+                    <h3 className="text-lg font-bold text-slate-900">
                       {distrito}
                     </h3>
                   </CardContent>
@@ -909,7 +909,7 @@ export default function NuevaDesignacionPage() {
 
   if (currentStep === "partidos" && (distritoSeleccionado || provinciaSeleccionada)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -917,12 +917,12 @@ export default function NuevaDesignacionPage() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentStep("distrito")}
-              className="mb-4 hover:bg-white/10"
+              className="mb-4 hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-4xl font-bold text-white mb-2">Crear Partidos</h1>
-            <p className="text-slate-400 text-lg">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Crear Partidos</h1>
+            <p className="text-gray-500 text-lg">
               {provinciaSeleccionada || distritoSeleccionado} • Paso 5 de 7
             </p>
           </div>
@@ -930,9 +930,9 @@ export default function NuevaDesignacionPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* SELECTOR DE EQUIPOS */}
             <div className="lg:col-span-3">
-              <Card className="border-2 border-slate-700 bg-slate-800/50">
+              <Card className="border-2 border-gray-200 bg-white">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
+                  <CardTitle className="text-slate-900 flex items-center gap-2">
                     <Users className="w-5 h-5 text-purple-400" />
                     Crear Partido
                   </CardTitle>
@@ -940,7 +940,7 @@ export default function NuevaDesignacionPage() {
                 <CardContent className="space-y-4">
                   {/* Equipo Local */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-3">
+                    <label className="block text-sm font-semibold text-gray-600 mb-3">
                       ⚽ Equipo Local
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -950,8 +950,8 @@ export default function NuevaDesignacionPage() {
                           onClick={() => setEquipoLocal(eq)}
                           className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
                             equipoLocal?.id === eq.id
-                              ? "border-purple-400 bg-purple-600 text-white"
-                              : "border-slate-600 bg-slate-700 text-slate-200 hover:border-purple-400/50"
+                              ? "border-purple-400 bg-purple-600 text-slate-900"
+                              : "border-gray-200 bg-white text-gray-600 hover:border-purple-400/50"
                           }`}
                         >
                           {eq.nombre.split(" ").slice(0, 2).join(" ")}
@@ -962,7 +962,7 @@ export default function NuevaDesignacionPage() {
 
                   {/* Equipo Visitante */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-3">
+                    <label className="block text-sm font-semibold text-gray-600 mb-3">
                       ✈️ Equipo Visitante
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -972,8 +972,8 @@ export default function NuevaDesignacionPage() {
                           onClick={() => setEquipoVisitante(eq)}
                           className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
                             equipoVisitante?.id === eq.id
-                              ? "border-orange-400 bg-orange-600 text-white"
-                              : "border-slate-600 bg-slate-700 text-slate-200 hover:border-orange-400/50"
+                              ? "border-orange-400 bg-orange-600 text-slate-900"
+                              : "border-gray-200 bg-white text-gray-600 hover:border-orange-400/50"
                           }`}
                         >
                           {eq.nombre.split(" ").slice(0, 2).join(" ")}
@@ -983,7 +983,7 @@ export default function NuevaDesignacionPage() {
                   </div>
 
                   {/* Botones */}
-                  <div className="flex gap-3 pt-4 border-t border-slate-700">
+                  <div className="flex gap-3 pt-4 border-t border-gray-200">
                     <Button
                       onClick={() => {
                         if (!equipoLocal || !equipoVisitante) {
@@ -1042,18 +1042,18 @@ export default function NuevaDesignacionPage() {
             {/* LISTA DE PARTIDOS */}
             {partidos.length > 0 && (
               <div className="lg:col-span-3">
-                <Card className="border-2 border-slate-700 bg-slate-800/50">
+                <Card className="border-2 border-gray-200 bg-white">
                   <CardHeader>
-                    <CardTitle className="text-white">
+                    <CardTitle className="text-slate-900">
                       Partidos Creados ({partidos.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {partidos.map((partido, idx) => (
-                        <div key={partido.id} className="p-4 border border-slate-600 rounded-lg bg-slate-700/30">
+                        <div key={partido.id} className="p-4 border border-gray-200 rounded-lg bg-white/30">
                           <div className="flex items-center justify-between mb-3">
-                            <Badge className="bg-blue-600 text-white">Partido {idx + 1}</Badge>
+                            <Badge className="bg-blue-600 text-slate-900">Partido {idx + 1}</Badge>
                             <button
                               onClick={() => {
                                 setPartidos(partidos.filter((p) => p.id !== partido.id))
@@ -1064,9 +1064,9 @@ export default function NuevaDesignacionPage() {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                          <p className="text-white font-semibold">{partido.equipoLocal.nombre}</p>
-                          <p className="text-center text-slate-400 text-sm my-1">VS</p>
-                          <p className="text-white font-semibold">{partido.equipoVisitante.nombre}</p>
+                          <p className="text-slate-900 font-semibold">{partido.equipoLocal.nombre}</p>
+                          <p className="text-center text-gray-500 text-sm my-1">VS</p>
+                          <p className="text-slate-900 font-semibold">{partido.equipoVisitante.nombre}</p>
                         </div>
                       ))}
                     </div>
@@ -1086,7 +1086,7 @@ export default function NuevaDesignacionPage() {
 
   if (currentStep === "designar" && partidos.length > 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -1094,22 +1094,22 @@ export default function NuevaDesignacionPage() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentStep("partidos")}
-              className="mb-4 hover:bg-white/10"
+              className="mb-4 hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-4xl font-bold text-white mb-2">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">
               Designación de Árbitros
             </h1>
-            <p className="text-slate-400 text-lg">Paso 6 de 7</p>
+            <p className="text-gray-500 text-lg">Paso 6 de 7</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* PANEL LATERAL: ÁRBITROS */}
             <div className="lg:col-span-1">
-              <Card className="border-2 border-slate-700 bg-slate-800/50 sticky top-24">
+              <Card className="border-2 border-gray-200 bg-white sticky top-24">
                 <CardHeader>
-                  <CardTitle className="text-white text-lg">
+                  <CardTitle className="text-slate-900 text-lg">
                     Árbitros Disponibles
                   </CardTitle>
                 </CardHeader>
@@ -1118,12 +1118,12 @@ export default function NuevaDesignacionPage() {
                     {arbitros.map((arb) => (
                       <div
                         key={arb.id}
-                        className="p-2 bg-slate-700/50 rounded border border-slate-600 hover:border-yellow-400/50 transition-all cursor-pointer"
+                        className="p-2 bg-white/50 rounded border border-gray-200 hover:border-blue-600/50 transition-all cursor-pointer"
                       >
-                        <p className="font-semibold text-slate-100 text-sm">
+                        <p className="font-semibold text-slate-900 text-sm">
                           {arb.nombre}
                         </p>
-                        <Badge className="text-xs mt-1 bg-blue-600 text-white">
+                        <Badge className="text-xs mt-1 bg-blue-600 text-slate-900">
                           {arb.categoria}
                         </Badge>
                       </div>
@@ -1136,17 +1136,17 @@ export default function NuevaDesignacionPage() {
             {/* PRINCIPAL: PARTIDOS Y DESIGNACIÓN */}
             <div className="lg:col-span-3 space-y-6">
               {partidos.map((partido, idx) => (
-                <Card key={partido.id} className="border-2 border-slate-600 bg-slate-800/50">
+                <Card key={partido.id} className="border-2 border-gray-200 bg-white">
                   {/* Header del partido */}
                   <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-900">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-white flex items-center gap-2">
+                      <CardTitle className="text-slate-900 flex items-center gap-2">
                         <Badge className="bg-purple-600">Partido {idx + 1}</Badge>
                       </CardTitle>
                       <div className="text-right">
-                        <p className="font-semibold text-slate-100">{partido.equipoLocal.nombre}</p>
-                        <p className="text-xs text-slate-400 my-1">vs</p>
-                        <p className="font-semibold text-slate-100">{partido.equipoVisitante.nombre}</p>
+                        <p className="font-semibold text-slate-900">{partido.equipoLocal.nombre}</p>
+                        <p className="text-xs text-gray-500 my-1">vs</p>
+                        <p className="font-semibold text-slate-900">{partido.equipoVisitante.nombre}</p>
                       </div>
                     </div>
                   </CardHeader>
@@ -1155,7 +1155,7 @@ export default function NuevaDesignacionPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                       {/* Árbitro Principal */}
                       <div>
-                        <label className="block text-sm font-semibold text-slate-300 mb-2">
+                        <label className="block text-sm font-semibold text-gray-600 mb-2">
                           🛡️ Principal
                         </label>
                         <select
@@ -1166,7 +1166,7 @@ export default function NuevaDesignacionPage() {
                             updatedPartidos[idx].arbitroPrincipal = arb || null
                             setPartidos(updatedPartidos)
                           }}
-                          className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                          className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         >
                           <option value="">Seleccionar</option>
                           {arbitros.map((arb) => (
@@ -1179,7 +1179,7 @@ export default function NuevaDesignacionPage() {
 
                       {/* Asistente 1 */}
                       <div>
-                        <label className="block text-sm font-semibold text-slate-300 mb-2">
+                        <label className="block text-sm font-semibold text-gray-600 mb-2">
                           👤 Asistente 1
                         </label>
                         <select
@@ -1190,7 +1190,7 @@ export default function NuevaDesignacionPage() {
                             updatedPartidos[idx].asistente1 = arb || null
                             setPartidos(updatedPartidos)
                           }}
-                          className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                         >
                           <option value="">Seleccionar</option>
                           {arbitros.map((arb) => (
@@ -1203,7 +1203,7 @@ export default function NuevaDesignacionPage() {
 
                       {/* Asistente 2 */}
                       <div>
-                        <label className="block text-sm font-semibold text-slate-300 mb-2">
+                        <label className="block text-sm font-semibold text-gray-600 mb-2">
                           👤 Asistente 2
                         </label>
                         <select
@@ -1214,7 +1214,7 @@ export default function NuevaDesignacionPage() {
                             updatedPartidos[idx].asistente2 = arb || null
                             setPartidos(updatedPartidos)
                           }}
-                          className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                          className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
                         >
                           <option value="">Seleccionar</option>
                           {arbitros.map((arb) => (
@@ -1227,7 +1227,7 @@ export default function NuevaDesignacionPage() {
 
                       {/* Cuarto Árbitro */}
                       <div>
-                        <label className="block text-sm font-semibold text-slate-300 mb-2">
+                        <label className="block text-sm font-semibold text-gray-600 mb-2">
                           🔄 Cuarto
                         </label>
                         <select
@@ -1238,7 +1238,7 @@ export default function NuevaDesignacionPage() {
                             updatedPartidos[idx].cuartoArbitro = arb || null
                             setPartidos(updatedPartidos)
                           }}
-                          className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                          className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                         >
                           <option value="">Seleccionar</option>
                           {arbitros.map((arb) => (
@@ -1251,7 +1251,7 @@ export default function NuevaDesignacionPage() {
 
                       {/* Asesor */}
                       <div>
-                        <label className="block text-sm font-semibold text-slate-300 mb-2">
+                        <label className="block text-sm font-semibold text-gray-600 mb-2">
                           📋 Asesor
                         </label>
                         <select
@@ -1262,7 +1262,7 @@ export default function NuevaDesignacionPage() {
                             updatedPartidos[idx].asesor = arb || null
                             setPartidos(updatedPartidos)
                           }}
-                          className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                          className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                         >
                           <option value="">Seleccionar</option>
                           {arbitros.map((arb) => (
@@ -1293,7 +1293,7 @@ export default function NuevaDesignacionPage() {
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
-                    className="flex-1 border-slate-600 hover:bg-slate-700 text-slate-100"
+                    className="flex-1 border-gray-200 hover:bg-white text-slate-900"
                     onClick={() => setCurrentStep("partidos")}
                   >
                     ← Volver
@@ -1399,7 +1399,7 @@ export default function NuevaDesignacionPage() {
 
   if (currentStep === "confirmacion") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8 flex items-center justify-center">
         <div className="max-w-2xl w-full">
           <Card className="border-2 border-green-600 bg-gradient-to-br from-green-600/20 to-emerald-600/20">
             <CardContent className="p-8 text-center space-y-6">
@@ -1407,22 +1407,22 @@ export default function NuevaDesignacionPage() {
                 <CheckCircle2 className="w-20 h-20 text-green-400 animate-pulse" />
               </div>
 
-              <h1 className="text-4xl font-bold text-white">
+              <h1 className="text-4xl font-bold text-slate-900">
                 ¡Designaciones Confirmadas!
               </h1>
 
-              <p className="text-slate-300 text-lg">
+              <p className="text-gray-600 text-lg">
                 Se han creado exitosamente {partidos.length} designaciones.
               </p>
 
-              <div className="space-y-2 text-left max-h-48 overflow-y-auto bg-slate-800/50 p-4 rounded border border-slate-700">
+              <div className="space-y-2 text-left max-h-48 overflow-y-auto bg-white p-4 rounded border border-gray-200">
                 {partidos.map((partido, idx) => (
-                  <div key={partido.id} className="text-sm text-slate-300">
-                    <p className="font-semibold text-slate-100">
+                  <div key={partido.id} className="text-sm text-gray-600">
+                    <p className="font-semibold text-slate-900">
                       Partido {idx + 1}: {partido.equipoLocal.nombre} vs {partido.equipoVisitante.nombre}
                     </p>
                     {partido.arbitroPrincipal && (
-                      <p className="text-xs text-slate-400 pl-2">
+                      <p className="text-xs text-gray-500 pl-2">
                         • Principal: {partido.arbitroPrincipal.nombre}
                       </p>
                     )}
@@ -1433,7 +1433,7 @@ export default function NuevaDesignacionPage() {
               <div className="flex gap-3 pt-4">
                 <Button
                   variant="outline"
-                  className="flex-1 border-slate-600 hover:bg-slate-700 text-slate-100"
+                  className="flex-1 border-gray-200 hover:bg-white text-slate-900"
                   onClick={() => router.push("/dashboard/designaciones")}
                 >
                   Ver Designaciones

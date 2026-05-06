@@ -89,9 +89,9 @@ export default function EquiposPage() {
     const getDivisionBadge = (categoria?: string) => {
         switch (categoria) {
             case "Primera División":
-                return <Badge className="bg-gradient-to-r from-amber-500 to-orange-500">Primera</Badge>
+                return <Badge className="bg-blue-100 text-blue-700 font-medium">Primera</Badge>
             case "Segunda División":
-                return <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500">Segunda</Badge>
+                return <Badge className="bg-green-100 text-green-700 font-medium">Segunda</Badge>
             default:
                 return <Badge variant="outline">{categoria}</Badge>
         }
@@ -137,22 +137,22 @@ export default function EquiposPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/campeonatos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                    <Link href="/dashboard/campeonatos" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
                         <ArrowLeft className="h-5 w-5" />
                         <span className="hidden sm:inline">Volver</span>
                     </Link>
-                    <div className="h-6 w-px bg-slate-300" />
+                    <div className="h-6 w-px bg-gray-300" />
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                        <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
                             <Shield className="h-7 w-7 text-white" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900">Equipos</h1>
-                            <p className="text-slate-500">Gestiona los equipos participantes</p>
+                            <p className="text-gray-500">Gestiona los equipos participantes</p>
                         </div>
                     </div>
                 </div>
-                <Button asChild className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
                     <Link href="/dashboard/campeonatos/equipos/nuevo">
                         <Plus className="h-4 w-4 mr-2" />
                         Nuevo Equipo
@@ -163,7 +163,7 @@ export default function EquiposPage() {
             {/* Stats por Provincia - Preparado para COPAR */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
-                    <LayoutGrid className="h-5 w-5 text-slate-600" />
+                    <LayoutGrid className="h-5 w-5 text-gray-600" />
                     <h2 className="text-lg font-semibold text-slate-900">Equipos por Provincia</h2>
                 </div>
                 <div className="grid gap-3 md:grid-cols-7">
@@ -177,12 +177,12 @@ export default function EquiposPage() {
                                 className={`p-3 rounded-xl border-2 transition-all text-left ${
                                     provinciaFilter === prov.nombre 
                                         ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50" 
-                                        : "border-slate-200 hover:border-slate-300 bg-white"
+                                        : "border-gray-200 hover:border-slate-300 bg-white"
                                 }`}
                             >
-                                <p className="text-xs text-slate-500 truncate">{prov.nombre}</p>
+                                <p className="text-xs text-gray-500 truncate">{prov.nombre}</p>
                                 <p className="text-xl font-bold text-slate-900">{s.total}</p>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-gray-400">
                                     <span className="text-amber-600">{s.primera}P</span> · 
                                     <span className="text-green-600">{s.segunda}S</span>
                                 </p>
@@ -194,41 +194,41 @@ export default function EquiposPage() {
 
             {/* Stats generales */}
             <div className="grid gap-4 md:grid-cols-3 mb-8">
-                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                <Card className="bg-white border border-gray-200 shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-blue-600">Total Equipos</p>
+                                <p className="text-sm text-gray-600">Total Equipos</p>
                                 <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-blue-200 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
                                 <Users className="h-6 w-6 text-blue-600" />
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                <Card className="bg-white border border-gray-200 shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-amber-600">Primera División</p>
-                                <p className="text-3xl font-bold text-amber-600">{stats.primera}</p>
+                                <p className="text-sm text-gray-600">Primera División</p>
+                                <p className="text-3xl font-bold text-blue-600">{stats.primera}</p>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-amber-200 flex items-center justify-center">
-                                <Shield className="h-6 w-6 text-amber-600" />
+                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                                <Shield className="h-6 w-6 text-blue-600" />
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <Card className="bg-white border border-gray-200 shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-green-600">Segunda División</p>
-                                <p className="text-3xl font-bold text-green-600">{stats.segunda}</p>
+                                <p className="text-sm text-gray-600">Segunda División</p>
+                                <p className="text-3xl font-bold text-blue-600">{stats.segunda}</p>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-green-200 flex items-center justify-center">
-                                <Shield className="h-6 w-6 text-green-600" />
+                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                                <Shield className="h-6 w-6 text-blue-600" />
                             </div>
                         </div>
                     </CardContent>
@@ -238,7 +238,7 @@ export default function EquiposPage() {
             {/* Search and Filters */}
             <div className="flex flex-col lg:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                         placeholder="Buscar equipos..."
                         value={query}
@@ -250,7 +250,7 @@ export default function EquiposPage() {
                     <select
                         value={provinciaFilter}
                         onChange={(e) => setProvinciaFilter(e.target.value)}
-                        className="h-12 px-4 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-12 px-4 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="todos">Todas las provincias</option>
                         {provincias.map((prov) => (
@@ -260,7 +260,7 @@ export default function EquiposPage() {
                     <select
                         value={divisionFilter}
                         onChange={(e) => setDivisionFilter(e.target.value)}
-                        className="h-12 px-4 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-12 px-4 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="todos">Todas las divisiones</option>
                         {divisiones.map((d) => (
@@ -272,16 +272,16 @@ export default function EquiposPage() {
 
             {/* Grid de equipos */}
             {filtered.length === 0 ? (
-                <Card className="p-12 text-center border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <Card className="p-12 text-center border border-gray-200 bg-white shadow-sm">
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                            <Shield className="h-10 w-10 text-blue-400" />
+                        <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center">
+                            <Shield className="h-10 w-10 text-blue-600" />
                         </div>
                         <div>
                             <h3 className="text-xl font-semibold text-slate-900">No hay equipos</h3>
-                            <p className="text-slate-500 mt-2">Agrega tu primer equipo para comenzar</p>
+                            <p className="text-gray-500 mt-2">Agrega tu primer equipo para comenzar</p>
                         </div>
-                        <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white mt-4">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-4">
                             <Plus className="h-4 w-4 mr-2" />
                             Agregar Equipo
                         </Button>
@@ -290,12 +290,12 @@ export default function EquiposPage() {
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filtered.map((equipo: EquipoAPI) => (
-                        <Card key={equipo.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden">
-                            <div className={`h-2 bg-gradient-to-r ${getProvinciaColor(equipo.provincia)}`} />
+                        <Card key={equipo.id} className="group hover:shadow-xl transition-all duration-300 border border-gray-200 bg-white shadow-sm overflow-hidden">
+                            <div className={`h-2 bg-blue-600`} />
                             <CardHeader className="pb-3">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${getProvinciaColor(equipo.provincia)} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                                        <div className={`w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
                                             <Shield className="h-8 w-8 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -314,29 +314,29 @@ export default function EquiposPage() {
                                 </div>
                                 <div className="space-y-2 text-sm">
                                     {equipo.estadio && (
-                                        <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2 rounded-lg">
-                                            <Building className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                                        <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <Building className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                             <span className="truncate">{equipo.estadio}</span>
                                         </div>
                                     )}
                                     {equipo.telefono && (
-                                        <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2 rounded-lg">
-                                            <Phone className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                                        <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                             <span>{equipo.telefono}</span>
                                         </div>
                                     )}
                                     {equipo.email && (
-                                        <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2 rounded-lg">
-                                            <Mail className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                                        <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                             <span className="truncate">{equipo.email}</span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                                <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
                                     <Button variant="outline" size="sm" className="flex-1 hover:bg-red-50 hover:border-red-200 hover:text-red-600" onClick={() => handleDelete(equipo.id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
-                                    <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-600 text-white">
+                                    <Button asChild size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
                                         <Link href={`/dashboard/campeonatos/equipos/${equipo.id}/editar`}>
                                             <Edit className="h-4 w-4 mr-1" />
                                             Editar
