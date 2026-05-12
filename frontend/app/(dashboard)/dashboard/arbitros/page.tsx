@@ -1,8 +1,6 @@
 "use client"
 
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,253 +14,166 @@ import {
 import {
   ArrowLeft,
   Plus,
-  Edit,
-  Eye,
-  Phone,
+  Users,
+  Search,
+  X,
   Mail,
-  User,
+  Phone,
   CheckCircle,
   XCircle,
-  Users,
+  Edit,
+  Eye,
   Trash2,
-  Search,
   Filter,
-  X,
 } from "lucide-react"
 import { getArbitros, deleteArbitro, Arbitro } from "@/services/api"
-import { toast } from "@/hooks/use-toast"
-import { useCache } from "@/hooks/useCache"
 import { CardSkeleton } from "@/components/Skeletons"
 
 export default function ArbitrosPage() {
+  const [arbitros, setArbitros] = useState<Arbitro[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategoria, setFilterCategoria] = useState("all")
   const [filterDisponibilidad, setFilterDisponibilidad] = useState("all")
-  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  const [hasActiveFilters, setHasActiveFilters] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  // Fetcher function for useCache hook
-  const fetchArbitros = async () => {
-    const data = await getArbitros()
-    return data || []
-  }
-
-  // Use cache hook for data fetching with 5-minute TTL
-  const { data: arbitros = [], isLoading, error: cacheError, refetch } = useCache(
-    "arbitros",
-    fetchArbitros,
-    { ttl: 5 * 60 * 1000 }
-  )
-
-  // Verificar si hay filtros activos
+  // Load arbitros from API
   useEffect(() => {
-    setHasActiveFilters(
-      searchTerm !== "" ||
-      filterCategoria !== "all" ||
-      filterDisponibilidad !== "all"
-    )
-  }, [searchTerm, filterCategoria, filterDisponibilidad])
-
-  // Eliminar árbitro
-  const handleEliminar = useCallback(async (id: number) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este árbitro? Esta acción no se puede deshacer.")) {
-      return
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const data = await getArbitros()
+        if (Array.isArray(data)) {
+          setArbitros(data)
+        } else {
+          console.warn("getArbitros returned non-array data:", data)
+          setArbitros([])
+        }
+      } catch (error) {
+        console.error("Error loading arbitros:", error)
+        setArbitros([])
+      } finally {
+        setIsLoading(false)
+      }
     }
+    loadData()
+  }, [])
+
+  // Calculate filtered arbitros inline - no useMemo to avoid cache issues
+  const arbitrosFiltrados: Arbitro[] = (() => {
+    if (!Array.isArray(arbitros) || arbitros.length === 0) {
+      return []
+    }
+
+    return arbitros.filter(arbitro => {
+      if (!arbitro) return false
+      
+      const nombre = `${arbitro.nombre || ""} ${arbitro.apellido || ""}`.toLowerCase()
+      const matchesSearch = 
+        nombre.includes(searchTerm.toLowerCase()) ||
+        (arbitro.email ? arbitro.email.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+        (arbitro.dni ? arbitro.dni.toLowerCase().includes(searchTerm.toLowerCase()) : false)
+      
+      const matchesCategoria = filterCategoria === "all" || arbitro.categoria === filterCategoria
+      const matchesDisponibilidad = filterDisponibilidad === "all" || 
+        (filterDisponibilidad === "disponible" ? arbitro.disponible === true : arbitro.disponible === false)
+      
+      return matchesSearch && matchesCategoria && matchesDisponibilidad
+    })
+  })()
+
+  const handleDelete = async (id: number | undefined) => {
+    if (!id) return
+    if (!confirm("¿Estás seguro de que deseas eliminar este árbitro?")) return
     
     setDeletingId(id)
     try {
-      const success = await deleteArbitro(id)
-      if (success) {
-        toast({
-          title: "Árbitro eliminado",
-          description: "El árbitro ha sido eliminado correctamente",
-        })
-        refetch()
-      } else {
-        toast({
-          title: "Error",
-          description: "No se pudo eliminar el árbitro",
-          variant: "destructive",
-        })
-      }
+      await deleteArbitro(id)
+      setArbitros(arbitros.filter(a => a.id !== id))
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Ocurrió un error al eliminar el árbitro",
-        variant: "destructive",
-      })
+      console.error("Error deleting arbitro:", error)
     } finally {
       setDeletingId(null)
     }
-  }, [refetch])
+  }
 
-  // Helper para obtener nombre completo
-  const getNombreCompleto = useCallback((a: Arbitro) => {
-    const partes = []
-    if (a.apellido) partes.push(a.apellido)
-    if (a.nombre) partes.push(a.nombre)
-    return partes.length > 0 ? partes.join(" ") : "Sin nombre"
-  }, [])
-
-  // Filtros optimizados
-  const arbitrosFiltrados = useMemo(() => {
-    return arbitros.filter((arbitro) => {
-      const nombreCompleto = getNombreCompleto(arbitro).toLowerCase()
-      const matchesSearch =
-        nombreCompleto.includes(searchTerm.toLowerCase()) ||
-        arbitro.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        arbitro.dni?.toLowerCase().includes(searchTerm.toLowerCase())
-
-      const matchesCategoria =
-        filterCategoria === "all" || arbitro.categoria === filterCategoria
-
-      const matchesDisponibilidad =
-        filterDisponibilidad === "all" ||
-        (filterDisponibilidad === "disponible" && arbitro.disponible) ||
-        (filterDisponibilidad === "no-disponible" && !arbitro.disponible)
-
-      return matchesSearch && matchesCategoria && matchesDisponibilidad
-    })
-  }, [arbitros, searchTerm, filterCategoria, filterDisponibilidad, getNombreCompleto])
-
-  const getCategoriaColor = useCallback((categoria: string | undefined) => {
-    if (!categoria) return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-    switch (categoria.toUpperCase()) {
-      case "FIFA":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-      case "NACIONAL":
-        return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
-      case "REGIONAL":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-      case "PROVINCIAL":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-      default:
-        return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-    }
-  }, [])
-
-  const resetFilters = useCallback(() => {
+  const hasActiveFilters = searchTerm || filterCategoria !== "all" || filterDisponibilidad !== "all"
+  const resetFilters = () => {
     setSearchTerm("")
     setFilterCategoria("all")
     setFilterDisponibilidad("all")
-  }, [])
+  }
 
-  if (isLoading && arbitros.length === 0) {
+  if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 py-4 md:py-8">
-          {/* Header */}
-          <div className="flex flex-col gap-4 mb-6 md:mb-8">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2 md:gap-4 flex-1">
-                <Link href="/dashboard">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="hover:bg-slate-200 dark:hover:bg-slate-700 h-9 w-9 md:h-10 md:w-10 p-0"
-                    aria-label="Volver"
-                  >
-                    <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
-                  </Button>
-                </Link>
-                <div className="flex-1">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
-                    Gestión de Árbitros
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Cargando datos...
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Skeleton Grid */}
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <CardSkeleton count={8} />
-          </div>
+      <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white">
+        <div className="container mx-auto w-full max-w-7xl px-4 py-8">
+          <h1 className="text-3xl font-bold text-sky-900 mb-8">Gestión de Árbitros</h1>
+          <CardSkeleton count={8} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 py-4 md:py-8">
+    <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white">
+      <div className="container mx-auto w-full max-w-7xl px-4 py-8">
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-6 md:mb-8">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-4 flex-1">
+        <div className="mb-8">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-4">
               <Link href="/dashboard">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="hover:bg-slate-200 dark:hover:bg-slate-700 h-9 w-9 md:h-10 md:w-10 p-0"
-                  aria-label="Volver"
-                >
-                  <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-sky-100">
+                  <ArrowLeft className="h-5 w-5 text-sky-900" />
                 </Button>
               </Link>
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
-                  Gestión de Árbitros
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {arbitrosFiltrados.length} resultado{arbitrosFiltrados.length !== 1 ? "s" : ""}
-                </p>
+              <div>
+                <h1 className="text-3xl font-bold text-sky-900">Gestión de Árbitros</h1>
+                <p className="text-sky-600 mt-1">{arbitrosFiltrados.length} resultados</p>
               </div>
             </div>
-            
-            <Button 
-              asChild 
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 shrink-0 h-9 md:h-10"
-              size="sm"
-            >
-              <Link href="/dashboard/arbitros/nuevo" className="flex items-center gap-1 md:gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuevo</span>
+            <Button asChild className="bg-sky-600 hover:bg-sky-700 h-10">
+              <Link href="/dashboard/arbitros/nuevo">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo
               </Link>
             </Button>
           </div>
 
-          {/* Barra de búsqueda principal */}
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-slate-400 pointer-events-none" />
+          {/* Search bar */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-sky-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre, email o DNI..."
-              className="w-full h-10 md:h-12 pl-10 pr-10 md:pr-12 rounded-lg md:rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm md:text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-10 pr-10 py-2 rounded-lg border border-sky-200 bg-white text-sky-900 placeholder-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                aria-label="Limpiar búsqueda"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sky-400 hover:text-sky-600"
               >
-                <X className="h-4 w-4 md:h-5 md:w-5" />
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>
-        </div>
 
-        {/* Filtros responsivos */}
-        <div className="mb-6">
-          {/* Botón de filtros (solo en móvil) */}
+          {/* Filters - Mobile button */}
           <div className="md:hidden mb-4">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-all ${
                 showFilters 
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
-                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  ? "border-sky-500 bg-sky-50" 
+                  : "border-sky-200 bg-white"
               }`}
             >
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span className="font-medium text-sm">
+                <Filter className="h-4 w-4 text-sky-600" />
+                <span className="font-medium text-sm text-sky-900">
                   Filtros {hasActiveFilters && `(${[
                     searchTerm ? 1 : 0,
                     filterCategoria !== "all" ? 1 : 0,
@@ -278,40 +189,34 @@ export default function ArbitrosPage() {
             </button>
           </div>
 
-          {/* Panel de filtros */}
-          <div className={`${showFilters ? "max-h-96 mb-4" : "max-h-0 md:max-h-none"} md:max-h-none overflow-hidden md:overflow-visible transition-all duration-300`}>
-            <Card className="bg-white dark:bg-slate-800 rounded-lg md:rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-              <CardContent className="p-3 sm:p-4 md:p-6">
-                <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:gap-4">
-                  {/* Filtro Categoría */}
-                  <div className="flex-1">
-                    <label className="block text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Categoría
-                    </label>
+          {/* Filters - Desktop and Mobile expanded */}
+          <div className={`${showFilters ? "block md:block" : "hidden md:block"} mb-6`}>
+            <Card className="bg-white border-sky-200">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-sky-900 mb-2">Categoría</label>
                     <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                      <SelectTrigger className="w-full h-9 md:h-11">
+                      <SelectTrigger className="w-full border-sky-200 text-sky-900">
                         <SelectValue placeholder="Todas las categorías" />
                       </SelectTrigger>
-                      <SelectContent className="z-50">
+                      <SelectContent>
                         <SelectItem value="all">Todas las categorías</SelectItem>
                         <SelectItem value="FIFA">FIFA</SelectItem>
                         <SelectItem value="Nacional">Nacional</SelectItem>
-                        <SelectItem value="Regional">Regional</SelectItem>
-                        <SelectItem value="Provincial">Provincial</SelectItem>
+                        <SelectItem value="Primera Categoría">Primera Categoría</SelectItem>
+                        <SelectItem value="Segunda Categoría">Segunda Categoría</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Filtro Disponibilidad */}
-                  <div className="flex-1">
-                    <label className="block text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Disponibilidad
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium text-sky-900 mb-2">Disponibilidad</label>
                     <Select value={filterDisponibilidad} onValueChange={setFilterDisponibilidad}>
-                      <SelectTrigger className="w-full h-9 md:h-11">
+                      <SelectTrigger className="w-full border-sky-200 text-sky-900">
                         <SelectValue placeholder="Todos" />
                       </SelectTrigger>
-                      <SelectContent className="z-50">
+                      <SelectContent>
                         <SelectItem value="all">Todos</SelectItem>
                         <SelectItem value="disponible">Disponibles</SelectItem>
                         <SelectItem value="no-disponible">No disponibles</SelectItem>
@@ -319,17 +224,16 @@ export default function ArbitrosPage() {
                     </Select>
                   </div>
 
-                  {/* Botón Limpiar filtros */}
                   {hasActiveFilters && (
-                    <div className="flex items-end pt-1">
+                    <div className="flex items-end">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={resetFilters}
-                        className="w-full md:w-auto h-9 md:h-11"
+                        className="w-full border-sky-200 text-sky-600 hover:bg-sky-50"
                       >
-                        <X className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                        <span className="text-xs md:text-sm">Limpiar</span>
+                        <X className="h-4 w-4 mr-2" />
+                        Limpiar filtros
                       </Button>
                     </div>
                   )}
@@ -338,181 +242,103 @@ export default function ArbitrosPage() {
             </Card>
           </div>
         </div>
-        {/* Lista de árbitros - Estado vacío */}
+
+        {/* Arbitros Grid */}
         {arbitrosFiltrados.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 md:py-20 px-4 text-center">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center mb-4">
-              <Users className="h-8 w-8 md:h-10 md:w-10 text-slate-400 dark:text-slate-500" />
-            </div>
-            <h3 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-white mb-1">
-              No se encontraron árbitros
-            </h3>
-            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
-              {searchTerm ? "Intenta con otros términos de búsqueda" : "Comienza agregando el primer árbitro al sistema"}
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Users className="h-16 w-16 text-sky-200 mb-4" />
+            <h3 className="text-lg font-semibold text-sky-900 mb-2">No se encontraron árbitros</h3>
+            <p className="text-sky-600 mb-6">
+              {searchTerm ? "Intenta con otros términos de búsqueda" : "Comienza agregando el primer árbitro"}
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button 
-                asChild 
-                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-              >
-                <Link href="/dashboard/arbitros/nuevo">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Árbitro
-                </Link>
-              </Button>
-              {hasActiveFilters && (
-                <Button 
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="w-full sm:w-auto"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Limpiar filtros
-                </Button>
-              )}
-            </div>
+            <Button asChild className="bg-sky-600 hover:bg-sky-700">
+              <Link href="/dashboard/arbitros/nuevo">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Árbitro
+              </Link>
+            </Button>
           </div>
         ) : (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {isLoading && arbitros.length === 0 ? (
-              <CardSkeleton count={8} />
-            ) : (
-              arbitrosFiltrados.map((arbitro) => (
-                <ArbitroCard
-                  key={arbitro.id}
-                  arbitro={arbitro}
-                  getNombreCompleto={getNombreCompleto}
-                  getCategoriaColor={getCategoriaColor}
-                onDelete={() => arbitro.id && handleEliminar(arbitro.id)}
-                isDeleting={deletingId === arbitro.id}
-              />
-            ))
-            )}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {arbitrosFiltrados.map((arbitro) => (
+              <Card key={arbitro.id} className="bg-white border-sky-200 hover:shadow-lg hover:border-sky-300 transition-all">
+                <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400" />
+                <CardContent className="p-4">
+                  {/* Nombre */}
+                  <h3 className="font-bold text-sky-900 text-center mb-2 line-clamp-2">
+                    {arbitro.apellido} {arbitro.nombre}
+                  </h3>
+
+                  {/* Categoría badge */}
+                  {arbitro.categoria && (
+                    <div className="flex justify-center mb-3">
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-700">
+                        {arbitro.categoria}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Disponibilidad */}
+                  <div className="flex items-center justify-center gap-2 mb-4 pb-4 border-b border-sky-100">
+                    {arbitro.disponible ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-emerald-600" />
+                        <span className="text-sm font-medium text-emerald-600">Disponible</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-red-600" />
+                        <span className="text-sm font-medium text-red-600">No disponible</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Contact info */}
+                  <div className="space-y-2 mb-4 text-sm">
+                    {arbitro.telefono && (
+                      <div className="flex items-center gap-2 text-sky-700">
+                        <Phone className="h-4 w-4 text-sky-500 flex-shrink-0" />
+                        <span className="truncate">{arbitro.telefono}</span>
+                      </div>
+                    )}
+                    {arbitro.email && (
+                      <div className="flex items-center gap-2 text-sky-700">
+                        <Mail className="h-4 w-4 text-sky-500 flex-shrink-0" />
+                        <span className="truncate text-xs">{arbitro.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <Button asChild size="sm" variant="outline" className="flex-1 border-sky-200 text-sky-600 hover:bg-sky-50">
+                      <Link href={`/dashboard/arbitros/${arbitro.id}`}>
+                        <Eye className="h-3 w-3 mr-1" />
+                        Ver
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" className="flex-1 bg-sky-600 hover:bg-sky-700">
+                      <Link href={`/dashboard/arbitros/${arbitro.id}/editar`}>
+                        <Edit className="h-3 w-3 mr-1" />
+                        Editar
+                      </Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => arbitro.id && handleDelete(arbitro.id)}
+                      disabled={deletingId === arbitro.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>
     </div>
   )
 }
-
-// Componente separado para la tarjeta de árbitro
-function ArbitroCard({ 
-  arbitro, 
-  getNombreCompleto, 
-  getCategoriaColor, 
-  onDelete,
-  isDeleting 
-}: {
-  arbitro: Arbitro
-  getNombreCompleto: (a: Arbitro) => string
-  getCategoriaColor: (c: string | undefined) => string
-  onDelete: () => void
-  isDeleting: boolean
-}) {
-  return (
-    <Card 
-      className="h-full hover:shadow-lg dark:hover:shadow-lg/50 transition-all duration-300 border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col group"
-    >
-      {/* Encabezado degradado */}
-      <div className="h-1.5 md:h-2 bg-gradient-to-r from-blue-500 to-indigo-500" />
-      
-      <CardContent className="p-3 md:p-4 flex-1 flex flex-col">
-        {/* Foto y nombre */}
-        <div className="flex flex-col items-center text-center mb-3 md:mb-4">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 overflow-hidden flex items-center justify-center mb-2 md:mb-3 border-2 border-slate-200 dark:border-slate-700 group-hover:border-blue-400 transition-colors">
-            {arbitro.foto ? (
-              <img
-                src={arbitro.foto}
-                alt={getNombreCompleto(arbitro)}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <User className="w-6 h-6 md:w-8 md:h-8 text-slate-400 dark:text-slate-500" />
-            )}
-          </div>
-
-          <h3 className="font-semibold text-sm md:text-base text-slate-900 dark:text-white line-clamp-2">
-            {getNombreCompleto(arbitro)}
-          </h3>
-
-          {arbitro.categoria && (
-            <span className={`inline-block px-2 md:px-2.5 py-1 rounded-full text-xs font-medium mt-2 ${getCategoriaColor(arbitro.categoria)}`}>
-              {arbitro.categoria}
-            </span>
-          )}
-        </div>
-
-        {/* Información de contacto */}
-        <div className="space-y-2 text-xs md:text-sm mb-3 md:mb-4 flex-1">
-          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-            {arbitro.disponible ? (
-              <>
-                <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-500 flex-shrink-0" />
-                <span className="text-green-700 dark:text-green-400 font-medium">Disponible</span>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-500 flex-shrink-0" />
-                <span className="text-red-700 dark:text-red-400 font-medium">No disponible</span>
-              </>
-            )}
-          </div>
-
-          {arbitro.telefono && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 min-w-0">
-              <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-              <span className="truncate">{arbitro.telefono}</span>
-            </div>
-          )}
-
-          {arbitro.email && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 min-w-0">
-              <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-              <span className="truncate text-xs">{arbitro.email}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Acciones */}
-        <div className="flex gap-1.5 md:gap-2 pt-3 md:pt-4 border-t border-slate-100 dark:border-slate-700">
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="flex-1 h-8 md:h-9 text-xs md:text-sm"
-          >
-            <Link href={`/dashboard/arbitros/${arbitro.id}`}>
-              <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-              <span className="hidden xs:inline">Ver</span>
-            </Link>
-          </Button>
-
-          <Button 
-            asChild 
-            size="sm" 
-            className="flex-1 h-8 md:h-9 text-xs md:text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            <Link href={`/dashboard/arbitros/${arbitro.id}/editar`}>
-              <Edit className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-              <span className="hidden xs:inline">Editar</span>
-            </Link>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 md:h-9 w-8 md:w-9 p-0"
-            onClick={onDelete}
-            disabled={isDeleting}
-            title="Eliminar"
-            aria-label="Eliminar árbitro"
-          >
-            <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
