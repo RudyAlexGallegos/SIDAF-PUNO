@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Search, X, Eye, Edit } from "lucide-react"
-import { getCampeaonados, Campoado } from "@/services/api"
+import { getCampeonatos, Campeonato } from "@/services/api"
 
 function formatDate(iso: string) {
   try {
@@ -34,12 +34,12 @@ function StatusBadge({ estado }: { estado: string | undefined }) {
 
 export default function CampeonadosPage() {
   const [query, setQuery] = useState<string>("")
-  const [campeaonados, setCampeaonados] = useState<Campoado[]>([])
+  const [campeaonados, setCampeaonados] = useState<Campeonato[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const cargarCampeones = async () => {
-      const data = await getCampeaonados()
+      const data = await getCampeonatos()
       setCampeaonados(data)
       setIsLoading(false)
     }

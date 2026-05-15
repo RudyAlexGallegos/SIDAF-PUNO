@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { getStoredUser, getUsuariosPendientes, getTodosUsuarios, aprobarUsuario, asignarPermisos, cambiarEstadoUsuario, logout, eliminarUsuario, Usuario, createAsesor } from "@/services/api"
 import { useRouter } from "next/navigation"
@@ -219,7 +221,7 @@ export default function GestionUsuariosPage() {
         router.push("/login")
     }
 
-    if (isLoading && pendientes.length === 0 && todosUsuarios.length === 0) {
+    if (isLoading && (!pendientes || pendientes.length === 0) && (!todosUsuarios || todosUsuarios.length === 0)) {
         return (
             <div className="min-h-screen bg-gray-50 p-6">
                 <div className="max-w-7xl mx-auto">
@@ -273,13 +275,13 @@ export default function GestionUsuariosPage() {
                         variant={tabActiva === "pendientes" ? "default" : "outline"}
                         onClick={() => setTabActiva("pendientes")}
                     >
-                        Pendientes ({pendientes.length})
+                        Pendientes ({(pendientes || []).length})
                     </Button>
                     <Button
                         variant={tabActiva === "todos" ? "default" : "outline"}
                         onClick={() => setTabActiva("todos")}
                     >
-                        Todos los Usuarios ({todosUsuarios.length})
+                        Todos los Usuarios ({(todosUsuarios || []).length})
                     </Button>
                 </div>
 

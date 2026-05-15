@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { getStoredUser, getAsesores, createAsesor, updateAsesor, deleteAsesor, cambiarEstadoAsesor, Asesor } from "@/services/api"
 import { useRouter } from "next/navigation"
