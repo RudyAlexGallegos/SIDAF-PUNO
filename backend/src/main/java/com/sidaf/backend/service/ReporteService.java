@@ -445,4 +445,39 @@ public class ReporteService {
         
         return resultado;
     }
+
+    /**
+     * Ranking semanal de asistencia - Versión simplificada
+     * Retorna: nombre, asistencias, porcentaje
+     */
+    public List<Map<String, Object>> getRankingSemanal(LocalDate inicio, LocalDate fin) {
+        List<Asistencia> lista = asistenciaRepository.findByFechaBetween(inicio, fin);
+        List<Arbitro> arbitros = arbitroRepository.findAll();
+        
+        List<Map<String, Object>> ranking = new ArrayList<>();
+        
+        for (Arbitro arbitro : arbitros) {
+            List<Asistencia> asisArbitros = new ArrayList<>();
+            for (Asistencia a : lista) {
+                String obs = a.getObservaciones();
+                if (obs != null && obs.contains("\"arbitroId\":" + arbitro.getId())) {
+                    asisArbitros.add(a);
+                }
+            }
+            
+            if (!asisArbitros.isEmpty()) {
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("nombre", arbitro.getNombre() + " " + arbitro.getApellido());
+                entry.put("asistencias", asisArbitros.size());
+                entry.put("porcentaje", calcularPorcentajeAsistencia(asisArbitros));
+                
+                ranking.add(entry);
+            }
+        }
+        
+        // Ordenar por asistencias descendente
+        ranking.sort((a, b) -> Integer.compare((Integer) b.get("asistencias"), (Integer) a.get("asistencias")));
+        
+        return ranking;
+    }
 }

@@ -469,4 +469,18 @@ public class AsistenciaController {
         LocalDate fechaFin = LocalDate.parse(fin);
         return reporteService.getRankingArbitros(fechaInicio, fechaFin);
     }
+
+    /**
+     * Ranking semanal de asistencia - Semana actual
+     * GET /api/asistencias/ranking-semanal
+     */
+    @GetMapping("/ranking-semanal")
+    public List<Map<String, Object>> rankingSemanal() {
+        LocalDate hoy = LocalDate.now();
+        // Obtener lunes de la semana actual (dia 1 es lunes en Java)
+        LocalDate lunes = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1);
+        LocalDate domingo = lunes.plusDays(6);
+        
+        return reporteService.getRankingSemanal(lunes, domingo);
+    }
 }

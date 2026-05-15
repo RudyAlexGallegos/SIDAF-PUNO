@@ -20,6 +20,9 @@ import {
     User,
     History,
     Award,
+    BookOpen,
+    ClipboardList,
+    Activity,
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
 
@@ -34,15 +37,29 @@ function NavLink({
     showLabels,
     onClick,
 }: {
-    href: string
+    href?: string
     icon: LucideIcon
     name: string
     showLabels?: boolean
     onClick?: () => void
 }) {
     const pathname = usePathname()
-    const isActive = pathname === href
+    const isActive = href ? pathname === href : false
     const router = useRouter()
+
+    if (!href) {
+        // Es un botón modal
+        return (
+            <button
+                onClick={onClick}
+                className={`flex items-center gap-3 text-sm px-3 py-2 rounded-xl transition-all w-full text-left
+            text-slate-200 hover:bg-white/10`}
+            >
+                <Icon className="h-5 w-5 shrink-0" />
+                {showLabels && <span>{name}</span>}
+            </button>
+        )
+    }
 
     return (
         <Link
@@ -104,7 +121,7 @@ const PERMISO_TO_HREF: Record<string, string> = {
 function getMenuItems(
     rol?: string,
     permisosEspecificos?: string
-): Array<{ title: string; items: Array<{ name: string; href: string; icon: LucideIcon }> }> {
+): Array<{ title: string; items: Array<{ name: string; href?: string; modalId?: string; icon: LucideIcon }> }> {
     // Parsear permisos específicos
     let permisos: string[] = []
     if (permisosEspecificos) {
@@ -223,7 +240,15 @@ function getMenuItems(
                 title: "Gestión",
                 items: [
                     { name: "Árbitros", href: "/dashboard/arbitros", icon: Users },
+                    { name: "Asesores", href: "/dashboard/asesores", icon: BookOpen },
                     { name: "Usuarios", href: "/dashboard/usuarios", icon: UserCog },
+                ],
+            },
+            {
+                title: "Evaluación y Desempeño",
+                items: [
+                    { name: "Evaluaciones", modalId: "evaluaciones", icon: ClipboardList },
+                    { name: "Desempeño Arbitral", modalId: "desempenio", icon: Activity },
                 ],
             },
             {
@@ -241,7 +266,7 @@ function getMenuItems(
                     },
                     {
                         name: "Ranking Semanal",
-                        href: "/dashboard/asistencia/ranking",
+                        href: "/dashboard/asistencia/ranking-semanal",
                         icon: Award,
                     },
                 ],
@@ -295,6 +320,14 @@ function getMenuItems(
                 items: [
                     { name: "Usuarios", href: "/dashboard/usuarios", icon: UserCog },
                     { name: "Árbitros", href: "/dashboard/arbitros", icon: Users },
+                    { name: "Asesores", href: "/dashboard/asesores", icon: BookOpen },
+                ],
+            },
+            {
+                title: "Evaluación y Desempeño",
+                items: [
+                    { name: "Evaluaciones", modalId: "evaluaciones", icon: ClipboardList },
+                    { name: "Desempeño Arbitral", modalId: "desempenio", icon: Activity },
                 ],
             },
             {
@@ -309,6 +342,11 @@ function getMenuItems(
                         name: "Historial Asistencia",
                         href: "/dashboard/asistencia/historial",
                         icon: History,
+                    },
+                    {
+                        name: "Ranking Semanal",
+                        href: "/dashboard/asistencia/ranking-semanal",
+                        icon: Award,
                     },
                 ],
             },
@@ -367,7 +405,7 @@ function getMenuItems(
                 },
                 {
                     name: "Ranking Semanal",
-                    href: "/dashboard/asistencia/ranking",
+                    href: "/dashboard/asistencia/ranking-semanal",
                     icon: Award,
                 },
             ],
@@ -432,6 +470,8 @@ export default function DashboardLayout({
     const [usuario, setUsuario] = useState<Usuario | null>(null)
     const router = useRouter()
     const [isMobile, setIsMobile] = useState(false)
+    const [modalAbiertoEvaluaciones, setModalAbiertoEvaluaciones] = useState(false)
+    const [modalAbiertoDesempenio, setModalAbiertoDesempenio] = useState(false)
 
     useEffect(() => {
         // Verificar si hay usuario logueado
@@ -531,14 +571,34 @@ export default function DashboardLayout({
                             ) : null}
 
                             <div className="space-y-1">
-                                {section.items.map((item) => (
-                                    <NavLink
-                                        key={item.name}
-                                        {...item}
-                                        showLabels={showLabels || (isMobile && mobileMenuOpen)}
-                                        onClick={() => isMobile && setMobileMenuOpen(false)}
-                                    />
-                                ))}
+                                {section.items.map((item) => {
+                                    let handleModalClick = () => {
+                                        isMobile && setMobileMenuOpen(false)
+                                    }
+                                    
+                                    if (item.modalId === "evaluaciones") {
+                                        handleModalClick = () => {
+                                            setModalAbiertoEvaluaciones(true)
+                                            isMobile && setMobileMenuOpen(false)
+                                        }
+                                    } else if (item.modalId === "desempenio") {
+                                        handleModalClick = () => {
+                                            setModalAbiertoDesempenio(true)
+                                            isMobile && setMobileMenuOpen(false)
+                                        }
+                                    }
+                                    
+                                    return (
+                                        <NavLink
+                                            key={item.name}
+                                            icon={item.icon}
+                                            name={item.name}
+                                            href={item.href}
+                                            showLabels={showLabels || (isMobile && mobileMenuOpen)}
+                                            onClick={handleModalClick}
+                                        />
+                                    )
+                                })}
                             </div>
                         </div>
                     ))}
@@ -599,6 +659,60 @@ export default function DashboardLayout({
                 )}
                 {children}
             </main>
+
+            {/* MODAL EVALUACIONES */}
+            {modalAbiertoEvaluaciones && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                        <div className="bg-gradient-to-r from-sky-500 to-sky-400 p-6 text-white">
+                            <div className="flex items-center gap-3">
+                                <ClipboardList className="w-8 h-8" />
+                                <h2 className="text-2xl font-bold">Evaluaciones</h2>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-sky-900 text-base leading-relaxed">
+                                La función de evaluación de árbitros en las etapas de distrital, provincial, departamental y examen de ascenso estarán disponibles proximamente.
+                            </p>
+                        </div>
+                        <div className="bg-sky-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setModalAbiertoEvaluaciones(false)}
+                                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DESEMPEÑO ARBITRAL */}
+            {modalAbiertoDesempenio && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                        <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 p-6 text-white">
+                            <div className="flex items-center gap-3">
+                                <Activity className="w-8 h-8" />
+                                <h2 className="text-2xl font-bold">Desempeño Arbitral</h2>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-sky-900 text-base leading-relaxed">
+                                La función desempeño arbitral se implementará proximamente. Consistirá en implementar a todos los árbitros relojes inteligentes que midan el desplazamiento y velocidad alcanzada en cada partido designado. Además se evaluará la cantidad de amonestaciones y expulsiones que cuenta en cada partido.
+                            </p>
+                        </div>
+                        <div className="bg-emerald-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setModalAbiertoDesempenio(false)}
+                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

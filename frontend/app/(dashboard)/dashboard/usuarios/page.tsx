@@ -1,9 +1,7 @@
 "use client"
 
-export const dynamic = 'force-dynamic'
-
 import { useState, useEffect } from "react"
-import { getStoredUser, getUsuariosPendientes, getTodosUsuarios, aprobarUsuario, asignarPermisos, cambiarEstadoUsuario, logout, eliminarUsuario, Usuario } from "@/services/api"
+import { getStoredUser, getUsuariosPendientes, getTodosUsuarios, aprobarUsuario, asignarPermisos, cambiarEstadoUsuario, logout, eliminarUsuario, Usuario, createAsesor } from "@/services/api"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -15,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { useCache } from "@/hooks/useCache"
 import { TableSkeleton } from "@/components/Skeletons"
 
-type Rol = "ADMIN" | "PRESIDENCIA_CODAR" | "UNIDAD_TECNICA_CODAR"
+type Rol = "ADMIN" | "PRESIDENCIA_CODAR" | "UNIDAD_TECNICA_CODAR" | "ARBITRO" | "ASESOR"
 type Estado = "PENDING" | "ACTIVO" | "INACTIVO"
 
 const PERMISOS_DISPONIBLES = [
@@ -51,21 +49,17 @@ export default function GestionUsuariosPage() {
     }
 
     // Use cache hooks for data fetching with 5-minute TTL
-    const { data: pendientesData, isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
+    const { data: pendientes = [], isLoading: loadingPendientes, refetch: refetchPendientes } = useCache(
         "usuariosPendientes",
         fetchPendientes,
         { ttl: 5 * 60 * 1000 }
     )
 
-    const { data: todosUsuariosData, isLoading: loadingTodos, refetch: refetchTodos } = useCache(
+    const { data: todosUsuarios = [], isLoading: loadingTodos, refetch: refetchTodos } = useCache(
         "todosUsuarios",
         fetchTodos,
         { ttl: 5 * 60 * 1000 }
     )
-
-    // Ensure arrays are never null
-    const pendientes = pendientesData || []
-    const todosUsuarios = todosUsuariosData || []
 
     const isLoading = loadingPendientes || loadingTodos
 
@@ -91,13 +85,32 @@ export default function GestionUsuariosPage() {
         }
     }, [router])
 
-    const handleAprobar = async (id: number) => {
+    const handleAprobar = async (id: number, user?: Usuario) => {
         if (!rolSeleccionado) {
             setError("Por favor selecciona un rol")
             return
         }
         try {
             await aprobarUsuario(id, rolSeleccionado, "[]")
+            
+            // Si el rol es ASESOR, crear automáticamente el asesor
+            if (rolSeleccionado === "ASESOR" && user) {
+                try {
+                    await createAsesor({
+                        usuarioId: id,
+                        nombre: user.nombre || "",
+                        apellido: user.apellido || "",
+                        dni: user.dni || "",
+                        email: user.email || "",
+                        telefono: user.telefono || "",
+                        estado: "ACTIVO",
+                    })
+                } catch (err: any) {
+                    console.error("Error al crear asesor:", err)
+                    // No fallar la aprobación del usuario si falla la creación del asesor
+                }
+            }
+            
             setSuccess("Usuario aprobado exitosamente")
             setError("")
             setUsuarioParaAprobar(null)
@@ -201,17 +214,9 @@ export default function GestionUsuariosPage() {
         }
     }
 
-    const handleLogout = async () => {
-        try {
-            await logout()
-            setUsuario(null)
-            setPermisosSeleccionados([])
-            setUsuarioSeleccionado(null)
-            router.push("/login")
-        } catch (error) {
-            console.error("Error en logout:", error)
-            router.push("/login")
-        }
+    const handleLogout = () => {
+        logout()
+        router.push("/login")
     }
 
     if (isLoading && pendientes.length === 0 && todosUsuarios.length === 0) {
@@ -301,9 +306,11 @@ export default function GestionUsuariosPage() {
                                                 <select
                                                     value={rolSeleccionado}
                                                     onChange={(e) => setRolSeleccionado(e.target.value)}
-                                                    className="border rounded px-2 py-1 text-sm"
+                                                    className="border border-sky-200 rounded px-2 py-1 text-sm bg-white text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                                 >
                                                     <option value="UNIDAD_TECNICA_CODAR">Unidad Técnica CODAR</option>
+                                                    <option value="ARBITRO">Árbitro</option>
+                                                    <option value="ASESOR">Asesor</option>
                                                     {usuario?.rol === "ADMIN" && (
                                                         <>
                                                             <option value="PRESIDENCIA_CODAR">Presidente CODAR</option>
@@ -311,7 +318,7 @@ export default function GestionUsuariosPage() {
                                                         </>
                                                     )}
                                                 </select>
-                                                <Button onClick={() => user.id && handleAprobar(user.id)}>
+                                                <Button onClick={() => user.id && handleAprobar(user.id, user)}>
                                                     Aprobar
                                                 </Button>
                                                 <Button variant="outline" onClick={() => user.id && handleCambiarEstado(user.id, "INACTIVO")}>

@@ -122,7 +122,7 @@ const InputField = ({
   children: React.ReactNode
 }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700">
+    <label className="block text-sm font-medium text-sky-900">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
@@ -148,7 +148,7 @@ const CustomInput = ({
     placeholder={placeholder}
     required={required}
     disabled={disabled}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
+    className={`w-full px-4 py-3 border border-sky-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors ${disabled ? 'bg-sky-50 cursor-not-allowed' : 'bg-white'} ${className}`}
     {...props}
   />
 )
@@ -167,7 +167,7 @@ const CustomSelect = ({
     onChange={onChange}
     required={required}
     disabled={disabled}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
+    className={`w-full px-4 py-3 border border-sky-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors bg-white ${disabled ? 'bg-sky-50 cursor-not-allowed' : ''} ${className}`}
     {...props}
   >
     {children}
@@ -189,7 +189,7 @@ const CustomTextarea = ({
     placeholder={placeholder}
     rows={rows}
     disabled={disabled}
-    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
+    className={`w-full px-4 py-3 border border-sky-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors resize-none ${disabled ? 'bg-sky-50 cursor-not-allowed' : 'bg-white'} ${className}`}
     {...props}
   />
 )
@@ -209,21 +209,21 @@ const CheckboxOption = ({
   description?: string
   disabled?: boolean
 }) => (
-  <div className={`flex items-start space-x-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+  <div className={`flex items-start space-x-3 p-4 border border-sky-200 rounded-lg hover:border-sky-400 transition-colors cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : 'bg-sky-50/30'}`}>
     <input
       type="checkbox"
       id={id}
       checked={checked}
       onChange={(e) => onChange(e.target.checked)}
       disabled={disabled}
-      className="mt-1 h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+      className="mt-1 h-5 w-5 text-sky-600 rounded focus:ring-sky-500"
     />
     <div className="flex-1">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-900 cursor-pointer">
+      <label htmlFor={id} className="block text-sm font-medium text-sky-900 cursor-pointer">
         {label}
       </label>
       {description && (
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <p className="text-sm text-sky-600 mt-1">{description}</p>
       )}
     </div>
   </div>
@@ -247,8 +247,8 @@ const RadioOption = ({
   <div
     className={`p-4 border rounded-lg cursor-pointer transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${
       checked
-        ? 'border-blue-500 bg-blue-50'
-        : 'border-gray-200 hover:border-gray-300'
+        ? 'border-sky-500 bg-sky-50'
+        : 'border-sky-200 hover:border-sky-300'
     }`}
     onClick={() => !disabled && onChange()}
   >
@@ -259,13 +259,13 @@ const RadioOption = ({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className="mt-1 h-4 w-4 text-blue-600"
+        className="mt-1 h-4 w-4 text-sky-600"
       />
       <div className="ml-3 flex-1">
-        <label htmlFor={id} className="block text-sm font-medium text-gray-900 cursor-pointer">
+        <label htmlFor={id} className="block text-sm font-medium text-sky-900 cursor-pointer">
           {label}
         </label>
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <p className="text-sm text-sky-600 mt-1">{description}</p>
       </div>
     </div>
   </div>
@@ -289,9 +289,9 @@ const Button = ({
   const baseClasses = "px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
 
   const variants = {
-    primary: "bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900 focus:ring-blue-500",
-    secondary: "bg-gradient-to-r from-gray-600 to-gray-800 text-white hover:from-gray-700 hover:to-gray-900 focus:ring-gray-500",
-    outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500"
+    primary: "bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500",
+    secondary: "bg-sky-100 text-sky-900 hover:bg-sky-200 focus:ring-sky-500",
+    outline: "border-2 border-sky-200 text-sky-600 hover:bg-sky-50 focus:ring-sky-500"
   }
 
   return (
@@ -315,13 +315,14 @@ const SectionCard = ({
   description: string
   children: React.ReactNode
 }) => (
-  <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
-    <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+  <div className="bg-white rounded-xl border border-sky-200 shadow-md overflow-hidden">
+    <div className="border-b border-sky-200 bg-gradient-to-r from-sky-50 to-white">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
       <div className="px-8 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-            <p className="text-gray-600 mt-1">{description}</p>
+            <h2 className="text-2xl font-bold text-sky-900">{title}</h2>
+            <p className="text-sky-600 mt-1">{description}</p>
           </div>
         </div>
       </div>
@@ -542,24 +543,24 @@ export default function EditarArbitroPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-        <div className="text-gray-600">Cargando datos del árbitro...</div>
+      <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white flex items-center justify-center">
+        <div className="text-sky-600">Cargando datos del árbitro...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
       {/* HEADER CORPORATIVO */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white border-b border-sky-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="h-auto py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <div className="flex items-center gap-3 order-2 sm:order-1">
               <Link
                 href={`/dashboard/arbitros/${id}`}
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full border border-sky-300 flex items-center justify-center">
                   <span className="text-lg">←</span>
                 </div>
                 <span className="font-medium hidden sm:inline">Volver</span>
@@ -567,8 +568,8 @@ export default function EditarArbitroPage() {
             </div>
 
             <div className="text-center order-1 sm:order-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Editar Árbitro</h1>
-              <p className="text-xs sm:text-sm text-gray-600">Comisión Departamental de Árbitros • Puno</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-sky-900">Editar Árbitro</h1>
+              <p className="text-xs sm:text-sm text-sky-600">Comisión Departamental de Árbitros • Puno</p>
             </div>
 
             <div className="order-3"></div>
@@ -636,7 +637,7 @@ export default function EditarArbitroPage() {
                         disabled={soloLectura}
                       />
                       {form.fechaNacimiento && (
-                        <div className="text-sm text-blue-600 font-medium">
+                        <div className="text-sm text-sky-600 font-medium">
                           Edad calculada: {calcularEdad(form.fechaNacimiento)} años
                         </div>
                       )}
@@ -768,7 +769,7 @@ export default function EditarArbitroPage() {
             >
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Categoría</h3>
+                  <h3 className="text-lg font-semibold text-sky-900 mb-4">Categoría</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {CATEGORIAS_CODAR.map((cat) => (
                       <RadioOption
@@ -794,7 +795,7 @@ export default function EditarArbitroPage() {
                         disabled={soloLectura}
                       />
                       {form.fechaAfiliacion && (
-                        <div className="text-sm text-blue-600 font-medium">
+                        <div className="text-sm text-sky-600 font-medium">
                           Tiempo como árbitro: {calcularAniosComoArbitro(form.fechaAfiliacion)} años
                         </div>
                       )}
@@ -840,7 +841,7 @@ export default function EditarArbitroPage() {
             >
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Roles Arbitrales</h3>
+                  <h3 className="text-lg font-semibold text-sky-900 mb-4">Roles Arbitrales</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {ROLES_CODAR.map((role) => (
                       <CheckboxOption
@@ -863,7 +864,7 @@ export default function EditarArbitroPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Especialidades</h3>
+                  <h3 className="text-lg font-semibold text-sky-900 mb-4">Especialidades</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {ESPECIALIDADES.map((esp) => (
                       <CheckboxOption
@@ -896,7 +897,7 @@ export default function EditarArbitroPage() {
             >
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado del Árbitro</h3>
+                  <h3 className="text-lg font-semibold text-sky-900 mb-4">Estado del Árbitro</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {[
                       { value: "activo", label: "Activo", desc: "Habilitado para designaciones" },
