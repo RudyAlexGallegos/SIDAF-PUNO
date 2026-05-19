@@ -332,6 +332,7 @@ public class ReporteService {
             case 1: return "analisis_partido";
             case 2: case 4: case 6: return "preparacion_fisica";
             case 5: return "reunion_ordinaria";
+            case 3: case 0: return "reunion_extraordinaria";
             default: return "";
         }
     }
@@ -464,20 +465,38 @@ public class ReporteService {
                     asisArbitros.add(a);
                 }
             }
-            
-            if (!asisArbitros.isEmpty()) {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("nombre", arbitro.getNombre() + " " + arbitro.getApellido());
-                entry.put("asistencias", asisArbitros.size());
-                entry.put("porcentaje", calcularPorcentajeAsistencia(asisArbitros));
-                
-                ranking.add(entry);
-            }
+
+            Set<Integer> diasPresentes = asisArbitros.stream()
+                .map(a -> a.getFecha().getDayOfWeek().getValue())
+                .collect(Collectors.toSet());
+
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("nombre", (arbitro.getNombre() + " " + arbitro.getApellido()).toUpperCase());
+            entry.put("lunes", diasPresentes.contains(1) ? getActividadLabel(1) : "-");
+            entry.put("martes", diasPresentes.contains(2) ? getActividadLabel(2) : "-");
+            entry.put("miercoles", diasPresentes.contains(3) ? getActividadLabel(3) : "-");
+            entry.put("jueves", diasPresentes.contains(4) ? getActividadLabel(4) : "-");
+            entry.put("viernes", diasPresentes.contains(5) ? getActividadLabel(5) : "-");
+            entry.put("total", asisArbitros.size());
+            entry.put("asistencias", asisArbitros.size());
+            entry.put("porcentaje", calcularPorcentajeAsistencia(asisArbitros));
+
+            ranking.add(entry);
         }
         
         // Ordenar por asistencias descendente
         ranking.sort((a, b) -> Integer.compare((Integer) b.get("asistencias"), (Integer) a.get("asistencias")));
         
         return ranking;
+    }
+
+    private String getActividadLabel(int diaSemana) {
+        switch (diaSemana) {
+            case 1: return "Análisis de Partido";
+            case 2: case 4: case 6: return "Preparación Física";
+            case 5: return "Reunión Ordinaria";
+            case 3: case 0: return "Reunión Extraordinaria";
+            default: return "";
+        }
     }
 }

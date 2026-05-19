@@ -16,6 +16,8 @@ import {
     ClipboardList,
 } from "lucide-react"
 import { getArbitros, getDesignaciones, getCampeonatos, getEquipos, getAsistencias, type Designacion, type Arbitro, type Campeonato, type Equipo, type Asistencia } from "@/services/api"
+import DashboardEstadisticasAsistencia from "@/components/dashboard-estadisticas-asistencia"
+import AlertasAsistencia from "@/components/alertas-asistencia"
 
 type ApiStatus = "checking" | "ok" | "error"
 
@@ -43,6 +45,8 @@ export default function DashboardPage() {
         todayAsistencias: 0,
     })
     const [loading, setLoading] = useState(true)
+    const [asistencias, setAsistencias] = useState<Asistencia[]>([])
+    const [arbitros, setArbitros] = useState<Arbitro[]>([])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -58,7 +62,7 @@ export default function DashboardPage() {
                     setApiStatus("ok")
 
                     // Fetch all data in parallel
-                    const [arbitros, designaciones, championships, equipos, todayAsistencias] = await Promise.all([
+                    const [arbitrosData, designaciones, championships, equipos, asistenciasData] = await Promise.all([
                         getArbitros(),
                         getDesignaciones(),
                         getCampeonatos(),
@@ -67,14 +71,14 @@ export default function DashboardPage() {
                     ])
 
                     // Calculate stats
-                    const arbitrosActivos = arbitros.filter((a: Arbitro) => a.estado === "ACTIVO" || a.disponible).length
+                    const arbitrosActivos = arbitrosData.filter((a: Arbitro) => a.estado === "ACTIVO" || a.disponible).length
                     const designacionesPendientes = designaciones.filter((d: Designacion) => d.estado === "PENDIENTE" || d.estado === "CONFIRMADA").length
                     const championshipsActivos = championships.filter((c: Campeonato) => c.estado === "ACTIVO" || c.estado === "EN_CURSO").length
                     const today = new Date().toISOString().split('T')[0]
-                    const todayAsistCount = todayAsistencias.filter((a: Asistencia) => a.fecha === today).length
+                    const todayAsistCount = asistenciasData.filter((a: Asistencia) => a.fecha === today).length
 
                     setStats({
-                        arbitros: arbitros.length,
+                        arbitros: arbitrosData.length,
                         arbitrosActivos,
                         designaciones: designaciones.length,
                         designacionesPendientes,
@@ -83,6 +87,10 @@ export default function DashboardPage() {
                         equipos: equipos.length,
                         todayAsistencias: todayAsistCount,
                     })
+
+                    // Store real data for dashboard components
+                    setAsistencias(asistenciasData)
+                    setArbitros(arbitrosData)
                     
                     // Success - set loading to false and exit the retry loop
                     setLoading(false)
@@ -241,6 +249,27 @@ export default function DashboardPage() {
                             />
                         </div>
                     </section>
+
+                    {/* Estadísticas y Alertas de Asistencia - Datos Reales */}
+                    {asistencias.length > 0 && (
+                        <section className="space-y-6">
+                            <DashboardEstadisticasAsistencia 
+                                asistencias={asistencias} 
+                                periodo={{ 
+                                    inicio: new Date(new Date().setMonth(new Date().getMonth() - 1)), 
+                                    fin: new Date() 
+                                }} 
+                            />
+                            <AlertasAsistencia 
+                                asistencias={asistencias} 
+                                arbitros={arbitros}
+                                periodo={{ 
+                                    inicio: new Date(new Date().setMonth(new Date().getMonth() - 1)), 
+                                    fin: new Date() 
+                                }} 
+                            />
+                        </section>
+                    )}
 
                     {/* Quick Actions */}
                     <section>

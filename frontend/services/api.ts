@@ -8,57 +8,188 @@ function buildUrl(path: string): string {
 }
 
 // ============================================================
-// ÁRBITROS
+// INTERFACES Y TIPOS
 // ============================================================
+
+export interface Usuario {
+    id?: number;
+    dni?: string;
+    nombre?: string;
+    apellido?: string;
+    email?: string;
+    telefono?: string;
+    rol?: string;
+    estado?: string;
+    token?: string;
+    perfilCompleto?: boolean;
+    cargoCodar?: string;
+    areaCodar?: string;
+    fechaNacimiento?: string;
+    especialidad?: string;
+    unidadOrganizacional?: string;
+    permisosEspecificos?: string;
+}
 
 export interface Arbitro {
     id?: number;
-    // Datos personales
     nombre?: string;
     apellido?: string;
     dni?: string;
-    tipoDocumento?: string;
-    fechaNacimiento?: string;
-    lugarNacimiento?: string;
-    genero?: string;
-    estatura?: string;
-    
-    // Datos de contacto
     email?: string;
     telefono?: string;
-    telefonoEmergencia?: string;
-    direccion?: string;
+    categoria?: string;
+    estado?: string;
+}
+
+export interface Asesor {
+    id?: number;
+    usuarioId: number;
+    nombre: string;
+    apellido: string;
+    dni: string;
+    email: string;
+    telefono?: string;
+    especialidad?: string;
+    estado?: string;
+    descripcion?: string;
+    foto?: string;
+    fechaRegistro?: string;
+    fechaActualizacion?: string;
+}
+
+export interface Campeonato {
+    id?: number;
+    nombre: string;
+    categoria?: string;
+    tipo?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    estado?: string;
+    organizador?: string;
+    contacto?: string;
+    ciudad?: string;
+    provincia?: string;
+    nivelDificultad?: string;
+    numeroEquipos?: number;
+}
+
+export interface Equipo {
+    id?: number;
+    nombre: string;
+    categoria?: string;
     provincia?: string;
     distrito?: string;
-    
-    // Datos del árbitro
-    categoria?: string;
-    especialidad?: string;
-    experiencia?: number;
-    nivelCertificacion?: string;
-    nivelPreparacion?: string;
-    
-    // Fechas profesionales
-    fechaAfiliacion?: string;
-    fechaExamenTeorico?: string;
-    fechaExamenPractico?: string;
-    academiaFormadora?: string;
-    
-    // Roles y especialidades
-    roles?: string;
-    especialidades?: string;
-    
-    // Disponibilidad
-    disponible?: boolean;
-    diasJuego?: string[];
-    
-    // Datos adicionales
-    foto?: string;
-    observaciones?: string;
-    fechaRegistro?: string;
-    estado?: string;
-    declaracionJurada?: boolean;
+    estadio?: string;
+    direccion?: string;
 }
+
+export interface Designacion {
+    id?: number;
+    partidoId?: string;
+    idArbitro?: number;
+    nombreArbitro?: string;
+    idCampeonato?: number;
+    nombreCampeonato?: string;
+    idEquipoLocal?: number;
+    nombreEquipoLocal?: string;
+    idEquipoVisitante?: number;
+    nombreEquipoVisitante?: string;
+    fecha?: string;
+    hora?: string;
+    estadio?: string;
+    posicion?: string;
+    estado?: string;
+}
+
+export interface Asistencia {
+    id?: number;
+    idArbitro?: number;
+    nombreArbitro?: string;
+    fecha?: string;
+    horaEntrada?: string;
+    horaSalida?: string;
+    actividad?: string;
+    evento?: string;
+    estado?: string;
+    observaciones?: string;
+}
+
+// ============================================================
+// AUTENTICACIÓN
+// ============================================================
+
+export async function login(dni: string, password: string): Promise<Usuario> {
+    const response = await fetch(buildUrl("/auth/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni, password }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al iniciar sesión");
+    }
+
+    const data = await response.json();
+    
+    if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data));
+    }
+    
+    return data;
+}
+
+export async function registro(datos: any): Promise<Usuario> {
+    const response = await fetch(buildUrl("/auth/registro"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al registrar usuario");
+    }
+
+    return await response.json();
+}
+
+export async function logout(): Promise<void> {
+    try {
+        if (typeof window === "undefined") return;
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+    } catch (error) {
+        console.error("Error durante logout:", error);
+    }
+}
+
+export function getStoredUser(): Usuario | null {
+    if (typeof window === "undefined") return null;
+    try {
+        const userStr = localStorage.getItem("user");
+        if (!userStr) return null;
+        return JSON.parse(userStr);
+    } catch (error) {
+        console.error("Error al obtener usuario almacenado:", error);
+        return null;
+    }
+}
+
+export function getStoredToken(): string | null {
+    if (typeof window === "undefined") return null;
+    try {
+        return localStorage.getItem("token");
+    } catch (error) {
+        console.error("Error al obtener token:", error);
+        return null;
+    }
+}
+
+// ============================================================
+// ÁRBITROS
+// ============================================================
 
 export async function getArbitros(): Promise<Arbitro[]> {
     try {
@@ -127,45 +258,6 @@ export async function deleteArbitro(id: number): Promise<boolean> {
 // CAMPEONATOS
 // ============================================================
 
-export interface Etapa {
-    id?: number;
-    nombre: string;
-    orden: number;
-    fechaInicio?: string;
-    fechaFin?: string;
-}
-
-export interface Campeonato {
-    id?: number;
-    nombre: string;
-    categoria?: string;
-    tipo?: string;
-    fechaInicio?: string;
-    fechaFin?: string;
-    estado?: string;
-    organizador?: string;
-    contacto?: string;
-    ciudad?: string;
-    provincia?: string;
-    nivelDificultad?: string;
-    numeroEquipos?: number;
-    formato?: string;
-    numeroJornadas?: number;
-    numeroArbitrosRequeridos?: number;
-    direccion?: string;
-    estadio?: string;
-    diasJuego?: string;
-    horaInicio?: string;
-    horaFin?: string;
-    equipos?: number[];
-    etapas?: Etapa[];
-    reglas?: string;
-    premios?: string;
-    observaciones?: string;
-    logo?: string;
-    fechaCreacion?: string;
-}
-
 export async function getCampeonatos(): Promise<Campeonato[]> {
     try {
         const response = await fetch(buildUrl("/campeonato"));
@@ -233,21 +325,6 @@ export async function deleteCampeonato(id: number): Promise<boolean> {
 // EQUIPOS
 // ============================================================
 
-export interface Equipo {
-    id?: number;
-    nombre: string;
-    categoria?: string;
-    provincia?: string;
-    distrito?: string;
-    estadio?: string;
-    nombreEstadio?: string;
-    direccion?: string;
-    telefono?: string;
-    email?: string;
-    colores?: string;
-    fechaCreacion?: string;
-}
-
 export async function getEquipos(): Promise<Equipo[]> {
     try {
         const response = await fetch(buildUrl("/equipos"));
@@ -311,59 +388,9 @@ export async function deleteEquipo(id: number): Promise<boolean> {
     }
 }
 
-export async function getEquiposByDistrito(distrito: string): Promise<Equipo[]> {
-    try {
-        const response = await fetch(buildUrl(`/equipos/distrito/${encodeURIComponent(distrito)}`));
-        if (!response.ok) throw new Error("Error HTTP");
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error getEquiposByDistrito:", error);
-        return [];
-    }
-}
-
-export async function getEquiposByProvinciaAndDistrito(provincia: string, distrito: string): Promise<Equipo[]> {
-    try {
-        const response = await fetch(
-            buildUrl(`/equipos/provincia/${encodeURIComponent(provincia)}/distrito/${encodeURIComponent(distrito)}`)
-        );
-        if (!response.ok) throw new Error("Error HTTP");
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error getEquiposByProvinciaAndDistrito:", error);
-        return [];
-    }
-}
-
 // ============================================================
 // DESIGNACIONES
 // ============================================================
-
-export interface Designacion {
-    id?: number;
-    partidoId?: string;
-    idArbitro?: number;
-    nombreArbitro?: string;
-    idCampeonato?: number;
-    nombreCampeonato?: string;
-    idEquipoLocal?: number;
-    nombreEquipoLocal?: string;
-    idEquipoVisitante?: number;
-    nombreEquipoVisitante?: string;
-    fecha?: string;
-    hora?: string;
-    estadio?: string;
-    posicion?: string;
-    estado?: string;
-    observaciones?: string;
-    createdAt?: string;
-    // Campos adicionales para nueva designación
-    arbitroPrincipal?: number;
-    arbitroAsistente1?: number;
-    arbitroAsistente2?: number;
-    cuartoArbitro?: number;
-    fechaDesignacion?: string;
-}
 
 export async function getDesignaciones(): Promise<Designacion[]> {
     try {
@@ -441,41 +468,9 @@ export async function getDesignacionesByCampeonato(campeonatoId: number): Promis
     }
 }
 
-export async function getEquiposByCampeonato(campeonatoId: number): Promise<Equipo[]> {
-    try {
-        const campeonato = await getCampeonatoById(campeonatoId);
-        if (!campeonato || !campeonato.equipos) return [];
-        
-        // Si la API devuelve IDs de equipos, obtener equipos
-        const equiposPromises = campeonato.equipos.map(equipoId => getEquipoById(equipoId));
-        const equipos = await Promise.all(equiposPromises);
-        
-        return equipos.filter(e => e !== null) as Equipo[];
-    } catch (error) {
-        console.error("❌ Error getEquiposByCampeonato:", error);
-        return [];
-    }
-}
-
 // ============================================================
 // ASISTENCIA
 // ============================================================
-
-export interface Asistencia {
-    id?: number;
-    idArbitro?: number;
-    nombreArbitro?: string;
-    fecha?: string;
-    horaEntrada?: string;
-    horaSalida?: string;
-    actividad?: string;
-    evento?: string;
-    estado?: string;
-    observaciones?: string;
-    latitude?: string;
-    longitude?: string;
-    createdAt?: string;
-}
 
 export async function getAsistencias(): Promise<Asistencia[]> {
     try {
@@ -540,10 +535,6 @@ export async function deleteAsistencia(id: number): Promise<boolean> {
     }
 }
 
-/**
- * Obtiene las asistencia(s) por fecha
- * GET /api/asistencias/fecha/{fecha}
- */
 export async function getAsistenciasByFecha(fecha: string): Promise<Asistencia[]> {
     try {
         const response = await fetch(buildUrl(`/asistencias/fecha/${fecha}`));
@@ -555,31 +546,6 @@ export async function getAsistenciasByFecha(fecha: string): Promise<Asistencia[]
     }
 }
 
-// ========== NUEVAS FUNCIONES PARA MEJORA DE ASISTENCIA ==========
-
-// Interfaz extendida de Asistencia con nuevos campos
-export interface AsistenciaExtendida extends Asistencia {
-    tipoDia?: string
-    tieneRetraso?: boolean
-    minutosRetraso?: number
-    fechaLimiteRegistro?: string
-    horaProgramada?: string
-    diaSemana?: number
-}
-
-// Información del día actual
-export interface DiaInfo {
-    fecha: string
-    diaSemana: number
-    nombreDia: string
-    esObligatorio: boolean
-    tipoDia: string
-}
-
-/**
- * Obtiene estadísticas de asistencia por árbitro
- * GET /api/asistencias/estadisticas
- */
 export async function getEstadisticasAsistencia(): Promise<any> {
     try {
         const response = await fetch(buildUrl("/asistencias/estadisticas"));
@@ -591,10 +557,6 @@ export async function getEstadisticasAsistencia(): Promise<any> {
     }
 }
 
-/**
- * Obtiene resumen de asistencia por fecha
- * GET /api/asistencias/resumen/{fecha}
- */
 export async function getResumenAsistenciaPorFecha(fecha: string): Promise<any> {
     try {
         const response = await fetch(buildUrl(`/asistencias/resumen/${fecha}`));
@@ -606,76 +568,6 @@ export async function getResumenAsistenciaPorFecha(fecha: string): Promise<any> 
     }
 }
 
-/**
- * Obtiene reporte consolidado de asistencias
- * GET /api/asistencias/reporte-consolidado
- */
-export async function getReporteConsolidado(): Promise<any> {
-    try {
-        const response = await fetch(buildUrl("/asistencias/reporte-consolidado"));
-        if (!response.ok) throw new Error("Error HTTP");
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error getReporteConsolidado:", error);
-        return null;
-    }
-}
-
-/**
- * Obtiene asistencias con información extendida
- * GET /api/asistencias/extendidas
- */
-export async function getAsistenciasExtendidas(): Promise<AsistenciaExtendida[]> {
-    try {
-        const response = await fetch(buildUrl("/asistencias/extendidas"));
-        if (!response.ok) throw new Error("Error HTTP");
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error getAsistenciasExtendidas:", error);
-        return [];
-    }
-}
-
-/**
- * Obtiene información del día actual
- * GET /api/asistencias/dia-actual
- */
-export async function getDiaActual(): Promise<DiaInfo> {
-    try {
-        const response = await fetch(buildUrl("/asistencias/dia-actual"));
-        if (!response.ok) throw new Error("Error HTTP");
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error getDiaActual:", error);
-        return {
-            fecha: new Date().toISOString().split('T')[0],
-            diaSemana: new Date().getDay(),
-            nombreDia: new Date().toLocaleDateString('es-ES', { weekday: 'long' }),
-            esObligatorio: false,
-            tipoDia: 'normal'
-        };
-    }
-}
-
-/**
- * Obtiene resumen mensual de asistencias
- * GET /api/asistencias/resumen-mensual/{anio}/{mes}
- */
-export async function getResumenMensual(anio: number, mes: number): Promise<any> {
-    try {
-        const response = await fetch(buildUrl(`/asistencias/resumen-mensual/${anio}/${mes}`));
-        if (!response.ok) throw new Error("Error HTTP");
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error getResumenMensual:", error);
-        return null;
-    }
-}
-
-/**
- * Obtiene historial de asistencias por rango de fechas
- * GET /api/asistencias/historial?fechaInicio={fechaInicio}&fechaFin={fechaFin}
- */
 export async function getHistorialAsistencias(fechaInicio?: string, fechaFin?: string): Promise<Asistencia[]> {
     try {
         const params = new URLSearchParams();
@@ -690,10 +582,6 @@ export async function getHistorialAsistencias(fechaInicio?: string, fechaFin?: s
     }
 }
 
-/**
- * Obtiene ranking de asistencias
- * GET /api/asistencias/ranking
- */
 export async function getRankingAsistencia(): Promise<any> {
     try {
         const response = await fetch(buildUrl("/asistencias/ranking"));
@@ -705,148 +593,112 @@ export async function getRankingAsistencia(): Promise<any> {
     }
 }
 
-// ============================================================
-// AUTENTICACIÓN
-// ============================================================
-
-export interface Usuario {
-    id?: number;
-    dni?: string;
-    nombre?: string;
-    apellido?: string;
-    email?: string;
-    rol?: string;
-    estado?: string;
-    token?: string;
-    perfilCompleto?: boolean;
-    cargoCodar?: string;
-    areaCodar?: string;
-    unidadOrganizacional?: string;
-    permisosEspecificos?: string;
+export async function getRankingSemanal(): Promise<Array<{nombre: string; lunes: string; martes: string; miercoles: string; jueves: string; viernes: string; total: number; porcentaje: number}>> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/ranking-semanal"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getRankingSemanal:", error);
+        return [];
+    }
 }
 
-/**
- * Inicia sesión con DNI y contraseña
- * POST /api/auth/login
- */
-export async function login(dni: string, password: string): Promise<Usuario> {
-    const response = await fetch(buildUrl("/auth/login"), {
+export async function getResumenMensual(anio: number, mes: number): Promise<any> {
+    try {
+        const response = await fetch(buildUrl(`/asistencias/resumen-mensual/${anio}/${mes}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getResumenMensual:", error);
+        return null;
+    }
+}
+
+// ============================================================
+// ASESORES
+// ============================================================
+
+export async function getAsesores(): Promise<Asesor[]> {
+    try {
+        const response = await fetch(buildUrl("/asesores"));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Asesores obtenidos:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getAsesores:", error);
+        return [];
+    }
+}
+
+export async function getAsesorById(id: number): Promise<Asesor | null> {
+    try {
+        const response = await fetch(buildUrl(`/asesores/${id}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getAsesorById:", error);
+        return null;
+    }
+}
+
+export async function createAsesor(data: Asesor): Promise<Asesor> {
+    const response = await fetch(buildUrl("/asesores"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni, password }),
+        body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al iniciar sesión");
-    }
-
-    const data = await response.json();
-    
-    // Guardar token en localStorage
-    if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data));
-    }
-    
-    return data;
-}
-
-/**
- * Registra un nuevo usuario
- * POST /api/auth/registro
- */
-export async function registro(datos: any): Promise<Usuario> {
-    const response = await fetch(buildUrl("/auth/registro"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al registrar usuario");
+        throw new Error("Error al crear asesor");
     }
 
     return await response.json();
 }
 
-/**
- * Verifica si un DNI ya está registrado
- * GET /api/auth/verificar-dni/{dni}
- */
-export async function verificarDni(dni: string): Promise<boolean> {
+export async function updateAsesor(id: number, data: Asesor): Promise<Asesor> {
+    const response = await fetch(buildUrl(`/asesores/${id}`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        throw new Error("Error al actualizar asesor");
+    }
+
+    return await response.json();
+}
+
+export async function cambiarEstadoAsesor(id: number, estado: string): Promise<Asesor> {
+    const response = await fetch(buildUrl(`/asesores/${id}/estado?estado=${encodeURIComponent(estado)}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+        throw new Error("Error al cambiar estado del asesor");
+    }
+
+    return await response.json();
+}
+
+export async function deleteAsesor(id: number): Promise<boolean> {
     try {
-        const response = await fetch(buildUrl(`/auth/verificar-dni/${dni}`));
-        if (!response.ok) throw new Error("Error HTTP");
-        const data = await response.json();
-        return data.existe || false;
-    } catch (error) {
-        console.error("❌ Error verificarDni:", error);
+        const response = await fetch(buildUrl(`/asesores/${id}`), {
+            method: "DELETE",
+        });
+        return response.ok;
+    } catch {
         return false;
     }
 }
 
-/**
- * Cierra sesión del usuario
- */
-export async function logout(): Promise<void> {
-    try {
-        if (typeof window === "undefined") return;
-        
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        
-        // Clear all cache entries
-        const keys = Object.keys(localStorage);
-        for (let i = 0; i < keys.length; i++) {
-            if (keys[i] && keys[i].startsWith("sidaf_cache_")) {
-                localStorage.removeItem(keys[i]);
-            }
-        }
-    } catch (error) {
-        console.error("Error durante logout:", error);
-    }
-}
-
-/**
- * Obtiene el usuario almacenado en localStorage
- */
-export function getStoredUser(): Usuario | null {
-    if (typeof window === "undefined") return null;
-    
-    try {
-        const userStr = localStorage.getItem("user");
-        if (!userStr) return null;
-        return JSON.parse(userStr);
-    } catch (error) {
-        console.error("Error al obtener usuario almacenado:", error);
-        return null;
-    }
-}
-
-/**
- * Obtiene el token de autenticación almacenado
- */
-export function getStoredToken(): string | null {
-    if (typeof window === "undefined") return null;
-    
-    try {
-        return localStorage.getItem("token");
-    } catch (error) {
-        console.error("Error al obtener token almacenado:", error);
-        return null;
-    }
-}
-
 // ============================================================
-// GESTIÓN DE USUARIOS (SOLO ADMIN/PRESIDENCIA_CODAR)
+// GESTIÓN DE USUARIOS
 // ============================================================
 
-/**
- * Obtiene todos los usuarios pendientes de aprobación
- * GET /api/usuarios/pendientes
- */
 export async function getUsuariosPendientes(): Promise<Usuario[]> {
     try {
         const response = await fetch(buildUrl("/usuarios/pendientes"));
@@ -860,10 +712,6 @@ export async function getUsuariosPendientes(): Promise<Usuario[]> {
     }
 }
 
-/**
- * Obtiene todos los usuarios del sistema
- * GET /api/usuarios
- */
 export async function getTodosUsuarios(): Promise<Usuario[]> {
     try {
         const response = await fetch(buildUrl("/usuarios"));
@@ -877,10 +725,6 @@ export async function getTodosUsuarios(): Promise<Usuario[]> {
     }
 }
 
-/**
- * Aprueba un usuario pendiente y le asigna un rol
- * POST /api/usuarios/{id}/aprobar
- */
 export async function aprobarUsuario(
     id: number,
     rol: string,
@@ -907,10 +751,6 @@ export async function aprobarUsuario(
     }
 }
 
-/**
- * Cambia el estado de un usuario
- * PUT /api/usuarios/{id}/estado
- */
 export async function cambiarEstadoUsuario(
     id: number,
     estado: string
@@ -936,10 +776,6 @@ export async function cambiarEstadoUsuario(
     }
 }
 
-/**
- * Elimina un usuario del sistema
- * DELETE /api/usuarios/{id}
- */
 export async function eliminarUsuario(id: number): Promise<boolean> {
     try {
         const response = await fetch(buildUrl(`/usuarios/${id}`), {
@@ -959,10 +795,6 @@ export async function eliminarUsuario(id: number): Promise<boolean> {
     }
 }
 
-/**
- * Asigna permisos a un usuario
- * PUT /api/usuarios/{id}/permisos
- */
 export async function asignarPermisos(
     id: number,
     permisos: string[]
@@ -989,62 +821,71 @@ export async function asignarPermisos(
 }
 
 // ============================================================
-// SOLICITUDES DE PERMISOS
+// REPORTES Y ESTADÍSTICAS
 // ============================================================
 
-export interface SolicitudPermiso {
-    id?: number;
-    usuarioId?: number;
-    usuarioNombre?: string;
-    permisoSolicitado?: string;
-    descripcion?: string;
-    estado?: string; // PENDIENTE, APROBADO, RECHAZADO
-    fechaSolicitud?: string;
-    fechaRespuesta?: string;
-    respondidoPor?: number;
-    razonRechazo?: string;
-    notas?: string;
-}
-
-/**
- * Obtiene solicitudes de permisos pendientes
- * GET /api/solicitudes/pendientes
- */
-export async function getSolicitudesPendientes(): Promise<SolicitudPermiso[]> {
+export async function getTendenciasAsistencia(dias: number): Promise<any> {
     try {
-        const response = await fetch(buildUrl("/solicitudes/pendientes"));
+        const response = await fetch(buildUrl(`/reportes/tendencias?dias=${dias}`));
         if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
-        console.log("✅ Solicitudes pendientes obtenidas:", data);
+        console.log("✅ Tendencias obtenidas:", data);
         return data;
     } catch (error) {
-        console.error("❌ Error getSolicitudesPendientes:", error);
-        return [];
+        console.error("❌ Error getTendenciasAsistencia:", error);
+        return null;
     }
 }
 
-/**
- * Responde a una solicitud de permiso (APROBAR o RECHAZAR)
- * POST /api/solicitudes/{id}/responder
- */
-export async function responderSolicitud(id: number, accion: string, respondidoPor?: number, razonRechazo?: string): Promise<SolicitudPermiso> {
+export async function getRankingArbitros(
+    inicio: string,
+    fin: string
+): Promise<{ ranking: any[] } | null> {
     try {
-        const response = await fetch(buildUrl(`/solicitudes/${id}/responder`), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ accion, respondidoPor, razonRechazo }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || "Error al responder solicitud");
-        }
-
+        const response = await fetch(
+            buildUrl(`/reportes/ranking?inicio=${inicio}&fin=${fin}`)
+        );
+        if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
-        console.log("✅ Solicitud respondida:", data);
+        console.log("✅ Ranking obtenido:", data);
         return data;
     } catch (error) {
-        console.error("❌ Error responderSolicitud:", error);
-        throw error;
+        console.error("❌ Error getRankingArbitros:", error);
+        return null;
+    }
+}
+
+export async function getDiasFaltantes(
+    inicio: string,
+    fin: string
+): Promise<{ total: number; diasFaltantes: any[] } | null> {
+    try {
+        const response = await fetch(
+            buildUrl(`/reportes/dias-faltantes?inicio=${inicio}&fin=${fin}`)
+        );
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Días faltantes obtenidos:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getDiasFaltantes:", error);
+        return null;
+    }
+}
+
+export async function getReporteConsolidado(inicio?: string, fin?: string): Promise<any> {
+    try {
+        let url = "/asistencias/reporte-consolidado";
+        if (inicio && fin) {
+            url = `/reportes/consolidado?inicio=${inicio}&fin=${fin}`;
+        }
+        const response = await fetch(buildUrl(url));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Reporte consolidado obtenido:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getReporteConsolidado:", error);
+        return null;
     }
 }
