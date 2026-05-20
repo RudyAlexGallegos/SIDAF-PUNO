@@ -752,21 +752,30 @@ export default function HistorialAsistenciaPage() {
     const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana
     const lunes = addDays(hoy, diffLunes)
     const viernes = addDays(lunes, 4)
-    
-    // Preparar datos para previsualización
-    const datosPreview: any[] = semanaData.map((fila: any) => ({
-      nombre: fila.nombre,
-      arbitroId: fila.arbitroId,
-      dias: Object.entries(fila.dias).map(([fecha, data]: [string, any]) => ({
-        fecha,
-        estado: data?.estado || null,
-        actividad: data?.actividad || null
-      }))
-    }))
-    
+
+    // Número de semana
+    const semanaNumero = getWeek(lunes)
+
+    // Preparar datos para previsualización usando el estado semanaData (ya tiene dias como objeto)
+    const datosPreview: any[] = semanaData.map((fila: any) => {
+      // Calcular último día con asistencia anterior al lunes
+      const registrosPrevios = registrosExpandidos
+        .filter((r: any) => String(r.arbitroId) === String(fila.arbitroId))
+        .filter((r: any) => r.estadoItem === 'presente' || r.estadoItem === 'tardanza' || r.estadoItem === 'justificado')
+        .filter((r: any) => new Date(r.fecha) < lunes)
+        .sort((a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+
+      const ultimo = registrosPrevios.length > 0 ? registrosPrevios[0] : null
+
+      return {
+        ...fila,
+        ultimoDiaAsistencia: ultimo ? format(new Date(ultimo.fecha), 'dd/MM/yyyy') : null
+      }
+    })
+
     // Mostrar previsualización antes de exportar
     setPreviewData(datosPreview)
-    setPreviewTitulo(`Reporte Semanal - ${format(lunes, 'dd/MM')} al ${format(viernes, 'dd/MM/yyyy')}`)
+    setPreviewTitulo(`Reporte Semanal - Semana ${semanaNumero} - ${format(lunes, 'dd/MM')} al ${format(viernes, 'dd/MM/yyyy')}`)
     setPreviewTipo("pdf")
     setPreviewOpen(true)
   }
@@ -1497,7 +1506,13 @@ export default function HistorialAsistenciaPage() {
                   {previewTitulo.includes("Semanal") ? (
                     // Vista especial para reporte semanal
                     <>
-                      <div className="flex gap-4 mb-3 text-xs">
+                      {/* Información de semana y expedido */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-sm text-slate-700">Semana: {previewTitulo.match(/Semana\s*(\d+)/)?.[1] || '-'}</div>
+                        <div className="text-sm text-slate-500">Expedido: {format(new Date(), 'dd/MM/yyyy')}</div>
+                      </div>
+
+                      <div className="flex gap-4 mb-3 text-xs"> 
                         <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-100 rounded-full"></span> Presente</span>
                         <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-100 rounded-full"></span> Ausente</span>
                         <span className="flex items-center gap-1"><span className="w-3 h-3 bg-yellow-100 rounded-full"></span> Tardanza</span>

@@ -2,7 +2,7 @@
 
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { format, eachDayOfInterval, addDays } from "date-fns"
+import { format, eachDayOfInterval, addDays, getWeek } from "date-fns"
 import { es } from "date-fns/locale"
 
 // Colores corporativos SIDAF-PUNO
@@ -817,6 +817,15 @@ export function generateReporteSemanalPDF(
   doc.text(`Período: ${format(fechaInicio, 'dd MMMM')} - ${format(fechaFin, 'dd MMMM yyyy', { locale: es })}`, pageWidth / 2, 67, { align: 'center' })
   doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, 74, { align: 'center' })
 
+  // Número de semana y expedido
+  const semanaNumero = getWeek(fechaInicio)
+  doc.setFontSize(10)
+  doc.setTextColor(...COLORS.dark)
+  doc.text(`Semana: ${semanaNumero}`, 14, 82)
+  doc.setFontSize(10)
+  doc.setTextColor(...COLORS.gray)
+  doc.text(`Expedido: ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth - 14, 82, { align: 'right' })
+
   // Tarjetas de estadísticas modernas
   let yPos = 88
   const cardWidth = (pageWidth - 56) / 4
@@ -885,7 +894,7 @@ export function generateReporteSemanalPDF(
 
   // Preparar datos de tabla
   const tableData = semanaData.map(fila => {
-    const row: any[] = [fila.nombre]
+    const row: any[] = [fila.nombre, (fila as any).ultimoDiaAsistencia || '-']
     let presentesFila = 0
 
     diasSemana.forEach((_, idx) => {
@@ -914,7 +923,7 @@ export function generateReporteSemanalPDF(
 
   autoTable(doc, {
     startY: yPos + 4,
-    head: [['Árbitro', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Total']],
+    head: [['Árbitro', 'Últ. Asist.', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Total']],
     body: tableData,
     theme: 'grid',
     headStyles: { 
@@ -933,12 +942,13 @@ export function generateReporteSemanalPDF(
     margin: { left: 14, right: 14 },
     columnStyles: {
       0: { cellWidth: 50, fontStyle: 'bold' },
-      1: { cellWidth: 18, halign: 'center' },
+      1: { cellWidth: 30, halign: 'center' },
       2: { cellWidth: 18, halign: 'center' },
       3: { cellWidth: 18, halign: 'center' },
       4: { cellWidth: 18, halign: 'center' },
       5: { cellWidth: 18, halign: 'center' },
-      6: { cellWidth: 22, halign: 'center', fontStyle: 'bold', fillColor: [220, 252, 231] },
+      6: { cellWidth: 18, halign: 'center' },
+      7: { cellWidth: 22, halign: 'center', fontStyle: 'bold', fillColor: [220, 252, 231] },
     },
   })
 
@@ -947,6 +957,25 @@ export function generateReporteSemanalPDF(
   doc.setFontSize(8)
   doc.setTextColor(...COLORS.gray)
   doc.text('Leyenda: P = Presente | A = Ausente | T = Tardanza | J = Justificado | - = Sin registro', pageWidth / 2, finalY + 10, { align: 'center' })
+
+  // Bloque de firma y expedido
+  const firmaY = finalY + 24
+  doc.setFontSize(10)
+  doc.setTextColor(...COLORS.dark)
+  doc.text('Expedido por: Comisión Departamental de Árbitros - Puno', 14, firmaY)
+  doc.text(`Fecha de expedición: ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth - 14, firmaY, { align: 'right' })
+
+  // Líneas de firma
+  const signY = firmaY + 18
+  doc.setDrawColor(...COLORS.gray)
+  doc.setLineWidth(0.3)
+  // Firma izquierda
+  doc.line(14, signY, 90, signY)
+  doc.setFontSize(9)
+  doc.text('Nombre y Firma', 14, signY + 6)
+  // Firma derecha
+  doc.line(pageWidth - 90, signY, pageWidth - 14, signY)
+  doc.text('Responsable', pageWidth - 90, signY + 6)
 
   addFooter(doc)
   doc.save(`reporte-semanal-${format(fechaInicio, 'yyyy-MM-dd')}-${format(fechaFin, 'yyyy-MM-dd')}.pdf`)

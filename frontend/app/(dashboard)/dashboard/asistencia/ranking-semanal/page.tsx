@@ -19,7 +19,8 @@ interface RankingItem {
     jueves: string
     viernes: string
     total: number
-    porcentaje: number
+    asistencias?: number
+    porcentaje: number | string
 }
 
 export default function RankingSemanalPage() {
@@ -79,7 +80,7 @@ export default function RankingSemanalPage() {
         }
     }
 
-    // Función que genera el PDF (reutilizable para preview y descarga)
+    // Función que genera el PDF mejorado (reutilizable para preview y descarga)
     const generarPDF = () => {
         const doc = new jsPDF({
             orientation: "portrait",
@@ -90,65 +91,106 @@ export default function RankingSemanalPage() {
         const fechas = obtenerFechasSemana()
         const pageWidth = doc.internal.pageSize.getWidth()
         const pageHeight = doc.internal.pageSize.getHeight()
-        const margin = 15
+        const margin = 12
 
         const colorSky = { r: 14, g: 165, b: 233 }
         const colorSkyDark = { r: 2, g: 132, b: 199 }
+        const colorSuccess = { r: 34, g: 197, b: 94 }
+        const colorWarning = { r: 217, g: 119, b: 6 }
+        const colorDanger = { r: 220, g: 38, b: 38 }
 
         let yPos = margin
 
-        doc.setDrawColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
-        doc.setLineWidth(2)
-        doc.line(margin, yPos, pageWidth - margin, yPos)
-        yPos += 5
+        // Encabezado profesional
+        doc.setFillColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
+        doc.rect(0, 0, pageWidth, 30, "F")
+        
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(18)
+        doc.setFont("helvetica", "bold")
+        doc.text("COMISIÓN DE ÁRBITROS - SIDAF PUNO", pageWidth / 2, 10, { align: "center" })
+        doc.setFontSize(12)
+        doc.setFont("helvetica", "normal")
+        doc.text("REPORTE SEMANAL DE ASISTENCIA Y DESEMPEÑO", pageWidth / 2, 18, { align: "center" })
+        doc.text("Sistema de Gestión Arbitral", pageWidth / 2, 24, { align: "center" })
+        
+        yPos = 35
 
+        // Información del período
         doc.setTextColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
-        doc.setFontSize(16)
+        doc.setFontSize(11)
         doc.setFont("helvetica", "bold")
-        doc.text("COMISIÓN DE ÁRBITROS - SIDAF PUNO", pageWidth / 2, yPos, { align: "center" })
-        yPos += 10
-
-        doc.setFontSize(14)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(colorSky.r, colorSky.g, colorSky.b)
-        doc.text("📊 REPORTE SEMANAL DE ASISTENCIA", pageWidth / 2, yPos, { align: "center" })
-        yPos += 8
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(80, 80, 80)
-        doc.text("Informe profesional de asistencia - Semana laboral", pageWidth / 2, yPos, { align: "center" })
-        yPos += 8
-
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(80, 80, 80)
-        doc.text(`Período: ${fechas.lunes} - ${fechas.viernes}`, pageWidth / 2, yPos, { align: "center" })
+        doc.text(`Período: ${fechas.lunes} - ${fechas.viernes}`, margin, yPos)
         yPos += 5
 
         const hoy = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
         doc.setFontSize(9)
-        doc.setTextColor(120, 120, 120)
-        doc.text(`Generado: ${hoy}`, pageWidth / 2, yPos, { align: "center" })
-        yPos += 10
+        doc.setTextColor(100, 100, 100)
+        doc.setFont("helvetica", "normal")
+        doc.text(`Generado: ${hoy}`, margin, yPos)
+        yPos += 8
 
         if (ranking.length > 0) {
-            const columnas = ["Posición", "Nombre", "Lun", "Mar", "Mié", "Jue", "Vie", "Total", "Porcentaje"]
-            const anchos = [18, 55, 14, 14, 14, 14, 14, 14, 22]
-            const alturaFila = 8
+            // SECCIÓN 1: ESTADÍSTICAS GENERALES
+            doc.setFillColor(240, 249, 255)
+            doc.rect(margin, yPos, pageWidth - 2 * margin, 35, "F")
+            doc.setDrawColor(colorSky.r, colorSky.g, colorSky.b)
+            doc.setLineWidth(0.5)
+            doc.rect(margin, yPos, pageWidth - 2 * margin, 35)
 
+            const totalAsistencias = ranking.reduce((sum, item) => sum + item.total, 0)
+            const promedioPorcentaje = ranking.length > 0 
+                ? (ranking.reduce((sum, item) => sum + Number(item.porcentaje ?? 0), 0) / ranking.length).toFixed(1) 
+                : "0"
+            const mejorArbitro = ranking.length > 0 ? ranking[0] : null
+            const peorArbitro = ranking.length > 0 ? ranking[ranking.length - 1] : null
+            const diasCubiertos = Math.max(...ranking.map(r => r.total), 0)
+            const arbitrosActivos = ranking.filter(r => r.total > 0).length
+
+            doc.setFontSize(11)
+            doc.setFont("helvetica", "bold")
+            doc.setTextColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
+            doc.text("INDICADORES GENERALES DE DESEMPEÑO", margin + 5, yPos + 5)
+
+            doc.setFontSize(9)
+            doc.setFont("helvetica", "normal")
+            doc.setTextColor(60, 60, 60)
+            let colWidth = (pageWidth - 2 * margin) / 2
+            doc.text(`Total de árbitros: ${ranking.length}`, margin + 5, yPos + 13)
+            doc.text(`Árbitros activos: ${arbitrosActivos}`, margin + 5 + colWidth, yPos + 13)
+            doc.text(`Total registros: ${totalAsistencias}`, margin + 5, yPos + 21)
+            doc.text(`Promedio asistencia: ${promedioPorcentaje}%`, margin + 5 + colWidth, yPos + 21)
+            doc.text(`Mayor desempeño: ${diasCubiertos} días`, margin + 5, yPos + 29)
+            doc.text(`Cobertura promedio: ${((totalAsistencias / (ranking.length * 5)) * 100).toFixed(1)}%`, margin + 5 + colWidth, yPos + 29)
+            
+            yPos += 40
+
+            // SECCIÓN 2: TABLA DE RANKING (Exporta los datos reales de la semana)
+            const columnas = ["N°", "Apellidos y Nombres", "Lun", "Mar", "Mié", "Jue", "Vie", "Total", "%"]
+            const anchos = [10, 62, 22, 22, 22, 22, 22, 16, 16]
+            const defaultAlturaFila = 10
+
+            const normalizeDia = (raw: string | undefined) => {
+                if (!raw || raw.trim() === "-") return "-"
+                return raw
+            }
+
+            // Encabezado de tabla
             doc.setFillColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
             doc.setTextColor(255, 255, 255)
             doc.setFont("helvetica", "bold")
-            doc.setFontSize(9)
+            doc.setFontSize(8)
 
             let xPos = margin
             for (let i = 0; i < columnas.length; i++) {
-                doc.rect(xPos, yPos, anchos[i], alturaFila, "F")
-                doc.text(columnas[i], xPos + 1, yPos + 5, { align: "center" })
+                doc.rect(xPos, yPos, anchos[i], defaultAlturaFila, "F")
+                const text = columnas[i]
+                doc.text(text, xPos + anchos[i] / 2, yPos + 5, { align: "center" })
                 xPos += anchos[i]
             }
-            yPos += alturaFila
+            yPos += defaultAlturaFila
 
+            // Filas de datos
             doc.setTextColor(0, 0, 0)
             doc.setFont("helvetica", "normal")
             doc.setFontSize(8)
@@ -157,96 +199,113 @@ export default function RankingSemanalPage() {
                 if (index === 0) {
                     doc.setFillColor(255, 243, 205)
                 } else if (index === 1) {
-                    doc.setFillColor(226, 232, 240)
+                    doc.setFillColor(230, 230, 230)
                 } else if (index === 2) {
-                    doc.setFillColor(254, 243, 199)
+                    doc.setFillColor(237, 222, 192)
                 } else if (index % 2 === 0) {
-                    doc.setFillColor(240, 249, 255)
+                    doc.setFillColor(245, 250, 255)
                 } else {
                     doc.setFillColor(255, 255, 255)
                 }
-                doc.rect(margin, yPos, pageWidth - 2 * margin, alturaFila, "F")
+
+                const nombre = (item.nombre || '').toUpperCase()
+                const nameMaxWidth = anchos[1] - 4
+                const nameLines = (doc as any).splitTextToSize(nombre, nameMaxWidth)
+                const nameLinesLimited = nameLines.slice(0, 2)
+                const linesCount = Math.max(1, nameLinesLimited.length)
+                const rowHeight = Math.max(defaultAlturaFila, linesCount * 6)
+
+                doc.rect(margin, yPos, pageWidth - 2 * margin, rowHeight, "F")
 
                 xPos = margin
-                const posText = (index + 1).toString()
-                if (index < 3) {
-                    doc.setFont("helvetica", "bold")
-                    doc.setTextColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
-                } else {
-                    doc.setFont("helvetica", "normal")
-                    doc.setTextColor(0, 0, 0)
-                }
-                doc.text(posText, xPos + 2, yPos + 5)
+                doc.setFont("helvetica", "bold")
+                doc.text((index + 1).toString(), xPos + anchos[0] / 2, yPos + 6, { align: "center" })
                 xPos += anchos[0]
 
-                doc.setTextColor(0, 0, 0)
                 doc.setFont("helvetica", "normal")
-                doc.text(item.nombre, xPos + 2, yPos + 5)
+                for (let li = 0; li < nameLinesLimited.length; li++) {
+                    doc.text(nameLinesLimited[li], xPos + 2, yPos + 5 + li * 6)
+                }
                 xPos += anchos[1]
 
-                doc.text(item.lunes || "-", xPos + 1, yPos + 5, { align: "center" })
-                xPos += anchos[2]
-                doc.text(item.martes || "-", xPos + 1, yPos + 5, { align: "center" })
-                xPos += anchos[3]
-                doc.text(item.miercoles || "-", xPos + 1, yPos + 5, { align: "center" })
-                xPos += anchos[4]
-                doc.text(item.jueves || "-", xPos + 1, yPos + 5, { align: "center" })
-                xPos += anchos[5]
-                doc.text(item.viernes || "-", xPos + 1, yPos + 5, { align: "center" })
-                xPos += anchos[6]
+                const lun = normalizeDia(item.lunes)
+                const mar = normalizeDia(item.martes)
+                const mie = normalizeDia(item.miercoles)
+                const jue = normalizeDia(item.jueves)
+                const vie = normalizeDia(item.viernes)
+                const total = item.total ?? 0
+                const porcentaje = Number(item.porcentaje ?? 0).toFixed(1)
 
-                doc.text(item.total.toString(), xPos + 2, yPos + 5, { align: "center" })
-                xPos += anchos[7]
+                const valores = [lun, mar, mie, jue, vie, total.toString(), `${porcentaje}%`]
+                for (let i = 0; i < valores.length; i++) {
+                    doc.text(String(valores[i]), xPos + anchos[i + 2] / 2, yPos + 6, { align: "center" })
+                    xPos += anchos[i + 2]
+                }
 
-                doc.text(`${item.porcentaje.toFixed(1)}%`, xPos + 2, yPos + 5, { align: "center" })
+                yPos += rowHeight
 
-                yPos += alturaFila
-
-                if (yPos > pageHeight - margin - 10) {
+                if (yPos > pageHeight - margin - 30) {
                     doc.addPage()
                     yPos = margin
+
+                    doc.setFillColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
+                    doc.setTextColor(255, 255, 255)
+                    doc.setFont("helvetica", "bold")
+                    doc.setFontSize(8)
+
+                    xPos = margin
+                    for (let i = 0; i < columnas.length; i++) {
+                        doc.rect(xPos, yPos, anchos[i], defaultAlturaFila, "F")
+                        doc.text(columnas[i], xPos + anchos[i] / 2, yPos + 5, { align: "center" })
+                        xPos += anchos[i]
+                    }
+                    yPos += defaultAlturaFila
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFont("helvetica", "normal")
+                    doc.setFontSize(8)
                 }
             })
 
             yPos += 8
+
+            // Línea separadora
             doc.setLineWidth(0.5)
             doc.setDrawColor(200, 200, 200)
             doc.line(margin, yPos, pageWidth - margin, yPos)
             yPos += 8
 
-            const totalAsistencias = ranking.reduce((sum, item) => sum + item.total, 0)
-            const promedioPorcentaje = ranking.length > 0 
-                ? (ranking.reduce((sum, item) => sum + item.porcentaje, 0) / ranking.length).toFixed(1) 
-                : "0"
-            const mejorArbitro = ranking.length > 0 ? ranking[0] : null
-            const peorArbitro = ranking.length > 0 ? ranking[ranking.length - 1] : null
-            const diasCubiertos = Math.max(...ranking.map(r => r.total), 0)
-
+            // SECCIÓN 3: ANÁLISIS DETALLADO
             doc.setFontSize(10)
             doc.setFont("helvetica", "bold")
             doc.setTextColor(colorSkyDark.r, colorSkyDark.g, colorSkyDark.b)
-            doc.text("RESUMEN DETALLADO DEL PERÍODO", margin, yPos)
+            doc.text("ANÁLISIS Y CONCLUSIONES", margin, yPos)
             yPos += 7
 
             doc.setFontSize(9)
             doc.setFont("helvetica", "normal")
             doc.setTextColor(60, 60, 60)
-            doc.text(`• Árbitros en el ranking: ${ranking.length}`, margin + 5, yPos)
-            yPos += 5
-            doc.text(`• Total de registros de asistencia: ${totalAsistencias}`, margin + 5, yPos)
-            yPos += 5
-            doc.text(`• Promedio general de asistencia: ${promedioPorcentaje}%`, margin + 5, yPos)
-            yPos += 5
-            doc.text(`• Mejor desempeño: ${mejorArbitro ? mejorArbitro.nombre + " (" + mejorArbitro.porcentaje.toFixed(1) + "%)" : "N/A"}`, margin + 5, yPos)
-            yPos += 5
-            doc.text(`• Menor desempeño: ${peorArbitro ? peorArbitro.nombre + " (" + peorArbitro.porcentaje.toFixed(1) + "%)" : "N/A"}`, margin + 5, yPos)
-            yPos += 5
-            doc.text(`• Máximo días registrados por árbitro: ${diasCubiertos}`, margin + 5, yPos)
-            yPos += 8
+            
+            const topThree = ranking.slice(0, 3).map((a, i) => `${i + 1}. ${a.nombre} (${Number(a.porcentaje ?? 0).toFixed(1)}%)`).join(" | ")
+            doc.text(`Mejor desempeño (Top 3): ${topThree}`, margin + 3, yPos)
+            yPos += 6
 
-            doc.setFontSize(8)
-            doc.setTextColor(100, 100, 100)
-            doc.text("Nota: El porcentaje se calcula como (presentes + justificados) / total de registros del árbitro en la semana.", margin, yPos)
+            const bottomThree = ranking.slice(-3).reverse().map((a, i) => `${i + 1}. ${a.nombre} (${Number(a.porcentaje ?? 0).toFixed(1)}%)`).join(" | ")
+            doc.text(`Menor desempeño (Bottom 3): ${bottomThree}`, margin + 3, yPos)
+            yPos += 6
+
+            const absentees = ranking.filter(r => r.total === 0).length
+            const docText = absentees > 0 
+                ? `Árbitros sin registro: ${absentees} (${((absentees / ranking.length) * 100).toFixed(1)}%)`
+                : "Todos los árbitros tienen registros en la semana"
+            doc.text(docText, margin + 3, yPos)
+            yPos += 6
+
+            const maxMissingDay = ranking.map(a => ({
+                nombre: a.nombre,
+                ausentes: [!a.lunes, !a.martes, !a.miercoles, !a.jueves, !a.viernes].filter(x => x).length
+            })).sort((a, b) => b.ausentes - a.ausentes)[0]
+            doc.text(`Tendencia: Mayor ausentismo: ${maxMissingDay.nombre} (${maxMissingDay.ausentes}/5 días)`, margin + 3, yPos)
+
         } else {
             doc.setFontSize(11)
             doc.setTextColor(150, 150, 150)
@@ -256,11 +315,12 @@ export default function RankingSemanalPage() {
         const pageCount = (doc as any).internal.pages.length - 1
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i)
-            doc.setFontSize(8)
-            doc.setTextColor(120, 120, 120)
-            doc.text(`Comisión de Árbitros - SIDAF Puno | Página ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 8, { align: "center" })
             doc.setFontSize(7)
-            doc.text("Documento generado automáticamente por el Sistema de Gestión Arbitral", pageWidth / 2, pageHeight - 4, { align: "center" })
+            doc.setTextColor(120, 120, 120)
+            doc.setFont("helvetica", "normal")
+            doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10)
+            doc.text(`Comisión de Árbitros - SIDAF Puno | Página ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 6, { align: "center" })
+            doc.text("Documento generado automáticamente por el Sistema de Gestión Arbitral", pageWidth / 2, pageHeight - 3, { align: "center" })
         }
 
         return doc
@@ -412,7 +472,7 @@ export default function RankingSemanalPage() {
                                                     </td>
                                                     <td className="px-4 py-3 text-center">
                                                         <span className="text-sky-900 font-semibold">
-                                                            {item.porcentaje.toFixed(1)}%
+                                                            {Number(item.porcentaje ?? 0).toFixed(1)}%
                                                         </span>
                                                     </td>
                                                 </tr>
