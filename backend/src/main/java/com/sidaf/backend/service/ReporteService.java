@@ -419,7 +419,11 @@ public class ReporteService {
             List<Asistencia> asisArbitros = new ArrayList<>();
             for (Asistencia a : lista) {
                 String obs = a.getObservaciones();
-                if (obs != null && obs.contains("\"arbitroId\":" + arbitro.getId())) {
+                // Buscar ambas variantes del campo (arbitroId y arbitrId) para compatibilidad
+                if (obs != null && (
+                    obs.contains("\"arbitroId\":" + arbitro.getId()) ||
+                    obs.contains("\"arbitrId\":" + arbitro.getId())
+                )) {
                     asisArbitros.add(a);
                 }
             }
@@ -461,7 +465,11 @@ public class ReporteService {
             List<Asistencia> asisArbitros = new ArrayList<>();
             for (Asistencia a : lista) {
                 String obs = a.getObservaciones();
-                if (obs != null && obs.contains("\"arbitroId\":" + arbitro.getId())) {
+                // Buscar ambas variantes del campo (arbitroId y arbitrId) para compatibilidad
+                if (obs != null && (
+                    obs.contains("\"arbitroId\":" + arbitro.getId()) ||
+                    obs.contains("\"arbitrId\":" + arbitro.getId())
+                )) {
                     asisArbitros.add(a);
                 }
             }
