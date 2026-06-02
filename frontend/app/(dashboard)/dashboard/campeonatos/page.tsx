@@ -40,11 +40,11 @@ function DifficultyBadge({ difficulty }: { difficulty: string | undefined }) {
 }
 
 function StatusBadge({ estado }: { estado: string | undefined }) {
-  const base = "px-2 py-0.5 rounded-md text-sm font-medium"
-  if (estado === "ACTIVO") return <Badge className={`${base} bg-green-500 text-white`}>En Curso</Badge>
-  if (estado === "PROGRAMADO") return <Badge className={`${base} bg-blue-50 text-blue-700`}>Próximamente</Badge>
-  return <Badge className={`${base} bg-gray-100 text-gray-700`}>Finalizado</Badge>
-}
+   const base = "px-2 py-0.5 rounded-md text-sm font-medium"
+   if (estado === "ACTIVO") return <Badge className={`${base} bg-green-500 text-white`}>En Curso</Badge>
+   if (estado === "PROGRAMADO") return <Badge className={`${base} bg-blue-50 text-blue-700`}>Próximamente</Badge>
+   return <Badge className={`${base} bg-slate-100 text-slate-700`}>Finalizado</Badge>
+ }
 
 export default function CampeonadosPage() {
   const [mounted, setMounted] = useState(false)
@@ -171,29 +171,29 @@ export default function CampeonadosPage() {
     )
   }, [query, campeonatos])
 
-  if (!mounted || isLoading) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-          <p className="text-gray-600">Cargando campeonatos...</p>
-        </div>
-      </div>
-    )
-  }
+if (!mounted || isLoading) {
+     return (
+       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-slate-50">
+         <div className="text-center space-y-4">
+           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+           <p className="text-slate-600">Cargando campeonatos...</p>
+         </div>
+       </div>
+     )
+   }
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <ArrowLeft className="h-5 w-5" aria-hidden />
-          <span>Volver al Dashboard</span>
-        </Link>
-        <div className="ml-auto flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-3">
-            <span className="text-sm text-gray-600">Total</span>
-            <Badge className="bg-gray-100 text-gray-800 px-2 py-1">{campeonatos.length}</Badge>
-          </div>
+<header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-4 md:px-6">
+         <Link href="/" className="flex items-center gap-2 font-semibold text-slate-800">
+           <ArrowLeft className="h-5 w-5" aria-hidden />
+           <span>Volver al Dashboard</span>
+         </Link>
+         <div className="ml-auto flex items-center gap-4">
+           <div className="hidden sm:flex items-center gap-3">
+             <span className="text-sm text-slate-600">Total</span>
+             <Badge className="bg-slate-100 text-slate-800 px-2 py-1">{campeonatos.length}</Badge>
+           </div>
           <Button asChild>
             <Link href="/dashboard/campeonato/nuevo" className="flex items-center">
               <Plus className="mr-2 h-4 w-4" aria-hidden />
