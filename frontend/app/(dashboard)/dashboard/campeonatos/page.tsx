@@ -203,119 +203,119 @@ export default function CampeonadosPage() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Gestión de Campeonatos</h1>
-          <div className="flex items-center gap-2">
-            <label htmlFor="buscar-campeonato" className="sr-only">Buscar</label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-600" aria-hidden />
-              <Input id="buscar-campeonato" value={query} onChange={e => setQuery(e.target.value)} type="search" placeholder="Buscar..." className="w-[200px] pl-8 md:w-[320px]" />
-              {query && (
-                <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-gray-600 hover:bg-gray-100">
-                  <X className="h-4 w-4" aria-hidden />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+<main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+         <div className="flex items-center justify-between">
+           <h1 className="text-2xl font-bold">Gestión de Campeonatos</h1>
+           <div className="flex items-center gap-2">
+             <label htmlFor="buscar-campeonato" className="sr-only">Buscar</label>
+             <div className="relative">
+               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-600" aria-hidden />
+               <Input id="buscar-campeonato" value={query} onChange={e => setQuery(e.target.value)} type="search" placeholder="Buscar..." className="w-[200px] pl-8 md:w-[320px]" />
+               {query && (
+                 <button aria-label="Limpiar" onClick={() => setQuery("")} className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100">
+                   <X className="h-4 w-4" aria-hidden />
+                 </button>
+               )}
+             </div>
+           </div>
+         </div>
 
-        {error && (
-          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
-            <button onClick={() => setError("")} className="ml-auto text-red-600 hover:text-red-800">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+         {error && (
+           <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+             <AlertCircle className="h-5 w-5 flex-shrink-0" />
+             <p className="text-sm">{error}</p>
+             <button onClick={() => setError("")} className="ml-auto text-red-600 hover:text-red-800">
+               <X className="h-4 w-4" />
+             </button>
+           </div>
+         )}
 
-        <Card className="border-gray-200 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle>Campeonatos Activos</CardTitle>
-            <CardDescription>Listado de certificados registrados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <TableSkeleton rows={5} />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-48">Nombre</TableHead>
-                      <TableHead className="text-center">Nivel</TableHead>
-                      <TableHead className="text-center">Categoría</TableHead>
-                      <TableHead className="text-center">Equipos</TableHead>
-                      <TableHead className="text-center">Fecha Inicio</TableHead>
-                      <TableHead className="text-center">Estado</TableHead>
-                      <TableHead className="text-center">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-sm text-gray-600 py-6">
-                          No se encontraron.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filtered.map(c => (
-                        <TableRow key={c.id} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors">
-                          <TableCell className="font-medium max-w-[220px] truncate flex items-center gap-2">
-                            {c.nombre}
-                            {c.nombre === "COPA PERÚ 2026" && (
-                              <Lock className="h-4 w-4 text-blue-600 flex-shrink-0" title="Campeonato protegido" />
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <DifficultyBadge difficulty={c.nivelDificultad} />
-                          </TableCell>
-                          <TableCell className="text-center text-sm text-gray-600">{c.categoria}</TableCell>
-                          <TableCell className="text-center">{c.numeroEquipos}</TableCell>
-                          <TableCell className="text-center">{c.fechaInicio ? formatDate(c.fechaInicio) : '-'}</TableCell>
-                          <TableCell className="text-center">
-                            <StatusBadge estado={c.estado} />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button asChild variant="ghost" size="sm">
-                                <Link href={`/dashboard/campeonatos/${c.id}`} className="flex items-center gap-2">
-                                  <Eye className="h-4 w-4" aria-hidden />
-                                  <span className="hidden md:inline">Ver</span>
-                                </Link>
-                              </Button>
-                              <Button asChild variant="ghost" size="sm">
-                                <Link href={`/dashboard/campeonatos/${c.id}/editar`} className="flex items-center gap-2">
-                                  <Edit className="h-4 w-4" aria-hidden />
-                                  <span className="hidden md:inline">Editar</span>
-                                </Link>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteClick(c.id, c.nombre)}
-                                disabled={isDeleting || c.nombre === "COPA PERÚ 2026"}
-                                className={c.nombre === "COPA PERÚ 2026" ? "text-gray-400 cursor-not-allowed opacity-50" : "text-red-600 hover:bg-red-50 hover:text-red-700"}
-                                title={c.nombre === "COPA PERÚ 2026" ? "Este campeonato está protegido y no puede ser eliminado" : ""}
-                              >
-                                <Trash2 className="h-4 w-4" aria-hidden />
-                                <span className="hidden md:inline">Eliminar</span>
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+         <Card className="border-slate-200 bg-white shadow-sm">
+           <CardHeader>
+             <CardTitle>Campeonatos Activos</CardTitle>
+             <CardDescription>Listado de campeonatos registrados</CardDescription>
+           </CardHeader>
+           <CardContent>
+             {isLoading ? (
+               <div className="space-y-2">
+                 <TableSkeleton rows={5} />
+               </div>
+             ) : (
+               <div className="overflow-x-auto">
+                 <Table>
+                   <TableHeader>
+                     <TableRow>
+                       <TableHead className="w-48">Nombre</TableHead>
+                       <TableHead className="text-center">Nivel</TableHead>
+                       <TableHead className="text-center">Categoría</TableHead>
+                       <TableHead className="text-center">Equipos</TableHead>
+                       <TableHead className="text-center">Fecha Inicio</TableHead>
+                       <TableHead className="text-center">Estado</TableHead>
+                       <TableHead className="text-center">Acciones</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {filtered.length === 0 ? (
+                       <TableRow>
+                         <TableCell colSpan={7} className="text-center text-sm text-slate-600 py-6">
+                           No se encontraron.
+                         </TableCell>
+                       </TableRow>
+                     ) : (
+                       filtered.map(c => (
+                         <TableRow key={c.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 transition-colors">
+                           <TableCell className="font-medium max-w-[220px] truncate flex items-center gap-2">
+                             {c.nombre}
+                             {c.nombre === "COPA PERÚ 2026" && (
+                               <Lock className="h-4 w-4 text-blue-600 flex-shrink-0" title="Campeonato protegido" />
+                             )}
+                           </TableCell>
+                           <TableCell className="text-center">
+                             <DifficultyBadge difficulty={c.nivelDificultad} />
+                           </TableCell>
+                           <TableCell className="text-center text-sm text-slate-600">{c.categoria}</TableCell>
+                           <TableCell className="text-center">{c.numeroEquipos}</TableCell>
+                           <TableCell className="text-center">{c.fechaInicio ? formatDate(c.fechaInicio) : '-'}</TableCell>
+                           <TableCell className="text-center">
+                             <StatusBadge estado={c.estado} />
+                           </TableCell>
+                           <TableCell className="text-center">
+                             <div className="flex items-center justify-center gap-1">
+                               <Button asChild variant="ghost" size="sm">
+                                 <Link href={`/dashboard/campeonatos/${c.id}`} className="flex items-center gap-2">
+                                   <Eye className="h-4 w-4" aria-hidden />
+                                   <span className="hidden md:inline">Ver</span>
+                                 </Link>
+                               </Button>
+                               <Button asChild variant="ghost" size="sm">
+                                 <Link href={`/dashboard/campeonatos/${c.id}/editar`} className="flex items-center gap-2">
+                                   <Edit className="h-4 w-4" aria-hidden />
+                                   <span className="hidden md:inline">Editar</span>
+                                 </Link>
+                               </Button>
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handleDeleteClick(c.id, c.nombre)}
+                                 disabled={isDeleting || c.nombre === "COPA PERÚ 2026"}
+                                 className={c.nombre === "COPA PERÚ 2026" ? "text-slate-400 cursor-not-allowed opacity-50" : "text-red-600 hover:bg-red-50 hover:text-red-700"}
+                                 title={c.nombre === "COPA PERÚ 2026" ? "Este campeonato está protegido y no puede ser eliminado" : ""}
+                               >
+                                 <Trash2 className="h-4 w-4" aria-hidden />
+                                 <span className="hidden md:inline">Eliminar</span>
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>
+                       ))
+                     )}
+                   </TableBody>
+                 </Table>
+               </div>
+             )}
+           </CardContent>
+         </Card>
+       </main>
 
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !isDeleting && setDeleteDialog({ ...deleteDialog, open })}>
         <AlertDialogContent>
