@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -77,12 +78,12 @@ public class Campeonato {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "campeonato_equipos", joinColumns = @JoinColumn(name = "campeonato_id"))
     @Column(name = "equipo_id")
-    private List<Long> equipos = new ArrayList<>();
+    @JsonFormat(with = JsonFormat.Feature.WRITE_EMPTY_ARRAYS)
+    private List<Integer> equipos = new ArrayList<>();
     
     @Column(columnDefinition = "TEXT")
     private String etapas;
-
-    // COPA PERÚ 2026: Estructura Jerárquica
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campeonato_padre_id")
     private Campeonato campeonatoPadre;
@@ -94,6 +95,7 @@ public class Campeonato {
     public enum EstadoCampeonato {
         PROGRAMADO,
         ACTIVO,
-        FINALIZADO
+        FINALIZADO,
+        CANCELADO
     }
 }

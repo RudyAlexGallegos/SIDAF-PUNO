@@ -71,6 +71,23 @@ public class CampeonatoController {
     // POST create campeonato
     @PostMapping
     public Campeonato createCampeonato(@RequestBody Campeonato campeonato) {
+        // Validación especial para CAMPEONATO FUNDAMENTAL: permite 0 o 1 equipo
+        // Para otras categorías, requiere mínimo 2 equipos
+        if (!"CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria()) && 
+            (campeonato.getEquipos() == null || campeonato.getEquipos().isEmpty())) {
+            throw new IllegalArgumentException("Debe seleccionar al menos 2 equipos");
+        }
+        
+        // Si es CAMPEONATO FUNDAMENTAL, establecer numeroEquipos según la lista
+        if ("CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria())) {
+            campeonato.setNumeroEquipos(campeonato.getEquipos() != null ? campeonato.getEquipos().size() : 0);
+        }
+        
+        // Inicializar listas vacías si son nulas
+        if (campeonato.getEquipos() == null) {
+            campeonato.setEquipos(new ArrayList<>());
+        }
+        
         return campeonatoRepository.save(campeonato);
     }
     

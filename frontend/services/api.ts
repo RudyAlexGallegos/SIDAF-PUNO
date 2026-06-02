@@ -2,9 +2,30 @@
 // API BASE URL
 // ============================================================
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
+export const ASISTENCIA_SYNC_KEY = "sidaf_asistencia_sync";
 
 function buildUrl(path: string): string {
     return `${API_BASE_URL}${path}`;
+}
+
+function getAuthHeaders(): HeadersInit {
+    const token = getStoredToken();
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
+
+export function notifyAsistenciaChanged(): void {
+    if (typeof window === "undefined") return;
+
+    try {
+        const timestamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem(ASISTENCIA_SYNC_KEY, timestamp);
+        window.dispatchEvent(new CustomEvent("sidaf:asistencias-updated", { detail: { timestamp } }));
+    } catch (error) {
+        console.warn("No se pudo notificar el cambio de asistencia:", error);
+    }
 }
 
 // ============================================================
@@ -28,6 +49,19 @@ export interface Usuario {
     especialidad?: string;
     unidadOrganizacional?: string;
     permisosEspecificos?: string;
+}
+
+export interface SolicitudPermiso {
+    id?: number;
+    usuarioId?: number;
+    usuarioNombre?: string;
+    permiso?: string;
+    permisoSolicitado?: string;
+    estado?: string;
+    fechaSolicitud?: string;
+    fechaRespuesta?: string;
+    observaciones?: string;
+    notas?: string;
 }
 
 export interface Arbitro {
@@ -69,8 +103,24 @@ export interface Campeonato {
     contacto?: string;
     ciudad?: string;
     provincia?: string;
+    direccion?: string;
+    estadio?: string;
+    horaInicio?: string;
+    horaFin?: string;
+    diasJuego?: string;
     nivelDificultad?: string;
     numeroEquipos?: number;
+    equipos?: number[];
+    etapas?: string;
+    formato?: string;
+    reglas?: string;
+    premios?: string;
+    observaciones?: string;
+    logo?: string;
+}
+
+export interface CrearCampeonatoPayload extends Campeonato {
+    // Hereda todos los campos de Campeonato
 }
 
 export interface Equipo {
@@ -99,6 +149,11 @@ export interface Designacion {
     estadio?: string;
     posicion?: string;
     estado?: string;
+    arbitroPrincipal?: string;
+    arbitroAsistente1?: string;
+    arbitroAsistente2?: string;
+    cuartoArbitro?: string;
+    asesor?: string;
 }
 
 export interface Asistencia {
@@ -153,6 +208,18 @@ export async function registro(datos: any): Promise<Usuario> {
     }
 
     return await response.json();
+}
+
+export async function verificarDni(dni: string): Promise<boolean> {
+    try {
+        const response = await fetch(buildUrl(`/auth/verificar-dni/${encodeURIComponent(dni)}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        return Boolean(data.existe);
+    } catch (error) {
+        console.error("Error verificarDni:", error);
+        return false;
+    }
 }
 
 export async function logout(): Promise<void> {
@@ -282,7 +349,7 @@ export async function getCampeonatoById(id: number): Promise<Campeonato | null> 
     }
 }
 
-export async function createCampeonato(data: Campeonato): Promise<Campeonato> {
+export async function createCampeonato(data: CrearCampeonatoPayload): Promise<Campeonato> {
     const response = await fetch(buildUrl("/campeonato"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -430,6 +497,20 @@ export async function createDesignacion(data: Designacion): Promise<Designacion>
     return await response.json();
 }
 
+export async function createDesignacionesBatch(designaciones: Omit<Designacion, "id">[]): Promise<Designacion[]> {
+    const response = await fetch(buildUrl("/designaciones/batch"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(designaciones),
+    });
+
+    if (!response.ok) {
+        throw new Error("Error al crear designaciones en lote");
+    }
+
+    return await response.json();
+}
+
 export async function updateDesignacion(id: number, data: Designacion): Promise<Designacion> {
     const response = await fetch(buildUrl(`/designaciones/${id}`), {
         method: "PUT",
@@ -507,7 +588,9 @@ export async function createAsistencia(data: Asistencia): Promise<Asistencia> {
         throw new Error("Error al registrar asistencia");
     }
 
-    return await response.json();
+    const result = await response.json();
+    notifyAsistenciaChanged();
+    return result;
 }
 
 export async function updateAsistencia(id: number, data: Asistencia): Promise<Asistencia> {
@@ -521,7 +604,9 @@ export async function updateAsistencia(id: number, data: Asistencia): Promise<As
         throw new Error("Error al actualizar asistencia");
     }
 
-    return await response.json();
+    const result = await response.json();
+    notifyAsistenciaChanged();
+    return result;
 }
 
 export async function deleteAsistencia(id: number): Promise<boolean> {
@@ -529,6 +614,9 @@ export async function deleteAsistencia(id: number): Promise<boolean> {
         const response = await fetch(buildUrl(`/asistencias/${id}`), {
             method: "DELETE",
         });
+        if (response.ok) {
+            notifyAsistenciaChanged();
+        }
         return response.ok;
     } catch {
         return false;
@@ -701,7 +789,9 @@ export async function deleteAsesor(id: number): Promise<boolean> {
 
 export async function getUsuariosPendientes(): Promise<Usuario[]> {
     try {
-        const response = await fetch(buildUrl("/usuarios/pendientes"));
+        const response = await fetch(buildUrl("/auth/usuarios/pendientes"), {
+            headers: getAuthHeaders(),
+        });
         if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
         console.log("✅ Usuarios pendientes obtenidos:", data);
@@ -714,7 +804,9 @@ export async function getUsuariosPendientes(): Promise<Usuario[]> {
 
 export async function getTodosUsuarios(): Promise<Usuario[]> {
     try {
-        const response = await fetch(buildUrl("/usuarios"));
+        const response = await fetch(buildUrl("/auth/usuarios"), {
+            headers: getAuthHeaders(),
+        });
         if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
         console.log("✅ Todos los usuarios obtenidos:", data);
@@ -731,9 +823,9 @@ export async function aprobarUsuario(
     permisos: string
 ): Promise<Usuario> {
     try {
-        const response = await fetch(buildUrl(`/usuarios/${id}/aprobar`), {
+        const response = await fetch(buildUrl(`/auth/usuarios/${id}/aprobar`), {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ rol, permisos }),
         });
 
@@ -756,9 +848,9 @@ export async function cambiarEstadoUsuario(
     estado: string
 ): Promise<Usuario> {
     try {
-        const response = await fetch(buildUrl(`/usuarios/${id}/estado`), {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
+        const response = await fetch(buildUrl(`/auth/usuarios/${id}/estado`), {
+            method: "POST",
+            headers: getAuthHeaders(),
             body: JSON.stringify({ estado }),
         });
 
@@ -778,8 +870,9 @@ export async function cambiarEstadoUsuario(
 
 export async function eliminarUsuario(id: number): Promise<boolean> {
     try {
-        const response = await fetch(buildUrl(`/usuarios/${id}`), {
+        const response = await fetch(buildUrl(`/auth/usuarios/${id}`), {
             method: "DELETE",
+            headers: getAuthHeaders(),
         });
 
         if (!response.ok) {
@@ -800,10 +893,10 @@ export async function asignarPermisos(
     permisos: string[]
 ): Promise<Usuario> {
     try {
-        const response = await fetch(buildUrl(`/usuarios/${id}/permisos`), {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ permisos }),
+        const response = await fetch(buildUrl(`/auth/usuarios/${id}/permisos`), {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ permisos: JSON.stringify(permisos) }),
         });
 
         if (!response.ok) {
@@ -818,6 +911,41 @@ export async function asignarPermisos(
         console.error("❌ Error asignarPermisos:", error);
         throw error;
     }
+}
+
+export async function getSolicitudesPendientes(): Promise<SolicitudPermiso[]> {
+    try {
+        const response = await fetch(buildUrl("/auth/solicitudes/pendientes"), {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || "Error al cargar solicitudes");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error getSolicitudesPendientes:", error);
+        throw error;
+    }
+}
+
+export async function responderSolicitud(
+    id: number,
+    accion: "APROBAR" | "RECHAZAR",
+    notas?: string
+): Promise<any> {
+    const response = await fetch(buildUrl(`/auth/solicitudes/${id}/responder`), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ accion, notas }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Error al responder solicitud");
+    }
+
+    return await response.json();
 }
 
 // ============================================================
