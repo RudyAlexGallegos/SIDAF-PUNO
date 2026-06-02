@@ -78,7 +78,7 @@ public class Campeonato {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "campeonato_equipos", joinColumns = @JoinColumn(name = "campeonato_id"))
     @Column(name = "equipo_id")
-    @JsonFormat(with = JsonFormat.Feature.WRITE_EMPTY_ARRAYS)
+    
     private List<Integer> equipos = new ArrayList<>();
     
     @Column(columnDefinition = "TEXT")
