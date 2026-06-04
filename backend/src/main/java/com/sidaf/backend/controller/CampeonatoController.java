@@ -1,5 +1,6 @@
 package com.sidaf.backend.controller;
 
+import com.sidaf.backend.dto.CampeonatoCreateDTO;
 import com.sidaf.backend.model.Campeonato;
 import com.sidaf.backend.model.Campeonato.EstadoCampeonato;
 import com.sidaf.backend.repository.CampeonatoRepository;
@@ -70,11 +71,12 @@ public class CampeonatoController {
     
     // POST create campeonato
     @PostMapping
-    public Campeonato createCampeonato(@RequestBody Campeonato campeonato) {
-        // Validación especial para CAMPEONATO FUNDAMENTAL: permite 0 o 1 equipo
-        // Para otras categorías, requiere mínimo 2 equipos
+    public Campeonato createCampeonato(@RequestBody CampeonatoCreateDTO dto) {
+        Campeonato campeonato = dto.toEntity();
+        
+        // Validación: requiere mínimo 2 equipos para categorías normales
         if (!"CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria()) && 
-            (campeonato.getEquipos() == null || campeonato.getEquipos().isEmpty())) {
+            (campeonato.getEquipos() == null || campeonato.getEquipos().size() < 2)) {
             throw new IllegalArgumentException("Debe seleccionar al menos 2 equipos");
         }
         

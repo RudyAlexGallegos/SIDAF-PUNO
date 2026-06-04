@@ -405,6 +405,44 @@ export async function getEquipos(): Promise<Equipo[]> {
     }
 }
 
+export async function getEquiposByProvinciaAndDistrito(provincia: string, distrito: string): Promise<Equipo[]> {
+    try {
+        const response = await fetch(buildUrl(`/equipos/provincia/${encodeURIComponent(provincia)}/distrito/${encodeURIComponent(distrito)}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Equipos obtenidos por provincia/distrito:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getEquiposByProvinciaAndDistrito:", error);
+        return [];
+    }
+}
+
+export interface DiaInfo {
+    fecha: string
+    diaSemana: number
+    nombreDia: string
+    esObligatorio: boolean
+    tipoDia: string
+}
+
+export async function getDiaActual(): Promise<DiaInfo> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/dia-actual"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getDiaActual:", error);
+        return {
+            fecha: new Date().toISOString().split('T')[0],
+            diaSemana: new Date().getDay(),
+            nombreDia: new Date().toLocaleDateString('es-ES', { weekday: 'long' }),
+            esObligatorio: false,
+            tipoDia: 'normal'
+        };
+    }
+}
+
 export async function getEquipoById(id: number): Promise<Equipo | null> {
     try {
         const response = await fetch(buildUrl(`/equipos/${id}`));

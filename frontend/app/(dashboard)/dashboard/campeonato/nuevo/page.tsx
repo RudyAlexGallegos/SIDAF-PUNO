@@ -87,8 +87,8 @@ export default function NuevoCampeonatoPage() {
       }
     }
 
-    // Validar equipos (mínimo 2)
-    if (equiposSeleccionados.length < 2) {
+    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL)
+    if (formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2) {
       nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
     }
 
@@ -97,11 +97,9 @@ export default function NuevoCampeonatoPage() {
       nuevosErrores.diasJuego = "Debe seleccionar al menos un día de juego"
     }
 
-    // Validar etapas (mínimo 1)
-    if (formData.etapas.length === 0) {
-      nuevosErrores.etapas = "Debe definir al menos una etapa"
-    } else {
-      // Validar que ninguna etapa tenga nombre vacío
+    // Los errores de etapas se muestran pero no bloquean el envío
+    // Se pueden agregar etapas después de crear el campeonato
+    if (formData.etapas.length > 0) {
       const etapasSinNombre = formData.etapas.some(e => !e.nombre.trim())
       if (etapasSinNombre) {
         nuevosErrores.etapas = "Todas las etapas deben tener un nombre"
@@ -326,13 +324,14 @@ export default function NuevoCampeonatoPage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Primera División">Primera División</SelectItem>
-                        <SelectItem value="Segunda División">Segunda División</SelectItem>
-                        <SelectItem value="Tercera División">Tercera División</SelectItem>
-                        <SelectItem value="Sub-19">Sub-19</SelectItem>
-                        <SelectItem value="Sub-17">Sub-17</SelectItem>
-                      </SelectContent>
+<SelectContent>
+                         <SelectItem value="CAMPEONATO FUNDAMENTAL">CAMPEONATO FUNDAMENTAL</SelectItem>
+                         <SelectItem value="Primera División">Primera División</SelectItem>
+                         <SelectItem value="Segunda División">Segunda División</SelectItem>
+                         <SelectItem value="Tercera División">Tercera División</SelectItem>
+                         <SelectItem value="Sub-19">Sub-19</SelectItem>
+                         <SelectItem value="Sub-17">Sub-17</SelectItem>
+                       </SelectContent>
                     </Select>
                   </div>
 
@@ -554,12 +553,15 @@ export default function NuevoCampeonatoPage() {
                   <Users className="h-5 w-5" />
                   Selección de Equipos
                 </CardTitle>
-                <CardDescription>
-                  Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
-                  {equiposSeleccionados.length < 2 && (
-                    <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
-                  )}
-                </CardDescription>
+<CardDescription>
+                   Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
+                   {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2 && (
+                     <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                   )}
+                   {formData.categoria === "CAMPEONATO FUNDAMENTAL" && (
+                     <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL: equipos opcionales</span>
+                   )}
+                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {equiposLoading ? (
@@ -642,8 +644,67 @@ export default function NuevoCampeonatoPage() {
               </CardContent>
             </Card>
 
-            {/* Botones */}
-            <div className="flex gap-4 justify-end">
+{/* Etapas del Campeonato */}
+             <Card>
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <Trophy className="h-5 w-5" />
+                   Etapas del Campeonato
+                 </CardTitle>
+                 <CardDescription>
+                   Define las etapas del torneo (mínimo 1)
+                 </CardDescription>
+               </CardHeader>
+               <CardContent className="space-y-4">
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   onClick={handleAgregarEtapa}
+                   className="flex items-center gap-2"
+                 >
+                   <Plus className="h-4 w-4" />
+                   Agregar Etapa
+                 </Button>
+                 
+                 {formData.etapas.length === 0 ? (
+                   <p className="text-sm text-muted-foreground">No hay etapas definidas. Agrega al menos una etapa.</p>
+                 ) : (
+                   <div className="space-y-2">
+                     {formData.etapas.map((etapa, index) => (
+                       <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                         <span className="text-sm font-medium w-16">Etapa {etapa.orden}:</span>
+                         <Input
+                           placeholder="Nombre de la etapa"
+                           value={etapa.nombre}
+                           onChange={(e) => handleActualizarEtapa(index, "nombre", e.target.value)}
+                           className="flex-1"
+                         />
+                         <Button
+                           type="button"
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleEliminarEtapa(index)}
+                           className="text-red-600 hover:bg-red-50"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+                 
+                 {errores.etapas && (
+                   <p className="text-sm text-red-500 flex items-center gap-1">
+                     <AlertCircle className="h-4 w-4" />
+                     {errores.etapas}
+                   </p>
+                 )}
+               </CardContent>
+             </Card>
+
+             {/* Botones */}
+             <div className="flex gap-4 justify-end">
               <Button type="button" variant="outline" asChild>
                 <Link href="/dashboard/campeonatos">Cancelar</Link>
               </Button>

@@ -140,8 +140,8 @@ export default function EditarCampeonatoPage() {
       }
     }
 
-    // Validar equipos (mínimo 2)
-    if (equiposSeleccionados.length < 2) {
+    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL)
+    if (formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2) {
       nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
     }
 
@@ -374,13 +374,14 @@ export default function EditarCampeonatoPage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Primera División">Primera División</SelectItem>
-                        <SelectItem value="Segunda División">Segunda División</SelectItem>
-                        <SelectItem value="Tercera División">Tercera División</SelectItem>
-                        <SelectItem value="Sub-19">Sub-19</SelectItem>
-                        <SelectItem value="Sub-17">Sub-17</SelectItem>
-                      </SelectContent>
+<SelectContent>
+                       <SelectItem value="CAMPEONATO FUNDAMENTAL">CAMPEONATO FUNDAMENTAL</SelectItem>
+                       <SelectItem value="Primera División">Primera División</SelectItem>
+                       <SelectItem value="Segunda División">Segunda División</SelectItem>
+                       <SelectItem value="Tercera División">Tercera División</SelectItem>
+                       <SelectItem value="Sub-19">Sub-19</SelectItem>
+                       <SelectItem value="Sub-17">Sub-17</SelectItem>
+                     </SelectContent>
                     </Select>
                   </div>
 
@@ -596,9 +597,15 @@ export default function EditarCampeonatoPage() {
                   <Users className="h-5 w-5" />
                   Seleccionar Equipos Participantes
                 </CardTitle>
-                <CardDescription>
-                  Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
-                </CardDescription>
+<CardDescription>
+                   Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
+                   {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2 && (
+                     <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                   )}
+                   {formData.categoria === "CAMPEONATO FUNDAMENTAL" && (
+                     <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL: equipos opcionales</span>
+                   )}
+                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ElegirEquiposCampeonato
