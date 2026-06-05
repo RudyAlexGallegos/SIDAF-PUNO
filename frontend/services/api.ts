@@ -28,6 +28,18 @@ export function notifyAsistenciaChanged(): void {
     }
 }
 
+export function notifyCampeonatoChanged(): void {
+    if (typeof window === "undefined") return;
+
+    try {
+        const timestamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem("sidaf_campeonato_sync", timestamp);
+        window.dispatchEvent(new CustomEvent("sidaf:campeonatos-updated", { detail: { timestamp } }));
+    } catch (error) {
+        console.warn("No se pudo notificar el cambio de campeonato:", error);
+    }
+}
+
 // ============================================================
 // INTERFACES Y TIPOS
 // ============================================================

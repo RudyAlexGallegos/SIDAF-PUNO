@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Save, Trophy, Search, MapPin, Clock, Users, AlertCircle, Plus, Trash2 } from "lucide-react"
-import { createCampeonato, getEquipos, type Equipo } from "@/services/api"
+import { createCampeonato, getEquipos, notifyCampeonatoChanged, type Equipo } from "@/services/api"
 import { toast } from "@/hooks/use-toast"
 
 const DIAS_SEMANA = [
@@ -220,31 +220,37 @@ export default function NuevoCampeonatoPage() {
 
     setIsLoading(true)
 
+    // Función para convertir a mayúsculas
+    const toUpperCase = (str: string | number) => {
+      if (typeof str === 'string') return str.toUpperCase()
+      return str
+    }
+
     try {
       await createCampeonato({
-        nombre: formData.nombre,
-        categoria: formData.categoria,
-        tipo: formData.tipo,
+        nombre: formData.nombre.toUpperCase(),
+        categoria: formData.categoria?.toUpperCase() || "",
+        tipo: formData.tipo?.toUpperCase() || "",
         fechaInicio: formData.fechaInicio,
         fechaFin: formData.fechaFin,
         estado: formData.estado,
-        organizador: formData.organizador,
-        contacto: formData.contacto,
-        ciudad: formData.ciudad,
-        provincia: formData.provincia,
-        direccion: formData.direccion,
-        estadio: formData.estadio,
+        organizador: formData.organizador?.toUpperCase() || "",
+        contacto: formData.contacto?.toUpperCase() || "",
+        ciudad: formData.ciudad?.toUpperCase() || "",
+        provincia: formData.provincia?.toUpperCase() || "",
+        direccion: formData.direccion?.toUpperCase() || "",
+        estadio: formData.estadio?.toUpperCase() || "",
         horaInicio: formData.horaInicio,
         horaFin: formData.horaFin,
         diasJuego: formData.diasJuego.join(","),
-        etapas: JSON.stringify(formData.etapas),
+        etapas: JSON.stringify(formData.etapas.map(e => ({ ...e, nombre: e.nombre.toUpperCase() }))),
         equipos: equiposSeleccionados,
-        nivelDificultad: formData.nivelDificultad,
+        nivelDificultad: formData.nivelDificultad?.toUpperCase() || "",
         numeroEquipos: formData.numeroEquipos,
-        formato: formData.formato,
-        reglas: formData.reglas,
-        premios: formData.premios,
-        observaciones: formData.observaciones,
+        formato: formData.formato?.toUpperCase() || "",
+        reglas: formData.reglas?.toUpperCase() || "",
+        premios: formData.premios?.toUpperCase() || "",
+        observaciones: formData.observaciones?.toUpperCase() || "",
       })
 
       toast({
@@ -252,6 +258,7 @@ export default function NuevoCampeonatoPage() {
         description: `El campeonato "${formData.nombre}" se ha creado exitosamente`,
       })
 
+      notifyCampeonatoChanged()
       router.push("/dashboard/campeonatos")
     } catch (error) {
       console.error("Error al crear campeonato:", error)

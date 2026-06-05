@@ -107,6 +107,23 @@ export default function CampeonadosPage() {
     { ttl: 5 * 60 * 1000 }
   )
 
+  // Escuchar cambios de campeonatos y refrescar automáticamente
+  useEffect(() => {
+    const handleCampeonatoUpdate = () => {
+      refetch()
+    }
+    
+    if (typeof window !== "undefined") {
+      window.addEventListener("sidaf:campeonatos-updated", handleCampeonatoUpdate)
+    }
+    
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("sidaf:campeonatos-updated", handleCampeonatoUpdate)
+      }
+    }
+  }, [refetch])
+
   useEffect(() => {
     crearCopaPeru().then(() => {
       // Cache hook loads automatically, but we can refetch if needed
