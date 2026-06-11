@@ -535,10 +535,14 @@ function DesignacionesPageContent() {
                               <TableHeader className="bg-gray-100 border-t border-b border-gray-200">
                               <TableRow>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Fecha</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Hora</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Campeonato</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Partido</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estadio</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Árbitro Principal</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Principal</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Asist. 1</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Asist. 2</TableHead>
+                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">4to Árbitro</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estado</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Acciones</TableHead>
                               </TableRow>
@@ -552,6 +556,12 @@ function DesignacionesPageContent() {
                                 })
                                 .map((designacion, idx) => {
                                   const arbPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
+                                  const arbAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
+                                  const arbAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
+                                  const arbCuarto = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
+
+                                  const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
+                                  const getArbCategoria = (arb: any) => arb?.categoria || ""
 
                                   return (
                                     <TableRow
@@ -563,38 +573,62 @@ function DesignacionesPageContent() {
                                           <div className="text-slate-900 font-bold text-xs">
                                             {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
                                           </div>
-                                          <div className="text-xs text-slate-500">
-                                            {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
-                                          </div>
                                         </div>
                                       </TableCell>
-                                      <TableCell className="text-xs text-slate-700 px-3 font-medium truncate max-w-xs">
+                                      <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                        {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
+                                      </TableCell>
+                                      <TableCell className="text-xs text-slate-700 px-3 font-medium truncate max-w-[120px]">
                                         {designacion.nombreCampeonato || "-"}
                                       </TableCell>
                                       <TableCell className="text-xs font-bold text-slate-900 px-3">
                                         <div className="space-y-1">
                                           <div>
                                             <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
-                                              {designacion.nombreEquipoLocal?.substring(0, 8) || "-"}
+                                              {(designacion.nombreEquipoLocal || "-").substring(0, 10)}
                                             </span>
                                           </div>
                                           <div className="text-slate-400 text-xs font-bold">vs</div>
                                           <div>
                                             <span className="inline-block bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">
-                                              {designacion.nombreEquipoVisitante?.substring(0, 8) || "-"}
+                                              {(designacion.nombreEquipoVisitante || "-").substring(0, 10)}
                                             </span>
                                           </div>
                                         </div>
                                       </TableCell>
-                                      <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-xs">
+                                      <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[120px]">
                                         {designacion.estadio || "-"}
                                       </TableCell>
                                       <TableCell className="text-xs px-3">
                                         <div className="space-y-0.5">
                                           <div className="font-semibold text-slate-900 text-xs">
-                                            {arbPrincipal ? `${arbPrincipal.nombre} ${arbPrincipal.apellido}`.trim() : "-"}
+                                            {getArbNombre(arbPrincipal)}
                                           </div>
-                                          <div className="text-xs text-slate-500">{arbPrincipal?.categoria || ""}</div>
+                                          <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3">
+                                        <div className="space-y-0.5">
+                                          <div className="font-semibold text-slate-900 text-xs">
+                                            {getArbNombre(arbAsist1)}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3">
+                                        <div className="space-y-0.5">
+                                          <div className="font-semibold text-slate-900 text-xs">
+                                            {getArbNombre(arbAsist2)}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-xs px-3">
+                                        <div className="space-y-0.5">
+                                          <div className="font-semibold text-slate-900 text-xs">
+                                            {getArbNombre(arbCuarto)}
+                                          </div>
+                                          <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
                                         </div>
                                       </TableCell>
                                       <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>

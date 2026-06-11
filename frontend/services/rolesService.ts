@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
 
 interface RolesData {
   usuarioId: number;

@@ -28,6 +28,18 @@ export function notifyAsistenciaChanged(): void {
     }
 }
 
+export function notifyCampeonatoChanged(): void {
+    if (typeof window === "undefined") return;
+
+    try {
+        const timestamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem("sidaf_campeonato_sync", timestamp);
+        window.dispatchEvent(new CustomEvent("sidaf:campeonatos-updated", { detail: { timestamp } }));
+    } catch (error) {
+        console.warn("No se pudo notificar el cambio de campeonato:", error);
+    }
+}
+
 // ============================================================
 // INTERFACES Y TIPOS
 // ============================================================
@@ -357,7 +369,9 @@ export async function createCampeonato(data: CrearCampeonatoPayload): Promise<Ca
     });
 
     if (!response.ok) {
-        throw new Error("Error al crear campeonato");
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Error ${response.status} al crear campeonato`;
+        throw new Error(message);
     }
 
     return await response.json();
@@ -371,7 +385,9 @@ export async function updateCampeonato(id: number, data: Campeonato): Promise<Ca
     });
 
     if (!response.ok) {
-        throw new Error("Error al actualizar campeonato");
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Error ${response.status} al actualizar campeonato`;
+        throw new Error(message);
     }
 
     return await response.json();
@@ -402,6 +418,44 @@ export async function getEquipos(): Promise<Equipo[]> {
     } catch (error) {
         console.error("❌ Error getEquipos:", error);
         return [];
+    }
+}
+
+export async function getEquiposByProvinciaAndDistrito(provincia: string, distrito: string): Promise<Equipo[]> {
+    try {
+        const response = await fetch(buildUrl(`/equipos/provincia/${encodeURIComponent(provincia)}/distrito/${encodeURIComponent(distrito)}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Equipos obtenidos por provincia/distrito:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getEquiposByProvinciaAndDistrito:", error);
+        return [];
+    }
+}
+
+export interface DiaInfo {
+    fecha: string
+    diaSemana: number
+    nombreDia: string
+    esObligatorio: boolean
+    tipoDia: string
+}
+
+export async function getDiaActual(): Promise<DiaInfo> {
+    try {
+        const response = await fetch(buildUrl("/asistencias/dia-actual"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getDiaActual:", error);
+        return {
+            fecha: new Date().toISOString().split('T')[0],
+            diaSemana: new Date().getDay(),
+            nombreDia: new Date().toLocaleDateString('es-ES', { weekday: 'long' }),
+            esObligatorio: false,
+            tipoDia: 'normal'
+        };
     }
 }
 
@@ -547,6 +601,45 @@ export async function getDesignacionesByCampeonato(campeonatoId: number): Promis
         console.error(`❌ Error getDesignacionesByCampeonato:`, error);
         return [];
     }
+}
+
+// ============================================================
+// COPA PERÚ - resultados (campeón / subcampeón)
+// ============================================================
+
+export interface CopaPeruResultadoDTO {
+    campeonatoId: number;
+    etapa: string;
+    equipoId: number;
+    posicion: number; // 1 = campeón, 2 = subcampeón
+}
+
+export async function getCopaPeruResultados(campeonatoId: number, etapa: string): Promise<any[]> {
+    try {
+        const params = new URLSearchParams();
+        params.append('campeonatoId', String(campeonatoId));
+        params.append('etapa', etapa);
+        const response = await fetch(buildUrl(`/copa-peru/resultados?${params.toString()}`));
+        if (!response.ok) throw new Error('Error HTTP');
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Error getCopaPeruResultados:', error);
+        return [];
+    }
+}
+
+export async function saveCopaPeruResultadosBatch(resultados: CopaPeruResultadoDTO[]): Promise<any[]> {
+    const response = await fetch(buildUrl('/copa-peru/resultados/batch'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultados),
+    });
+
+    if (!response.ok) {
+        throw new Error('Error al guardar resultados de Copa Perú');
+    }
+
+    return await response.json();
 }
 
 // ============================================================

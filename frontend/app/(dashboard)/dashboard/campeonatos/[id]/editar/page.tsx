@@ -140,8 +140,8 @@ export default function EditarCampeonatoPage() {
       }
     }
 
-    // Validar equipos (mínimo 2)
-    if (equiposSeleccionados.length < 2) {
+    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL)
+    if (formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2) {
       nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
     }
 
@@ -261,29 +261,29 @@ export default function EditarCampeonatoPage() {
 
     try {
       await updateCampeonato(parseInt(campeonatoId), {
-        nombre: formData.nombre,
-        categoria: formData.categoria,
-        tipo: formData.tipo,
+        nombre: formData.nombre.toUpperCase(),
+        categoria: formData.categoria?.toUpperCase() || "",
+        tipo: formData.tipo?.toUpperCase() || "",
         fechaInicio: formData.fechaInicio,
         fechaFin: formData.fechaFin,
         estado: formData.estado,
-        organizador: formData.organizador,
-        contacto: formData.contacto,
-        ciudad: formData.ciudad,
-        provincia: formData.provincia,
-        direccion: formData.direccion,
-        estadio: formData.estadio,
+        organizador: formData.organizador?.toUpperCase() || "",
+        contacto: formData.contacto?.toUpperCase() || "",
+        ciudad: formData.ciudad?.toUpperCase() || "",
+        provincia: formData.provincia?.toUpperCase() || "",
+        direccion: formData.direccion?.toUpperCase() || "",
+        estadio: formData.estadio?.toUpperCase() || "",
         horaInicio: formData.horaInicio,
         horaFin: formData.horaFin,
         diasJuego: formData.diasJuego.join(","),
-        etapas: JSON.stringify(formData.etapas),
+        etapas: JSON.stringify(formData.etapas.map(e => ({ ...e, nombre: e.nombre?.toUpperCase() || "" }))),
         equipos: equiposSeleccionados,
-        nivelDificultad: formData.nivelDificultad,
-        numeroEquipos: formData.numeroEquipos,
-        formato: formData.formato,
-        reglas: formData.reglas,
-        premios: formData.premios,
-        observaciones: formData.observaciones,
+        nivelDificultad: formData.nivelDificultad?.toUpperCase() || "",
+        numeroEquipos: equiposSeleccionados.length,
+        formato: formData.formato?.toUpperCase() || "",
+        reglas: formData.reglas?.toUpperCase() || "",
+        premios: formData.premios?.toUpperCase() || "",
+        observaciones: formData.observaciones?.toUpperCase() || "",
       })
 
       toast({
@@ -292,11 +292,11 @@ export default function EditarCampeonatoPage() {
       })
 
       router.push(`/dashboard/campeonatos/${campeonatoId}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al actualizar campeonato:", error)
       toast({
         title: "Error al guardar cambios",
-        description: "Ocurrió un error al guardar el campeonato. Inténtalo de nuevo.",
+        description: error.message || "Ocurrió un error al guardar el campeonato. Inténtalo de nuevo.",
         variant: "destructive"
       })
     } finally {
@@ -374,13 +374,14 @@ export default function EditarCampeonatoPage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Primera División">Primera División</SelectItem>
-                        <SelectItem value="Segunda División">Segunda División</SelectItem>
-                        <SelectItem value="Tercera División">Tercera División</SelectItem>
-                        <SelectItem value="Sub-19">Sub-19</SelectItem>
-                        <SelectItem value="Sub-17">Sub-17</SelectItem>
-                      </SelectContent>
+<SelectContent>
+                       <SelectItem value="CAMPEONATO FUNDAMENTAL">CAMPEONATO FUNDAMENTAL</SelectItem>
+                       <SelectItem value="Primera División">Primera División</SelectItem>
+                       <SelectItem value="Segunda División">Segunda División</SelectItem>
+                       <SelectItem value="Tercera División">Tercera División</SelectItem>
+                       <SelectItem value="Sub-19">Sub-19</SelectItem>
+                       <SelectItem value="Sub-17">Sub-17</SelectItem>
+                     </SelectContent>
                     </Select>
                   </div>
 
@@ -596,9 +597,15 @@ export default function EditarCampeonatoPage() {
                   <Users className="h-5 w-5" />
                   Seleccionar Equipos Participantes
                 </CardTitle>
-                <CardDescription>
-                  Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
-                </CardDescription>
+<CardDescription>
+                   Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
+                   {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2 && (
+                     <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                   )}
+                   {formData.categoria === "CAMPEONATO FUNDAMENTAL" && (
+                     <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL: equipos opcionales</span>
+                   )}
+                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ElegirEquiposCampeonato

@@ -1,5 +1,6 @@
 package com.sidaf.backend.controller;
 
+import com.sidaf.backend.dto.CampeonatoCreateDTO;
 import com.sidaf.backend.model.Campeonato;
 import com.sidaf.backend.model.Campeonato.EstadoCampeonato;
 import com.sidaf.backend.repository.CampeonatoRepository;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/campeonato")
@@ -68,33 +70,37 @@ public class CampeonatoController {
                 .orElse(ResponseEntity.notFound().build());
     }
     
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    }
+
     // POST create campeonato
     @PostMapping
-    public Campeonato createCampeonato(@RequestBody Campeonato campeonato) {
-        // Validación especial para CAMPEONATO FUNDAMENTAL: permite 0 o 1 equipo
-        // Para otras categorías, requiere mínimo 2 equipos
-        if (!"CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria()) && 
-            (campeonato.getEquipos() == null || campeonato.getEquipos().isEmpty())) {
-            throw new IllegalArgumentException("Debe seleccionar al menos 2 equipos");
-        }
-        
-        // Si es CAMPEONATO FUNDAMENTAL, establecer numeroEquipos según la lista
-        if ("CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria())) {
-            campeonato.setNumeroEquipos(campeonato.getEquipos() != null ? campeonato.getEquipos().size() : 0);
-        }
-        
-        // Inicializar listas vacías si son nulas
+    public ResponseEntity<?> createCampeonato(@RequestBody CampeonatoCreateDTO dto) {
+        Campeonato campeonato = dto.toEntity();
+
         if (campeonato.getEquipos() == null) {
             campeonato.setEquipos(new ArrayList<>());
         }
-        
-        return campeonatoRepository.save(campeonato);
+
+        // Validación: requiere mínimo 2 equipos para categorías normales
+        if (!"CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria()) &&
+            campeonato.getEquipos().size() < 2) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe seleccionar al menos 2 equipos"));
+        }
+
+        // Establecer numeroEquipos según la lista
+        campeonato.setNumeroEquipos(campeonato.getEquipos().size());
+
+        // Guardar con flush para asegurar persistencia inmediata de equipos
+        Campeonato saved = campeonatoRepository.saveAndFlush(campeonato);
+        return ResponseEntity.ok(saved);
     }
     
     // PUT update campeonato
     @PutMapping("/{id}")
-    public ResponseEntity<Campeonato> updateCampeonato(@PathVariable Long id, @RequestBody Campeonato campeonatoDetails) {
-        System.out.println("🔍 DEBUG: Equipos recibidos del frontend: " + campeonatoDetails.getEquipos());
+    public ResponseEntity<?> updateCampeonato(@PathVariable Long id, @RequestBody Campeonato campeonatoDetails) {
         Optional<Campeonato> campeonato = campeonatoRepository.findById(id);
         if (campeonato.isPresent()) {
             Campeonato updatedCampeonato = campeonato.get();
@@ -114,27 +120,33 @@ public class CampeonatoController {
             updatedCampeonato.setHoraFin(campeonatoDetails.getHoraFin());
             updatedCampeonato.setDiasJuego(campeonatoDetails.getDiasJuego());
             updatedCampeonato.setNivelDificultad(campeonatoDetails.getNivelDificultad());
-            updatedCampeonato.setNumeroEquipos(campeonatoDetails.getNumeroEquipos());
             updatedCampeonato.setFormato(campeonatoDetails.getFormato());
             updatedCampeonato.setReglas(campeonatoDetails.getReglas());
             updatedCampeonato.setPremios(campeonatoDetails.getPremios());
             updatedCampeonato.setObservaciones(campeonatoDetails.getObservaciones());
             updatedCampeonato.setLogo(campeonatoDetails.getLogo());
-            
-            // Clear and update equipos - critical for ElementCollection
+
+            // Clear and update equipos
             if (updatedCampeonato.getEquipos() == null) {
                 updatedCampeonato.setEquipos(new ArrayList<>());
             }
             updatedCampeonato.getEquipos().clear();
-            
+
             if (campeonatoDetails.getEquipos() != null && !campeonatoDetails.getEquipos().isEmpty()) {
                 updatedCampeonato.getEquipos().addAll(campeonatoDetails.getEquipos());
             }
-            System.out.println("🔍 DEBUG: Equipos antes de guardar: " + updatedCampeonato.getEquipos());
-            
+
+            // Validación: requiere mínimo 2 equipos para categorías normales
+            if (!"CAMPEONATO FUNDAMENTAL".equals(updatedCampeonato.getCategoria()) &&
+                updatedCampeonato.getEquipos().size() < 2) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Debe seleccionar al menos 2 equipos"));
+            }
+
+            // Establecer numeroEquipos según la lista
+            updatedCampeonato.setNumeroEquipos(updatedCampeonato.getEquipos().size());
+
             updatedCampeonato.setEtapas(campeonatoDetails.getEtapas());
             Campeonato saved = campeonatoRepository.save(updatedCampeonato);
-            System.out.println("🔍 DEBUG: Equipos después de guardar: " + saved.getEquipos());
             return ResponseEntity.ok(saved);
         }
         return ResponseEntity.notFound().build();
