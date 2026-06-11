@@ -141,7 +141,7 @@ export default function EditarCampeonatoPage() {
     }
 
     // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL u OFICIAL)
-    if (!List.of("CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL").contains(formData.categoria) && equiposSeleccionados.length < 2) {
+    if (!["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && equiposSeleccionados.length < 2) {
       nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
     }
 
