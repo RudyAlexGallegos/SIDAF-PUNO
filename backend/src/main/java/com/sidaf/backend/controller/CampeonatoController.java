@@ -95,8 +95,8 @@ public class CampeonatoController {
             campeonato.setEquipos(new ArrayList<>());
         }
 
-        // Validación: requiere mínimo 2 equipos para categorías normales
-        if (!"CAMPEONATO FUNDAMENTAL".equals(campeonato.getCategoria()) &&
+        // Validación: requiere mínimo 2 equipos para categorías normales (no aplica para Fundamental ni Oficial)
+        if (!List.of("CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL").contains(campeonato.getCategoria()) &&
             campeonato.getEquipos().size() < 2) {
             return ResponseEntity.badRequest().body(Map.of("error", "Debe seleccionar al menos 2 equipos"));
         }

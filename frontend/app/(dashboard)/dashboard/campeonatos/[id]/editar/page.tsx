@@ -140,8 +140,8 @@ export default function EditarCampeonatoPage() {
       }
     }
 
-    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL)
-    if (formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2) {
+    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL u OFICIAL)
+    if (!List.of("CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL").contains(formData.categoria) && equiposSeleccionados.length < 2) {
       nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
     }
 
@@ -599,12 +599,12 @@ export default function EditarCampeonatoPage() {
                 </CardTitle>
 <CardDescription>
                    Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
-                   {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2 && (
-                     <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
-                   )}
-                   {formData.categoria === "CAMPEONATO FUNDAMENTAL" && (
-                     <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL: equipos opcionales</span>
-                   )}
+                    {(["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && (
+                      <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL u OFICIAL: equipos opcionales</span>
+                    )}
+                    {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && formData.categoria !== "CAMPEONATO OFICIAL" && equiposSeleccionados.length < 2 && (
+                      <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                    )}
                  </CardDescription>
               </CardHeader>
               <CardContent>
