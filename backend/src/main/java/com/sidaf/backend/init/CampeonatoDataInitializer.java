@@ -22,22 +22,13 @@ public class CampeonatoDataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         System.out.println("🔍 Inicializando datos de campeonatos...");
         
-        // Eliminar todos los campeonatos existentes excepto COPA PERÚ 2026
+        // Verificar si COPA PERÚ 2026 ya existe y no modificar otros campeonatos
         long totalCampeonatos = campeonatoRepository.count();
         System.out.println("📊 Campeonatos actuales en BD: " + totalCampeonatos);
         
-        if (totalCampeonatos > 0) {
-            campeonatoRepository.deleteAll();
-            System.out.println("🗑️  Eliminados todos los campeonatos previos");
-        }
-        
-        // Verificar si COPA PERÚ 2026 ya existe
-        boolean copaPeruExiste = campeonatoRepository.findAll()
-            .stream()
-            .anyMatch(c -> "COPA PERÚ 2026".equalsIgnoreCase(c.getNombre()));
+        boolean copaPeruExiste = campeonatoRepository.findByNombreIgnoreCase("COPA PERÚ 2026").isPresent();
         
         if (!copaPeruExiste) {
-            // Crear COPA PERÚ 2026
             Campeonato copaPerú = new Campeonato();
             copaPerú.setNombre("COPA PERÚ 2026");
             copaPerú.setCategoria("Nacional");
@@ -63,13 +54,7 @@ public class CampeonatoDataInitializer implements CommandLineRunner {
             System.out.println("✅ COPA PERÚ 2026 ya existe en la base de datos");
         }
         
-        // Verificación final
         long totalFinal = campeonatoRepository.count();
         System.out.println("✅ Inicialización completada. Total de campeonatos: " + totalFinal);
-        
-        if (totalFinal == 1) {
-            Campeonato campeonato = campeonatoRepository.findAll().get(0);
-            System.out.println("📌 Campeonato activo: " + campeonato.getNombre() + " (ID: " + campeonato.getId() + ")");
-        }
     }
 }

@@ -39,7 +39,7 @@ INSERT INTO campeonatos (
     'Competencia',
     '2026-04-14'::DATE,
     '2026-12-31'::DATE,
-    'EN_PROGRESO',
+    'ACTIVO',
     'Federación Deportiva Nacional Peruana de Fútbol',
     'info@federacionfutbol.pe',
     'Puno',

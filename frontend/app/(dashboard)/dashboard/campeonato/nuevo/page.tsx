@@ -360,6 +360,26 @@ export default function NuevoCampeonatoPage() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label>Nivel de Dificultad</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {["Bajo", "Medio", "Alto"].map((nivel) => (
+                        <button
+                          key={nivel}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, nivelDificultad: nivel })}
+                          className={`h-10 rounded-lg border-2 text-sm font-semibold transition-all ${
+                            formData.nivelDificultad === nivel
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                          }`}
+                        >
+                          {nivel}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

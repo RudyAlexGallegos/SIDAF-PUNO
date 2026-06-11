@@ -374,14 +374,15 @@ export default function EditarCampeonatoPage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
-<SelectContent>
-                       <SelectItem value="CAMPEONATO FUNDAMENTAL">CAMPEONATO FUNDAMENTAL</SelectItem>
-                       <SelectItem value="Primera División">Primera División</SelectItem>
-                       <SelectItem value="Segunda División">Segunda División</SelectItem>
-                       <SelectItem value="Tercera División">Tercera División</SelectItem>
-                       <SelectItem value="Sub-19">Sub-19</SelectItem>
-                       <SelectItem value="Sub-17">Sub-17</SelectItem>
-                     </SelectContent>
+ <SelectContent>
+                        <SelectItem value="CAMPEONATO FUNDAMENTAL">CAMPEONATO FUNDAMENTAL</SelectItem>
+                        <SelectItem value="CAMPEONATO OFICIAL">CAMPEONATO OFICIAL</SelectItem>
+                        <SelectItem value="Primera División">Primera División</SelectItem>
+                        <SelectItem value="Segunda División">Segunda División</SelectItem>
+                        <SelectItem value="Tercera División">Tercera División</SelectItem>
+                        <SelectItem value="Sub-19">Sub-19</SelectItem>
+                        <SelectItem value="Sub-17">Sub-17</SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
 
@@ -401,6 +402,26 @@ export default function EditarCampeonatoPage() {
                         <SelectItem value="Amistoso">Amistoso</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Nivel de Dificultad</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {["Bajo", "Medio", "Alto"].map((nivel) => (
+                      <button
+                        key={nivel}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, nivelDificultad: nivel })}
+                        className={`h-10 rounded-lg border-2 text-sm font-semibold transition-all ${
+                          formData.nivelDificultad === nivel
+                            ? "border-slate-900 bg-slate-900 text-white"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                        }`}
+                      >
+                        {nivel}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
