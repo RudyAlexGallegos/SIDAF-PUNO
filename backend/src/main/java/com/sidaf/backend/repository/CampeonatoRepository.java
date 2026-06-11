@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CampeonatoRepository extends JpaRepository<Campeonato, Long> {
@@ -19,4 +20,6 @@ public interface CampeonatoRepository extends JpaRepository<Campeonato, Long> {
     List<Campeonato> findByCiudad(String ciudad);
     
     List<Campeonato> findByCategoria(String categoria);
+    
+    Optional<Campeonato> findByNombreIgnoreCase(String nombre);
 }

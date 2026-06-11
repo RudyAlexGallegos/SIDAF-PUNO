@@ -279,7 +279,7 @@ export default function EditarCampeonatoPage() {
         etapas: JSON.stringify(formData.etapas.map(e => ({ ...e, nombre: e.nombre?.toUpperCase() || "" }))),
         equipos: equiposSeleccionados,
         nivelDificultad: formData.nivelDificultad?.toUpperCase() || "",
-        numeroEquipos: formData.numeroEquipos,
+        numeroEquipos: equiposSeleccionados.length,
         formato: formData.formato?.toUpperCase() || "",
         reglas: formData.reglas?.toUpperCase() || "",
         premios: formData.premios?.toUpperCase() || "",
@@ -292,11 +292,11 @@ export default function EditarCampeonatoPage() {
       })
 
       router.push(`/dashboard/campeonatos/${campeonatoId}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al actualizar campeonato:", error)
       toast({
         title: "Error al guardar cambios",
-        description: "Ocurrió un error al guardar el campeonato. Inténtalo de nuevo.",
+        description: error.message || "Ocurrió un error al guardar el campeonato. Inténtalo de nuevo.",
         variant: "destructive"
       })
     } finally {

@@ -369,7 +369,9 @@ export async function createCampeonato(data: CrearCampeonatoPayload): Promise<Ca
     });
 
     if (!response.ok) {
-        throw new Error("Error al crear campeonato");
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Error ${response.status} al crear campeonato`;
+        throw new Error(message);
     }
 
     return await response.json();
@@ -383,7 +385,9 @@ export async function updateCampeonato(id: number, data: Campeonato): Promise<Ca
     });
 
     if (!response.ok) {
-        throw new Error("Error al actualizar campeonato");
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Error ${response.status} al actualizar campeonato`;
+        throw new Error(message);
     }
 
     return await response.json();
@@ -597,6 +601,45 @@ export async function getDesignacionesByCampeonato(campeonatoId: number): Promis
         console.error(`❌ Error getDesignacionesByCampeonato:`, error);
         return [];
     }
+}
+
+// ============================================================
+// COPA PERÚ - resultados (campeón / subcampeón)
+// ============================================================
+
+export interface CopaPeruResultadoDTO {
+    campeonatoId: number;
+    etapa: string;
+    equipoId: number;
+    posicion: number; // 1 = campeón, 2 = subcampeón
+}
+
+export async function getCopaPeruResultados(campeonatoId: number, etapa: string): Promise<any[]> {
+    try {
+        const params = new URLSearchParams();
+        params.append('campeonatoId', String(campeonatoId));
+        params.append('etapa', etapa);
+        const response = await fetch(buildUrl(`/copa-peru/resultados?${params.toString()}`));
+        if (!response.ok) throw new Error('Error HTTP');
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Error getCopaPeruResultados:', error);
+        return [];
+    }
+}
+
+export async function saveCopaPeruResultadosBatch(resultados: CopaPeruResultadoDTO[]): Promise<any[]> {
+    const response = await fetch(buildUrl('/copa-peru/resultados/batch'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultados),
+    });
+
+    if (!response.ok) {
+        throw new Error('Error al guardar resultados de Copa Perú');
+    }
+
+    return await response.json();
 }
 
 // ============================================================

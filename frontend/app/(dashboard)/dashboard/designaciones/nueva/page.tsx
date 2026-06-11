@@ -19,7 +19,7 @@ import {
   Lock,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion } from "@/services/api"
+import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch } from "@/services/api"
 
 // ============================================================
 // TIPOS
@@ -105,21 +105,24 @@ const router = useRouter()
   // 🔐 SISTEMA DE DESBLOQUEO PROGRESIVO (SOLO COPA PERÚ 2026)
   const esCopaPeruActual = campeonatoSeleccionado?.nombre === "COPA PERÚ 2026"
 
-  // Campeones/subcampeones por distrito en etapa distrital
-  const [distritoCampeones, setDistritoCampeones] = useState<Record<string, DistritoCampeones>>({})
+// Campeones/subcampeones por distrito en etapa distrital
+   const [distritoCampeones, setDistritoCampeones] = useState<Record<string, DistritoCampeones>>({})
 
-  // Campeones/subcampeones por provincia en etapa provincial
-  const [provinciaCampeones, setProvinciaCampeones] = useState<Record<string, DistritoCampeones>>({})
+   // Campeones/subcampeones por distrito en etapa provincial
+   const [provinciaCampeones, setProvinciaCampeones] = useState<Record<string, DistritoCampeones>>({})
 
-  // Estado de desbloqueo de etapas
-  const [etapasState, setEtapasState] = useState<EtapaState>({
-    etapas: {
-      "Etapa Distrital": { completada: false, desbloqueada: true }, // Siempre desbloqueada
-      "Etapa Provincial": { completada: false, desbloqueada: false },
-      "Etapa Departamental": { completada: false, desbloqueada: false },
-      "Etapa Nacional": { completada: false, desbloqueada: false },
-    },
-  })
+   // 🔒 Control: ¿Ya se guardaron los campeones provinciales en backend?
+   const [provincialCampeonesFinalizados, setProvincialCampeonesFinalizados] = useState(false)
+
+   // Estado de desbloqueo de etapas
+   const [etapasState, setEtapasState] = useState<EtapaState>({
+     etapas: {
+       "Etapa Distrital": { completada: false, desbloqueada: true }, // Siempre desbloqueada
+       "Etapa Provincial": { completada: false, desbloqueada: false },
+       "Etapa Departamental": { completada: false, desbloqueada: false },
+       "Etapa Nacional": { completada: false, desbloqueada: false },
+     },
+   })
 
 // Árbitros asignados (para validar duplicados)
    const [arbitrosAsignados, setArbitrosAsignados] = useState<Record<string, Arbitro[]>>({})
@@ -180,19 +183,19 @@ const router = useRouter()
     })
   }
 
-  const validarProvinciasCompletas = (): boolean => {
-    if (!esCopaPeruActual) return true
-    
-    // En Etapa Provincial: todos los distritos de la provincia actual deben tener campeón
-    if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
-      return DISTRITOS_PUNO.every((distrito) => {
-        const campeones = provinciaCampeones[distrito]
-        return campeones?.campeón !== null && campeones?.campeón !== undefined
-      })
-    }
-    
-    return true
-  }
+const validarProvinciasCompletas = (): boolean => {
+     if (!esCopaPeruActual) return true
+
+     // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
+     if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
+       return DISTRITOS_PUNO.every((distrito) => {
+         const campeones = provinciaCampeones[distrito]
+         return campeones?.campeón !== null && campeones?.campeón !== undefined
+       })
+     }
+
+     return true
+   }
 
   const validarPartidosCompletos = (): boolean => {
     if (!partidos.length) return false
@@ -223,47 +226,134 @@ const router = useRouter()
     )
   }
 
-  const calcularEtapasDesbloqueadas = () => {
-    if (!esCopaPeruActual) return
+const calcularEtapasDesbloqueadas = () => {
+     if (!esCopaPeruActual) return
 
-    const nuevasEtapas = { ...etapasState.etapas }
+     const nuevasEtapas = { ...etapasState.etapas }
 
-    // Distrital siempre desbloqueada
-    nuevasEtapas["Etapa Distrital"].desbloqueada = true
+     // 🔒 Distrital se BLOQUEA cuando Provincial está guardado
+     nuevasEtapas["Etapa Distrital"].desbloqueada = !provincialCampeonesFinalizados
 
-    // Provincial se desbloquea si todos los distritos tienen campeón (En Etapa Distrital)
-    if (validarDistritosCompletos()) {
-      nuevasEtapas["Etapa Distrital"].completada = true
-      nuevasEtapas["Etapa Provincial"].desbloqueada = true
-    } else {
-      nuevasEtapas["Etapa Provincial"].desbloqueada = false
-    }
+     // Provincial se desbloquea si todos los distritos tienen campeón (En Etapa Distrital)
+     if (validarDistritosCompletos()) {
+       nuevasEtapas["Etapa Distrital"].completada = true
+       nuevasEtapas["Etapa Provincial"].desbloqueada = true
+     } else {
+       nuevasEtapas["Etapa Provincial"].desbloqueada = false
+     }
 
-    // Departamental se desbloquea si los partidos están completos en Etapa Provincial
-    if (
-      etapaSeleccionada === "Etapa Provincial" &&
-      validarPartidosCompletos()
-    ) {
-      nuevasEtapas["Etapa Provincial"].completada = true
-      nuevasEtapas["Etapa Departamental"].desbloqueada = true
-    }
+     // Departamental se desbloquea si los partidos están completos en Etapa Provincial
+     if (
+       etapaSeleccionada === "Etapa Provincial" &&
+       validarPartidosCompletos()
+     ) {
+       nuevasEtapas["Etapa Provincial"].completada = true
+       nuevasEtapas["Etapa Departamental"].desbloqueada = true
+     }
 
-    // Nacional se desbloquea si Departamental está completa
-    if (
-      etapaSeleccionada === "Etapa Departamental" &&
-      validarPartidosCompletos()
-    ) {
-      nuevasEtapas["Etapa Departamental"].completada = true
-      nuevasEtapas["Etapa Nacional"].desbloqueada = true
-    }
+     // Nacional se desbloquea si Departamental está completa
+     if (
+       etapaSeleccionada === "Etapa Departamental" &&
+       validarPartidosCompletos()
+     ) {
+       nuevasEtapas["Etapa Departamental"].completada = true
+       nuevasEtapas["Etapa Nacional"].desbloqueada = true
+     }
 
-    setEtapasState({ etapas: nuevasEtapas })
-  }
+     // Marcar provincial como completada si está finalizado
+     if (provincialCampeonesFinalizados) {
+       nuevasEtapas["Etapa Provincial"].completada = true
+     }
 
-  // Recalcular desbloqueos cuando cambia el estado
-  useEffect(() => {
-    calcularEtapasDesbloqueadas()
-  }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado])
+     setEtapasState({ etapas: nuevasEtapas })
+   }
+
+// Recalcular desbloqueos cuando cambia el estado
+   useEffect(() => {
+     calcularEtapasDesbloqueadas()
+   }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado, provincialCampeonesFinalizados])
+
+   // 🔒 Cargar resultados de etapa provincial guardados desde backend
+   useEffect(() => {
+     const loadProvincial = async () => {
+       try {
+         if (!campeonatoSeleccionado || !esCopaPeruActual) {
+           setProvinciaCampeones({})
+           setProvincialCampeonesFinalizados(false)
+           return
+         }
+
+         const resultados = await getCopaPeruResultados(campeonatoSeleccionado.id as number, 'PROVINCIAL')
+         const mapping: Record<string, DistritoCampeones> = {}
+         resultados.forEach((r: any) => {
+           const equipo = r.equipo || {}
+           // En etapa provincial, los equipos están agrupados por distrito
+           const distrito = equipo.distrito || 'Sin Distrito'
+           if (!mapping[distrito]) mapping[distrito] = { campeón: null, subcampeón: null }
+           const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
+           if (r.posicion === 1) mapping[distrito].campeón = equipoObj
+           if (r.posicion === 2) mapping[distrito].subcampeón = equipoObj
+         })
+         setProvinciaCampeones(mapping)
+
+         // Verificar si todos los distritos tienen campeón asignado
+         const todosTienenCampeon = DISTRITOS_PUNO.every((distrito) => mapping[distrito]?.campeón)
+         if (todosTienenCampeon) {
+           setProvincialCampeonesFinalizados(true)
+         }
+       } catch (e) {
+         console.warn('No se pudo cargar campeones provinciales desde backend', e)
+         setProvinciaCampeones({})
+         setProvincialCampeonesFinalizados(false)
+       }
+     }
+
+     loadProvincial()
+   }, [campeonatoSeleccionado, esCopaPeruActual])
+
+   // 🔒 Cargar resultados de etapa distrital para detectar equipos participantes
+   useEffect(() => {
+     const loadDistrital = async () => {
+       try {
+         if (!campeonatoSeleccionado || !esCopaPeruActual) {
+           setDistritoCampeones({})
+           return
+         }
+
+         const resultados = await getCopaPeruResultados(campeonatoSeleccionado.id as number, 'DISTRITAL')
+         const mapping: Record<string, DistritoCampeones> = {}
+         resultados.forEach((r: any) => {
+           const equipo = r.equipo || {}
+           const distrito = equipo.distrito || 'Sin Distrito'
+           if (!mapping[distrito]) mapping[distrito] = { campeón: null, subcampeón: null }
+           const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
+           if (r.posicion === 1) mapping[distrito].campeón = equipoObj
+           if (r.posicion === 2) mapping[distrito].subcampeón = equipoObj
+         })
+         setDistritoCampeones(mapping)
+       } catch (e) {
+         console.warn('No se pudo cargar resultados distritales desde backend', e)
+         setDistritoCampeones({})
+       }
+     }
+
+     loadDistrital()
+   }, [campeonatoSeleccionado, esCopaPeruActual])
+
+   // 🔒 Detectar y bloquear etapa distrital automáticamente cuando provincial está guardado
+   useEffect(() => {
+     if (!campeonatoSeleccionado || !esCopaPeruActual) return
+
+     // Si los campeones provinciales están finalizados, bloquear etapa distrital
+     if (provincialCampeonesFinalizados) {
+       setEtapasState(prev => ({
+         etapas: {
+           ...prev.etapas,
+           "Etapa Distrital": { desbloqueada: false, completada: false }
+         }
+       }))
+     }
+   }, [provincialCampeonesFinalizados, campeonatoSeleccionado, esCopaPeruActual])
 
   if (loading) {
     return (

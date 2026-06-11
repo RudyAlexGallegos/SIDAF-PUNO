@@ -72,7 +72,7 @@ export default function CampeonadosPage() {
       if (!existeCopa) {
         const nuevoCampeonato = {
           nombre: "COPA PERÚ 2026",
-          categoria: "Profesional",
+          categoria: "CAMPEONATO FUNDAMENTAL",
           tipo: "Torneo",
           estado: "ACTIVO",
           fechaInicio: "2026-04-01",
@@ -85,12 +85,18 @@ export default function CampeonadosPage() {
           numeroEquipos: 32,
           formato: "Regional",
           observaciones: "Campeonato nacional principal 2026. No puede ser eliminado.",
+          equipos: [],
+          diasJuego: "",
+          etapas: "[]",
         }
-        await fetch(`${API_URL}/campeonato`, {
+        const createRes = await fetch(`${API_URL}/campeonato`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(nuevoCampeonato),
         })
+        if (createRes.ok) {
+          await refetch()
+        }
       }
     } catch (error) {
       console.error("Error creando COPA PERÚ:", error)
@@ -125,6 +131,30 @@ export default function CampeonadosPage() {
       // Cache hook loads automatically, but we can refetch if needed
     })
   }, [])
+
+  useEffect(() => {
+    const handleCampeonatosUpdated = async () => {
+      try {
+        await refetch()
+      } catch (error) {
+        console.error("Error refrescando campeonatos tras actualización:", error)
+      }
+    }
+
+    window.addEventListener("sidaf:campeonatos-updated", handleCampeonatosUpdated)
+    return () => window.removeEventListener("sidaf:campeonatos-updated", handleCampeonatosUpdated)
+  }, [refetch])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const syncKey = localStorage.getItem("sidaf_campeonato_sync")
+    if (syncKey) {
+      refetch().catch((error) => {
+        console.error("Error refrescando campeonatos tras navegación:", error)
+      })
+      localStorage.removeItem("sidaf_campeonato_sync")
+    }
+  }, [refetch])
 
   const handleDeleteClick = (id: number, nombre: string) => {
     // Proteger COPA PERÚ 2026
