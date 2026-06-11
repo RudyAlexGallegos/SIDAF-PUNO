@@ -122,14 +122,14 @@ function DesignacionesPageContent() {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Fetch designaciones
+   // Fetch designaciones
   const cacheDesignaciones = useCache(
     "designaciones",
     async () => {
       const data = await getDesignaciones()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 5 * 60 * 1000 }
+    { ttl: 30 * 1000 }
   )
 
   // Fetch arbitros
@@ -139,7 +139,7 @@ function DesignacionesPageContent() {
       const data = await getArbitros()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 5 * 60 * 1000 }
+    { ttl: 30 * 1000 }
   )
 
   // Fetch campeonatos
@@ -149,7 +149,7 @@ function DesignacionesPageContent() {
       const data = await getCampeonatos()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 5 * 60 * 1000 }
+    { ttl: 30 * 1000 }
   )
 
   // Fetch equipos
@@ -159,7 +159,7 @@ function DesignacionesPageContent() {
       const data = await getEquipos()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 5 * 60 * 1000 }
+    { ttl: 30 * 1000 }
   )
 
   const designaciones = Array.isArray(cacheDesignaciones.data) ? cacheDesignaciones.data : []

@@ -98,12 +98,21 @@ export interface Designacion {
   calificacion?: number
 }
 
+export interface Asistencia {
+  id: string
+  arbitroId: string
+  fecha: string
+  presente: boolean
+  tipoActividad?: string
+  observaciones?: string
+}
+
 interface DataStore {
   arbitros: Arbitro[]
   equipos: Equipo[]
   campeonatos: Campeonato[]
-  circuitos: Campeonato[]
   designaciones: Designacion[]
+  asistencias: Asistencia[]
   loading: boolean
   error: string | null
 
@@ -134,7 +143,7 @@ interface DataStore {
   extendDataExpiration?: () => void
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
 
 export const useDataStore = create<DataStore>()(
   persist(
@@ -412,13 +421,13 @@ export const useDataStore = create<DataStore>()(
           const asistsRes = await fetch(`${API_URL}/asistencias`)
           if (asistsRes.ok) {
             const asistsData = await asistsRes.json()
-            const normalizedAsists = (asistsData || []).map((d: any) => ({ 
-              ...d, 
-              id: String(d.id), 
-              arbitroId: String(d.idAribro || d.idAritro || d.idArbitro || d.arbitrId || d.arbitroId || d.id),
-              presente: d.estado === 'presente' || d.estado === 'presente' || d.presente === true
+            const normalizedAsists = (asistsData || []).map((d: any) => ({
+              ...d,
+              id: String(d.id),
+              arbitroId: String(d.idArbitro || d.arbitroId || d.id),
+              presente: d.estado === 'presente' || d.estado === 'tardanza' || d.presente === true
             }))
-            set({ assistencias: normalizedAsists })
+            set({ asistencias: normalizedAsists })
           }
 
         } catch (err: any) {

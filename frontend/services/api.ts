@@ -1,7 +1,7 @@
 // ============================================================
 // API BASE URL
 // ============================================================
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api";
 export const ASISTENCIA_SYNC_KEY = "sidaf_asistencia_sync";
 
 function buildUrl(path: string): string {
