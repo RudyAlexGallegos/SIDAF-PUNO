@@ -100,11 +100,11 @@ export default function CampeonadosPage() {
     return Array.isArray(data) ? data : []
   }
 
-  // Use cache hook for data fetching with 5-minute TTL
+  // Use cache hook for data fetching with 30-second TTL
   const { data: campeonatos = [], isLoading, error: cacheError, refetch } = useCache(
     "campeonatos",
     fetchCampeonatos,
-    { ttl: 5 * 60 * 1000 }
+    { ttl: 30 * 1000 }
   )
 
   // Escuchar cambios de campeonatos y refrescar automáticamente

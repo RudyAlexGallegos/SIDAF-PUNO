@@ -5,8 +5,10 @@ import com.sidaf.backend.model.Campeonato;
 import com.sidaf.backend.model.Campeonato.EstadoCampeonato;
 import com.sidaf.backend.repository.CampeonatoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.cache.CacheManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +22,14 @@ public class CampeonatoController {
     
     @Autowired
     private CampeonatoRepository campeonatoRepository;
+
+    @Autowired
+    private CacheManager cacheManager;
+
+    private void evictCampeonatoCache() {
+        var cache = cacheManager.getCache("campeonatos");
+        if (cache != null) cache.clear();
+    }
     
     // GET campeonatos by estado - RUTAS ESPECÍFICAS PRIMERO
     @GetMapping("/estado/{estado}")
@@ -76,6 +86,7 @@ public class CampeonatoController {
     }
 
     // POST create campeonato
+    @CacheEvict(value = "campeonatos", allEntries = true)
     @PostMapping
     public ResponseEntity<?> createCampeonato(@RequestBody CampeonatoCreateDTO dto) {
         Campeonato campeonato = dto.toEntity();
@@ -99,6 +110,7 @@ public class CampeonatoController {
     }
     
     // PUT update campeonato
+    @CacheEvict(value = "campeonatos", allEntries = true)
     @PutMapping("/{id}")
     public ResponseEntity<?> updateCampeonato(@PathVariable Long id, @RequestBody Campeonato campeonatoDetails) {
         Optional<Campeonato> campeonato = campeonatoRepository.findById(id);
