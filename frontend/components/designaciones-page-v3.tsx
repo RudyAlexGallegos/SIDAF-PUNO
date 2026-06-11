@@ -129,7 +129,7 @@ function DesignacionesPageContent() {
       const data = await getDesignaciones()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 30 * 1000 }
+    { skipCache: true }
   )
 
   // Fetch arbitros
@@ -139,7 +139,7 @@ function DesignacionesPageContent() {
       const data = await getArbitros()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 30 * 1000 }
+    { skipCache: true }
   )
 
   // Fetch campeonatos
@@ -149,7 +149,7 @@ function DesignacionesPageContent() {
       const data = await getCampeonatos()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 30 * 1000 }
+    { skipCache: true }
   )
 
   // Fetch equipos
@@ -159,7 +159,7 @@ function DesignacionesPageContent() {
       const data = await getEquipos()
       return Array.isArray(data) ? data : []
     },
-    { ttl: 30 * 1000 }
+    { skipCache: true }
   )
 
   const designaciones = Array.isArray(cacheDesignaciones.data) ? cacheDesignaciones.data : []
