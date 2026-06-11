@@ -14,7 +14,7 @@ import { updateCampeonato, getEquipos, type Equipo } from "@/services/api"
 import ElegirEquiposCampeonato from "@/components/campeonato/ElegirEquiposCampeonato"
 import { toast } from "@/hooks/use-toast"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
 
 const DIAS_SEMANA = [
   { id: "lunes", label: "Lunes" },

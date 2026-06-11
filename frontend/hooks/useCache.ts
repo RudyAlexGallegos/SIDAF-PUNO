@@ -51,7 +51,8 @@ export function useCache<T>(
 
   const setCachedData = (value: T) => {
     if (typeof window === 'undefined') return
-    
+    if (options?.skipCache) return
+
     try {
       const entry: CacheEntry<T> = {
         data: value,

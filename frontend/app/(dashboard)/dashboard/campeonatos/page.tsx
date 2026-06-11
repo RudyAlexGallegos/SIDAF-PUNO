@@ -113,11 +113,11 @@ export default function CampeonadosPage() {
     return Array.isArray(data) ? data : []
   }
 
-  // Use cache hook for data fetching with 5-minute TTL
+  // Use cache hook for data fetching - skip cache for campeonatos (sync across devices)
   const { data: campeonatosData, isLoading, error: cacheError, refetch } = useCache(
     "campeonatos",
     fetchCampeonatos,
-    { ttl: 5 * 60 * 1000 }
+    { skipCache: true }
   )
   
   // Garantizar que campeonatos siempre sea un array
