@@ -87,8 +87,8 @@ export default function NuevoCampeonatoPage() {
       }
     }
 
-    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL)
-    if (formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2) {
+    // Validar equipos (mínimo 2, a menos que sea CAMPEONATO FUNDAMENTAL u OFICIAL)
+    if (!["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && equiposSeleccionados.length < 2) {
       nuevosErrores.equipos = "Debe seleccionar al menos 2 equipos"
     }
 
@@ -333,6 +333,7 @@ export default function NuevoCampeonatoPage() {
                       </SelectTrigger>
 <SelectContent>
                          <SelectItem value="CAMPEONATO FUNDAMENTAL">CAMPEONATO FUNDAMENTAL</SelectItem>
+                         <SelectItem value="CAMPEONATO OFICIAL">CAMPEONATO OFICIAL</SelectItem>
                          <SelectItem value="Primera División">Primera División</SelectItem>
                          <SelectItem value="Segunda División">Segunda División</SelectItem>
                          <SelectItem value="Tercera División">Tercera División</SelectItem>
@@ -358,6 +359,26 @@ export default function NuevoCampeonatoPage() {
                         <SelectItem value="Amistoso">Amistoso</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nivel de Dificultad</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {["Bajo", "Medio", "Alto"].map((nivel) => (
+                        <button
+                          key={nivel}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, nivelDificultad: nivel })}
+                          className={`h-10 rounded-lg border-2 text-sm font-semibold transition-all ${
+                            formData.nivelDificultad === nivel
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                          }`}
+                        >
+                          {nivel}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -566,7 +587,7 @@ export default function NuevoCampeonatoPage() {
                      <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
                    )}
                    {formData.categoria === "CAMPEONATO FUNDAMENTAL" && (
-                     <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL: equipos opcionales</span>
+                      <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL u OFICIAL: equipos opcionales</span>
                    )}
                  </CardDescription>
               </CardHeader>
