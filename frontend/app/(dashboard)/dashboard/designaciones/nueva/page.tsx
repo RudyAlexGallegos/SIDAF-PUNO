@@ -210,6 +210,13 @@ const router = useRouter()
     })
   }
 
+  const validarEquipoNoRepetido = (equipoId: number): boolean => {
+    // Un equipo no puede estar en múltiples partidos
+    return !partidos.some(
+      (p) => p.equipoLocal?.id === equipoId || p.equipoVisitante?.id === equipoId
+    )
+  }
+
   const validarArbitroNoRepetido = (arbitroId: number, partidoActualId: string): boolean => {
     // Un árbitro no puede estar en múltiples partidos simultáneamente
     return !partidos.some(
@@ -890,19 +897,28 @@ if (loading) {
                       ⚽ Equipo Local
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                      {equiposDisponibles.map((eq) => (
-                        <button
-                          key={eq.id}
-                          onClick={() => setEquipoLocal(eq)}
-                          className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
-                            equipoLocal?.id === eq.id
-                              ? "border-purple-500 bg-purple-600 text-white"
-                              : "border-gray-200 bg-white text-slate-700 hover:border-purple-400"
-                          }`}
-                        >
-                          {eq.nombre.split(" ").slice(0, 2).join(" ")}
-                        </button>
-                      ))}
+                      {equiposDisponibles.map((eq) => {
+                        const estaRepetido = partidos.some(
+                          (p) => p.equipoLocal?.id === eq.id || p.equipoVisitante?.id === eq.id
+                        )
+                        return (
+                          <button
+                            key={eq.id}
+                            onClick={() => !estaRepetido && setEquipoLocal(eq)}
+                            disabled={estaRepetido}
+                            className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
+                              equipoLocal?.id === eq.id
+                                ? "border-purple-500 bg-purple-600 text-white"
+                                : estaRepetido
+                                  ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
+                                  : "border-gray-200 bg-white text-slate-700 hover:border-purple-400"
+                            }`}
+                          >
+                            {eq.nombre.split(" ").slice(0, 2).join(" ")}
+                            {estaRepetido && <span className="text-xs block">Asignado</span>}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 
@@ -912,55 +928,80 @@ if (loading) {
                       ✈️ Equipo Visitante
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                      {equiposDisponibles.filter((eq) => eq.id !== equipoLocal?.id).map((eq) => (
-                        <button
-                          key={eq.id}
-                          onClick={() => setEquipoVisitante(eq)}
-                          className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
-                            equipoVisitante?.id === eq.id
-                              ? "border-orange-500 bg-orange-600 text-white"
-                              : "border-gray-200 bg-white text-slate-700 hover:border-orange-400"
-                          }`}
-                        >
-                          {eq.nombre.split(" ").slice(0, 2).join(" ")}
-                        </button>
-                      ))}
+                      {equiposDisponibles.filter((eq) => eq.id !== equipoLocal?.id).map((eq) => {
+                        const estaRepetido = partidos.some(
+                          (p) => p.equipoLocal?.id === eq.id || p.equipoVisitante?.id === eq.id
+                        )
+                        return (
+                          <button
+                            key={eq.id}
+                            onClick={() => !estaRepetido && setEquipoVisitante(eq)}
+                            disabled={estaRepetido}
+                            className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
+                              equipoVisitante?.id === eq.id
+                                ? "border-orange-500 bg-orange-600 text-white"
+                                : estaRepetido
+                                  ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
+                                  : "border-gray-200 bg-white text-slate-700 hover:border-orange-400"
+                            }`}
+                          >
+                            {eq.nombre.split(" ").slice(0, 2).join(" ")}
+                            {estaRepetido && <span className="text-xs block">Asignado</span>}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 
-                  {/* Botones */}
-                  <div className="flex gap-3 pt-4 border-t">
-                    <Button
-                      onClick={() => {
-                        if (!equipoLocal || !equipoVisitante) {
+{/* Botones */}
+                    <div className="flex gap-3 pt-4 border-t">
+                      <Button
+                        onClick={() => {
+                          if (!equipoLocal || !equipoVisitante) {
+                            toast({
+                              title: "Validación",
+                              description: "Selecciona ambos equipos",
+                              variant: "destructive",
+                            })
+                            return
+                          }
+
+                          const equipoLocalRepetido = partidos.some(
+                            (p) => p.equipoLocal?.id === equipoLocal.id || p.equipoVisitante?.id === equipoLocal.id
+                          )
+                          const equipoVisitanteRepetido = partidos.some(
+                            (p) => p.equipoLocal?.id === equipoVisitante.id || p.equipoVisitante?.id === equipoVisitante.id
+                          )
+
+                          if (equipoLocalRepetido || equipoVisitanteRepetido) {
+                            toast({
+                              title: "Equipos duplicados",
+                              description: "Un equipo no puede participar en múltiples partidos",
+                              variant: "destructive",
+                            })
+                            return
+                          }
+
+                          const nuevoPartido: Partido = {
+                            id: `partido-${Date.now()}`,
+                            equipoLocal,
+                            equipoVisitante,
+                          }
+
+                          setPartidos([...partidos, nuevoPartido])
+                          setEquipoLocal(null)
+                          setEquipoVisitante(null)
+
                           toast({
-                            title: "Validación",
-                            description: "Selecciona ambos equipos",
-                            variant: "destructive",
+                            title: "✅ Partido creado",
+                            description: `${equipoLocal.nombre} vs ${equipoVisitante.nombre}`,
                           })
-                          return
-                        }
-
-                        const nuevoPartido: Partido = {
-                          id: `partido-${Date.now()}`,
-                          equipoLocal,
-                          equipoVisitante,
-                        }
-
-                        setPartidos([...partidos, nuevoPartido])
-                        setEquipoLocal(null)
-                        setEquipoVisitante(null)
-
-                        toast({
-                          title: "✅ Partido creado",
-                          description: `${equipoLocal.nombre} vs ${equipoVisitante.nombre}`,
-                        })
-                      }}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      <Plus className="w-5 h-5 mr-2" />
-                      Crear Partido
-                    </Button>
+                        }}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <Plus className="w-5 h-5 mr-2" />
+                        Crear Partido
+                      </Button>
 
                     <Button
                       onClick={() => {
