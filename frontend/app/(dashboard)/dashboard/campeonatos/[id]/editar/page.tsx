@@ -618,15 +618,15 @@ export default function EditarCampeonatoPage() {
                   <Users className="h-5 w-5" />
                   Seleccionar Equipos Participantes
                 </CardTitle>
-<CardDescription>
-                   Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
-                    {(["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && (
-                      <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL u OFICIAL: equipos opcionales</span>
-                    )}
-                    {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && formData.categoria !== "CAMPEONATO OFICIAL" && equiposSeleccionados.length < 2 && (
-                      <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
-                    )}
-                 </CardDescription>
+                <CardDescription>
+                  Elige los equipos del campeonato por provincia y distrito ({equiposSeleccionados.length} seleccionados)
+                  {(["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && (
+                    <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL u OFICIAL: equipos opcionales</span>
+                  ))}
+                  {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && formData.categoria !== "CAMPEONATO OFICIAL" && equiposSeleccionados.length < 2 && (
+                    <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                  )}
+</CardDescription>
               </CardHeader>
               <CardContent>
                 <ElegirEquiposCampeonato
