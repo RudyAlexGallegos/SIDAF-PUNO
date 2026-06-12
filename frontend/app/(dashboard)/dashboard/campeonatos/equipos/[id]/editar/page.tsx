@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Shield, Save, Building, MapPin, Phone, Mail, Palette, Loader2 } from "lucide-react"
+import { ArrowLeft, Shield, Save, MapPin, Phone, Palette, Loader2 } from "lucide-react"
 import { getEquipoById, updateEquipo, type Equipo } from "@/services/api"
-import { getDistritosPorProvincia } from "@/lib/distritos-puno"
+import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 
 export default function EditarEquipoPage() {
     const router = useRouter()
@@ -34,9 +34,10 @@ export default function EditarEquipoPage() {
     })
     
     const distritosDisponibles = useMemo(() => {
-        return getDistritosPorProvincia(form.provincia)
+        if (!form.provincia) return []
+        return getDistritosByProvincia(form.provincia).map(d => d.nombre)
     }, [form.provincia])
-    
+
     // Cargar datos del equipo
     useEffect(() => {
         async function loadEquipo() {
@@ -48,6 +49,7 @@ export default function EditarEquipoPage() {
                         nombre: data.nombre || "",
                         categoria: data.categoria || "Primera División",
                         provincia: data.provincia || "Puno",
+                        distrito: data.distrito || "",
                         estadio: data.estadio || "",
                         direccion: data.direccion || "",
                         telefono: data.telefono || "",
@@ -93,22 +95,6 @@ export default function EditarEquipoPage() {
 
     const categorias = ["Primera División", "Segunda División"]
     
-    const provincias = [
-        { nombre: "Azángaro" },
-        { nombre: "Carabaya" },
-        { nombre: "Chucuito"},
-        { nombre: "El Collao" },
-        { nombre: "Huancané", capital: "Huancané" },
-        { nombre: "Lampa", capital: "Lampa" },
-        { nombre: "Melgar", capital: "Ayaviri" },
-        { nombre: "Moho", capital: "Moho" },
-        { nombre: "Puno", capital: "Puno (capital del departamento)" },
-        { nombre: "San Antonio de Putina", capital: "Putina" },
-        { nombre: "San Román", capital: "Juliaca (ciudad más poblada)" },
-        { nombre: "Sandia", capital: "Sandia" },
-        { nombre: "Yunguyo", capital: "Yunguyo" }
-    ]
-
     const colores = [
         { value: "Rojo", label: "Rojo", bg: "bg-red-500" },
         { value: "Azul", label: "Azul", bg: "bg-blue-500" },
@@ -207,9 +193,10 @@ export default function EditarEquipoPage() {
                                         onChange={(e) => setForm({ ...form, provincia: e.target.value, distrito: "" })}
                                         className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
-                                        {provincias.map((prov) => (
+                                        <option value="">Seleccione una provincia</option>
+                                        {PROVINCIAS_PUNO.map((prov) => (
                                             <option key={prov.nombre} value={prov.nombre}>
-                                                {prov.nombre} : {prov.capital}
+                                                {prov.nombre}
                                             </option>
                                         ))}
                                     </select>
@@ -229,7 +216,7 @@ export default function EditarEquipoPage() {
                                             <option key={dist} value={dist}>{dist}</option>
                                         ))}
                                     </select>
-                                    {distritosDisponibles.length === 0 && form.provincia !== "" && (
+                                    {distritosDisponibles.length === 0 && form.provincia && (
                                         <p className="text-xs text-slate-500 mt-1">
                                             Distritos no disponibles para esta provincia
                                         </p>

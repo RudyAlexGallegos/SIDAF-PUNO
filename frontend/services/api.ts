@@ -143,6 +143,10 @@ export interface Equipo {
     distrito?: string;
     estadio?: string;
     direccion?: string;
+    telefono?: string;
+    email?: string;
+    colores?: string;
+    nombreEstadio?: string;
 }
 
 export interface Designacion {

@@ -3,10 +3,9 @@
 import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-
 import { createArbitro } from "@/services/api"
+import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 
-// ==================== TIPOS ====================
 type EstadoArbitro = "activo" | "inactivo" | "suspendido" | "licencia_medica"
 type Categoria = "FIFA" | "Nacional" | "Primera Categoría" | "Segunda Categoría" | "Tercera Categoría" | "Aspirante"
 type Sexo = "masculino" | "femenino"
@@ -48,32 +47,6 @@ interface ArbitroData {
   estado: EstadoArbitro
   observaciones: string
   declaracionJurada: boolean
-}
-
-// ==================== DATOS PUNO - ESTRUCTURA JERÁRQUICA ====================
-// Departamento: Puno (código 26)
-const DEPARTAMENTO_PUNO = "Puno"
-
-// Provincias y distritos de Puno (estructura jerárquica)
-const PROVINCIA_DISTRITOS: Record<string, string[]> = {
-  Puno: ["Puno", "Ácora", "Atuncolla", "Mañazo", "Tirapata", "Paucarcolla", "San Antonio de Esquilache", "Maure", "Taquile"],
-  "San Román": ["Juliaca", "Azángaro", "Samicaya", "Cuyuchí", "Huancané", "Cojata", "Huatasani", "Cuturapi", "Otoca", "Tilali"],
-  "El Collao": ["Ilave", "Capazo", "Pilcuyo", "Santa Rosa", "Mañazo", "Conduriri"],
-  Chucuito: ["Juli", "Desaguadero", "Zepita", "Balvina", "Comina", "Kelluyo", "Maure", "Pisacoma", "Pomata", "Tinicachi"],
-  Huancané: ["Huancané", "Taraco", "Vilque Chico", "Cahocache", "Pisacoma", "Huatasani", "Rosaspata", "San Antonio de Cusi", "Tinquiconi"],
-  Lampa: ["Lampa", "Cabanilla", "Calapuja", "Núñoa", "Palca", "Pucará", "Santa Lucía", "Ocuviri", "Picuta", "Progreso"],
-  Melgar: ["Ayaviri", "Antauta", "Cupi", "Llalli", "Macari", "Nuñoa", "Ocuviri", "Pucará", "Santa Rosa", "Umachiri"],
-  Moho: ["Moho", "Conima", "Huayrapata", "Tilali"],
-  "San Antonio de Putina": ["Putina", "Ananea", "Pedro Vilca Apaza", "Quilcapuncu", "Sina"],
-  Sandia: ["Sandia", "Cuyuchí", "Bala", "Limbani", "Patambuco", "Phara", "Quilcapuncu", "Sibayo", "Tiniguad"],
-  Yunguyo: ["Yunguyo", "Anapia", "Camacachi", "Chupa", "Manu", "Ollachea", "Tapacari", "Tiquillaca", "Unicachi"]
-}
-
-const PROVINCIAS_PUNO = Object.keys(PROVINCIA_DISTRITOS)
-
-// Obtener distritos según la provincia seleccionada
-const getDistritosPorProvincia = (provincia: string): string[] => {
-  return PROVINCIA_DISTRITOS[provincia] || []
 }
 
 const CATEGORIAS_CODAR = [
@@ -890,14 +863,14 @@ export default function NuevoArbitroPage() {
           >
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <InputField label="Provincia" required error={errors.provincia}>
+<InputField label="Provincia" required error={errors.provincia}>
                   <CustomSelect
                     value={form.provincia}
                     onChange={(e) => updateForm({ provincia: e.target.value })}
                   >
                     <option value="">Seleccionar provincia</option>
                     {PROVINCIAS_PUNO.map(prov => (
-                      <option key={prov} value={prov}>{prov}</option>
+                      <option key={prov.nombre} value={prov.nombre}>{prov.nombre}</option>
                     ))}
                   </CustomSelect>
                 </InputField>
@@ -909,8 +882,8 @@ export default function NuevoArbitroPage() {
                     disabled={!form.provincia}
                   >
                     <option value="">{form.provincia ? "Seleccionar distrito" : "Primero seleccione una provincia"}</option>
-                    {getDistritosPorProvincia(form.provincia).map((dist: string) => (
-                      <option key={dist} value={dist}>{dist}</option>
+                    {getDistritosByProvincia(form.provincia).map((d) => (
+                      <option key={d.nombre} value={d.nombre}>{d.nombre}</option>
                     ))}
                   </CustomSelect>
                 </InputField>
