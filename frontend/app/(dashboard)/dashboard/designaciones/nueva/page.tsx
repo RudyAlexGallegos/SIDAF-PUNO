@@ -795,6 +795,20 @@ if (loading) {
   // ============================================================
 
   if (currentStep === "partidos" && (distritoSeleccionado || provinciaSeleccionada)) {
+    // 🔒 Filtrar equipos disponibles según el contexto
+    let equiposDisponibles: Equipo[] = equiposReales
+    if (distritoSeleccionado) {
+      // 1. Etapa Distrital: mostrar solo equipos del distrito seleccionado
+      equiposDisponibles = equiposReales.filter((eq) => eq.distrito === distritoSeleccionado)
+    } else if (esCopaPeruActual && etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
+      // 2. Etapa Provincial (Copa Perú): usar campeón/subcampeón de cada distrito
+      equiposDisponibles = Object.values(provinciaCampeones)
+        .flatMap((c) => [c.campeón, c.subcampeón].filter(Boolean) as Equipo[])
+    } else if (provinciaSeleccionada) {
+      // 3. Otros campeonatos / etapas: filtrar por provincia seleccionada
+      equiposDisponibles = equiposReales.filter((eq) => eq.provincia === provinciaSeleccionada)
+    }
+
     return (
       <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
         {/* Header */}
@@ -827,7 +841,7 @@ if (loading) {
                       ⚽ Equipo Local
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                      {equiposReales.map((eq) => (
+                      {equiposDisponibles.map((eq) => (
                         <button
                           key={eq.id}
                           onClick={() => setEquipoLocal(eq)}
@@ -849,7 +863,7 @@ if (loading) {
                       ✈️ Equipo Visitante
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                      {equiposReales.filter((eq) => eq.id !== equipoLocal?.id).map((eq) => (
+                      {equiposDisponibles.filter((eq) => eq.id !== equipoLocal?.id).map((eq) => (
                         <button
                           key={eq.id}
                           onClick={() => setEquipoVisitante(eq)}
