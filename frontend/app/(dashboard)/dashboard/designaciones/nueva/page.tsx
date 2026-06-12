@@ -355,12 +355,12 @@ setProvinciaCampeones(mapping)
      }
    }, [provincialCampeonesFinalizados, campeonatoSeleccionado, esCopaPeruActual])
 
-  if (loading) {
+if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex items-center justify-center min-h-[80vh]">
         <div className="text-center space-y-4">
           <Loader className="w-16 h-16 animate-spin text-blue-600 mx-auto" />
-          <p className="text-gray-600 text-lg">Cargando sistema de designación...</p>
+          <p className="text-slate-600 text-lg">Cargando sistema de designación...</p>
         </div>
       </div>
     )
@@ -370,101 +370,92 @@ setProvinciaCampeones(mapping)
   // STEP 1: CAMPEONATO
   // ============================================================
 
-if (currentStep === "campeonato") {
+  if (currentStep === "campeonato") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-10">
-            <Link href="/dashboard/designaciones">
-              <Button variant="ghost" size="icon" className="mb-4 hover:bg-white/10 text-white">
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2 flex items-center gap-3">
-              <Trophy className="w-10 h-10 text-yellow-400" />
-              Nueva Designación
-            </h1>
-            <p className="text-blue-300/70 text-lg">Paso 1 de 7: Selecciona un campeonato</p>
-          </div>
+      <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
+        {/* Header */}
+        <section className="border-b pb-3 md:pb-4">
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            Nueva Designación
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-3">
+            <Trophy className="w-8 h-8 text-amber-600" />
+            Selecciona un Campeonato
+          </h1>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 1 de 7</p>
+        </section>
 
-          {/* Grid de campeonatos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {campeonatos.map((camp) => {
-              const esCopaPeruProtegida = camp.nombre === "COPA PERÚ 2026"
-              
-              return (
-                <div
-                  key={camp.id}
-                  onClick={() => {
-                    setCampeonatoSeleccionado(camp)
-                    setEtapaSeleccionada(null)
-                    setProvinciaSeleccionada(null)
-                    setDistritoSeleccionado(null)
-                    setPartidos([])
-                    setArbitrosSeleccionados([])
-                    // CAMPEONATO FUNDAMENTAL va directo a designación general
-                    if (camp.categoria === "CAMPEONATO FUNDAMENTAL") {
-                      setCurrentStep("designacionGeneral")
-                    } else {
-                      setCurrentStep("etapa")
-                    }
-                  }}
-                  className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
-                >
-                  <Card className="h-full border-2 border-blue-500/30 bg-gradient-to-b from-slate-800/80 to-slate-900/80 backdrop-blur-sm hover:border-cyan-400/50 shadow-xl transition-all">
-                    <CardContent className="p-6 h-full flex flex-col justify-between">
-                      {/* Header */}
-                      <div>
-                        <div className="flex items-start justify-between mb-4">
-                          <Trophy className="w-8 h-8 text-yellow-400" />
-                          {esCopaPeruProtegida && (
-                            <div title="Campeonato protegido">
-                              <Lock className="w-5 h-5 text-red-400" />
-                            </div>
-                          )}
-                          {camp.categoria === "CAMPEONATO FUNDAMENTAL" && (
-                            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs border-0">SIN REQUISITOS</Badge>
-                          )}
+        {/* Grid de campeonatos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {campeonatos.map((camp) => {
+            const esCopaPeruProtegida = camp.nombre === "COPA PERÚ 2026"
+
+            return (
+              <Card
+                key={camp.id}
+                className={`h-full cursor-pointer border-2 transition-all duration-200 hover:shadow-md ${
+                  esCopaPeruProtegida ? "border-red-200 hover:border-red-300" : "border-gray-200 hover:border-blue-300"
+                }`}
+                onClick={() => {
+                  setCampeonatoSeleccionado(camp)
+                  setEtapaSeleccionada(null)
+                  setProvinciaSeleccionada(null)
+                  setDistritoSeleccionado(null)
+                  setPartidos([])
+                  setArbitrosSeleccionados([])
+                  if (camp.categoria === "CAMPEONATO FUNDAMENTAL") {
+                    setCurrentStep("designacionGeneral")
+                  } else {
+                    setCurrentStep("etapa")
+                  }
+                }}
+              >
+                <CardContent className="p-4 md:p-6 h-full flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <Trophy className="w-6 h-6 md:w-8 md:h-8 text-amber-600" />
+                      {esCopaPeruProtegida && (
+                        <div title="Campeonato protegido">
+                          <Lock className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
                         </div>
+                      )}
+                      {camp.categoria === "CAMPEONATO FUNDAMENTAL" && (
+                        <Badge className="bg-purple-600 text-white text-xs">SIN REQUISITOS</Badge>
+                      )}
+                    </div>
 
-                        {/* Nombre */}
-                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">
-                          {camp.nombre}
-                        </h3>
+                    <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">
+                      {camp.nombre}
+                    </h3>
 
-                        {/* Detalles */}
-                        <div className="space-y-2 text-sm text-blue-300/70">
-                          {camp.categoria && (
-                            <p className="flex items-center gap-2">
-                              <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">{camp.categoria}</Badge>
-                            </p>
-                          )}
-                          {camp.numeroEquipos && (
-                            <p className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-cyan-400" />
-                              {camp.numeroEquipos} equipos
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                    <div className="space-y-2 text-sm text-slate-600">
+                      {camp.categoria && (
+                        <p className="flex items-center gap-2">
+                          <Badge className="bg-blue-600 text-white">{camp.categoria}</Badge>
+                        </p>
+                      )}
+                      {camp.numeroEquipos && (
+                        <p className="flex items-center gap-2">
+                          <Users className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
+                          {camp.numeroEquipos} equipos
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                      {/* Estado */}
-                      <div className="mt-4 pt-4 border-t border-blue-500/30">
-                        <Badge className={`${
-                          camp.estado === "ACTIVO"
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0"
-                            : "bg-gradient-to-r from-slate-600 to-slate-700 text-slate-300 border-0"
-                        }`}>
-                          {camp.estado || "Sin estado"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )
-            })}
-          </div>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <Badge className={`${
+                      camp.estado === "ACTIVO"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-600 text-slate-200"
+                    }`}>
+                      {camp.estado || "Sin estado"}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </div>
     )
@@ -476,111 +467,84 @@ if (currentStep === "campeonato") {
 
   if (currentStep === "etapa" && campeonatoSeleccionado) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-10">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentStep("campeonato")}
-              className="mb-4 hover:bg-white/10 text-white"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
-              Etapas del Campeonato
-            </h1>
-            <p className="text-blue-300/70 text-lg">
-              {campeonatoSeleccionado.nombre} • Paso 2 de 7
-            </p>
+      <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
+        {/* Header */}
+        <section className="border-b pb-3 md:pb-4">
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            {campeonatoSeleccionado.nombre}
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+            Etapas del Campeonato
+          </h1>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 2 de 7</p>
+        </section>
 
-            {/* 🔐 ADVERTENCIA DE DESBLOQUEO (COPA PERÚ) */}
-            {esCopaPeruActual && !validarDistritosCompletos() && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-xl backdrop-blur-sm">
-                <p className="text-amber-300 text-sm">
-                  ⚠️ Debes completar la <strong className="text-amber-200">Etapa Distrital</strong> seleccionando los campeones de todos los distritos para desbloquear las siguientes etapas.
-                </p>
-                {obtenerDistritosPendientes().length > 0 && (
-                  <p className="text-amber-400/80 text-xs mt-2">
-                    Distritos pendientes: <strong className="text-amber-300">{obtenerDistritosPendientes().join(", ")}</strong>
-                  </p>
-                )}
-              </div>
+        {/* 🔐 ADVERTENCIA DE DESBLOQUEO (COPA PERÚ) */}
+        {esCopaPeruActual && !validarDistritosCompletos() && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-800 text-sm">
+              ⚠️ Debes completar la <strong className="text-amber-700">Etapa Distrital</strong> seleccionando los campeones de todos los distritos para desbloquear las siguientes etapas.
+            </p>
+            {obtenerDistritosPendientes().length > 0 && (
+              <p className="text-amber-600 text-xs mt-2">
+                Distritos pendientes: <strong className="text-amber-700">{obtenerDistritosPendientes().join(", ")}</strong>
+              </p>
             )}
           </div>
+        )}
 
-          {/* Grid de etapas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {ETAPAS.map((etapa) => {
-              const estadoEtapa = esCopaPeruActual ? etapasState.etapas[etapa] : { desbloqueada: true, completada: false }
-              const estaDesbloqueada = estadoEtapa?.desbloqueada ?? true
+        {/* Grid de etapas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {ETAPAS.map((etapa) => {
+            const estadoEtapa = esCopaPeruActual ? etapasState.etapas[etapa] : { desbloqueada: true, completada: false }
+            const estaDesbloqueada = estadoEtapa?.desbloqueada ?? true
 
-              return (
-                <div
-                  key={etapa}
-                  onClick={() => {
-                    if (estaDesbloqueada) {
-                      setEtapaSeleccionada(etapa)
-                      setProvinciaSeleccionada(null)
-                      setDistritoSeleccionado(null)
-                      setPartidos([])
-                      // Limpiar estados según la etapa
-                      if (etapa === "Etapa Distrital") {
-                        setDistritoCampeones({})
-                        setProvinciaCampeones({})
-                      } else if (etapa === "Etapa Provincial") {
-                        setProvinciaCampeones({})
-                      }
-                      setCurrentStep("provincia")
-                    } else if (esCopaPeruActual) {
-                      toast({
-                        title: "Etapa Bloqueada",
-                        description: `Debes completar etapas anteriores para acceder a "${etapa}"`,
-                        variant: "destructive",
-                      })
+            return (
+              <Card
+                key={etapa}
+                className={`h-32 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  estaDesbloqueada ? "border-blue-200 hover:border-blue-300" : "border-red-200 opacity-50"
+                }`}
+                onClick={() => {
+                  if (estaDesbloqueada) {
+                    setEtapaSeleccionada(etapa)
+                    setProvinciaSeleccionada(null)
+                    setDistritoSeleccionado(null)
+                    setPartidos([])
+                    if (etapa === "Etapa Distrital") {
+                      setDistritoCampeones({})
+                      setProvinciaCampeones({})
+                    } else if (etapa === "Etapa Provincial") {
+                      setProvinciaCampeones({})
                     }
-                  }}
-                  className={`cursor-pointer group transition-all duration-300 ${
-                    estaDesbloqueada ? "transform hover:scale-105" : "opacity-50 cursor-not-allowed"
-                  }`}
-                >
-                  <Card
-                    className={`h-32 border-2 ${
-                      estaDesbloqueada
-                        ? "border-blue-500/30 bg-gradient-to-b from-slate-800/80 to-slate-900/80 backdrop-blur-sm hover:border-cyan-400/50"
-                        : "border-red-500/30 bg-red-900/20"
-                    } flex items-center justify-center relative transition-all shadow-xl`}
-                  >
+                    setCurrentStep("provincia")
+                  } else if (esCopaPeruActual) {
+                    toast({
+                      title: "Etapa Bloqueada",
+                      description: `Debes completar etapas anteriores para acceder a "${etapa}"`,
+                      variant: "destructive",
+                    })
+                  }
+                }}
+              >
+                <CardContent className="text-center p-4 md:p-6 h-full flex flex-col justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <h3 className={`text-lg md:text-2xl font-bold ${
+                      estaDesbloqueada ? "text-slate-900" : "text-slate-500"
+                    }`}>
+                      {etapa}
+                    </h3>
                     {!estaDesbloqueada && esCopaPeruActual && (
-                      <div className="absolute top-3 right-3">
-                        <Lock className="w-5 h-5 text-red-400" />
-                      </div>
+                      <p className="text-xs text-red-600 font-medium">Bloqueada</p>
                     )}
-
                     {estadoEtapa?.completada && esCopaPeruActual && (
-                      <div className="absolute top-3 right-3">
-                        <CheckCircle2 className="w-5 h-5 text-green-400" />
-                      </div>
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-1" />
                     )}
-
-                    <CardContent className="text-center p-6">
-                      <div className="flex flex-col items-center gap-2">
-                        <h3 className={`text-2xl font-bold ${
-                          estaDesbloqueada ? "text-white drop-shadow-lg" : "text-slate-500"
-                        }`}>
-                          {etapa}
-                        </h3>
-                        {!estaDesbloqueada && esCopaPeruActual && (
-                          <p className="text-xs text-red-400 mt-2 font-medium">Bloqueada</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )
-            })}
-          </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </div>
     )
@@ -592,56 +556,47 @@ if (currentStep === "campeonato") {
 
   if (currentStep === "provincia" && campeonatoSeleccionado && etapaSeleccionada) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-10">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentStep("etapa")}
-              className="mb-4 hover:bg-white/10 text-white"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2 flex items-center gap-2">
-              <MapPin className="w-10 h-10 text-cyan-400" />
-              Provincias de Puno
-            </h1>
-            <p className="text-blue-300/70 text-lg">
-              {etapaSeleccionada} • Paso 3 de 7
-            </p>
-          </div>
+      <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
+        {/* Header */}
+        <section className="border-b pb-3 md:pb-4">
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            {campeonatoSeleccionado.nombre}
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+            <MapPin className="w-8 h-8 text-cyan-600" />
+            Provincias de Puno
+          </h1>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">
+            {etapaSeleccionada} • Paso 3 de 7
+          </p>
+        </section>
 
-          {/* Grid de provincias */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {PROVINCIAS_PUNO.map((prov) => (
-              <div
-                key={prov.nombre}
-                onClick={() => {
-                  setProvinciaSeleccionada(prov.nombre)
-                  setCurrentStep("distrito")
-                }}
-                className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
-              >
-                <Card className="h-24 border-2 border-blue-500/30 bg-gradient-to-b from-slate-800/80 to-slate-900/80 backdrop-blur-sm hover:border-cyan-400/50 shadow-xl transition-all flex items-center justify-center">
-                  <CardContent className="text-center p-4">
-                    <h3 className="text-lg font-bold text-white flex items-center justify-center gap-2 drop-shadow-lg">
-                      <MapPin className="w-4 h-4 text-cyan-400" />
-                      {prov.nombre}
-                    </h3>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
+        {/* Grid de provincias */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PROVINCIAS_PUNO.map((prov) => (
+            <Card
+              key={prov.nombre}
+              className="h-24 cursor-pointer border-2 border-gray-200 bg-card transition-all duration-200 hover:shadow-md hover:border-blue-300"
+              onClick={() => {
+                setProvinciaSeleccionada(prov.nombre)
+                setCurrentStep("distrito")
+              }}
+            >
+              <CardContent className="text-center p-4 h-full flex items-center justify-center">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center justify-center gap-2">
+                  <MapPin className="w-4 h-4 text-cyan-600" />
+                  {prov.nombre}
+                </h3>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )
   }
 
-// ============================================================
-    // STEP 4: DISTRITO
+  // ============================================================
+  // STEP 4: DISTRITO
   // ============================================================
 
   if (currentStep === "distrito" && provinciaSeleccionada) {
@@ -653,49 +608,42 @@ if (currentStep === "campeonato") {
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-10">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCurrentStep("provincia")}
-                className="mb-4 hover:bg-white/10 text-white"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent mb-2">
-                Clasificación Provincial - {provinciaSeleccionada}
-              </h1>
-              <p className="text-blue-300/70 text-lg">
-                Selecciona campeones y subcampeones de los distritos • Paso 4 de 7
-              </p>
+        <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
+          {/* Header */}
+          <section className="border-b pb-3 md:pb-4">
+            <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+              {campeonatoSeleccionado?.nombre} · {provinciaSeleccionada}
+            </p>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+              Clasificación Provincial
+            </h1>
+            <p className="text-slate-500 mt-2 text-xs md:text-sm">Selecciona campeones y subcampeones • Paso 4 de 7</p>
+          </section>
 
-              {/* 🔐 INSTRUCCIONES */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 rounded-xl backdrop-blur-sm">
-                <p className="text-amber-200 text-sm">
-                  📋 Selecciona el equipo <strong>campeón</strong> y opcionalmente el <strong>subcampeón</strong> de cada distrito.
-                </p>
-              </div>
-            </div>
+          {/* 🔐 INSTRUCCIONES */}
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-800 text-sm">
+              📋 Selecciona el equipo <strong>campeón</strong> y opcionalmente el <strong>subcampeón</strong> de cada distrito.
+            </p>
+          </div>
 
-            {/* CARD POR DISTRITO */}
-            <div className="space-y-6">
-              {distritosDeProvinciaSeleccionada.map((distrito) => {
-                const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
-                const tieneCompletado = !!campeones?.campeón
+          {/* CARD POR DISTRITO */}
+          <div className="space-y-4">
+            {distritosDeProvinciaSeleccionada.map((distrito) => {
+              const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
+              const tieneCompletado = !!campeones?.campeón
 
-                return (
-                  <div key={distrito} className="bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-2 border-blue-500/30 rounded-xl p-6 backdrop-blur-sm shadow-xl">
+              return (
+                <Card key={distrito} className="border-2 border-gray-200 bg-card">
+                  <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between mb-4">
-                     <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-white drop-shadow-lg">{distrito}</h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">{distrito}</h3>
                         {tieneCompletado ? (
-                          <CheckCircle2 className="w-6 h-6 text-green-400" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                         ) : (
-                          <div className="w-6 h-6 rounded-full border-2 border-amber-400 flex items-center justify-center">
-                            <span className="text-xs text-amber-400">!</span>
+                          <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center">
+                            <span className="text-xs text-amber-500">!</span>
                           </div>
                         )}
                       </div>
@@ -705,7 +653,7 @@ if (currentStep === "campeonato") {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* CAMPEÓN (OBLIGATORIO) */}
                       <div>
-                        <label className="block text-sm font-bold text-amber-300 mb-2">
+                        <label className="block text-sm font-semibold text-amber-700 mb-2">
                           🥇 Equipo Campeón *
                         </label>
                         <select
@@ -722,11 +670,11 @@ if (currentStep === "campeonato") {
                               },
                             }))
                           }}
-                          className="w-full px-3 py-2 bg-slate-800/50 border border-blue-500/30 rounded-md text-white text-sm focus:outline-none focus:border-cyan-400"
+                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                         >
                           <option value="">-- Selecciona campeón --</option>
                           {equiposFiltrados.map((eq) => (
-                            <option key={eq.id} value={eq.id} className="bg-slate-800 text-white">
+                            <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
                               {eq.nombre}
                             </option>
                           ))}
@@ -735,7 +683,7 @@ if (currentStep === "campeonato") {
 
                       {/* SUBCAMPEÓN (OPCIONAL) */}
                       <div>
-                        <label className="block text-sm font-bold text-blue-300 mb-2">
+                        <label className="block text-sm font-semibold text-blue-700 mb-2">
                           🥈 Equipo Subcampeón (Opcional)
                         </label>
                         <select
@@ -752,53 +700,53 @@ if (currentStep === "campeonato") {
                               },
                             }))
                           }}
-                          className="w-full px-3 py-2 bg-slate-800/50 border border-blue-500/30 rounded-md text-white text-sm focus:outline-none focus:border-cyan-400"
+                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                         >
                           <option value="">-- Selecciona subcampeón --</option>
                           {equiposFiltrados
                             .filter((eq) => eq.id !== campeones?.campeón?.id)
                             .map((eq) => (
-                              <option key={eq.id} value={eq.id} className="bg-slate-800 text-white">
+                              <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
                                 {eq.nombre}
                               </option>
                             ))}
                         </select>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  </CardContent>
+                </Card>
+              )
+            })}
 
-              {/* BOTÓN DE AVANCE */}
-              <div className="flex gap-3 pt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentStep("provincia")}
-                  className="flex-1 border-blue-500/30 text-blue-300 hover:bg-blue-500/20"
-                >
-                  ← Atrás
-                </Button>
-                <Button
-                  onClick={() => setCurrentStep("partidos")}
-                  disabled={!validarProvinciasCompletas()}
-                  className={`flex-1 shadow-xl ${
-                    validarProvinciasCompletas()
-                      ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
-                      : "bg-slate-700 cursor-not-allowed opacity-50"
-                  }`}
-                >
-                  ✅ Continuar a Partidos →
-                </Button>
-              </div>
-
-              {!validarProvinciasCompletas() && (
-                <div className="p-4 bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 rounded-xl backdrop-blur-sm">
-                  <p className="text-red-300 text-sm">
-                    ⛔ Debes seleccionar el campeón de <strong>todos los distritos</strong> para continuar.
-                  </p>
-                </div>
-              )}
+            {/* BOTÓN DE AVANCE */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentStep("provincia")}
+                className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
+              >
+                ← Atrás
+              </Button>
+              <Button
+                onClick={() => setCurrentStep("partidos")}
+                disabled={!validarProvinciasCompletas()}
+                className={`flex-1 ${
+                  validarProvinciasCompletas()
+                    ? "bg-amber-600 hover:bg-amber-700 text-white"
+                    : "bg-slate-300 cursor-not-allowed opacity-50"
+                }`}
+              >
+                ✅ Continuar a Partidos →
+              </Button>
             </div>
+
+            {!validarProvinciasCompletas() && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800 text-sm">
+                  ⛔ Debes seleccionar el campeón de <strong>todos los distritos</strong> para continuar.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )
@@ -806,45 +754,37 @@ if (currentStep === "campeonato") {
 
     // VISTA POR DEFECTO (ETAPA DISTRITAL - SIN SELECTORES)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-10">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentStep("provincia")}
-              className="mb-4 hover:bg-white/10 text-white"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-500 bg-clip-text text-transparent mb-2 flex items-center gap-2">
-              Distritos de {provinciaSeleccionada}
-            </h1>
-            <p className="text-blue-300/70 text-lg">Paso 4 de 7</p>
-          </div>
+      <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <section className="border-b pb-3 md:pb-4">
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            {campeonatoSeleccionado?.nombre} · {provinciaSeleccionada}
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+            <MapPin className="w-8 h-8 text-cyan-600" />
+            Distritos de {provinciaSeleccionada}
+          </h1>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 4 de 7</p>
+        </section>
 
-          {/* Grid de distritos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {distritosDeProvinciaSeleccionada.map((distrito) => (
-              <div
-                key={distrito}
-                onClick={() => {
-                  setDistritoSeleccionado(distrito)
-                  setCurrentStep("partidos")
-                }}
-                className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
-              >
-                <Card className="h-24 border-2 border-blue-500/30 bg-gradient-to-b from-slate-800/80 to-slate-900/80 backdrop-blur-sm hover:border-cyan-400/50 transition-all flex items-center justify-center shadow-xl">
-                  <CardContent className="text-center p-4">
-                    <h3 className="text-lg font-bold text-white drop-shadow-lg">
-                      {distrito}
-                    </h3>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
+        {/* Grid de distritos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {distritosDeProvinciaSeleccionada.map((distrito) => (
+            <Card
+              key={distrito}
+              className="h-24 cursor-pointer border-2 border-gray-200 bg-card transition-all duration-200 hover:shadow-md hover:border-blue-300 flex items-center justify-center"
+              onClick={() => {
+                setDistritoSeleccionado(distrito)
+                setCurrentStep("partidos")
+              }}
+            >
+              <CardContent className="text-center p-4">
+                <h3 className="text-lg font-bold text-slate-900">
+                  {distrito}
+                </h3>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )
