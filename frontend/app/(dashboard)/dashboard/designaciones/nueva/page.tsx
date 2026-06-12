@@ -376,14 +376,23 @@ if (loading) {
         {/* Header */}
         <section className="border-b pb-3 md:pb-4">
           <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-            Nueva Designación
+            Designación
           </p>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-3">
             <Trophy className="w-8 h-8 text-amber-600" />
             Selecciona un Campeonato
           </h1>
-          <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 1 de 7</p>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 1 de 7 • 7 pasos para completar</p>
         </section>
+
+        <div className="flex justify-between items-center">
+          <Link href="/dashboard/designaciones">
+            <Button variant="outline" size="sm" className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Volver al Listado
+            </Button>
+          </Link>
+        </div>
 
         {/* Grid de campeonatos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -479,6 +488,14 @@ if (loading) {
           <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 2 de 7</p>
         </section>
 
+        {/* Botón de retroceso */}
+        <div className="flex justify-start">
+          <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Cambiar Campeonato
+          </Button>
+        </div>
+
         {/* 🔐 ADVERTENCIA DE DESBLOQUEO (COPA PERÚ) */}
         {esCopaPeruActual && !validarDistritosCompletos() && (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -571,6 +588,14 @@ if (loading) {
           </p>
         </section>
 
+        {/* Botón de retroceso */}
+        <div className="flex justify-start">
+          <Button variant="outline" size="sm" onClick={() => setCurrentStep("etapa")} className="border-gray-200">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Cambiar Etapa
+          </Button>
+        </div>
+
         {/* Grid de provincias */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {PROVINCIAS_PUNO.map((prov) => (
@@ -619,6 +644,14 @@ if (loading) {
             </h1>
             <p className="text-slate-500 mt-2 text-xs md:text-sm">Selecciona campeones y subcampeones • Paso 4 de 7</p>
           </section>
+
+          {/* Botón de retroceso */}
+          <div className="flex justify-start">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Cambiar Provincia
+            </Button>
+          </div>
 
           {/* 🔐 INSTRUCCIONES */}
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -767,6 +800,14 @@ if (loading) {
           <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 4 de 7</p>
         </section>
 
+        {/* Botón de retroceso */}
+        <div className="flex justify-start">
+          <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Cambiar Provincia
+          </Button>
+        </div>
+
         {/* Grid de distritos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {distritosDeProvinciaSeleccionada.map((distrito) => (
@@ -823,6 +864,14 @@ if (loading) {
             {provinciaSeleccionada || distritoSeleccionado} • Paso 5 de 7
           </p>
         </section>
+
+        {/* Botón de retroceso */}
+        <div className="flex justify-start">
+          <Button variant="outline" size="sm" onClick={() => setCurrentStep("distrito")} className="border-gray-200">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Cambiar Distrito/Provincia
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* SELECTOR DE EQUIPOS */}
@@ -993,6 +1042,14 @@ if (loading) {
           </h1>
           <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 6 de 7</p>
         </section>
+
+        {/* Botón de retroceso */}
+        <div className="flex justify-start">
+          <Button variant="outline" size="sm" onClick={() => setCurrentStep("partidos")} className="border-gray-200">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Volver a Partidos
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
               {/* PANEL LATERAL: ÁRBITROS */}
@@ -1393,6 +1450,14 @@ if (loading) {
             CAMPEONATO FUNDAMENTAL (Sin requisitos)
           </p>
         </section>
+
+        {/* Botón de retroceso */}
+        <div className="flex justify-start">
+          <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Cambiar Campeonato
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Panel de árbitros disponibles */}
