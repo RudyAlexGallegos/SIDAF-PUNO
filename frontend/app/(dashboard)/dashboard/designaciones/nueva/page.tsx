@@ -856,38 +856,34 @@ if (currentStep === "campeonato") {
 
   if (currentStep === "partidos" && (distritoSeleccionado || provinciaSeleccionada)) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentStep("distrito")}
-              className="mb-4 hover:bg-gray-100"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Crear Partidos</h1>
-            <p className="text-gray-500 text-lg">
-              {provinciaSeleccionada || distritoSeleccionado} • Paso 5 de 7
-            </p>
-          </div>
+      <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <section className="border-b pb-3 md:pb-4">
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            Nueva Designación · {campeonatoSeleccionado?.nombre}
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+            Crear Partidos
+          </h1>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">
+            {provinciaSeleccionada || distritoSeleccionado} • Paso 5 de 7
+          </p>
+        </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* SELECTOR DE EQUIPOS */}
             <div className="lg:col-span-3">
-              <Card className="border-2 border-gray-200 bg-white">
+              <Card className="border-2 border-gray-200 bg-card">
                 <CardHeader>
                   <CardTitle className="text-slate-900 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-purple-400" />
+                    <Users className="w-5 h-5 text-purple-600" />
                     Crear Partido
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Equipo Local */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-3">
+                    <label className="block text-sm font-semibold text-slate-600 mb-3">
                       ⚽ Equipo Local
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -897,8 +893,8 @@ if (currentStep === "campeonato") {
                           onClick={() => setEquipoLocal(eq)}
                           className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
                             equipoLocal?.id === eq.id
-                              ? "border-purple-400 bg-purple-600 text-slate-900"
-                              : "border-gray-200 bg-white text-gray-600 hover:border-purple-400/50"
+                              ? "border-purple-500 bg-purple-600 text-white"
+                              : "border-gray-200 bg-white text-slate-700 hover:border-purple-400"
                           }`}
                         >
                           {eq.nombre.split(" ").slice(0, 2).join(" ")}
@@ -909,7 +905,7 @@ if (currentStep === "campeonato") {
 
                   {/* Equipo Visitante */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-3">
+                    <label className="block text-sm font-semibold text-slate-600 mb-3">
                       ✈️ Equipo Visitante
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -919,8 +915,8 @@ if (currentStep === "campeonato") {
                           onClick={() => setEquipoVisitante(eq)}
                           className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-semibold ${
                             equipoVisitante?.id === eq.id
-                              ? "border-orange-400 bg-orange-600 text-slate-900"
-                              : "border-gray-200 bg-white text-gray-600 hover:border-orange-400/50"
+                              ? "border-orange-500 bg-orange-600 text-white"
+                              : "border-gray-200 bg-white text-slate-700 hover:border-orange-400"
                           }`}
                         >
                           {eq.nombre.split(" ").slice(0, 2).join(" ")}
@@ -930,7 +926,7 @@ if (currentStep === "campeonato") {
                   </div>
 
                   {/* Botones */}
-                  <div className="flex gap-3 pt-4 border-t border-gray-200">
+                  <div className="flex gap-3 pt-4 border-t">
                     <Button
                       onClick={() => {
                         if (!equipoLocal || !equipoVisitante) {
@@ -957,7 +953,7 @@ if (currentStep === "campeonato") {
                           description: `${equipoLocal.nombre} vs ${equipoVisitante.nombre}`,
                         })
                       }}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       Crear Partido
@@ -976,7 +972,7 @@ if (currentStep === "campeonato") {
 
                         setCurrentStep("designar")
                       }}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
                       Continuar
                       <ChevronRight className="w-5 h-5 ml-2" />
@@ -989,7 +985,7 @@ if (currentStep === "campeonato") {
             {/* LISTA DE PARTIDOS */}
             {partidos.length > 0 && (
               <div className="lg:col-span-3">
-                <Card className="border-2 border-gray-200 bg-white">
+                <Card className="border-2 border-gray-200 bg-card">
                   <CardHeader>
                     <CardTitle className="text-slate-900">
                       Partidos Creados ({partidos.length})
@@ -998,21 +994,21 @@ if (currentStep === "campeonato") {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {partidos.map((partido, idx) => (
-                        <div key={partido.id} className="p-4 border border-gray-200 rounded-lg bg-white/30">
+                        <div key={partido.id} className="p-4 border border-gray-200 rounded-lg bg-white/50">
                           <div className="flex items-center justify-between mb-3">
-                            <Badge className="bg-blue-600 text-slate-900">Partido {idx + 1}</Badge>
+                            <Badge className="bg-blue-600 text-white">Partido {idx + 1}</Badge>
                             <button
                               onClick={() => {
                                 setPartidos(partidos.filter((p) => p.id !== partido.id))
                                 toast({ title: "Partido eliminado" })
                               }}
-                              className="p-1 hover:bg-red-600/20 rounded text-red-400 transition-all"
+                              className="p-1 hover:bg-red-100 rounded text-red-600 transition-all"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                           <p className="text-slate-900 font-semibold">{partido.equipoLocal.nombre}</p>
-                          <p className="text-center text-gray-500 text-sm my-1">VS</p>
+                          <p className="text-center text-slate-500 text-sm my-1">VS</p>
                           <p className="text-slate-900 font-semibold">{partido.equipoVisitante.nombre}</p>
                         </div>
                       ))}
@@ -1022,7 +1018,6 @@ if (currentStep === "campeonato") {
               </div>
             )}
           </div>
-        </div>
       </div>
     )
   }
