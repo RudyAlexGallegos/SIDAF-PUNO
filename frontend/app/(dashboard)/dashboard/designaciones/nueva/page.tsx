@@ -20,10 +20,7 @@ import {
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch } from "@/services/api"
-
-// ============================================================
-// TIPOS
-// ============================================================
+import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 
 interface Partido {
   id: string
@@ -53,27 +50,11 @@ interface EtapaState {
 
 type Step = "campeonato" | "etapa" | "provincia" | "distrito" | "partidos" | "designar" | "confirmacion" | "designacionGeneral"
 
-// ============================================================
-// DATOS ESTÁTICOS
-// ============================================================
-
-const PROVINCIAS_PUNO = [
-  "Puno", "Azángaro", "Carabaya", "Chucuito", "El Collao",
-  "Huancané", "Lampa", "Melgar", "Moho", "San Antonio de Putina",
-  "San Román", "Sandia", "Yunguyo"
-]
-
 const ETAPAS = [
   "Etapa Distrital",
   "Etapa Provincial",
   "Etapa Departamental",
   "Etapa Nacional"
-]
-
-const DISTRITOS_PUNO = [
-  "Puno (Capital)", "Acora", "Amantaní", "Atuncolla", "Capachica", "Chucuito",
-  "Coata", "Huata", "Mañazo", "Paucarcolla", "Pichacani", "Platería",
-  "San Antonio", "Tiquillaca", "Vilque"
 ]
 
 // ============================================================
@@ -106,15 +87,20 @@ const router = useRouter()
   const esCopaPeruActual = campeonatoSeleccionado?.nombre === "COPA PERÚ 2026"
 
 // Campeones/subcampeones por distrito en etapa distrital
-   const [distritoCampeones, setDistritoCampeones] = useState<Record<string, DistritoCampeones>>({})
+    const [distritoCampeones, setDistritoCampeones] = useState<Record<string, DistritoCampeones>>({})
 
-   // Campeones/subcampeones por distrito en etapa provincial
-   const [provinciaCampeones, setProvinciaCampeones] = useState<Record<string, DistritoCampeones>>({})
+    // Campeones/subcampeones por distrito en etapa provincial
+    const [provinciaCampeones, setProvinciaCampeones] = useState<Record<string, DistritoCampeones>>({})
 
-   // 🔒 Control: ¿Ya se guardaron los campeones provinciales en backend?
-   const [provincialCampeonesFinalizados, setProvincialCampeonesFinalizados] = useState(false)
+    // 🔒 Control: ¿Ya se guardaron los campeones provinciales en backend?
+    const [provincialCampeonesFinalizados, setProvincialCampeonesFinalizados] = useState(false)
 
-   // Estado de desbloqueo de etapas
+    // Obtener distritos según la provincia seleccionada (para COPA PERÚ)
+    const distritosDeProvinciaSeleccionada = provinciaSeleccionada
+      ? getDistritosByProvincia(provinciaSeleccionada).map(d => d.nombre)
+      : []
+
+    // Estado de desbloqueo de etapas
    const [etapasState, setEtapasState] = useState<EtapaState>({
      etapas: {
        "Etapa Distrital": { completada: false, desbloqueada: true }, // Siempre desbloqueada
@@ -167,8 +153,12 @@ const router = useRouter()
   const validarDistritosCompletos = (): boolean => {
     if (!esCopaPeruActual || etapaSeleccionada !== "Etapa Distrital") return true
 
+    const distritos = distritosDeProvinciaSeleccionada.length > 0
+      ? distritosDeProvinciaSeleccionada
+      : getDistritosByProvincia("Puno").map(d => d.nombre)
+
     // Todos los distritos deben tener al menos un campeón
-    return DISTRITOS_PUNO.every((distrito) => {
+    return distritos.every((distrito) => {
       const campeones = distritoCampeones[distrito]
       return campeones?.campeón !== null && campeones?.campeón !== undefined
     })
@@ -177,18 +167,25 @@ const router = useRouter()
   const obtenerDistritosPendientes = (): string[] => {
     if (!esCopaPeruActual) return []
 
-    return DISTRITOS_PUNO.filter((distrito) => {
+    const distritos = distritosDeProvinciaSeleccionada.length > 0
+      ? distritosDeProvinciaSeleccionada
+      : getDistritosByProvincia("Puno").map(d => d.nombre)
+
+    return distritos.filter((distrito) => {
       const campeones = distritoCampeones[distrito]
       return !campeones?.campeón
     })
   }
 
-const validarProvinciasCompletas = (): boolean => {
+  const validarProvinciasCompletas = (): boolean => {
      if (!esCopaPeruActual) return true
 
      // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
      if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
-       return DISTRITOS_PUNO.every((distrito) => {
+       const distritos = distritosDeProvinciaSeleccionada.length > 0
+         ? distritosDeProvinciaSeleccionada
+         : getDistritosByProvincia("Puno").map(d => d.nombre)
+       return distritos.every((distrito) => {
          const campeones = provinciaCampeones[distrito]
          return campeones?.campeón !== null && campeones?.campeón !== undefined
        })
@@ -294,22 +291,25 @@ const calcularEtapasDesbloqueadas = () => {
            if (r.posicion === 1) mapping[distrito].campeón = equipoObj
            if (r.posicion === 2) mapping[distrito].subcampeón = equipoObj
          })
-         setProvinciaCampeones(mapping)
+setProvinciaCampeones(mapping)
 
-         // Verificar si todos los distritos tienen campeón asignado
-         const todosTienenCampeon = DISTRITOS_PUNO.every((distrito) => mapping[distrito]?.campeón)
-         if (todosTienenCampeon) {
-           setProvincialCampeonesFinalizados(true)
-         }
-       } catch (e) {
-         console.warn('No se pudo cargar campeones provinciales desde backend', e)
-         setProvinciaCampeones({})
-         setProvincialCampeonesFinalizados(false)
-       }
-     }
+          // Verificar si todos los distritos tienen campeón asignado
+          const distritos = distritosDeProvinciaSeleccionada.length > 0
+            ? distritosDeProvinciaSeleccionada
+            : getDistritosByProvincia("Puno").map(d => d.nombre)
+          const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeón)
+          if (todosTienenCampeon) {
+            setProvincialCampeonesFinalizados(true)
+          }
+        } catch (e) {
+          console.warn('No se pudo cargar campeones provinciales desde backend', e)
+          setProvinciaCampeones({})
+          setProvincialCampeonesFinalizados(false)
+        }
+      }
 
-     loadProvincial()
-   }, [campeonatoSeleccionado, esCopaPeruActual])
+      loadProvincial()
+    }, [campeonatoSeleccionado, esCopaPeruActual, distritosDeProvinciaSeleccionada])
 
    // 🔒 Cargar resultados de etapa distrital para detectar equipos participantes
    useEffect(() => {
@@ -611,22 +611,22 @@ const calcularEtapasDesbloqueadas = () => {
             </p>
           </div>
 
-          {/* Grid de provincias */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {PROVINCIAS_PUNO.map((provincia) => (
-              <div
-                key={provincia}
-                onClick={() => {
-                  setProvinciaSeleccionada(provincia)
-                  setCurrentStep("distrito")
-                }}
-                className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
-              >
-                <Card className="h-24 border-2 border-gray-200 bg-white hover:border-blue-600/50 shadow-sm transition-all flex items-center justify-center">
-                  <CardContent className="text-center p-4">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center justify-center gap-2">
-                      <MapPin className="w-4 h-4 text-blue-600" />
-                      {provincia}
+{/* Grid de provincias */}
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             {PROVINCIAS_PUNO.map((prov) => (
+               <div
+                 key={prov.nombre}
+                 onClick={() => {
+                   setProvinciaSeleccionada(prov.nombre)
+                   setCurrentStep("distrito")
+                 }}
+                 className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
+               >
+                 <Card className="h-24 border-2 border-gray-200 bg-white hover:border-blue-600/50 shadow-sm transition-all flex items-center justify-center">
+                   <CardContent className="text-center p-4">
+                     <h3 className="text-lg font-bold text-slate-900 flex items-center justify-center gap-2">
+                       <MapPin className="w-4 h-4 text-blue-600" />
+                       {prov.nombre}
                     </h3>
                   </CardContent>
                 </Card>
@@ -678,15 +678,15 @@ const calcularEtapasDesbloqueadas = () => {
               </div>
             </div>
 
-            {/* CARD POR DISTRITO */}
-            <div className="space-y-6">
-              {DISTRITOS_PUNO.map((distrito) => {
-                const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
-                const tieneCompletado = !!campeones?.campeón
+{/* CARD POR DISTRITO */}
+             <div className="space-y-6">
+               {distritosDeProvinciaSeleccionada.map((distrito) => {
+                 const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
+                 const tieneCompletado = !!campeones?.campeón
 
-                return (
-                  <div key={distrito} className="bg-slate-800 border-2 border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-4">
+                 return (
+                   <div key={distrito} className="bg-slate-800 border-2 border-gray-200 rounded-lg p-6">
+                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <h3 className="text-xl font-bold text-slate-900">{distrito}</h3>
                         {tieneCompletado ? (
@@ -802,51 +802,51 @@ const calcularEtapasDesbloqueadas = () => {
       )
     }
 
-    // VISTA POR DEFECTO (ETAPA DISTRITAL - SIN SELECTORES)
-    return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentStep("provincia")}
-              className="mb-4 hover:bg-gray-100"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-2">
-              Distritos de {provinciaSeleccionada}
-            </h1>
-            <p className="text-gray-500 text-lg">Paso 4 de 7</p>
-          </div>
+// VISTA POR DEFECTO (ETAPA DISTRITAL - SIN SELECTORES)
+     return (
+       <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+         <div className="max-w-7xl mx-auto">
+           {/* Header */}
+           <div className="mb-8">
+             <Button
+               variant="ghost"
+               size="icon"
+               onClick={() => setCurrentStep("provincia")}
+               className="mb-4 hover:bg-gray-100"
+             >
+               <ChevronLeft className="w-5 h-5" />
+             </Button>
+             <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+               Distritos de {provinciaSeleccionada}
+             </h1>
+             <p className="text-gray-500 text-lg">Paso 4 de 7</p>
+           </div>
 
-          {/* Grid de distritos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {DISTRITOS_PUNO.map((distrito) => (
-              <div
-                key={distrito}
-                onClick={() => {
-                  setDistritoSeleccionado(distrito)
-                  setCurrentStep("partidos")
-                }}
-                className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
-              >
-                <Card className="h-24 border-2 border-gray-200 bg-white hover:border-green-400/50 transition-all flex items-center justify-center">
-                  <CardContent className="text-center p-4">
-                    <h3 className="text-lg font-bold text-slate-900">
-                      {distrito}
-                    </h3>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+           {/* Grid de distritos */}
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             {distritosDeProvinciaSeleccionada.map((distrito) => (
+               <div
+                 key={distrito}
+                 onClick={() => {
+                   setDistritoSeleccionado(distrito)
+                   setCurrentStep("partidos")
+                 }}
+                 className="cursor-pointer group transition-all duration-300 transform hover:scale-105"
+               >
+                 <Card className="h-24 border-2 border-gray-200 bg-white hover:border-green-400/50 transition-all flex items-center justify-center">
+                   <CardContent className="text-center p-4">
+                     <h3 className="text-lg font-bold text-slate-900">
+                       {distrito}
+                     </h3>
+                   </CardContent>
+                 </Card>
+               </div>
+             ))}
+           </div>
+         </div>
+       </div>
+     )
+   }
 
   // ============================================================
   // STEP 5: CREAR PARTIDOS
