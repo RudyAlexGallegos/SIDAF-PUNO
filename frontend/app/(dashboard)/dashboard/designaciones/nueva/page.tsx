@@ -95,6 +95,9 @@ const router = useRouter()
     // 🔒 Control: ¿Ya se guardaron los campeones provinciales en backend?
     const [provincialCampeonesFinalizados, setProvincialCampeonesFinalizados] = useState(false)
 
+    // Distritos que no participan (se retiran)
+    const [distritosNoParticipantes, setDistritosNoParticipantes] = useState<string[]>([])
+
     // Obtener distritos según la provincia seleccionada (para COPA PERÚ)
     const distritosDeProvinciaSeleccionada = provinciaSeleccionada
       ? getDistritosByProvincia(provinciaSeleccionada).map(d => d.nombre)
@@ -177,22 +180,43 @@ const router = useRouter()
     })
   }
 
-  const validarProvinciasCompletas = (): boolean => {
-     if (!esCopaPeruActual) return true
+const validarProvinciasCompletas = (): boolean => {
+      if (!esCopaPeruActual) return true
 
-     // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
-     if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
-       const distritos = distritosDeProvinciaSeleccionada.length > 0
-         ? distritosDeProvinciaSeleccionada
-         : getDistritosByProvincia("Puno").map(d => d.nombre)
-       return distritos.every((distrito) => {
-         const campeones = provinciaCampeones[distrito]
-         return campeones?.campeón !== null && campeones?.campeón !== undefined
-       })
-     }
+      // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
+      // EXCEPTUANDO los distritos marcados como "no participantes"
+      if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
+        const distritos = distritosDeProvinciaSeleccionada.length > 0
+          ? distritosDeProvinciaSeleccionada
+          : getDistritosByProvincia("Puno").map(d => d.nombre)
+        return distritos.every((distrito) => {
+          // Si el distrito está marcado como no participante, no requiere campeón
+          if (distritosNoParticipantes.includes(distrito)) return true
+          const campeones = provinciaCampeones[distrito]
+          return campeones?.campeón !== null && campeones?.campeón !== undefined
+        })
+      }
 
-     return true
-   }
+      return true
+    }
+
+  // Toggle distrito como no participante
+  const toggleDistritoParticipa = (distrito: string) => {
+    setDistritosNoParticipantes(prev => {
+      const nuevos = prev.includes(distrito)
+        ? prev.filter(d => d !== distrito)
+        : [...prev, distrito]
+      // Si no participa, limpiar su selección
+      if (prev.includes(distrito)) {
+        setProvinciaCampeones((c) => {
+          const nuevosC = { ...c }
+          delete nuevosC[distrito]
+          return nuevosC
+        })
+      }
+      return nuevos
+    })
+  }
 
   const validarPartidosCompletos = (): boolean => {
     if (!partidos.length) return false
@@ -672,87 +696,113 @@ if (loading) {
             {distritosDeProvinciaSeleccionada.map((distrito) => {
               const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
               const tieneCompletado = !!campeones?.campeón
+              const noParticipa = distritosNoParticipantes.includes(distrito)
 
               return (
-                <Card key={distrito} className="border-2 border-gray-200 bg-card">
+                <Card key={distrito} className={`border-2 ${
+                  noParticipa ? "border-slate-300 bg-slate-50" : "border-gray-200 bg-card"
+                }`}>
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-slate-900">{distrito}</h3>
-                        {tieneCompletado ? (
+                        <h3 className={`text-lg font-bold ${
+                          noParticipa ? "text-slate-500 line-through" : "text-slate-900"
+                        }`}>{distrito}</h3>
+                        {noParticipa && (
+                          <Badge className="bg-slate-400 text-white text-xs">NO PARTICIPA</Badge>
+                        )}
+                        {tieneCompletado && !noParticipa ? (
                           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                         ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                            <span className="text-xs text-amber-500">!</span>
-                          </div>
+                          !noParticipa && (
+                            <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center">
+                              <span className="text-xs text-amber-500">!</span>
+                            </div>
+                          )
                         )}
                       </div>
+                      {/* Botón NO PARTICIPA */}
+                      <Button
+                        type="button"
+                        variant={noParticipa ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleDistritoParticipa(distrito)}
+                        className={`text-xs ${
+                          noParticipa
+                            ? "bg-slate-600 text-white hover:bg-slate-700"
+                            : "border-slate-300 text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        {noParticipa ? "✓ Participa" : "No Participa"}
+                      </Button>
                     </div>
 
-                    {/* GRID DE SELECTORES */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* CAMPEÓN (OBLIGATORIO) */}
-                      <div>
-                        <label className="block text-sm font-semibold text-amber-700 mb-2">
-                          🥇 Equipo Campeón *
-                        </label>
-                        <select
-                          value={campeones?.campeón?.id ?? ""}
-                          onChange={(e) => {
-                            const equipoId = Number(e.target.value)
-                            const equipo = equiposFiltrados.find((eq) => eq.id === equipoId) || null
+                    {/* GRID DE SELECTORES - OCULTOS SI NO PARTICIPA */}
+                    {!noParticipa && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* CAMPEÓN (OBLIGATORIO) */}
+                        <div>
+                          <label className="block text-sm font-semibold text-amber-700 mb-2">
+                            🥇 Equipo Campeón *
+                          </label>
+                          <select
+                            value={campeones?.campeón?.id ?? ""}
+                            onChange={(e) => {
+                              const equipoId = Number(e.target.value)
+                              const equipo = equiposFiltrados.find((eq) => eq.id === equipoId) || null
 
-                            setProvinciaCampeones((prev) => ({
-                              ...prev,
-                              [distrito]: {
-                                ...prev[distrito],
-                                campeón: equipo,
-                              },
-                            }))
-                          }}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
-                        >
-                          <option value="">-- Selecciona campeón --</option>
-                          {equiposFiltrados.map((eq) => (
-                            <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
-                              {eq.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* SUBCAMPEÓN (OPCIONAL) */}
-                      <div>
-                        <label className="block text-sm font-semibold text-blue-700 mb-2">
-                          🥈 Equipo Subcampeón (Opcional)
-                        </label>
-                        <select
-                          value={campeones?.subcampeón?.id ?? ""}
-                          onChange={(e) => {
-                            const equipoId = Number(e.target.value)
-                            const equipo = equiposFiltrados.find((eq) => eq.id === equipoId) || null
-
-                            setProvinciaCampeones((prev) => ({
-                              ...prev,
-                              [distrito]: {
-                                ...prev[distrito],
-                                subcampeón: equipo,
-                              },
-                            }))
-                          }}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
-                        >
-                          <option value="">-- Selecciona subcampeón --</option>
-                          {equiposFiltrados
-                            .filter((eq) => eq.id !== campeones?.campeón?.id)
-                            .map((eq) => (
+                              setProvinciaCampeones((prev) => ({
+                                ...prev,
+                                [distrito]: {
+                                  ...prev[distrito],
+                                  campeón: equipo,
+                                },
+                              }))
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
+                          >
+                            <option value="">-- Selecciona campeón --</option>
+                            {equiposFiltrados.map((eq) => (
                               <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
                                 {eq.nombre}
                               </option>
                             ))}
-                        </select>
+                          </select>
+                        </div>
+
+                        {/* SUBCAMPEÓN (OPCIONAL) */}
+                        <div>
+                          <label className="block text-sm font-semibold text-blue-700 mb-2">
+                            🥈 Equipo Subcampeón (Opcional)
+                          </label>
+                          <select
+                            value={campeones?.subcampeón?.id ?? ""}
+                            onChange={(e) => {
+                              const equipoId = Number(e.target.value)
+                              const equipo = equiposFiltrados.find((eq) => eq.id === equipoId) || null
+
+                              setProvinciaCampeones((prev) => ({
+                                ...prev,
+                                [distrito]: {
+                                  ...prev[distrito],
+                                  subcampeón: equipo,
+                                },
+                              }))
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
+                          >
+                            <option value="">-- Selecciona subcampeón --</option>
+                            {equiposFiltrados
+                              .filter((eq) => eq.id !== campeones?.campeón?.id)
+                              .map((eq) => (
+                                <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
+                                  {eq.nombre}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               )
