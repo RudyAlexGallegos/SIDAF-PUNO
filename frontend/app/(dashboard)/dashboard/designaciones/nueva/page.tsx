@@ -694,6 +694,10 @@ if (loading) {
           {/* CARD POR DISTRITO */}
           <div className="space-y-4">
             {distritosDeProvinciaSeleccionada.map((distrito) => {
+              // Para etapa provincial, filtrar equipos por distrito específico
+              const equiposDelDistrito = equiposReales.filter(
+                (eq) => eq.distrito === distrito
+              )
               const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
               const tieneCompletado = !!campeones?.campeón
               const noParticipa = distritosNoParticipantes.includes(distrito)
@@ -749,7 +753,7 @@ if (loading) {
                             value={campeones?.campeón?.id ?? ""}
                             onChange={(e) => {
                               const equipoId = Number(e.target.value)
-                              const equipo = equiposFiltrados.find((eq) => eq.id === equipoId) || null
+                              const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) || null
 
                               setProvinciaCampeones((prev) => ({
                                 ...prev,
@@ -762,7 +766,7 @@ if (loading) {
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                           >
                             <option value="">-- Selecciona campeón --</option>
-                            {equiposFiltrados.map((eq) => (
+                            {equiposDelDistrito.map((eq) => (
                               <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
                                 {eq.nombre}
                               </option>
@@ -779,7 +783,7 @@ if (loading) {
                             value={campeones?.subcampeón?.id ?? ""}
                             onChange={(e) => {
                               const equipoId = Number(e.target.value)
-                              const equipo = equiposFiltrados.find((eq) => eq.id === equipoId) || null
+                              const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) || null
 
                               setProvinciaCampeones((prev) => ({
                                 ...prev,
@@ -792,7 +796,7 @@ if (loading) {
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                           >
                             <option value="">-- Selecciona subcampeón --</option>
-                            {equiposFiltrados
+                            {equiposDelDistrito
                               .filter((eq) => eq.id !== campeones?.campeón?.id)
                               .map((eq) => (
                                 <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
