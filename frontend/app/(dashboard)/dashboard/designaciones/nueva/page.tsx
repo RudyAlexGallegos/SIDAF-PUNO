@@ -750,10 +750,12 @@ if (loading) {
                             🥇 Equipo Campeón *
                           </label>
                           <select
-                            value={campeones?.campeón?.id ?? ""}
+                            value={campeones?.campeón?.id ? String(campeones.campeón.id) : ""}
                             onChange={(e) => {
                               const equipoId = Number(e.target.value)
                               const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) || null
+
+                              console.log("Seleccionado campeón:", equipoId, equipo?.nombre, "distrito:", distrito)
 
                               setProvinciaCampeones((prev) => ({
                                 ...prev,
@@ -766,11 +768,15 @@ if (loading) {
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                           >
                             <option value="">-- Selecciona campeón --</option>
-                            {equiposDelDistrito.map((eq) => (
-                              <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
-                                {eq.nombre}
-                              </option>
-                            ))}
+                            {equiposDelDistrito.length > 0 ? (
+                              equiposDelDistrito.map((eq) => (
+                                <option key={eq.id} value={String(eq.id)} className="bg-white text-slate-900">
+                                  {eq.nombre}
+                                </option>
+                              ))
+                            ) : (
+                              <option disabled value="">No hay equipos registrados</option>
+                            )}
                           </select>
                         </div>
 
@@ -780,7 +786,7 @@ if (loading) {
                             🥈 Equipo Subcampeón (Opcional)
                           </label>
                           <select
-                            value={campeones?.subcampeón?.id ?? ""}
+                            value={campeones?.subcampeón?.id ? String(campeones.subcampeón.id) : ""}
                             onChange={(e) => {
                               const equipoId = Number(e.target.value)
                               const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) || null
@@ -799,7 +805,7 @@ if (loading) {
                             {equiposDelDistrito
                               .filter((eq) => eq.id !== campeones?.campeón?.id)
                               .map((eq) => (
-                                <option key={eq.id} value={eq.id} className="bg-white text-slate-900">
+                                <option key={eq.id} value={String(eq.id)} className="bg-white text-slate-900">
                                   {eq.nombre}
                                 </option>
                               ))}
