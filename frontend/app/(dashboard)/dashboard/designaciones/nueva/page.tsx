@@ -756,7 +756,16 @@ if (loading) {
                               value={campeones?.campeon?.id != null ? String(campeones.campeon.id) : ""}
                               onChange={(e) => {
                                 const value = e.target.value
-                                if (!value) return
+                                if (!value) {
+                                  setProvinciaCampeones(prev => {
+                                    const nuevo = { ...prev }
+                                    if (nuevo[distrito]) {
+                                      nuevo[distrito].campeon = null
+                                    }
+                                    return nuevo
+                                  })
+                                  return
+                                }
                                 const equipoId = parseInt(value, 10)
                                 const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
 
