@@ -753,32 +753,33 @@ if (loading) {
                               🥇 Equipo Campeón *
                             </label>
                             <select
-                              value={campeones?.campeon?.id != null ? String(campeones.campeon.id) : ""}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (!value) {
-                                  setProvinciaCampeones(prev => {
-                                    const nuevo = { ...prev }
-                                    if (nuevo[distrito]) {
-                                      nuevo[distrito].campeon = null
-                                    }
-                                    return nuevo
-                                  })
-                                  return
-                                }
-                                const equipoId = parseInt(value, 10)
-                                const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
+                               key={`${distrito}-${campeones?.campeon?.id ?? 'none'}`}
+                               value={campeones?.campeon?.id != null ? String(campeones.campeon.id) : ""}
+                               onChange={(e) => {
+                                 const value = e.target.value
+                                 if (!value) {
+                                   setProvinciaCampeones(prev => {
+                                     const nuevo = { ...prev }
+                                     if (nuevo[distrito]) {
+                                       nuevo[distrito].campeon = null
+                                     }
+                                     return nuevo
+                                   })
+                                   return
+                                 }
+                                 const equipoId = parseInt(value, 10)
+                                 const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
 
-                                setProvinciaCampeones(prev => ({
-                                  ...prev,
-                                  [distrito]: {
-                                    campeon: equipo,
-                                    subcampeon: prev[distrito]?.subcampeon ?? null,
-                                  },
-                                }))
-                              }}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
-                            >
+                                 setProvinciaCampeones(prev => ({
+                                   ...prev,
+                                   [distrito]: {
+                                     campeon: equipo,
+                                     subcampeon: prev[distrito]?.subcampeon ?? null,
+                                   },
+                                 }))
+                               }}
+                               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
+                             >
                              <option value="">-- Selecciona campeón --</option>
                              {equiposDelDistrito
                                .filter(eq => eq.id != null)
@@ -796,23 +797,33 @@ if (loading) {
                              🥈 Equipo Subcampeón (Opcional)
                            </label>
 <select
-                              value={campeones?.subcampeon?.id != null ? String(campeones.subcampeon.id) : ""}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (!value) return
-                                const equipoId = parseInt(value, 10)
-                                const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
+                               key={`${distrito}-${campeones?.subcampeon?.id ?? 'none'}`}
+                               value={campeones?.subcampeon?.id != null ? String(campeones.subcampeon.id) : ""}
+                               onChange={(e) => {
+                                 const value = e.target.value
+                                 if (!value) {
+                                   setProvinciaCampeones(prev => {
+                                     const nuevo = { ...prev }
+                                     if (nuevo[distrito]) {
+                                       nuevo[distrito].subcampeon = null
+                                     }
+                                     return nuevo
+                                   })
+                                   return
+                                 }
+                                 const equipoId = parseInt(value, 10)
+                                 const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
 
-                                setProvinciaCampeones(prev => ({
-                                  ...prev,
-                                  [distrito]: {
-                                    campeon: prev[distrito]?.campeon ?? null,
-                                    subcampeon: equipo,
-                                  },
-                                }))
-                              }}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
-                            >
+                                 setProvinciaCampeones(prev => ({
+                                   ...prev,
+                                   [distrito]: {
+                                     campeon: prev[distrito]?.campeon ?? null,
+                                     subcampeon: equipo,
+                                   },
+                                 }))
+                               }}
+                               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
+                             >
                              <option value="">-- Selecciona subcampeón --</option>
                              {equiposDelDistrito
                                .filter(eq => eq.id != null && eq.id !== campeones?.campeon?.id)
