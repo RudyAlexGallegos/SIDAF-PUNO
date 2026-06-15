@@ -695,9 +695,14 @@ if (loading) {
           <div className="space-y-4">
             {distritosDeProvinciaSeleccionada.map((distrito) => {
               // Para etapa provincial, filtrar equipos por distrito específico
-              const equiposDelDistrito = equiposReales.filter(
+              // Si no hay equipos con distrito asignado, usar todos los de la provincia
+              let equiposDelDistrito = equiposReales.filter(
                 (eq) => eq.distrito === distrito
               )
+              if (equiposDelDistrito.length === 0) {
+                // Fallback: equipos de la provincia que podrían ser del distrito
+                equiposDelDistrito = equiposFiltrados
+              }
               const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
               const tieneCompletado = !!campeones?.campeón
               const noParticipa = distritosNoParticipantes.includes(distrito)
