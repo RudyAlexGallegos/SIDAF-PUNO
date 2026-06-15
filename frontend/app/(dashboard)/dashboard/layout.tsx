@@ -25,6 +25,7 @@ import {
     Activity,
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
+import { useAutoLogout } from "@/hooks/useAutoLogout"
 
 /* =======================
    NAV LINK
@@ -472,6 +473,7 @@ export default function DashboardLayout({
     const [isMobile, setIsMobile] = useState(false)
     const [modalAbiertoEvaluaciones, setModalAbiertoEvaluaciones] = useState(false)
     const [modalAbiertoDesempenio, setModalAbiertoDesempenio] = useState(false)
+    const { forceLogout, resetLogoutTimer } = useAutoLogout()
 
     useEffect(() => {
         // Verificar si hay usuario logueado
@@ -493,6 +495,47 @@ export default function DashboardLayout({
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
     }, [router])
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") {
+                forceLogout()
+            }
+        }
+
+        const handleFocusOut = () => {
+            window.setTimeout(() => {
+                if (!document.hasFocus()) {
+                    forceLogout()
+                }
+            }, 0)
+        }
+
+        const handleUserActivity = () => {
+            resetLogoutTimer()
+        }
+
+        document.addEventListener("visibilitychange", handleVisibilityChange)
+        window.addEventListener("blur", handleFocusOut)
+        window.addEventListener("focus", resetLogoutTimer)
+        window.addEventListener("mousemove", handleUserActivity)
+        window.addEventListener("keydown", handleUserActivity)
+        window.addEventListener("touchstart", handleUserActivity)
+        window.addEventListener("click", handleUserActivity)
+        resetLogoutTimer()
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange)
+            window.removeEventListener("blur", handleFocusOut)
+            window.removeEventListener("focus", resetLogoutTimer)
+            window.removeEventListener("mousemove", handleUserActivity)
+            window.removeEventListener("keydown", handleUserActivity)
+            window.removeEventListener("touchstart", handleUserActivity)
+            window.removeEventListener("click", handleUserActivity)
+        }
+    }, [forceLogout, resetLogoutTimer])
 
     const handleLogout = () => {
         localStorage.removeItem("token")
