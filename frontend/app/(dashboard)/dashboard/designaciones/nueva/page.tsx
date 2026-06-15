@@ -34,8 +34,8 @@ interface Partido {
 }
 
 interface DistritoCampeones {
-  campeón: Equipo | null
-  subcampeón: Equipo | null
+  campeon: Equipo | null
+  subcampeon: Equipo | null
 }
 
 interface EtapaState {
@@ -163,7 +163,7 @@ const router = useRouter()
     // Todos los distritos deben tener al menos un campeón
     return distritos.every((distrito) => {
       const campeones = distritoCampeones[distrito]
-      return campeones?.campeón !== null && campeones?.campeón !== undefined
+      return campeones?.campeon !== null && campeones?.campeon !== undefined
     })
   }
 
@@ -176,7 +176,7 @@ const router = useRouter()
 
     return distritos.filter((distrito) => {
       const campeones = distritoCampeones[distrito]
-      return !campeones?.campeón
+      return !campeones?.campeon
     })
   }
 
@@ -193,7 +193,7 @@ const validarProvinciasCompletas = (): boolean => {
           // Si el distrito está marcado como no participante, no requiere campeón
           if (distritosNoParticipantes.includes(distrito)) return true
           const campeones = provinciaCampeones[distrito]
-          return campeones?.campeón !== null && campeones?.campeón !== undefined
+          return campeones?.campeon !== null && campeones?.campeon !== undefined
         })
       }
 
@@ -317,18 +317,18 @@ const calcularEtapasDesbloqueadas = () => {
            const equipo = r.equipo || {}
            // En etapa provincial, los equipos están agrupados por distrito
            const distrito = equipo.distrito || 'Sin Distrito'
-           if (!mapping[distrito]) mapping[distrito] = { campeón: null, subcampeón: null }
-           const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
-           if (r.posicion === 1) mapping[distrito].campeón = equipoObj
-           if (r.posicion === 2) mapping[distrito].subcampeón = equipoObj
-         })
-setProvinciaCampeones(mapping)
+           if (!mapping[distrito]) mapping[distrito] = { campeon: null, subcampeon: null }
+const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
+            if (r.posicion === 1) mapping[distrito].campeon = equipoObj
+            if (r.posicion === 2) mapping[distrito].subcampeon = equipoObj
+          })
+          setProvinciaCampeones(mapping)
 
           // Verificar si todos los distritos tienen campeón asignado
-          const distritos = distritosDeProvinciaSeleccionada.length > 0
-            ? distritosDeProvinciaSeleccionada
-            : getDistritosByProvincia("Puno").map(d => d.nombre)
-          const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeón)
+           const distritos = distritosDeProvinciaSeleccionada.length > 0
+             ? distritosDeProvinciaSeleccionada
+             : getDistritosByProvincia("Puno").map(d => d.nombre)
+           const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeon)
           if (todosTienenCampeon) {
             setProvincialCampeonesFinalizados(true)
           }
@@ -356,12 +356,12 @@ setProvinciaCampeones(mapping)
          resultados.forEach((r: any) => {
            const equipo = r.equipo || {}
            const distrito = equipo.distrito || 'Sin Distrito'
-           if (!mapping[distrito]) mapping[distrito] = { campeón: null, subcampeón: null }
+           if (!mapping[distrito]) mapping[distrito] = { campeon: null, subcampeon: null }
            const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
-           if (r.posicion === 1) mapping[distrito].campeón = equipoObj
-           if (r.posicion === 2) mapping[distrito].subcampeón = equipoObj
-         })
-         setDistritoCampeones(mapping)
+if (r.posicion === 1) mapping[distrito].campeon = equipoObj
+            if (r.posicion === 2) mapping[distrito].subcampeon = equipoObj
+          })
+          setDistritoCampeones(mapping)
        } catch (e) {
          console.warn('No se pudo cargar resultados distritales desde backend', e)
          setDistritoCampeones({})
@@ -693,19 +693,18 @@ if (loading) {
 
           {/* CARD POR DISTRITO */}
           <div className="space-y-4">
-            {distritosDeProvinciaSeleccionada.map((distrito) => {
-              // Para etapa provincial, filtrar equipos por distrito específico
-              // Si no hay equipos con distrito asignado, usar todos los de la provincia
-              let equiposDelDistrito = equiposReales.filter(
-                (eq) => eq.distrito === distrito
-              )
-              if (equiposDelDistrito.length === 0) {
-                // Fallback: equipos de la provincia que podrían ser del distrito
-                equiposDelDistrito = equiposFiltrados
-              }
-              const campeones = provinciaCampeones[distrito] || { campeón: null, subcampeón: null }
-              const tieneCompletado = !!campeones?.campeón
-              const noParticipa = distritosNoParticipantes.includes(distrito)
+{distritosDeProvinciaSeleccionada.map((distrito) => {
+// Para etapa provincial, filtrar equipos por distrito específico
+               let equiposDelDistrito = equiposReales.filter(
+                 (eq) => eq.distrito === distrito
+               )
+               // Si no hay equipos con distrito asignado, usar todos los de la provincia
+               if (equiposDelDistrito.length === 0 && equiposFiltrados.length > 0) {
+                 equiposDelDistrito = equiposFiltrados
+               }
+               const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
+               const tieneCompletado = !!campeones?.campeon
+               const noParticipa = distritosNoParticipantes.includes(distrito)
 
               return (
                 <Card key={distrito} className={`border-2 ${
@@ -751,37 +750,35 @@ if (loading) {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* CAMPEÓN (OBLIGATORIO) */}
                         <div>
-                          <label className="block text-sm font-semibold text-amber-700 mb-2">
-                            🥇 Equipo Campeón *
-                          </label>
-                          <select
-                            value={campeones?.campeón?.id ? String(campeones.campeón.id) : ""}
-                            onChange={(e) => {
-                              const equipoId = Number(e.target.value)
-                              const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) || null
+<label className="block text-sm font-semibold text-amber-700 mb-2">
+                             🥇 Equipo Campeón *
+                           </label>
+<select
+                                value={campeones?.campeon && campeones.campeon.id != null ? String(campeones.campeon.id) : ""}
+                                onChange={(e) => {
+                                   const equipoId = e.target.value ? Number(e.target.value) : null
+                                   const equipo = equipoId ? equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null : null
 
-                              console.log("Seleccionado campeón:", equipoId, equipo?.nombre, "distrito:", distrito)
-
-                              setProvinciaCampeones((prev) => ({
-                                ...prev,
-                                [distrito]: {
-                                  ...prev[distrito],
-                                  campeón: equipo,
-                                },
-                              }))
-                            }}
+                                   setProvinciaCampeones((prev) => ({
+                                     ...prev,
+                                     [distrito]: {
+                                       campeon: equipo,
+                                       subcampeon: prev[distrito]?.subcampeon ?? null,
+                                     },
+                                   }))
+                                 }}
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                           >
                             <option value="">-- Selecciona campeón --</option>
-                            {equiposDelDistrito.length > 0 ? (
-                              equiposDelDistrito.map((eq) => (
-                                <option key={eq.id} value={String(eq.id)} className="bg-white text-slate-900">
-                                  {eq.nombre}
-                                </option>
-                              ))
-                            ) : (
-                              <option disabled value="">No hay equipos registrados</option>
-                            )}
+{equiposDelDistrito.length > 0 ? (
+                               equiposDelDistrito.map((eq) => (
+                                 <option key={`campeon-${eq.id ?? Math.random()}`} value={eq.id != null ? String(eq.id) : ""} className="bg-white text-slate-900">
+                                   {eq.nombre}
+                                 </option>
+                               ))
+                             ) : (
+                               <option disabled value="">No hay equipos registrados</option>
+                             )}
                           </select>
                         </div>
 
@@ -790,29 +787,29 @@ if (loading) {
                           <label className="block text-sm font-semibold text-blue-700 mb-2">
                             🥈 Equipo Subcampeón (Opcional)
                           </label>
-                          <select
-                            value={campeones?.subcampeón?.id ? String(campeones.subcampeón.id) : ""}
-                            onChange={(e) => {
-                              const equipoId = Number(e.target.value)
-                              const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) || null
+<select
+                              value={campeones?.subcampeon && campeones.subcampeon.id != null ? String(campeones.subcampeon.id) : ""}
+onChange={(e) => {
+                                 const equipoId = e.target.value ? Number(e.target.value) : null
+                                 const equipo = equipoId ? equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null : null
 
-                              setProvinciaCampeones((prev) => ({
-                                ...prev,
-                                [distrito]: {
-                                  ...prev[distrito],
-                                  subcampeón: equipo,
-                                },
-                              }))
-                            }}
+                                 setProvinciaCampeones((prev) => ({
+                                   ...prev,
+                                   [distrito]: {
+                                     campeon: prev[distrito]?.campeon ?? null,
+                                     subcampeon: equipo,
+                                   },
+                                 }))
+                               }}
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                           >
                             <option value="">-- Selecciona subcampeón --</option>
                             {equiposDelDistrito
-                              .filter((eq) => eq.id !== campeones?.campeón?.id)
+                              .filter((eq) => !campeones?.campeon || eq.id !== campeones.campeon.id)
                               .map((eq) => (
-                                <option key={eq.id} value={String(eq.id)} className="bg-white text-slate-900">
-                                  {eq.nombre}
-                                </option>
+<option key={eq.id} value={eq.id != null ? String(eq.id) : ""} className="bg-white text-slate-900">
+                                   {eq.nombre}
+                                 </option>
                               ))}
                           </select>
                         </div>
@@ -916,7 +913,7 @@ if (loading) {
     } else if (esCopaPeruActual && etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
       // 2. Etapa Provincial (Copa Perú): usar campeón/subcampeón de cada distrito
       equiposDisponibles = Object.values(provinciaCampeones)
-        .flatMap((c) => [c.campeón, c.subcampeón].filter(Boolean) as Equipo[])
+        .flatMap((c) => [c.campeon, c.subcampeon].filter(Boolean) as Equipo[])
     } else if (provinciaSeleccionada) {
       // 3. Otros campeonatos / etapas: filtrar por provincia seleccionada
       equiposDisponibles = equiposReales.filter((eq) => eq.provincia === provinciaSeleccionada)
