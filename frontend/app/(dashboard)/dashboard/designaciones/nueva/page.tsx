@@ -332,11 +332,10 @@ const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equ
           if (todosTienenCampeon) {
             setProvincialCampeonesFinalizados(true)
           }
-        } catch (e) {
-          console.warn('No se pudo cargar campeones provinciales desde backend', e)
-          setProvinciaCampeones({})
-          setProvincialCampeonesFinalizados(false)
-        }
+} catch (e) {
+           console.warn('No se pudo cargar campeones provinciales desde backend', e)
+           // No reseteamos - mantener la selección del usuario
+         }
       }
 
       loadProvincial()
@@ -698,8 +697,8 @@ if (loading) {
                let equiposDelDistrito = equiposReales.filter(
                  (eq) => eq.distrito === distrito
                )
-               // Si no hay equipos con distrito asignado, usar todos los de la provincia
-               if (equiposDelDistrito.length === 0 && equiposFiltrados.length > 0) {
+               // Si no hay equipos por distrito, usar equipos de la provincia como fallback
+               if (!equiposDelDistrito.length) {
                  equiposDelDistrito = equiposFiltrados
                }
                const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
