@@ -692,16 +692,16 @@ if (loading) {
 
           {/* CARD POR DISTRITO */}
           <div className="space-y-4">
-{distritosDeProvinciaSeleccionada.map((distrito) => {
-// Para etapa provincial, filtrar equipos por distrito específico
-               let equiposDelDistrito = equiposReales.filter(
-                 (eq) => eq.distrito === distrito
-               )
-               // Si no hay equipos por distrito, usar equipos de la provincia como fallback
-               if (!equiposDelDistrito.length) {
-                 equiposDelDistrito = equiposFiltrados
-               }
-               const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
+{distritosDeProvinciaSeleccionada.map((distrito, idx) => {
+                // Para etapa provincial, filtrar equipos por distrito específico
+                // Si no hay equipos por distrito, usar equipos de la provincia como fallback
+                const equiposDelDistritoFiltrados = equiposReales.filter(
+                  (eq) => eq.distrito === distrito
+                )
+                const equiposDelDistrito = equiposDelDistritoFiltrados.length > 0 
+                  ? equiposDelDistritoFiltrados 
+                  : equiposFiltrados
+                const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
                const tieneCompletado = !!campeones?.campeon
                const noParticipa = distritosNoParticipantes.includes(distrito)
 
@@ -753,20 +753,20 @@ if (loading) {
                               🥇 Equipo Campeón *
                             </label>
                             <select
-                              value={campeones?.campeon?.id ? String(campeones.campeon.id) : ""}
+                              value={campeones?.campeon?.id != null ? String(campeones.campeon.id) : ""}
                               onChange={(e) => {
-                                if (!e.target.value) return
-                                const equipoId = parseInt(e.target.value, 10)
+                                const value = e.target.value
+                                if (!value) return
+                                const equipoId = parseInt(value, 10)
                                 const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
-                                setProvinciaCampeones(prev => {
-                                  const nuevo = { ...prev }
-                                  const anterior = nuevo[distrito]
-                                  nuevo[distrito] = {
+
+                                setProvinciaCampeones(prev => ({
+                                  ...prev,
+                                  [distrito]: {
                                     campeon: equipo,
-                                    subcampeon: anterior?.subcampeon ?? null,
-                                  }
-                                  return nuevo
-                                })
+                                    subcampeon: prev[distrito]?.subcampeon ?? null,
+                                  },
+                                }))
                               }}
                               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
                             >
@@ -786,22 +786,24 @@ if (loading) {
                            <label className="block text-sm font-semibold text-blue-700 mb-2">
                              🥈 Equipo Subcampeón (Opcional)
                            </label>
-                           <select
-                             value={campeones?.subcampeon?.id != null ? String(campeones.subcampeon.id) : ""}
-                             onChange={(e) => {
-                               const selectedId = e.target.value
-                               if (!selectedId) return
-                               const equipo = equiposDelDistrito.find((eq) => eq.id != null && String(eq.id) === selectedId) ?? null
-                               setProvinciaCampeones(prev => ({
-                                 ...prev,
-                                 [distrito]: {
-                                   ...(prev[distrito] || { campeon: null, subcampeon: null }),
-                                   subcampeon: equipo,
-                                 },
-                               }))
-                             }}
-                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
-                           >
+<select
+                              value={campeones?.subcampeon?.id != null ? String(campeones.subcampeon.id) : ""}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                if (!value) return
+                                const equipoId = parseInt(value, 10)
+                                const equipo = equiposDelDistrito.find((eq) => eq.id === equipoId) ?? null
+
+                                setProvinciaCampeones(prev => ({
+                                  ...prev,
+                                  [distrito]: {
+                                    campeon: prev[distrito]?.campeon ?? null,
+                                    subcampeon: equipo,
+                                  },
+                                }))
+                              }}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-slate-900 text-sm focus:outline-none focus:border-cyan-400"
+                            >
                              <option value="">-- Selecciona subcampeón --</option>
                              {equiposDelDistrito
                                .filter(eq => eq.id != null && eq.id !== campeones?.campeon?.id)
