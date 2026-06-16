@@ -8,7 +8,7 @@ const AUTO_LOGOUT_INACTIVITY_MS = 4 * 60 * 1000 // 4 minutos
 let logoutTimer: ReturnType<typeof setTimeout> | null = null
 let isRedirecting = false
 
-function resetLogoutTimer() {
+function resetLogoutTimerInternal() {
     if (typeof window === "undefined") return
 
     if (logoutTimer) {
@@ -37,11 +37,15 @@ export function useAutoLogout() {
         })
     }
 
+    const resetLogoutTimer = () => {
+        isRedirecting = false
+        resetLogoutTimerInternal()
+    }
+
     useEffect(() => {
         const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
         
         const handleActivity = () => {
-            isRedirecting = false
             resetLogoutTimer()
         }
 
@@ -61,5 +65,5 @@ export function useAutoLogout() {
         }
     }, [])
 
-    return { forceLogout }
+    return { forceLogout, resetLogoutTimer }
 }
