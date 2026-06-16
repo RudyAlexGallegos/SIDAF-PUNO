@@ -473,7 +473,7 @@ export default function DashboardLayout({
     const [isMobile, setIsMobile] = useState(false)
     const [modalAbiertoEvaluaciones, setModalAbiertoEvaluaciones] = useState(false)
     const [modalAbiertoDesempenio, setModalAbiertoDesempenio] = useState(false)
-    const { forceLogout, resetLogoutTimer } = useAutoLogout()
+    const { resetLogoutTimer } = useAutoLogout()
 
     useEffect(() => {
         // Verificar si hay usuario logueado
@@ -500,17 +500,9 @@ export default function DashboardLayout({
         if (typeof window === "undefined") return
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === "hidden") {
-                forceLogout()
+            if (document.visibilityState === "visible") {
+                resetLogoutTimer()
             }
-        }
-
-        const handleFocusOut = () => {
-            window.setTimeout(() => {
-                if (!document.hasFocus()) {
-                    forceLogout()
-                }
-            }, 0)
         }
 
         const handleUserActivity = () => {
@@ -518,8 +510,6 @@ export default function DashboardLayout({
         }
 
         document.addEventListener("visibilitychange", handleVisibilityChange)
-        window.addEventListener("blur", handleFocusOut)
-        window.addEventListener("focus", resetLogoutTimer)
         window.addEventListener("mousemove", handleUserActivity)
         window.addEventListener("keydown", handleUserActivity)
         window.addEventListener("touchstart", handleUserActivity)
@@ -528,14 +518,12 @@ export default function DashboardLayout({
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange)
-            window.removeEventListener("blur", handleFocusOut)
-            window.removeEventListener("focus", resetLogoutTimer)
             window.removeEventListener("mousemove", handleUserActivity)
             window.removeEventListener("keydown", handleUserActivity)
             window.removeEventListener("touchstart", handleUserActivity)
             window.removeEventListener("click", handleUserActivity)
         }
-    }, [forceLogout, resetLogoutTimer])
+    }, [resetLogoutTimer])
 
     const handleLogout = () => {
         localStorage.removeItem("token")
