@@ -49,18 +49,20 @@ import { getDesignaciones, getArbitros, getCampeonatos, getEquipos, deleteDesign
 import { useCache } from "@/hooks/useCache"
 
 interface Designacion {
-  id?: number | null
-  nombreEquipoLocal?: string
-  nombreEquipoVisitante?: string
-  arbitroPrincipal?: number | string | null
-  arbitroAsistente1?: number | string | null
-  arbitroAsistente2?: number | string | null
-  cuartoArbitro?: number | string | null
-  fecha?: string | Date
-  hora?: string
-  estadio?: string
-  nombreCampeonato?: string
-  estado?: string
+   id?: number | null
+   nombreEquipoLocal?: string
+   nombreEquipoVisitante?: string
+   arbitroPrincipal?: number | string | null
+   arbitroAsistente1?: number | string | null
+   arbitroAsistente2?: number | string | null
+   cuartoArbitro?: number | string | null
+   fecha?: string | Date
+   hora?: string
+   estadio?: string
+   nombreCampeonato?: string
+   estado?: string
+   provinciaEquipo?: string
+   distritoEquipo?: string
 }
 
 interface Arbitro {
@@ -224,52 +226,57 @@ function DesignacionesPageContent() {
       }).length,
       confirmadas: designacionesFiltradas.filter((d) => d?.estado?.toUpperCase() === "CONFIRMADA").length,
     }
-  }, [designacionesFiltradas])
+}, [designacionesFiltradas])
 
-  const getProvinciaDistrito = (designacion: Designacion) => {
-    const equipoLocal = equipos.find((e) => e.nombre === designacion.nombreEquipoLocal)
-    const equipoVisitante = equipos.find((e) => e.nombre === designacion.nombreEquipoVisitante)
-    const equipo = equipoLocal || equipoVisitante
-    return {
-      provincia: equipo?.provincia || "Sin provincia",
-      distrito: equipo?.distrito || "Sin distrito",
-    }
-  }
+   const getSemanaLabel = (fecha: string | Date | undefined) => {
+     if (!fecha) return "Sin fecha"
+     try {
+       const fechaObj = new Date(fecha)
+       const lunes = startOfWeek(fechaObj, { weekStartsOn: 1 })
+       const domingo = endOfWeek(fechaObj, { weekStartsOn: 1 })
+       const lunesStr = format(lunes, "dd", { locale: es })
+       const domingoStr = format(domingo, "dd MMM", { locale: es })
+       return `${lunesStr} al ${domingoStr}`.toUpperCase()
+     } catch {
+       return "Fecha inválida"
+     }
+   }
 
-  const designacionesAgrupadas = useMemo(() => {
-    const grupos: Record<string, Record<string, Designacion[]>> = {}
+   const designacionesAgrupadas = useMemo(() => {
+     const grupos: Record<string, Record<string, Designacion[]>> = {}
 
-    designacionesFiltradas.forEach((d) => {
-      if (!d) return
-      const { provincia, distrito } = getProvinciaDistrito(d)
-      if (!grupos[provincia]) grupos[provincia] = {}
-      if (!grupos[provincia][distrito]) grupos[provincia][distrito] = []
-      grupos[provincia][distrito].push(d)
-    })
+     designacionesFiltradas.forEach((d) => {
+       if (!d) return
+       const campeonato = d.nombreCampeonato || "Sin campeonato"
+       const semanaLabel = getSemanaLabel(d.fecha)
+       if (!grupos[campeonato]) grupos[campeonato] = {}
+       if (!grupos[campeonato][semanaLabel]) grupos[campeonato][semanaLabel] = []
+       grupos[campeonato][semanaLabel].push(d)
+     })
 
-    return grupos
-  }, [designacionesFiltradas, equipos])
+     return grupos
+   }, [designacionesFiltradas])
 
-  const provincias = useMemo(() => {
-    return Object.keys(designacionesAgrupadas).sort()
-  }, [designacionesAgrupadas])
+   const campeonatos = useMemo(() => {
+     return Object.keys(designacionesAgrupadas).sort()
+   }, [designacionesAgrupadas])
 
-  useEffect(() => {
-    const provincias = Object.keys(designacionesAgrupadas)
-    if (provincias.length > 0 && expandedProvincias.size === 0) {
-      setExpandedProvincias(new Set([provincias[0]]))
-    }
-  }, [designacionesAgrupadas])
+useEffect(() => {
+     const camps = Object.keys(designacionesAgrupadas)
+     if (camps.length > 0 && expandedProvincias.size === 0) {
+       setExpandedProvincias(new Set([camps[0]]))
+     }
+   }, [designacionesAgrupadas])
 
-  const toggleProvincia = (provincia: string) => {
-    const newSet = new Set(expandedProvincias)
-    if (newSet.has(provincia)) {
-      newSet.delete(provincia)
-    } else {
-      newSet.add(provincia)
-    }
-    setExpandedProvincias(newSet)
-  }
+   const toggleCampeonato = (campeonato: string) => {
+     const newSet = new Set(expandedProvincias)
+     if (newSet.has(campeonato)) {
+       newSet.delete(campeonato)
+     } else {
+       newSet.add(campeonato)
+     }
+     setExpandedProvincias(newSet)
+   }
 
   const getEstadoBadge = (estado?: string) => {
     const estadoUpper = estado?.toUpperCase() || ""
@@ -484,61 +491,60 @@ function DesignacionesPageContent() {
             </CardContent>
           </Card>
 
-          <div ref={printRef} className="space-y-4">
-        {provincias.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
-            </CardContent>
-          </Card>
-            ) : (
-              provincias.map((provincia) => (
-                <Card key={provincia} className="overflow-hidden border border-gray-200 shadow-sm">
-                  <button
-                    onClick={() => toggleProvincia(provincia)}
-                    className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                        <MapPin className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <span className="font-bold text-lg text-slate-900">{provincia}</span>
-                        <span className="ml-2 text-sm text-gray-600 font-medium">
-                          {Object.values(designacionesAgrupadas[provincia] || {}).reduce((sum, arr) => sum + arr.length, 0)} designaciones
-                        </span>
-                      </div>
-                    </div>
-                    {expandedProvincias.has(provincia) ? (
-                      <ChevronDown className="w-5 h-5 text-gray-600" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-600" />
-                    )}
-                  </button>
+<div ref={printRef} className="space-y-4">
+         {campeonatos.length === 0 ? (
+           <Card>
+             <CardContent className="p-12 text-center">
+               <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+               <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
+             </CardContent>
+           </Card>
+             ) : (
+               campeonatos.map((campeonato) => (
+                 <Card key={campeonato} className="overflow-hidden border border-gray-200 shadow-sm">
+                   <button
+                     onClick={() => toggleCampeonato(campeonato)}
+                     className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
+                   >
+                     <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                         <Trophy className="w-5 h-5" />
+                       </div>
+                       <div className="text-left">
+                         <span className="font-bold text-lg text-slate-900">{campeonato}</span>
+                         <span className="ml-2 text-sm text-gray-600 font-medium">
+                           {Object.values(designacionesAgrupadas[campeonato] || {}).reduce((sum, arr) => sum + arr.length, 0)} designaciones
+                         </span>
+                       </div>
+                     </div>
+                     {expandedProvincias.has(campeonato) ? (
+                       <ChevronDown className="w-5 h-5 text-gray-600" />
+                     ) : (
+                       <ChevronRight className="w-5 h-5 text-gray-600" />
+                     )}
+                   </button>
 
-                  {expandedProvincias.has(provincia) && (
-                    <CardContent className="p-0 space-y-3 bg-gray-50">
-                    {Object.entries(designacionesAgrupadas[provincia] || {})
-                      .sort(([, a], [, b]) => b.length - a.length)
-                      .map(([distrito, designacionesDistrito]) => (
-                        <div key={distrito} className="border-l-4 border-blue-500 bg-white p-4 m-4 rounded-lg">
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h3 className="text-lg font-bold text-slate-900">{distrito}</h3>
-                              <p className="text-sm text-gray-600">{designacionesDistrito.length} designaciones</p>
-                            </div>
-                          </div>
+                   {expandedProvincias.has(campeonato) && (
+                     <CardContent className="p-0 space-y-3 bg-gray-50">
+                     {Object.entries(designacionesAgrupadas[campeonato] || {})
+                       .sort(([, a], [, b]) => b.length - a.length)
+                       .map(([semana, designacionesSemana]) => (
+                         <div key={semana} className="border-l-4 border-emerald-500 bg-white p-4 m-4 rounded-lg">
+                           <div className="flex items-center justify-between mb-4">
+                             <div>
+                               <h3 className="text-lg font-bold text-slate-900">Semana {semana}</h3>
+                               <p className="text-sm text-gray-600">{designacionesSemana.length} partidos</p>
+                             </div>
+                           </div>
 
                           <div className="overflow-x-auto">
                             <Table className="text-sm">
                               <TableHeader className="bg-gray-100 border-t border-b border-gray-200">
                               <TableRow>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Fecha</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Hora</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Campeonato</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Partido</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estadio</TableHead>
+<TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Fecha</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Hora</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Partido</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estadio</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Principal</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Asist. 1</TableHead>
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Asist. 2</TableHead>
@@ -547,14 +553,14 @@ function DesignacionesPageContent() {
                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Acciones</TableHead>
                               </TableRow>
                             </TableHeader>
-                            <TableBody>
-                              {designacionesDistrito
-                                .sort((a, b) => {
-                                  const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
-                                  const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
-                                  return dateA - dateB
-                                })
-                                .map((designacion, idx) => {
+<TableBody>
+                               {designacionesSemana
+                                 .sort((a, b) => {
+                                   const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
+                                   const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
+                                   return dateA - dateB
+                                 })
+                                 .map((designacion, idx) => {
                                   const arbPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
                                   const arbAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
                                   const arbAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
@@ -568,37 +574,34 @@ function DesignacionesPageContent() {
                                       key={designacion.id}
                                       className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-blue-50 transition-colors h-14`}
                                     >
-                                      <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
-                                        <div>
-                                          <div className="text-slate-900 font-bold text-xs">
-                                            {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
-                                          </div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
-                                        {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
-                                      </TableCell>
-                                      <TableCell className="text-xs text-slate-700 px-3 font-medium truncate max-w-[120px]">
-                                        {designacion.nombreCampeonato || "-"}
-                                      </TableCell>
-                                      <TableCell className="text-xs font-bold text-slate-900 px-3">
-                                        <div className="space-y-1">
-                                          <div>
-                                            <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
-                                              {(designacion.nombreEquipoLocal || "-").substring(0, 10)}
-                                            </span>
-                                          </div>
-                                          <div className="text-slate-400 text-xs font-bold">vs</div>
-                                          <div>
-                                            <span className="inline-block bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">
-                                              {(designacion.nombreEquipoVisitante || "-").substring(0, 10)}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[120px]">
-                                        {designacion.estadio || "-"}
-                                      </TableCell>
+<TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                         <div>
+                                           <div className="text-slate-900 font-bold text-xs">
+                                             {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
+                                           </div>
+                                         </div>
+                                       </TableCell>
+                                       <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                         {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
+                                       </TableCell>
+                                       <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                         <div className="space-y-1">
+                                           <div>
+                                             <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
+                                               {(designacion.nombreEquipoLocal || "-").substring(0, 10)}
+                                             </span>
+                                           </div>
+                                           <div className="text-slate-400 text-xs font-bold">vs</div>
+                                           <div>
+                                             <span className="inline-block bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">
+                                               {(designacion.nombreEquipoVisitante || "-").substring(0, 10)}
+                                             </span>
+                                           </div>
+                                         </div>
+                                       </TableCell>
+                                       <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[120px]">
+                                         {designacion.estadio || "-"}
+                                       </TableCell>
                                       <TableCell className="text-xs px-3">
                                         <div className="space-y-0.5">
                                           <div className="font-semibold text-slate-900 text-xs">

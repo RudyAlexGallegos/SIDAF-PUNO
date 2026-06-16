@@ -301,41 +301,44 @@ const calcularEtapasDesbloqueadas = () => {
      calcularEtapasDesbloqueadas()
    }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado, provincialCampeonesFinalizados])
 
-   // 🔒 Cargar resultados de etapa provincial guardados desde backend
-   useEffect(() => {
-     const loadProvincial = async () => {
-       try {
-         if (!campeonatoSeleccionado || !esCopaPeruActual) {
-           setProvinciaCampeones({})
-           setProvincialCampeonesFinalizados(false)
-           return
-         }
+// 🔒 Cargar resultados de etapa provincial guardados desde backend
+    useEffect(() => {
+      const loadProvincial = async () => {
+        try {
+          if (!campeonatoSeleccionado || !esCopaPeruActual) {
+            setProvinciaCampeones({})
+            setProvincialCampeonesFinalizados(false)
+            return
+          }
 
-         const resultados = await getCopaPeruResultados(campeonatoSeleccionado.id as number, 'PROVINCIAL')
-         const mapping: Record<string, DistritoCampeones> = {}
-         resultados.forEach((r: any) => {
-           const equipo = r.equipo || {}
-           // En etapa provincial, los equipos están agrupados por distrito
-           const distrito = equipo.distrito || 'Sin Distrito'
-           if (!mapping[distrito]) mapping[distrito] = { campeon: null, subcampeon: null }
+          const resultados = await getCopaPeruResultados(campeonatoSeleccionado.id as number, 'PROVINCIAL')
+          const mapping: Record<string, DistritoCampeones> = {}
+          resultados.forEach((r: any) => {
+            const equipo = r.equipo || {}
+            // En etapa provincial, los equipos están agrupados por distrito
+            const distrito = equipo.distrito || 'Sin Distrito'
+            if (!mapping[distrito]) mapping[distrito] = { campeon: null, subcampeon: null }
 const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
             if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             if (r.posicion === 2) mapping[distrito].subcampeon = equipoObj
           })
-          setProvinciaCampeones(mapping)
+          // Solo actualizar si hay datos del backend, sino preservar selecciones del usuario
+          if (resultados.length > 0) {
+            setProvinciaCampeones(mapping)
+          }
 
           // Verificar si todos los distritos tienen campeón asignado
-           const distritos = distritosDeProvinciaSeleccionada.length > 0
-             ? distritosDeProvinciaSeleccionada
-             : getDistritosByProvincia("Puno").map(d => d.nombre)
-           const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeon)
-          if (todosTienenCampeon) {
-            setProvincialCampeonesFinalizados(true)
-          }
+            const distritos = distritosDeProvinciaSeleccionada.length > 0
+              ? distritosDeProvinciaSeleccionada
+              : getDistritosByProvincia("Puno").map(d => d.nombre)
+            const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeon)
+            if (todosTienenCampeon && resultados.length > 0) {
+              setProvincialCampeonesFinalizados(true)
+            }
 } catch (e) {
-           console.warn('No se pudo cargar campeones provinciales desde backend', e)
-           // No reseteamos - mantener la selección del usuario
-         }
+            console.warn('No se pudo cargar campeones provinciales desde backend', e)
+            // No reseteamos - mantener la selección del usuario
+          }
       }
 
       loadProvincial()
@@ -753,7 +756,6 @@ if (loading) {
                               🥇 Equipo Campeón *
                             </label>
                             <select
-                               key={`${distrito}-${campeones?.campeon?.id ?? 'none'}`}
                                value={campeones?.campeon?.id != null ? String(campeones.campeon.id) : ""}
                                onChange={(e) => {
                                  const value = e.target.value
@@ -797,9 +799,8 @@ if (loading) {
                              🥈 Equipo Subcampeón (Opcional)
                            </label>
 <select
-                               key={`${distrito}-${campeones?.subcampeon?.id ?? 'none'}`}
-                               value={campeones?.subcampeon?.id != null ? String(campeones.subcampeon.id) : ""}
-                               onChange={(e) => {
+                                value={campeones?.subcampeon?.id != null ? String(campeones.subcampeon.id) : ""}
+                                onChange={(e) => {
                                  const value = e.target.value
                                  if (!value) {
                                    setProvinciaCampeones(prev => {
