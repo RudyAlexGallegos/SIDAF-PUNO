@@ -1,8 +1,9 @@
 "use client"
 
 import { logout } from "@/services/api"
+import { useEffect } from "react"
 
-const AUTO_LOGOUT_INACTIVITY_MS = 60_000
+const AUTO_LOGOUT_INACTIVITY_MS = 4 * 60 * 1000 // 4 minutos
 
 let logoutTimer: ReturnType<typeof setTimeout> | null = null
 let isRedirecting = false
@@ -36,5 +37,29 @@ export function useAutoLogout() {
         })
     }
 
-    return { forceLogout, resetLogoutTimer }
+    useEffect(() => {
+        const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
+        
+        const handleActivity = () => {
+            isRedirecting = false
+            resetLogoutTimer()
+        }
+
+        events.forEach(event => {
+            window.addEventListener(event, handleActivity)
+        })
+
+        resetLogoutTimer()
+
+        return () => {
+            events.forEach(event => {
+                window.removeEventListener(event, handleActivity)
+            })
+            if (logoutTimer) {
+                clearTimeout(logoutTimer)
+            }
+        }
+    }, [])
+
+    return { forceLogout }
 }
