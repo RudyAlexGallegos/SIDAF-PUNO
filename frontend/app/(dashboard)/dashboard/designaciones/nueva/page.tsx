@@ -1219,13 +1219,13 @@ if (loading) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {arbitros.map((arb) => (
+{arbitros.map((arb) => (
                         <div
                           key={arb.id}
                           className="p-2 bg-white rounded border border-gray-200 hover:border-blue-600/50 transition-all cursor-pointer"
                         >
                           <p className="font-semibold text-slate-900 text-sm">
-                            {arb.nombre}
+                            {arb.nombre} {arb.apellido}
                           </p>
                           <Badge className="text-xs mt-1 bg-blue-600 text-white">
                             {arb.categoria}
@@ -1275,7 +1275,7 @@ if (loading) {
                             <option value="">Seleccionar</option>
                             {arbitros.map((arb) => (
                               <option key={arb.id} value={arb.id}>
-                                {arb.nombre}
+                                {arb.nombre} {arb.apellido}
                               </option>
                             ))}
                           </select>
@@ -1299,7 +1299,7 @@ if (loading) {
                             <option value="">Seleccionar</option>
                             {arbitros.map((arb) => (
                               <option key={arb.id} value={arb.id}>
-                                {arb.nombre}
+                                {arb.nombre} {arb.apellido}
                               </option>
                             ))}
                           </select>
@@ -1323,7 +1323,7 @@ if (loading) {
                             <option value="">Seleccionar</option>
                             {arbitros.map((arb) => (
                               <option key={arb.id} value={arb.id}>
-                                {arb.nombre}
+                                {arb.nombre} {arb.apellido}
                               </option>
                             ))}
                           </select>
@@ -1347,7 +1347,7 @@ if (loading) {
                             <option value="">Seleccionar</option>
                             {arbitros.map((arb) => (
                               <option key={arb.id} value={arb.id}>
-                                {arb.nombre}
+                                {arb.nombre} {arb.apellido}
                               </option>
                             ))}
                           </select>
@@ -1371,7 +1371,7 @@ if (loading) {
                             <option value="">Seleccionar</option>
                             {arbitros.map((arb) => (
                               <option key={arb.id} value={arb.id}>
-                                {arb.nombre}
+                                {arb.nombre} {arb.apellido}
                               </option>
                             ))}
                           </select>
@@ -1530,9 +1530,9 @@ if (loading) {
                   <>
                     {arbitrosSeleccionados.map((arb, idx) => (
                       <div key={arb.id} className="text-sm text-slate-600">
-                        <p className="font-semibold text-slate-900">
-                          Árbitro {idx + 1}: {arb.nombre}
-                        </p>
+<p className="font-semibold text-slate-900">
+                           Árbitro {idx + 1}: {arb.nombre} {arb.apellido}
+                         </p>
                         <p className="text-xs text-slate-500 pl-2">
                           • Categoría: {arb.categoria}
                         </p>
@@ -1646,7 +1646,7 @@ if (loading) {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-sm">{arb.nombre}</p>
+                          <p className="font-semibold text-sm">{arb.nombre} {arb.apellido}</p>
                           <Badge className={`${
                             estaSeleccionado ? "bg-white/20 text-white" : "bg-blue-600 text-white"
                           } text-xs mt-1`}>
@@ -1681,7 +1681,7 @@ if (loading) {
                   {arbitrosSeleccionados.map((arb) => (
                     <div key={arb.id} className="p-3 bg-blue-600/10 rounded-lg flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-slate-900">{arb.nombre}</p>
+                        <p className="font-semibold text-slate-900">{arb.nombre} {arb.apellido}</p>
                         <Badge className="bg-blue-600 text-white text-xs">{arb.categoria}</Badge>
                       </div>
                       <button
