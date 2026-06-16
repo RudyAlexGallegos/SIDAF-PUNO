@@ -1817,8 +1817,9 @@ if (loading) {
             >
               ← Cancelar
             </Button>
-            <Button
-              onClick={async () => {
+<Button
+                type="button"
+                onClick={async () => {
                 if (arbitrosSeleccionados.length < 1) {
                   toast({
                     title: "Validación",
