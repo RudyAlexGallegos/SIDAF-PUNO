@@ -306,7 +306,8 @@ const calcularEtapasDesbloqueadas = () => {
       const loadProvincial = async () => {
         try {
           if (!campeonatoSeleccionado || !esCopaPeruActual) {
-            // No resetear - mantener selecciones del usuario
+            setProvinciaCampeones({})
+            setProvincialCampeonesFinalizados(false)
             return
           }
 
@@ -317,25 +318,24 @@ const calcularEtapasDesbloqueadas = () => {
             // En etapa provincial, los equipos están agrupados por distrito
             const distrito = equipo.distrito || 'Sin Distrito'
             if (!mapping[distrito]) mapping[distrito] = { campeon: null, subcampeon: null }
-            const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
+const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
             if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             if (r.posicion === 2) mapping[distrito].subcampeon = equipoObj
           })
-          
-          // Si hay datos del backend, actualizar estado y guardar en localStorage
+          // Solo actualizar si hay datos del backend, sino preservar selecciones del usuario
           if (resultados.length > 0) {
             setProvinciaCampeones(mapping)
-            localStorage.setItem('provincialCampeones', JSON.stringify(mapping))
-            setProvincialCampeonesFinalizados(true)
-          } else {
-            // Intentar cargar desde localStorage si no hay datos del backend
-            const saved = localStorage.getItem('provincialCampeones')
-            if (saved) {
-              setProvinciaCampeones(JSON.parse(saved))
+          }
+
+          // Verificar si todos los distritos tienen campeón asignado
+            const distritos = distritosDeProvinciaSeleccionada.length > 0
+              ? distritosDeProvinciaSeleccionada
+              : getDistritosByProvincia("Puno").map(d => d.nombre)
+            const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeon)
+            if (todosTienenCampeon && resultados.length > 0) {
               setProvincialCampeonesFinalizados(true)
             }
-          }
-        } catch (e) {
+} catch (e) {
             console.warn('No se pudo cargar campeones provinciales desde backend', e)
             // No reseteamos - mantener la selección del usuario
           }
@@ -665,12 +665,19 @@ if (loading) {
 
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
-      // Si ya hay campeones guardados o selecciones locales, mostrar lista de equipos participantes
-      const equiposParticipantes = Object.values(provinciaCampeones || {})
-        .flatMap((c: any) => [c.campeon, c.subcampeon].filter(Boolean))
-        .filter(Boolean)
+      // Si ya hay campeones guardados, mostrar lista de equipos participantes
+      const equiposParticipantes = Object.entries(provinciaCampeones || {}).flatMap(([distrito, c]: [string, any]) => {
+        const participantes: any[] = []
+        if (c?.campeon) {
+          participantes.push({ ...c.campeon, tipo: "Campeón" })
+        }
+        if (c?.subcampeon) {
+          participantes.push({ ...c.subcampeon, tipo: "Subcampeón" })
+        }
+        return participantes
+      }).filter(Boolean)
       
-      // Mostrar lista si hay equipos participantes (ya sea del backend o seleccionados localmente)
+      // Mostrar lista si hay equipos participantes (guardados en backend o seleccionados localmente)
       if (equiposParticipantes.length > 0) {
         return (
           <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
@@ -705,8 +712,8 @@ if (loading) {
                           {equipo.distrito && `Distrito: ${equipo.distrito}`}
                         </p>
                       </div>
-                      <Badge className="bg-green-600 text-white">
-                        {idx === 0 ? "Campeón" : "Subcampeón"}
+<Badge className="bg-green-600 text-white">
+                        {equipo.tipo}
                       </Badge>
                     </div>
                   </CardContent>
@@ -725,10 +732,8 @@ if (loading) {
               </Button>
               <Button
                 onClick={async () => {
-                  if (provincialCampeonesFinalizados) {
-                    setCurrentStep("partidos")
-                  } else {
-                    // Guardar en backend
+                  if (!provincialCampeonesFinalizados) {
+                    // Guardar en backend antes de continuar
                     const resultados: any[] = []
                     Object.entries(provinciaCampeones).forEach(([distrito, campeones]) => {
                       if (campeones.campeon && campeones.campeon.id !== undefined) {
@@ -751,35 +756,20 @@ if (loading) {
                     if (resultados.length > 0) {
                       await saveCopaPeruResultadosBatch(resultados)
                       setProvincialCampeonesFinalizados(true)
-                      localStorage.setItem('provincialCampeonesFinalizados', 'true')
                     }
                   }
                   setCurrentStep("partidos")
                 }}
-                disabled={!validarProvinciasCompletas()}
-                className={`flex-1 ${
-                  validarProvinciasCompletas()
-                    ? "bg-amber-600 hover:bg-amber-700 text-white"
-                    : "bg-slate-300 cursor-not-allowed opacity-50"
-                }`}
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
               >
                 ✅ Continuar a Partidos →
               </Button>
             </div>
+          </div>
+        )
+      }
 
-{!validarProvinciasCompletas() && (
-               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                 <p className="text-red-800 text-sm">
-                   ⛔ Debes seleccionar el campeón de <strong>todos los distritos</strong> para continuar.
-                 </p>
-               </div>
-             )}
-           </div>
-         )
-       }
-
-       // Si no hay equipos participantes, mostrar formulario de selección
-       return (
+      return (
         <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
           {/* Header */}
           <section className="border-b pb-3 md:pb-4">
@@ -989,11 +979,10 @@ if (loading) {
                           })
                         }
                       })
-if (resultados.length > 0) {
-                         await saveCopaPeruResultadosBatch(resultados)
-                         setProvincialCampeonesFinalizados(true)
-                         localStorage.setItem('provincialCampeonesFinalizados', 'true')
-                       }
+                      if (resultados.length > 0) {
+                        await saveCopaPeruResultadosBatch(resultados)
+                        setProvincialCampeonesFinalizados(true)
+                      }
                     } catch (error) {
                       console.error("Error guardando campeones provinciales:", error)
                     }
