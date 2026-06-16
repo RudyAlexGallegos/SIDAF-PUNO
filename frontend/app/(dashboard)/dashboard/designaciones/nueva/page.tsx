@@ -852,7 +852,39 @@ if (loading) {
                 ← Atrás
               </Button>
               <Button
-                onClick={() => setCurrentStep("partidos")}
+                onClick={async () => {
+                  // Guardar campeones provinciales antes de continuar
+                  if (campeonatoSeleccionado && esCopaPeruActual && etapaSeleccionada === "Etapa Provincial") {
+                    try {
+                      const resultados: any[] = []
+                      Object.entries(provinciaCampeones).forEach(([distrito, campeones]) => {
+                        if (campeones.campeon) {
+                          resultados.push({
+                            campeonatoId: campeonatoSeleccionado.id,
+                            etapa: 'PROVINCIAL',
+                            equipoId: campeones.campeon.id,
+                            posicion: 1
+                          })
+                        }
+                        if (campeones.subcampeon) {
+                          resultados.push({
+                            campeonatoId: campeonatoSeleccionado.id,
+                            etapa: 'PROVINCIAL',
+                            equipoId: campeones.subcampeon.id,
+                            posicion: 2
+                          })
+                        }
+                      })
+                      if (resultados.length > 0) {
+                        await saveCopaPeruResultadosBatch(resultados)
+                        setProvincialCampeonesFinalizados(true)
+                      }
+                    } catch (error) {
+                      console.error("Error guardando campeones provinciales:", error)
+                    }
+                  }
+                  setCurrentStep("partidos")
+                }}
                 disabled={!validarProvinciasCompletas()}
                 className={`flex-1 ${
                   validarProvinciasCompletas()

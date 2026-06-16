@@ -5,55 +5,30 @@ import { useEffect } from "react"
 
 const AUTO_LOGOUT_INACTIVITY_MS = 4 * 60 * 1000 // 4 minutos
 
-let logoutTimer: ReturnType<typeof setTimeout> | null = null
-let isRedirecting = false
-
-function resetLogoutTimerInternal() {
-    if (typeof window === "undefined") return
-
-    if (logoutTimer) {
-        clearTimeout(logoutTimer)
-    }
-
-    logoutTimer = setTimeout(() => {
-        void logout()
-        window.location.href = "/login"
-    }, AUTO_LOGOUT_INACTIVITY_MS)
-}
-
 export function useAutoLogout() {
-    const forceLogout = () => {
-        if (isRedirecting) return
-
-        isRedirecting = true
-
-        if (logoutTimer) {
-            clearTimeout(logoutTimer)
-            logoutTimer = null
-        }
-
-        void logout().finally(() => {
-            window.location.href = "/login"
-        })
-    }
-
     const resetLogoutTimer = () => {
-        isRedirecting = false
-        resetLogoutTimerInternal()
+        if (typeof window === "undefined") return
     }
 
     useEffect(() => {
-        const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
-        
+        let logoutTimer: ReturnType<typeof setTimeout> | null = null
+
         const handleActivity = () => {
-            resetLogoutTimer()
+            if (logoutTimer) {
+                clearTimeout(logoutTimer)
+            }
+            logoutTimer = setTimeout(() => {
+                void logout()
+                window.location.href = "/login"
+            }, AUTO_LOGOUT_INACTIVITY_MS)
         }
 
+        const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
         events.forEach(event => {
             window.addEventListener(event, handleActivity)
         })
 
-        resetLogoutTimer()
+        handleActivity()
 
         return () => {
             events.forEach(event => {
@@ -65,5 +40,5 @@ export function useAutoLogout() {
         }
     }, [])
 
-    return { forceLogout, resetLogoutTimer }
+    return { resetLogoutTimer }
 }
