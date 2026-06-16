@@ -19,7 +19,7 @@ import {
   Lock,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch } from "@/services/api"
+import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor } from "@/services/api"
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 
 interface Partido {
@@ -30,7 +30,7 @@ interface Partido {
   asistente1?: Arbitro | null
   asistente2?: Arbitro | null
   cuartoArbitro?: Arbitro | null
-  asesor?: Arbitro | null
+  asesor?: Asesor | null
 }
 
 interface DistritoCampeones {
@@ -98,6 +98,9 @@ const router = useRouter()
     // Distritos que no participan (se retiran)
     const [distritosNoParticipantes, setDistritosNoParticipantes] = useState<string[]>([])
 
+    // Lista de asesores
+    const [asesores, setAsesores] = useState<Asesor[]>([])
+
     // Obtener distritos según la provincia seleccionada (para COPA PERÚ)
     const distritosDeProvinciaSeleccionada = provinciaSeleccionada
       ? getDistritosByProvincia(provinciaSeleccionada).map(d => d.nombre)
@@ -122,32 +125,34 @@ const router = useRouter()
    // Detectar si es CAMPEONATO FUNDAMENTAL
    const esCampeonatoFundamental = campeonatoSeleccionado?.categoria === "CAMPEONATO FUNDAMENTAL"
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true)
-        const [campData, arbData, equiposData] = await Promise.all([
-          getCampeonatos(),
-          getArbitros(),
-          getEquipos(),
-        ])
-        setCampeonatos(campData)
-        setArbitros(arbData)
-        setEquiposReales(equiposData)
-      } catch (error) {
-        console.error("Error cargando datos:", error)
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los datos",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
-  }, [])
+// Cargar datos iniciales
+   useEffect(() => {
+     async function loadData() {
+       try {
+         setLoading(true)
+         const [campData, arbData, equiposData, asesoresData] = await Promise.all([
+           getCampeonatos(),
+           getArbitros(),
+           getEquipos(),
+           getAsesores(),
+         ])
+         setCampeonatos(campData)
+         setArbitros(arbData)
+         setEquiposReales(equiposData)
+         setAsesores(asesoresData.filter((a: Asesor) => a.estado === "ACTIVO"))
+       } catch (error) {
+         console.error("Error cargando datos:", error)
+         toast({
+           title: "Error",
+           description: "No se pudieron cargar los datos",
+           variant: "destructive",
+         })
+       } finally {
+         setLoading(false)
+       }
+     }
+     loadData()
+   }, [])
 
   // ============================================================
   // 🔐 FUNCIONES DE VALIDACIÓN Y DESBLOQUEO
@@ -1465,17 +1470,17 @@ if (loading) {
                           <select
                             value={partido.asesor?.id || ""}
                             onChange={(e) => {
-                              const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
+                              const as = asesores.find((a) => a.id === parseInt(e.target.value))
                               const updatedPartidos = [...partidos]
-                              updatedPartidos[idx].asesor = arb || null
+                              updatedPartidos[idx].asesor = as || null
                               setPartidos(updatedPartidos)
                             }}
                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                           >
                             <option value="">Seleccionar</option>
-                            {arbitros.map((arb) => (
-                              <option key={arb.id} value={arb.id}>
-                                {arb.nombre} {arb.apellido}
+                            {asesores.map((as) => (
+                              <option key={as.id} value={as.id}>
+                                {as.nombre} {as.apellido}
                               </option>
                             ))}
                           </select>
