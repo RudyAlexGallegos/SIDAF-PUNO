@@ -737,10 +737,10 @@ if (loading) {
               </Button>
               <Button
                 onClick={async () => {
-                  if (!provincialCampeonesFinalizados) {
+                  if (!provincialCampeonesFinalizados && campeonatoSeleccionado) {
                     // Guardar en backend antes de continuar
                     const resultados: any[] = []
-                    Object.entries(provinciaCampeones).forEach(([distrito, campeones]) => {
+                    Object.entries(provinciaCampeones).forEach(([distrito, campeones]: [string, any]) => {
                       if (campeones.campeon && campeones.campeon.id !== undefined) {
                         resultados.push({
                           campeonatoId: campeonatoSeleccionado.id,
