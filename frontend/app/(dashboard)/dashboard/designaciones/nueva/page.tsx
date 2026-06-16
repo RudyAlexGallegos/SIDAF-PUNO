@@ -665,6 +665,74 @@ if (loading) {
 
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
+      // Si ya hay campeones guardados, mostrar lista de equipos participantes
+      const equiposParticipantes = Object.values(provinciaCampeones || {})
+        .flatMap((c: any) => [c.campeon, c.subcampeon].filter(Boolean))
+        .filter(Boolean)
+      
+      if (provincialCampeonesFinalizados && equiposParticipantes.length > 0) {
+        return (
+          <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
+            {/* Header */}
+            <section className="border-b pb-3 md:pb-4">
+              <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+                {campeonatoSeleccionado?.nombre} · {provinciaSeleccionada}
+              </p>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+                Equipos Participantes
+              </h1>
+              <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 4 de 7 • Campeones ya seleccionados</p>
+            </section>
+
+            {/* Botón de retroceso */}
+            <div className="flex justify-start">
+              <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Cambiar Provincia
+              </Button>
+            </div>
+
+            {/* Lista de equipos participantes */}
+            <div className="space-y-4">
+              {equiposParticipantes.map((equipo: any, idx: number) => (
+                <Card key={`${equipo.nombre}-${idx}`} className="border-2 border-green-300 bg-gradient-to-r from-green-50 to-emerald-50">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">{equipo.nombre}</h3>
+                        <p className="text-sm text-gray-600">
+                          {equipo.distrito && `Distrito: ${equipo.distrito}`}
+                        </p>
+                      </div>
+                      <Badge className="bg-green-600 text-white">
+                        {idx === 0 ? "Campeón" : "Subcampeón"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Botón de avance */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentStep("provincia")}
+                className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
+              >
+                ← Atrás
+              </Button>
+              <Button
+                onClick={() => setCurrentStep("partidos")}
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                ✅ Continuar a Partidos →
+              </Button>
+            </div>
+          </div>
+        )
+      }
+
       return (
         <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
           {/* Header */}
