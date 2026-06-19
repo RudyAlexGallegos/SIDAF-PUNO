@@ -1,5 +1,7 @@
 package com.sidaf.backend.controller;
 
+import com.sidaf.backend.model.Usuario;
+import com.sidaf.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,6 +17,9 @@ public class MigrationController {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @Autowired
+    private UsuarioRepository usuarioRepository;
     
     /**
      * Ejecutar migración de roles
@@ -113,8 +118,12 @@ public class MigrationController {
     }
 
     @PostMapping("/fix-rol-check")
-    public ResponseEntity<?> fixRolCheck() {
+    public ResponseEntity<?> fixRolCheck(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            Usuario usuario = usuarioRepository.findByDni(authHeader != null && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader).orElse(null);
+            if (usuario == null || usuario.getRol() != com.sidaf.backend.model.Usuario.RolUsuario.ADMIN) {
+                return ResponseEntity.status(403).body(Map.of("error", "Solo ADMIN puede ejecutar esta migracion"));
+            }
             Map<String, Object> resultado = new HashMap<>();
             jdbcTemplate.execute("ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_rol_check");
             jdbcTemplate.execute(
