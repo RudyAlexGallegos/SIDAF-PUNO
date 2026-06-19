@@ -94,13 +94,11 @@ public class MigrationController {
         try {
             Map<String, Object> resultado = new HashMap<>();
             
-            // Roles únicos
             List<Map<String, Object>> roles = jdbcTemplate.queryForList(
                 "SELECT DISTINCT rol FROM usuarios ORDER BY rol"
             );
             resultado.put("roles_unicos", roles);
             
-            // Estadísticas
             List<Map<String, Object>> estadisticas = jdbcTemplate.queryForList(
                 "SELECT rol, COUNT(*) as cantidad FROM usuarios GROUP BY rol ORDER BY rol"
             );
@@ -108,6 +106,22 @@ public class MigrationController {
             
             return ResponseEntity.ok(resultado);
             
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/fix-rol-check")
+    public ResponseEntity<?> fixRolCheck() {
+        try {
+            Map<String, Object> resultado = new HashMap<>();
+            jdbcTemplate.execute("ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_rol_check");
+            jdbcTemplate.execute(
+                "ALTER TABLE usuarios ADD CONSTRAINT usuarios_rol_check CHECK (rol IN ('ADMIN', 'PRESIDENCIA', 'UNIDAD_TECNICA'))"
+            );
+            resultado.put("estado", "Constraint usuarios_rol_check actualizado correctamente");
+            return ResponseEntity.ok(resultado);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
