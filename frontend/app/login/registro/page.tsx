@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, ShieldCheck, User, ArrowLeft, CheckCircle, Briefcase, Phone, Award, Mail, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, ShieldCheck, User, ArrowLeft, CheckCircle, Phone, Award, Mail, ArrowRight } from "lucide-react"
 import { registro, verificarDni } from "@/services/api"
 
 import { Button } from "@/components/ui/button"
@@ -31,13 +31,10 @@ export default function RegistroPage() {
     const [showPassword, setShowPassword] = useState(false)
     
     // Datos de dirigente/ex-árbitro
-    const [cargoCodar, setCargoCodar] = useState("")
-    const [areaCodar, setAreaCodar] = useState("")
     const [esExArbitro, setEsExArbirto] = useState(false)
     const [fechaNacimiento, setFechaNacimiento] = useState("")
     const [edad, setEdad] = useState<number | null>(null)
-    const [especialidad, setEspecialidad] = useState("")
-    
+
     // Calcular edad automáticamente cuando cambia la fecha de nacimiento
     const calcularEdad = (fecha: string) => {
         if (!fecha) {
@@ -78,17 +75,6 @@ export default function RegistroPage() {
             return
         }
 
-        // Validar campos obligatorios del dirigente
-        if (!cargoCodar) {
-            setError("Por favor indique su cargo en CODAR")
-            return
-        }
-
-        if (!areaCodar) {
-            setError("Por favor indique su área de trabajo")
-            return
-        }
-
         if (!telefono) {
             setError("Por favor indique un número de teléfono")
             return
@@ -98,7 +84,7 @@ export default function RegistroPage() {
 
         try {
             console.log("Intentando registrar en:", "http://localhost:8083/api/auth/registro")
-            console.log("Datos:", { dni, nombre, email, password, rol: "UNIDAD_TECNICA_CODAR" })
+            console.log("Datos:", { dni, nombre, email, password, rol: "UNIDAD_TECNICA" })
             
             // Verificar si el DNI ya está registrado
             const dniExiste = await verificarDni(dni)
@@ -115,11 +101,8 @@ export default function RegistroPage() {
                 email,
                 password,
                 telefono,
-                cargoCodar,
-                areaCodar,
                 esExArbitro: esExArbitro ? "true" : "false",
-                fechaNacimiento,
-                especialidad
+                fechaNacimiento
             })
 
             setRegistroExitoso(true)
@@ -310,54 +293,27 @@ export default function RegistroPage() {
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Sección: Información en CODAR */}
-                            <div className="space-y-4 pt-2">
-                                <h3 className="text-sm font-semibold text-sky-600 uppercase tracking-wider flex items-center gap-2">
-                                    <div className="h-1 w-1 rounded-full bg-sky-500"></div>
-                                    Información en CODAR
-                                </h3>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cargoCodar" className="text-sky-900 text-sm font-medium">Cargo en CODAR *</Label>
-                                        <div className="relative group">
-                                            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-sky-400 group-focus-within:text-sky-600 transition-colors" />
-                                            <Input
-                                                id="cargoCodar"
-                                                type="text"
-                                                value={cargoCodar}
-                                                onChange={(e) => setCargoCodar(e.target.value)}
-                                                placeholder="Presidente, Vocal, etc."
-                                                className="pl-10 bg-sky-50 border-sky-200 text-sky-900 placeholder:text-sky-400 focus:border-sky-500 focus:ring-sky-500/50 focus:ring-2 transition-all h-11"
-                                                required
-                                            />
-                                        </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="fechaNacimiento" className="text-sky-900 text-sm font-medium">Fecha de Nacimiento</Label>
+                                    <div className="relative group">
+                                        <Award className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-sky-400 group-focus-within:text-sky-600 transition-colors" />
+                                        <Input
+                                            id="fechaNacimiento"
+                                            type="date"
+                                            value={fechaNacimiento}
+                                            onChange={(e) => {
+                                                setFechaNacimiento(e.target.value)
+                                                calcularEdad(e.target.value)
+                                            }}
+                                            className="pl-10 bg-sky-50 border-sky-200 text-sky-900 placeholder:text-sky-400 focus:border-sky-500 focus:ring-sky-500/50 focus:ring-2 transition-all h-11"
+                                        />
                                     </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fechaNacimiento" className="text-sky-900 text-sm font-medium">Fecha de Nacimiento</Label>
-                                        <div className="relative group">
-                                            <Award className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-sky-400 group-focus-within:text-sky-600 transition-colors" />
-                                            <Input
-                                                id="fechaNacimiento"
-                                                type="date"
-                                                value={fechaNacimiento}
-                                                onChange={(e) => {
-                                                    setFechaNacimiento(e.target.value)
-                                                    calcularEdad(e.target.value)
-                                                }}
-                                                className="pl-10 bg-sky-50 border-sky-200 text-sky-900 placeholder:text-sky-400 focus:border-sky-500 focus:ring-sky-500/50 focus:ring-2 transition-all h-11"
-                                                required
-                                            />
-                                        </div>
-                                        {edad !== null && (
-                                            <p className="text-xs text-sky-600 flex items-center gap-1.5">
-                                                <span className="text-sky-600 font-medium">{edad}</span> años
-                                            </p>
-                                        )}
-                                    </div>
+                                    {edad !== null && (
+                                        <p className="text-xs text-sky-600 flex items-center gap-1.5">
+                                            <span className="text-sky-600 font-medium">{edad}</span> años
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
