@@ -2,14 +2,13 @@ import axios, { AxiosInstance } from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sidaf-backend.onrender.com/api';
 
-interface RolesData {
-  usuarioId: number;
-  nombreRol: string;
-  descripcion: string;
-  jerarquia: number;
-  aprobadoPor?: number;
-  razon?: string;
-}
+const getAuthHeaders = () => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
 export const rolesService = {
   private: null as AxiosInstance | null,
@@ -18,9 +17,7 @@ export const rolesService = {
     if (!this.private) {
       this.private = axios.create({
         baseURL: API_BASE_URL,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
     }
     return this.private;
@@ -30,7 +27,7 @@ export const rolesService = {
 
   async obtenerInfoUsuario(usuarioId: number) {
     try {
-      const response = await this.getAxiosInstance().get(`/usuarios-roles/${usuarioId}`);
+      const response = await this.getAxiosInstance().get(`/auth/usuarios/${usuarioId}`);
       return response.data;
     } catch (error) {
       console.error('Error obteniendo info de usuario:', error);
@@ -40,29 +37,29 @@ export const rolesService = {
 
   async obtenerUsuariosPendientes() {
     try {
-      const response = await this.getAxiosInstance().get('/usuarios-roles/pendientes');
-      return response.data.datos || [];
+      const response = await this.getAxiosInstance().get('/auth/usuarios/pendientes');
+      return response.data || [];
     } catch (error) {
       console.error('Error obteniendo usuarios pendientes:', error);
       throw error;
     }
   },
 
-  async obtenerUsuariosPorRol(nombreRol: string) {
+  async obtenerTodosUsuarios() {
     try {
-      const response = await this.getAxiosInstance().get(`/usuarios-roles/rol/${nombreRol}`);
-      return response.data.datos || [];
+      const response = await this.getAxiosInstance().get('/auth/usuarios');
+      return response.data || [];
     } catch (error) {
-      console.error('Error obteniendo usuarios por rol:', error);
+      console.error('Error obteniendo usuarios:', error);
       throw error;
     }
   },
 
-  async aprobarUsuario(usuarioId: number, aprobadoPorId: number, razon: string) {
+  async aprobarUsuario(usuarioId: number, rol: string, permisos: string) {
     try {
-      const response = await this.getAxiosInstance().post(`/usuarios-roles/aprobar/${usuarioId}`, {
-        aprobadoPorId,
-        razon,
+      const response = await this.getAxiosInstance().post(`/auth/usuarios/${usuarioId}/aprobar`, {
+        rol,
+        permisos,
       });
       return response.data;
     } catch (error) {
@@ -71,90 +68,37 @@ export const rolesService = {
     }
   },
 
-  async rechazarUsuario(usuarioId: number, rechazadoPorId: number, razonRechazo: string) {
+  async cambiarEstadoUsuario(usuarioId: number, estado: string) {
     try {
-      const response = await this.getAxiosInstance().post(`/usuarios-roles/rechazar/${usuarioId}`, {
-        rechazadoPorId,
-        razonRechazo,
+      const response = await this.getAxiosInstance().post(`/auth/usuarios/${usuarioId}/estado`, {
+        estado,
       });
       return response.data;
     } catch (error) {
-      console.error('Error rechazando usuario:', error);
+      console.error('Error cambiando estado de usuario:', error);
       throw error;
     }
   },
 
-  // ==================== PERMISOS ====================
-
-  async obtenerTodosPermisos() {
+  async eliminarUsuario(usuarioId: number) {
     try {
-      const response = await this.getAxiosInstance().get('/permisos');
-      return response.data.datos || [];
+      const response = await this.getAxiosInstance().delete(`/auth/usuarios/${usuarioId}`);
+      return response.data;
     } catch (error) {
-      console.error('Error obteniendo permisos:', error);
+      console.error('Error eliminando usuario:', error);
       throw error;
     }
   },
 
-  async obtenerPermisosPorModulo(modulo: string) {
+  async asignarPermisos(usuarioId: number, permisos: string[]) {
     try {
-      const response = await this.getAxiosInstance().get(`/permisos/modulo/${modulo}`);
-      return response.data.datos || [];
-    } catch (error) {
-      console.error('Error obteniendo permisos por módulo:', error);
-      throw error;
-    }
-  },
-
-  async obtenerPermisosUsuario(usuarioId: number) {
-    try {
-      const response = await this.getAxiosInstance().get(`/permisos/usuario/${usuarioId}`);
-      return response.data.datos || [];
-    } catch (error) {
-      console.error('Error obteniendo permisos de usuario:', error);
-      throw error;
-    }
-  },
-
-  async asignarPermiso(usuarioId: number, permisoId: number, asignadoPorId: number, razon: string) {
-    try {
-      const response = await this.getAxiosInstance().post('/permisos/asignar', {
-        usuarioId,
-        permisoId,
-        asignadoPorId,
-        razon,
+      const response = await this.getAxiosInstance().post(`/auth/usuarios/${usuarioId}/permisos`, {
+        permisos: JSON.stringify(permisos),
       });
       return response.data;
     } catch (error) {
-      console.error('Error asignando permiso:', error);
+      console.error('Error asignando permisos:', error);
       throw error;
-    }
-  },
-
-  async revocarPermiso(usuarioId: number, permisoId: number, revocadoPorId: number, razon: string) {
-    try {
-      const response = await this.getAxiosInstance().post('/permisos/revocar', {
-        usuarioId,
-        permisoId,
-        revocadoPorId,
-        razon,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error revocando permiso:', error);
-      throw error;
-    }
-  },
-
-  async verificarPermiso(usuarioId: number, codigoPermiso: string) {
-    try {
-      const response = await this.getAxiosInstance().get(
-        `/permisos/usuario/${usuarioId}/tiene/${codigoPermiso}`
-      );
-      return response.data.tiene || false;
-    } catch (error) {
-      console.error('Error verificando permiso:', error);
-      return false;
     }
   },
 
@@ -162,20 +106,18 @@ export const rolesService = {
 
   async obtenerSolicitudesPendientes() {
     try {
-      const response = await this.getAxiosInstance().get('/usuarios-roles/solicitudes/pendientes');
-      return response.data.datos || [];
+      const response = await this.getAxiosInstance().get('/auth/solicitudes/pendientes');
+      return response.data || [];
     } catch (error) {
       console.error('Error obteniendo solicitudes:', error);
       throw error;
     }
   },
 
-  async crearSolicitudPermiso(usuarioId: number, permisoId: number, descripcion: string) {
+  async crearSolicitudPermiso(permiso: string) {
     try {
-      const response = await this.getAxiosInstance().post('/usuarios-roles/solicitud/crear', {
-        usuarioId,
-        permisoId,
-        descripcion,
+      const response = await this.getAxiosInstance().post('/auth/solicitudes', {
+        permiso,
       });
       return response.data;
     } catch (error) {
@@ -184,34 +126,25 @@ export const rolesService = {
     }
   },
 
-  async aprobarSolicitudPermiso(solicitudId: number, aprobadoPorId: number, razon: string) {
+  async responderSolicitud(solicitudId: number, accion: 'APROBAR' | 'RECHAZAR', notas?: string) {
     try {
-      const response = await this.getAxiosInstance().post(
-        `/usuarios-roles/solicitud/aprobar/${solicitudId}`,
-        {
-          aprobadoPorId,
-          razon,
-        }
-      );
+      const response = await this.getAxiosInstance().post(`/auth/solicitudes/${solicitudId}/responder`, {
+        accion,
+        notas,
+      });
       return response.data;
     } catch (error) {
-      console.error('Error aprobando solicitud:', error);
+      console.error('Error respondiendo solicitud:', error);
       throw error;
     }
   },
 
-  async rechazarSolicitudPermiso(solicitudId: number, rechazadoPorId: number, razonRechazo: string) {
+  async obtenerMisSolicitudes() {
     try {
-      const response = await this.getAxiosInstance().post(
-        `/usuarios-roles/solicitud/rechazar/${solicitudId}`,
-        {
-          rechazadoPorId,
-          razonRechazo,
-        }
-      );
-      return response.data;
+      const response = await this.getAxiosInstance().get('/auth/solicitudes/mis-solicitudes');
+      return response.data || [];
     } catch (error) {
-      console.error('Error rechazando solicitud:', error);
+      console.error('Error obteniendo mis solicitudes:', error);
       throw error;
     }
   },

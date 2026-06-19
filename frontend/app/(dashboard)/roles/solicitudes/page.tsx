@@ -1,7 +1,7 @@
 'use client';
 
 import { SolicitudesPermisosPanel } from '@/components/roles/SolicitudesPermisosPanel';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SolicitudesPage() {
   return (
@@ -17,33 +17,41 @@ export default function SolicitudesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Tipos de Permisos</CardTitle>
+          <CardTitle>Tipos de Permisos Disponibles</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <strong>VER:</strong>
-              <p className="text-gray-600">Acceso de lectura</p>
+              <strong>VER_ARBITROS:</strong>
+              <p className="text-gray-600">Ver información de árbitros</p>
             </div>
             <div>
-              <strong>CREAR:</strong>
-              <p className="text-gray-600">Crear nuevos registros</p>
+              <strong>GESTION_ARBITROS:</strong>
+              <p className="text-gray-600">Crear, editar y eliminar árbitros</p>
             </div>
             <div>
-              <strong>EDITAR:</strong>
-              <p className="text-gray-600">Modificar existentes</p>
+              <strong>GESTION_ASISTENCIA:</strong>
+              <p className="text-gray-600">Registrar y modificar asistencias</p>
             </div>
             <div>
-              <strong>ELIMINAR:</strong>
-              <p className="text-gray-600">Borrar registros</p>
+              <strong>GESTION_DESIGNACIONES:</strong>
+              <p className="text-gray-600">Crear y asignar designaciones</p>
             </div>
             <div>
-              <strong>EXPORTAR:</strong>
-              <p className="text-gray-600">Descargar datos</p>
+              <strong>GESTION_CAMPEONATOS:</strong>
+              <p className="text-gray-600">Administrar campeonatos</p>
             </div>
             <div>
-              <strong>REGISTRAR:</strong>
-              <p className="text-gray-600">Entrada (ej: asistencia)</p>
+              <strong>GESTION_EQUIPOS:</strong>
+              <p className="text-gray-600">Gestionar equipos</p>
+            </div>
+            <div>
+              <strong>VER_REPORTES:</strong>
+              <p className="text-gray-600">Acceder a reportes y estadísticas</p>
+            </div>
+            <div>
+              <strong>VER_USUARIOS:</strong>
+              <p className="text-gray-600">Ver lista de usuarios</p>
             </div>
           </div>
         </CardContent>

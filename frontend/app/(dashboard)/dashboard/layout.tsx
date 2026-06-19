@@ -87,7 +87,7 @@ function NavLink({
    TIPOS DE ROL
   ======================= */
 
-type RolUsuario = "ADMIN" | "PRESIDENTE" | "ARBITRO"
+type RolUsuario = "ADMIN" | "PRESIDENTE" | "ARBITRO" | "UNIDAD_TECNICA" | "PRESIDENCIA"
 
 interface Usuario {
     id?: number
@@ -190,6 +190,29 @@ function getMenuItems(
                 items: [
                     { name: "Solicitar Permiso", href: "/dashboard/solicitar-permiso", icon: Send },
                     { name: "Ver Solicitudes", href: "/dashboard/solicitudes", icon: Inbox },
+                ],
+            },
+            {
+                title: "Gestión",
+                items: menuItems,
+            },
+        ]
+    }
+
+    // PRESIDENCIA: Acceso a gestión de usuarios y solicitudes
+    if (rol === "PRESIDENCIA") {
+        return [
+            ...menuPrincipal,
+            {
+                title: "Gestión de Usuarios",
+                items: [
+                    { name: "Aprobar Usuarios", href: "/roles/usuarios-pendientes", icon: Users },
+                ],
+            },
+            {
+                title: "Solicitudes",
+                items: [
+                    { name: "Solicitudes de Permisos", href: "/roles/solicitudes", icon: FileText },
                 ],
             },
             {
@@ -448,12 +471,14 @@ function getRolLabel(rol?: string): string {
     switch (rol) {
         case "ADMIN":
             return "Administrador"
-        case "PRESIDENTE":
+        case "PRESIDENCIA":
             return "Presidente"
+        case "UNIDAD_TECNICA":
+            return "Usuario"
         case "ARBITRO":
             return "Árbitro"
         default:
-            return "Usuario"
+            return rol || "Usuario"
     }
 }
 

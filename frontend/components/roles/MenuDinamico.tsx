@@ -65,7 +65,7 @@ export function MenuDinamico() {
       if (rolNombre === 'PRESIDENCIA') {
         menuBasico.push({
           icon: Users,
-          label: 'Usuarios Pendientes',
+          label: 'Aprobar Usuarios',
           href: '/roles/usuarios-pendientes',
           visible: true,
           badge: 'Nuevo',
@@ -74,7 +74,7 @@ export function MenuDinamico() {
 
         menuBasico.push({
           icon: FileText,
-          label: 'Solicitudes',
+          label: 'Solicitudes de Permisos',
           href: '/roles/solicitudes',
           visible: true,
           color: 'purple'
@@ -86,6 +86,25 @@ export function MenuDinamico() {
           href: '/roles/permisos',
           visible: true,
           color: 'indigo'
+        });
+      }
+
+      // Ítems si es UNIDAD_TECNICA
+      if (rolNombre === 'UNIDAD_TECNICA') {
+        menuBasico.push({
+          icon: FileText,
+          label: 'Solicitar Permiso',
+          href: '/dashboard/solicitar-permiso',
+          visible: true,
+          color: 'purple'
+        });
+
+        menuBasico.push({
+          icon: FileText,
+          label: 'Mis Solicitudes',
+          href: '/dashboard/mis-solicitudes',
+          visible: true,
+          color: 'blue'
         });
       }
 
