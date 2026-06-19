@@ -36,6 +36,30 @@ public class RolConstraintInitializer implements CommandLineRunner {
             );
 
             System.out.println("✅ Constraint usuarios_rol_check actualizado automáticamente.");
+
+            // Migrar valores antiguos a los nuevos del enum
+            int actualizados = jdbcTemplate.update(
+                "UPDATE usuarios SET rol = 'ADMIN' WHERE rol = 'ADMINISTRADOR'"
+            );
+            if (actualizados > 0) {
+                System.out.println("🔄 Migrados " + actualizados + " usuarios de ADMINISTRADOR -> ADMIN");
+            }
+
+            actualizados = jdbcTemplate.update(
+                "UPDATE usuarios SET rol = 'PRESIDENCIA' WHERE rol IN ('PRESIDENTE_SIDAF', 'PRESIDENCIA_CODAR', 'PRESIDENTE')"
+            );
+            if (actualizados > 0) {
+                System.out.println("🔄 Migrados " + actualizados + " usuarios a PRESIDENCIA");
+            }
+
+            actualizados = jdbcTemplate.update(
+                "UPDATE usuarios SET rol = 'UNIDAD_TECNICA' WHERE rol IN ('USUARIO_TECNICO', 'UNIDAD_TECNICA_LEGACY')"
+            );
+            if (actualizados > 0) {
+                System.out.println("🔄 Migrados " + actualizados + " usuarios a UNIDAD_TECNICA");
+            }
+
+            System.out.println("✅ Migración de roles completada.");
         } catch (Exception e) {
             System.out.println("❌ Error al verificar/corregir constraint: " + e.getMessage());
             e.printStackTrace();
