@@ -1,7 +1,10 @@
 package com.sidaf.backend.controller;
 
+import com.sidaf.backend.model.AuditoriaPermiso;
 import com.sidaf.backend.model.SolicitudPermiso;
+import com.sidaf.backend.model.TipoCambio;
 import com.sidaf.backend.model.Usuario;
+import com.sidaf.backend.repository.AuditoriaPermisoRepository;
 import com.sidaf.backend.repository.SolicitudPermisoRepository;
 import com.sidaf.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,9 @@ public class AuthController {
     
     @Autowired
     private SolicitudPermisoRepository solicitudPermisoRepository;
+
+    @Autowired
+    private AuditoriaPermisoRepository auditoriaPermisoRepository;
 
     // Login
     @PostMapping("/login")
@@ -313,6 +319,15 @@ public class AuthController {
         usuario.setEstado("ACTIVO");
         usuarioRepository.save(usuario);
         
+        // Registrar en auditoría
+        AuditoriaPermiso auditoria = new AuditoriaPermiso();
+        auditoria.setUsuarioAfectado(usuario);
+        auditoria.setRealizadoPor(usuarioActual);
+        auditoria.setTipoCambio(TipoCambio.USUARIO_APROBADO);
+        auditoria.setDescripcion("Usuario aprobado por " + (esPresidencia ? "Presidencia" : "Administrador"));
+        auditoria.setFechaCambio(LocalDateTime.now());
+        auditoriaPermisoRepository.save(auditoria);
+        
         String mensaje = esPresidencia ? 
             "Usuario aprobado por Presidencia con rol UNIDAD_TECNICA" : 
             "Usuario aprobado exitosamente por Administrador";
@@ -434,6 +449,16 @@ public class AuthController {
         
         String nuevoEstado = datos.get("estado");
         if (nuevoEstado != null && (nuevoEstado.equals("ACTIVO") || nuevoEstado.equals("INACTIVO") || nuevoEstado.equals("PENDING"))) {
+            // Registrar en auditoría
+            AuditoriaPermiso auditoria = new AuditoriaPermiso();
+            auditoria.setUsuarioAfectado(usuario);
+            auditoria.setRealizadoPor(usuarioActual);
+            auditoria.setTipoCambio(TipoCambio.CAMBIO_ESTADO);
+            auditoria.setDescripcion("Estado cambiado a " + nuevoEstado);
+            auditoria.setRazon("Modificado por " + (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN ? "Administrador" : "Presidencia"));
+            auditoria.setFechaCambio(LocalDateTime.now());
+            auditoriaPermisoRepository.save(auditoria);
+            
             usuario.setEstado(nuevoEstado);
             usuarioRepository.save(usuario);
         }
@@ -453,7 +478,8 @@ public class AuthController {
             return ResponseEntity.status(403).body(Map.of("error", "Solo el administrador puede eliminar usuarios"));
         }
         
-        if (!usuarioRepository.existsById(id)) {
+        Usuario usuarioAEliminar = usuarioRepository.findById(id).orElse(null);
+        if (usuarioAEliminar == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Usuario no encontrado"));
         }
         
@@ -461,6 +487,16 @@ public class AuthController {
         if (id.equals(usuarioActual.getId())) {
             return ResponseEntity.badRequest().body(Map.of("error", "No puedes eliminarte a ti mismo"));
         }
+        
+        // Registrar en auditoría
+        AuditoriaPermiso auditoria = new AuditoriaPermiso();
+        auditoria.setUsuarioAfectado(usuarioAEliminar);
+        auditoria.setRealizadoPor(usuarioActual);
+        auditoria.setTipoCambio(TipoCambio.CAMBIO_ESTADO);
+        auditoria.setDescripcion("Usuario eliminado");
+        auditoria.setRazon("Eliminado por administrador");
+        auditoria.setFechaCambio(LocalDateTime.now());
+        auditoriaPermisoRepository.save(auditoria);
         
         usuarioRepository.deleteById(id);
         
