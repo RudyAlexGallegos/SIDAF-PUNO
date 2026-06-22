@@ -253,11 +253,11 @@ function getMenuItems(
     if (rol === "PRESIDENCIA_CODAR") {
         return [
             ...menuPrincipal,
-            {
-                title: "Presidencia",
+{
+                title: "Permisos",
                 items: [
                     { name: "Solicitar Permiso", href: "/dashboard/solicitar-permiso", icon: Send },
-                    { name: "Ver Solicitudes", href: "/dashboard/solicitudes", icon: Inbox },
+                    { name: "Ver Solicitudes", href: "/roles/solicitudes", icon: Inbox },
                 ],
             },
             {
