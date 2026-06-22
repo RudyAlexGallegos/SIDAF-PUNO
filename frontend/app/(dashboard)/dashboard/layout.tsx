@@ -348,6 +348,12 @@ function getMenuItems(
                 ],
             },
             {
+                title: "Auditoría",
+                items: [
+                    { name: "Ver Auditoría", href: "/roles/auditoria", icon: FileText },
+                ],
+            },
+            {
                 title: "Evaluación y Desempeño",
                 items: [
                     { name: "Evaluaciones", modalId: "evaluaciones", icon: ClipboardList },
