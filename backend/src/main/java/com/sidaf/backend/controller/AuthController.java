@@ -247,11 +247,11 @@ public class AuthController {
             }
             
             List<Usuario> pendientes;
-            if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN) {
-                // Admin ve todos los pendientes
+            if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN || usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
+                // Admin y PRESIDENCIA_CODAR ven todos los pendientes
                 pendientes = usuarioRepository.findByEstado("PENDING");
             } else {
-                // Presidente ve solo los de su unidad
+                // PRESIDENCIA ve solo los de su unidad
                 pendientes = usuarioRepository.findByEstadoAndUnidadOrganizacional("PENDING", usuarioActual.getUnidadOrganizacional());
             }
             
@@ -284,12 +284,12 @@ public class AuthController {
         }
         
         boolean esAdmin = usuarioActual.getRol() == Usuario.RolUsuario.ADMIN;
-        boolean esPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA || usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
-        
-        if (!esAdmin && esPresidencia) {
-            if (!usuario.getUnidadOrganizacional().equals(usuarioActual.getUnidadOrganizacional())) {
-                return ResponseEntity.status(403).body(Map.of("error", "No puedes aprobar usuarios de otra unidad"));
-            }
+        boolean esPresidenciaCodar = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
+        boolean esPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA;
+
+        // PRESIDENCIA CODAR aprueba usuarios de cualquier unidad
+        if (esPresidencia && !usuario.getUnidadOrganizacional().equals(usuarioActual.getUnidadOrganizacional())) {
+            return ResponseEntity.status(403).body(Map.of("error", "No puedes aprobar usuarios de otra unidad"));
         }
         
         String nuevoRol = datos.get("rol");
@@ -302,14 +302,14 @@ public class AuthController {
             } catch (Exception e) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Rol no valido: " + nuevoRol));
             }
-        } else if (esPresidencia) {
+        } else if (esPresidencia || esPresidenciaCodar) {
             usuario.setRol(Usuario.RolUsuario.UNIDAD_TECNICA);
         }
         
         if (permisos != null && !permisos.isEmpty()) {
             usuario.setPermisosEspecificos(permisos);
         } else {
-            if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA) {
+            if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA || usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
                 usuario.setPermisosEspecificos("[\"GESTION_ARBITROS\",\"GESTION_ASISTENCIA\",\"GESTION_DESIGNACIONES\",\"GESTION_CAMPEONATOS\",\"GESTION_EQUIPOS\",\"VER_REPORTES\"]");
             } else if (usuario.getRol() == Usuario.RolUsuario.UNIDAD_TECNICA) {
                 usuario.setPermisosEspecificos("[]");
