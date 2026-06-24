@@ -284,7 +284,7 @@ public class AuthController {
         }
         
         boolean esAdmin = usuarioActual.getRol() == Usuario.RolUsuario.ADMIN;
-        boolean esPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA;
+        boolean esPresidencia = usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA || usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
         
         if (!esAdmin && esPresidencia) {
             if (!usuario.getUnidadOrganizacional().equals(usuarioActual.getUnidadOrganizacional())) {
@@ -542,7 +542,8 @@ public class AuthController {
         if (usuario == null) return false;
         // ADMIN y PRESIDENCIA pueden gestionar usuarios
         return usuario.getRol() == Usuario.RolUsuario.ADMIN || 
-               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA;
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA ||
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
     }
     
     private Map<String, Object> usuarioToMap(Usuario usuario) {
