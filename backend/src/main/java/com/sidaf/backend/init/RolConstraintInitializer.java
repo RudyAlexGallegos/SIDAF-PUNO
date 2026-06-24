@@ -32,7 +32,7 @@ public class RolConstraintInitializer implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_rol_check");
             jdbcTemplate.execute(
                 "ALTER TABLE usuarios ADD CONSTRAINT usuarios_rol_check " +
-                "CHECK (rol IN ('ADMIN', 'PRESIDENCIA', 'UNIDAD_TECNICA'))"
+                "CHECK (rol IN ('ADMIN', 'PRESIDENCIA', 'PRESIDENCIA_CODAR', 'UNIDAD_TECNICA'))"
             );
 
             System.out.println("✅ Constraint usuarios_rol_check actualizado automáticamente.");
@@ -45,12 +45,12 @@ public class RolConstraintInitializer implements CommandLineRunner {
                 System.out.println("🔄 Migrados " + actualizados + " usuarios de ADMINISTRADOR -> ADMIN");
             }
 
-            actualizados = jdbcTemplate.update(
-                "UPDATE usuarios SET rol = 'PRESIDENCIA' WHERE rol IN ('PRESIDENTE_SIDAF', 'PRESIDENCIA_CODAR', 'PRESIDENTE')"
-            );
-            if (actualizados > 0) {
-                System.out.println("🔄 Migrados " + actualizados + " usuarios a PRESIDENCIA");
-            }
+actualizados = jdbcTemplate.update(
+            "UPDATE usuarios SET rol = 'PRESIDENCIA' WHERE rol IN ('PRESIDENTE_SIDAF', 'PRESIDENCIA_CODAR', 'PRESIDENTE')"
+        );
+        if (actualizados > 0) {
+            System.out.println("Migrados " + actualizados + " usuarios a PRESIDENCIA");
+        }
 
             actualizados = jdbcTemplate.update(
                 "UPDATE usuarios SET rol = 'UNIDAD_TECNICA' WHERE rol IN ('USUARIO_TECNICO', 'UNIDAD_TECNICA_LEGACY')"

@@ -107,6 +107,7 @@ public class Usuario {
     public enum RolUsuario {
         ADMIN(1L, "ADMIN", 1),
         PRESIDENCIA(2L, "PRESIDENCIA", 2),
+        PRESIDENCIA_CODAR(2L, "PRESIDENCIA_CODAR", 2),
         UNIDAD_TECNICA(3L, "UNIDAD_TECNICA", 3);
         
         private final Long id;
