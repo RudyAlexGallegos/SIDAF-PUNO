@@ -415,7 +415,7 @@ public class AuthController {
             }
             
             List<Usuario> usuarios;
-            if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN) {
+            if (usuarioActual.getRol() == Usuario.RolUsuario.ADMIN || usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
                 usuarios = usuarioRepository.findAll();
             } else if (usuarioActual.getRol() == Usuario.RolUsuario.PRESIDENCIA) {
                 usuarios = usuarioRepository.findByUnidadOrganizacional(usuarioActual.getUnidadOrganizacional());
