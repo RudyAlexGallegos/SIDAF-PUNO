@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from "react"
-import { getStoredUser, getAsesores, createAsesor, updateAsesor, deleteAsesor, cambiarEstadoAsesor, Asesor } from "@/services/api"
+import { getStoredUser, getAsesores, createAsesor, updateAsesor, deleteAsesor, cambiarEstadoAsesor, Asesor, Usuario, getTodosUsuarios } from "@/services/api"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,8 @@ export default function AsesoresPage() {
     const [mostrarModalCrear, setMostrarModalCrear] = useState(false)
     const [mostrarModalEditar, setMostrarModalEditar] = useState(false)
     const [asesorEditando, setAsesorEditando] = useState<Asesor | null>(null)
+    const [usuariosDisponibles, setUsuariosDisponibles] = useState<Usuario[]>([])
+    const [usuarioSeleccionadoId, setUsuarioSeleccionadoId] = useState<number | null>(null)
 
     // Form states
     const [formData, setFormData] = useState<Asesor>({
@@ -73,6 +75,20 @@ export default function AsesoresPage() {
         }
     }, [router])
 
+    useEffect(() => {
+        const cargarUsuarios = async () => {
+            if (!mostrarModalCrear) return
+            try {
+                const usuarios = await getTodosUsuarios().catch(() => [])
+                setUsuariosDisponibles(usuarios.filter((u: Usuario) => u.id))
+            } catch {
+                setUsuariosDisponibles([])
+            }
+        }
+
+        cargarUsuarios()
+    }, [mostrarModalCrear])
+
     // Filtrar asesores por búsqueda
     const asesoreFiltrados = (asesores || []).filter(a => {
         const nombreCompleto = `${a.nombre || ""} ${a.apellido || ""}`.toLowerCase()
@@ -92,8 +108,14 @@ export default function AsesoresPage() {
             return
         }
 
+        const usuarioId = formData.usuarioId || usuario?.id || 0
+        if (!usuarioId) {
+            setError("Selecciona un usuario existente para asociarlo al asesor")
+            return
+        }
+
         try {
-            await createAsesor(formData)
+            await createAsesor({ ...formData, usuarioId })
             setSuccess("Asesor creado exitosamente")
             setError("")
             setFormData({
@@ -107,6 +129,7 @@ export default function AsesoresPage() {
                 estado: "ACTIVO",
                 descripcion: "",
             })
+            setUsuarioSeleccionadoId(null)
             setMostrarModalCrear(false)
             refetch()
             toast({
@@ -114,7 +137,7 @@ export default function AsesoresPage() {
                 description: `${formData.nombre} ${formData.apellido}`,
             })
         } catch (err: any) {
-            setError("Error: " + err.message)
+            setError(err.message || "Error al crear asesor")
         }
     }
 
@@ -308,6 +331,35 @@ export default function AsesoresPage() {
                             </CardHeader>
                             <CardContent className="p-6 space-y-4">
                                 <form onSubmit={handleCrearAsesor} className="space-y-4">
+                                    <div>
+                                        <Label className="text-sky-900 font-semibold">Usuario asociado *</Label>
+                                        <select
+                                            value={usuarioSeleccionadoId ?? ""}
+                                            onChange={(e) => {
+                                                const id = Number(e.target.value)
+                                                setUsuarioSeleccionadoId(id || null)
+                                                const seleccionado = usuariosDisponibles.find((u) => u.id === id)
+                                                if (seleccionado) {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        usuarioId: seleccionado.id || 0,
+                                                        nombre: prev.nombre || seleccionado.nombre || "",
+                                                        apellido: prev.apellido || seleccionado.apellido || "",
+                                                        dni: prev.dni || seleccionado.dni || "",
+                                                        email: prev.email || seleccionado.email || "",
+                                                    }))
+                                                }
+                                            }}
+                                            className="w-full px-3 py-2 border border-sky-200 rounded-md text-sky-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                        >
+                                            <option value="">Selecciona un usuario</option>
+                                            {usuariosDisponibles.map((usuarioDisponible) => (
+                                                <option key={usuarioDisponible.id} value={usuarioDisponible.id}>
+                                                    {`${usuarioDisponible.nombre || ""} ${usuarioDisponible.apellido || ""}`.trim() || usuarioDisponible.email || usuarioDisponible.dni}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div>
                                         <Label className="text-sky-900 font-semibold">Nombre *</Label>
                                         <Input

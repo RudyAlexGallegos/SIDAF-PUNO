@@ -836,7 +836,9 @@ export async function createAsesor(data: Asesor): Promise<Asesor> {
     });
 
     if (!response.ok) {
-        throw new Error("Error al crear asesor");
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.error || errorData?.message || "Error al crear asesor";
+        throw new Error(message);
     }
 
     return await response.json();
@@ -850,7 +852,9 @@ export async function updateAsesor(id: number, data: Asesor): Promise<Asesor> {
     });
 
     if (!response.ok) {
-        throw new Error("Error al actualizar asesor");
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.error || errorData?.message || "Error al actualizar asesor";
+        throw new Error(message);
     }
 
     return await response.json();
@@ -863,7 +867,9 @@ export async function cambiarEstadoAsesor(id: number, estado: string): Promise<A
     });
 
     if (!response.ok) {
-        throw new Error("Error al cambiar estado del asesor");
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.error || errorData?.message || "Error al cambiar estado del asesor";
+        throw new Error(message);
     }
 
     return await response.json();

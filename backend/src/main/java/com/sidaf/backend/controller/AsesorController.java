@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -68,12 +69,12 @@ public class AsesorController {
      * POST /api/asesores - Crear nuevo asesor
      */
     @PostMapping
-    public ResponseEntity<Asesor> crearAsesor(@RequestBody Asesor asesor) {
+    public ResponseEntity<?> crearAsesor(@RequestBody Asesor asesor) {
         try {
             Asesor nuevoAsesor = asesorService.crearAsesor(asesor);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevoAsesor);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
     
@@ -81,12 +82,12 @@ public class AsesorController {
      * PUT /api/asesores/{id} - Actualizar asesor
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Asesor> actualizarAsesor(@PathVariable Long id, @RequestBody Asesor asesor) {
+    public ResponseEntity<?> actualizarAsesor(@PathVariable Long id, @RequestBody Asesor asesor) {
         try {
             Asesor asesorActualizado = asesorService.actualizarAsesor(id, asesor);
             return ResponseEntity.ok(asesorActualizado);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
     
@@ -94,7 +95,7 @@ public class AsesorController {
      * PATCH /api/asesores/{id}/estado - Cambiar estado del asesor
      */
     @PatchMapping("/{id}/estado")
-    public ResponseEntity<Asesor> cambiarEstadoAsesor(
+    public ResponseEntity<?> cambiarEstadoAsesor(
         @PathVariable Long id,
         @RequestParam String estado
     ) {
@@ -102,7 +103,7 @@ public class AsesorController {
             Asesor asesor = asesorService.cambiarEstadoAsesor(id, estado);
             return ResponseEntity.ok(asesor);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
     
