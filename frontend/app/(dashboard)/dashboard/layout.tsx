@@ -350,7 +350,7 @@ function getMenuItems(
             {
                 title: "Auditoría",
                 items: [
-                    { name: "Ver Auditoría", href: "/roles/auditoria", icon: FileText },
+                    { name: "Ver Auditoría", href: "/dashboard/auditoria", icon: FileText },
                 ],
             },
             {

@@ -129,7 +129,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: BarChart3,
           label: 'Auditoría',
-          href: '/roles/auditoria',
+          href: '/dashboard/auditoria',
           visible: true,
           color: 'purple'
         });

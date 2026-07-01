@@ -2,7 +2,7 @@
 
 import { UsuariosPendientesPanel } from '@/components/roles/UsuariosPendientesPanel';
 import { GestionPermisosPanel } from '@/components/roles/GestionPermisosPanel';
-import { DashboardAuditoria } from '@/components/roles/DashboardAuditoria';
+import DashboardAuditoria from '@/components/roles/DashboardAuditoria';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
