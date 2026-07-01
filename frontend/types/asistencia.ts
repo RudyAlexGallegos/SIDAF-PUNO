@@ -3,6 +3,7 @@ export type TipoActividad =
     | "preparacion_fisica"
     | "reunion_ordinaria"
     | "reunion_extraordinaria"
+    | "actividad_suspendida"
 
 export type EstadoAsistencia =
     | "presente"

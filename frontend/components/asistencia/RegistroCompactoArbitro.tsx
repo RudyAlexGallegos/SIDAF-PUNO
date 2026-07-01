@@ -5,6 +5,18 @@ import React from "react"
 import { CheckCircle, Clock, XCircle, MoreHorizontal } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
+function getEstadoLabel(estado: EstadoAsistencia) {
+    switch (estado) {
+        case 'presente': return 'Presente'
+        case 'tardanza': return 'Tardanza'
+        case 'ausente': return 'Falta'
+        case 'justificado': return 'Justificado'
+        case 'licencia': return 'Licencia'
+        case 'justificacion': return 'Justificación'
+        default: return 'Sin registrar'
+    }
+}
+
 function initials(name?: string, surname?: string) {
     const a = (surname || "").trim().split(" ")[0] || ""
     const b = (name || "").trim().split(" ")[0] || ""
@@ -37,6 +49,7 @@ export default function RegistroCompactoArbitro({
     }, [menuOpen])
     const displayName = `${(arbitro.apellidoPaterno || arbitro.apellido || "").split(" ")[0]} ${arbitro.nombres || arbitro.nombre || ""}`.trim()
     const dni = (arbitro as any).dni || (arbitro as any).codigoCODAR || "—"
+    const estadoLabel = getEstadoLabel(estado)
 
     const btn = (value: EstadoAsistencia, label: string, cls: string, Icon?: any) => (
         <button
@@ -65,7 +78,7 @@ export default function RegistroCompactoArbitro({
                         <div>
                             <div className="flex items-center gap-2">
                                 <div className="font-medium text-sm">{displayName}</div>
-                                <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${estado === 'presente' ? 'bg-emerald-100 text-emerald-700' : estado === 'tardanza' ? 'bg-yellow-100 text-yellow-800' : estado === 'ausente' ? 'bg-slate-100 text-slate-700' : 'bg-blue-50 text-blue-700'}`}>{estado}</div>
+                                <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${estado === 'presente' ? 'bg-emerald-100 text-emerald-700' : estado === 'tardanza' ? 'bg-yellow-100 text-yellow-800' : estado === 'ausente' ? 'bg-slate-100 text-slate-700' : 'bg-blue-50 text-blue-700'}`}>{estadoLabel}</div>
                             </div>
                             <div className="text-xs text-gray-500">DNI: {dni} • {arbitro.categoria || (arbitro as any).categoria || '—'}</div>
                         </div>

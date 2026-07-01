@@ -75,7 +75,7 @@ export function useRegistroAsistencia() {
         }
     }
 
-    function iniciarRegistro(tipo: TipoActividad, responsable?: string, fechaCustom?: string) {
+    function iniciarRegistro(tipo: TipoActividad, responsable?: string, fechaCustom?: string, descripcion = "") {
         const now = new Date()
         const fecha = fechaCustom || now.toISOString().split("T")[0]
         const horaInicio = fechaCustom 
@@ -87,7 +87,7 @@ export function useRegistroAsistencia() {
             horaInicio: horaInicio,
             horaFin: "",
             tipoActividad: tipo,
-            descripcion: "",
+            descripcion: descripcion || "",
             ubicacion: "",
             responsable: responsable || "",
             arbitros: [],
@@ -114,6 +114,13 @@ export function useRegistroAsistencia() {
         }
 
         const updated = { ...registro, arbitros: updatedArbitros }
+        setRegistro(updated)
+        persist(updated)
+    }
+
+    function actualizarDescripcion(descripcion: string) {
+        if (!registro) return
+        const updated = { ...registro, descripcion }
         setRegistro(updated)
         persist(updated)
     }
@@ -190,6 +197,7 @@ export function useRegistroAsistencia() {
         registro, 
         iniciarRegistro, 
         marcarAsistencia, 
+        actualizarDescripcion,
         finalizarRegistro, 
         cancelarRegistro,
         diaInfo,
