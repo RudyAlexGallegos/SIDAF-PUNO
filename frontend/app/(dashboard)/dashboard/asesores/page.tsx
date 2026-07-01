@@ -74,11 +74,14 @@ export default function AsesoresPage() {
     }, [router])
 
     // Filtrar asesores por búsqueda
-    const asesoreFiltrados = (asesores || []).filter(a =>
-        `${a.nombre} ${a.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.dni.includes(searchTerm) ||
-        a.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const asesoreFiltrados = (asesores || []).filter(a => {
+        const nombreCompleto = `${a.nombre || ""} ${a.apellido || ""}`.toLowerCase()
+        const dni = `${a.dni || ""}`.toLowerCase()
+        const email = `${a.email || ""}`.toLowerCase()
+        const term = searchTerm.toLowerCase()
+
+        return nombreCompleto.includes(term) || dni.includes(term) || email.includes(term)
+    })
 
     // Manejar crear asesor
     const handleCrearAsesor = async (e: React.FormEvent) => {

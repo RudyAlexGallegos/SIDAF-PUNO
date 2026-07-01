@@ -61,17 +61,39 @@ public class AsesorService {
      * Crear nuevo asesor
      */
     public Asesor crearAsesor(Asesor asesor) {
-        // Validar que el asesor no exista ya
+        if (asesor == null) {
+            throw new RuntimeException("Los datos del asesor son obligatorios");
+        }
+
+        String nombre = normalizarTexto(asesor.getNombre());
+        String apellido = normalizarTexto(asesor.getApellido());
+        String dni = normalizarTexto(asesor.getDni());
+        String email = normalizarTexto(asesor.getEmail());
+
+        if (nombre.isEmpty() || apellido.isEmpty() || dni.isEmpty() || email.isEmpty()) {
+            throw new RuntimeException("Nombre, apellido, DNI y email son obligatorios");
+        }
+
+        if (asesor.getUsuarioId() == null || asesor.getUsuarioId() <= 0) {
+            throw new RuntimeException("El usuario asociado es obligatorio");
+        }
+
         if (asesorRepository.findByUsuarioId(asesor.getUsuarioId()).isPresent()) {
             throw new RuntimeException("Ya existe un asesor asociado a este usuario");
         }
-        if (asesorRepository.findByDni(asesor.getDni()).isPresent()) {
+        if (asesorRepository.findByDni(dni).isPresent()) {
             throw new RuntimeException("Ya existe un asesor con este DNI");
         }
-        if (asesorRepository.findByEmail(asesor.getEmail()).isPresent()) {
+        if (asesorRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Ya existe un asesor con este email");
         }
-        
+
+        asesor.setNombre(nombre);
+        asesor.setApellido(apellido);
+        asesor.setDni(dni);
+        asesor.setEmail(email);
+        asesor.setEstado(normalizarTexto(asesor.getEstado()).isEmpty() ? "ACTIVO" : asesor.getEstado().trim().toUpperCase());
+
         return asesorRepository.save(asesor);
     }
     
@@ -82,18 +104,40 @@ public class AsesorService {
         return asesorRepository.findById(id)
             .map(asesor -> {
                 if (asesorActualizado.getNombre() != null) {
-                    asesor.setNombre(asesorActualizado.getNombre());
+                    String nombre = normalizarTexto(asesorActualizado.getNombre());
+                    if (nombre.isEmpty()) {
+                        throw new RuntimeException("El nombre no puede estar vacío");
+                    }
+                    asesor.setNombre(nombre);
                 }
                 if (asesorActualizado.getApellido() != null) {
-                    asesor.setApellido(asesorActualizado.getApellido());
+                    String apellido = normalizarTexto(asesorActualizado.getApellido());
+                    if (apellido.isEmpty()) {
+                        throw new RuntimeException("El apellido no puede estar vacío");
+                    }
+                    asesor.setApellido(apellido);
+                }
+                if (asesorActualizado.getDni() != null) {
+                    String dni = normalizarTexto(asesorActualizado.getDni());
+                    if (dni.isEmpty()) {
+                        throw new RuntimeException("El DNI no puede estar vacío");
+                    }
+                    Optional<Asesor> existenteDni = asesorRepository.findByDni(dni);
+                    if (existenteDni.isPresent() && !existenteDni.get().getId().equals(id)) {
+                        throw new RuntimeException("Ya existe un asesor con este DNI");
+                    }
+                    asesor.setDni(dni);
                 }
                 if (asesorActualizado.getEmail() != null) {
-                    // Validar que no exista otro asesor con este email
-                    Optional<Asesor> existente = asesorRepository.findByEmail(asesorActualizado.getEmail());
-                    if (existente.isPresent() && !existente.get().getId().equals(id)) {
+                    String email = normalizarTexto(asesorActualizado.getEmail());
+                    if (email.isEmpty()) {
+                        throw new RuntimeException("El email no puede estar vacío");
+                    }
+                    Optional<Asesor> existenteEmail = asesorRepository.findByEmail(email);
+                    if (existenteEmail.isPresent() && !existenteEmail.get().getId().equals(id)) {
                         throw new RuntimeException("Ya existe un asesor con este email");
                     }
-                    asesor.setEmail(asesorActualizado.getEmail());
+                    asesor.setEmail(email);
                 }
                 if (asesorActualizado.getTelefono() != null) {
                     asesor.setTelefono(asesorActualizado.getTelefono());
@@ -102,7 +146,7 @@ public class AsesorService {
                     asesor.setEspecialidad(asesorActualizado.getEspecialidad());
                 }
                 if (asesorActualizado.getEstado() != null) {
-                    asesor.setEstado(asesorActualizado.getEstado());
+                    asesor.setEstado(normalizarTexto(asesorActualizado.getEstado()).isEmpty() ? "ACTIVO" : asesorActualizado.getEstado().trim().toUpperCase());
                 }
                 if (asesorActualizado.getDescripcion() != null) {
                     asesor.setDescripcion(asesorActualizado.getDescripcion());
@@ -114,6 +158,10 @@ public class AsesorService {
                 return asesorRepository.save(asesor);
             })
             .orElseThrow(() -> new RuntimeException("Asesor no encontrado con ID: " + id));
+    }
+
+    private String normalizarTexto(String valor) {
+        return valor == null ? "" : valor.trim();
     }
     
     /**
