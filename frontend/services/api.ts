@@ -806,7 +806,9 @@ export async function getResumenMensual(anio: number, mes: number): Promise<any>
 
 export async function getAsesores(): Promise<Asesor[]> {
     try {
-        const response = await fetch(buildUrl("/asesores"));
+        const response = await fetch(buildUrl("/asesores"), {
+            headers: getAuthHeaders(),
+        });
         if (!response.ok) throw new Error("Error HTTP");
         const data = await response.json();
         console.log("✅ Asesores obtenidos:", data);
@@ -819,7 +821,9 @@ export async function getAsesores(): Promise<Asesor[]> {
 
 export async function getAsesorById(id: number): Promise<Asesor | null> {
     try {
-        const response = await fetch(buildUrl(`/asesores/${id}`));
+        const response = await fetch(buildUrl(`/asesores/${id}`), {
+            headers: getAuthHeaders(),
+        });
         if (!response.ok) throw new Error("Error HTTP");
         return await response.json();
     } catch (error) {
@@ -831,7 +835,7 @@ export async function getAsesorById(id: number): Promise<Asesor | null> {
 export async function createAsesor(data: Asesor): Promise<Asesor> {
     const response = await fetch(buildUrl("/asesores"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
 
@@ -847,7 +851,7 @@ export async function createAsesor(data: Asesor): Promise<Asesor> {
 export async function updateAsesor(id: number, data: Asesor): Promise<Asesor> {
     const response = await fetch(buildUrl(`/asesores/${id}`), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
 
@@ -863,7 +867,7 @@ export async function updateAsesor(id: number, data: Asesor): Promise<Asesor> {
 export async function cambiarEstadoAsesor(id: number, estado: string): Promise<Asesor> {
     const response = await fetch(buildUrl(`/asesores/${id}/estado?estado=${encodeURIComponent(estado)}`), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -879,6 +883,7 @@ export async function deleteAsesor(id: number): Promise<boolean> {
     try {
         const response = await fetch(buildUrl(`/asesores/${id}`), {
             method: "DELETE",
+            headers: getAuthHeaders(),
         });
         return response.ok;
     } catch {

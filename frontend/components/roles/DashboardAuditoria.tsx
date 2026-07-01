@@ -101,9 +101,13 @@ export default function AuditoriaPage() {
         setAuditoria([]);
         setTotalElementos(0);
       }
-    } catch (err) {
-      setError('Error al cargar auditoría');
-      console.error(err);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.mensaje ||
+        err?.message ||
+        'Error al cargar auditoría';
+      setError(msg);
+      console.error('Error cargando auditoría:', err);
     } finally {
       setLoading(false);
     }

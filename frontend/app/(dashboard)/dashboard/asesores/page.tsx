@@ -79,8 +79,15 @@ export default function AsesoresPage() {
         const cargarUsuarios = async () => {
             if (!mostrarModalCrear) return
             try {
-                const usuarios = await getTodosUsuarios().catch(() => [])
-                setUsuariosDisponibles(usuarios.filter((u: Usuario) => u.id))
+                const [usuarios, asesoresExistentes] = await Promise.all([
+                    getTodosUsuarios().catch(() => []),
+                    getAsesores().catch(() => []),
+                ])
+
+                const usuariosAsignados = new Set((asesoresExistentes || []).map((asesor) => asesor.usuarioId).filter(Boolean))
+                setUsuariosDisponibles(
+                    (usuarios || []).filter((u: Usuario) => u.id && !usuariosAsignados.has(u.id))
+                )
             } catch {
                 setUsuariosDisponibles([])
             }
