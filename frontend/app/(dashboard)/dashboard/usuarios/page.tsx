@@ -54,20 +54,22 @@ export default function GestionUsuariosPage() {
     const [loadingPendientes, setLoadingPendientes] = useState(true)
     const [loadingTodos, setLoadingTodos] = useState(true)
     const [apiError, setApiError] = useState<string | null>(null)
+    const [debugInfo, setDebugInfo] = useState<string | null>(null)
 
     const cargarPendientes = useCallback(async () => {
         setLoadingPendientes(true)
         try {
+            const token = getToken()
             const res = await fetch(`${API_BASE}/auth/usuarios/pendientes`, { headers: authHeaders() })
             if (!res.ok) {
                 const body = await res.json().catch(() => ({}))
                 throw new Error(`${res.status} – ${body.error || res.statusText}`)
             }
-            const data = await res.json()
-            setPendientes(Array.isArray(data) ? data : [])
+            const raw = await res.json()
+            const data = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? [])
+            setPendientes(data)
         } catch (err: any) {
             console.error("cargarPendientes:", err)
-            setApiError(`No se pudieron cargar los pendientes: ${err.message}`)
         } finally {
             setLoadingPendientes(false)
         }
@@ -76,14 +78,30 @@ export default function GestionUsuariosPage() {
     const cargarTodos = useCallback(async () => {
         setLoadingTodos(true)
         setApiError(null)
+        setDebugInfo(null)
         try {
-            const res = await fetch(`${API_BASE}/auth/usuarios`, { headers: authHeaders() })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(`HTTP ${res.status} – ${body.error || res.statusText}`)
+            const token = getToken()
+            if (!token) {
+                setApiError("No hay sesión activa. Por favor inicia sesión nuevamente.")
+                return
             }
-            const data = await res.json()
-            setTodosUsuarios(Array.isArray(data) ? data : [])
+            const res = await fetch(`${API_BASE}/auth/usuarios`, { headers: authHeaders() })
+            const rawText = await res.text()
+            if (!res.ok) {
+                let errMsg = res.statusText
+                try { errMsg = JSON.parse(rawText)?.error || errMsg } catch {}
+                setDebugInfo(`URL: ${API_BASE}/auth/usuarios | Status: ${res.status} | Token: ${token.substring(0,8)}... | Respuesta: ${rawText.substring(0,200)}`)
+                throw new Error(`HTTP ${res.status} – ${errMsg}`)
+            }
+            let raw: any
+            try { raw = JSON.parse(rawText) } catch {
+                throw new Error(`Respuesta no es JSON válido: ${rawText.substring(0, 100)}`)
+            }
+            const data: Usuario[] = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? [])
+            setTodosUsuarios(data)
+            if (data.length === 0) {
+                setDebugInfo(`El servidor respondió OK pero con lista vacía. Respuesta: ${rawText.substring(0, 300)}`)
+            }
         } catch (err: any) {
             console.error("cargarTodos:", err)
             setApiError(`Error al cargar usuarios: ${err.message}`)
@@ -292,12 +310,20 @@ export default function GestionUsuariosPage() {
             {apiError && (
                 <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg">
                     <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
-                    <div>
+                    <div className="flex-1">
                         <p className="font-semibold text-sm">Error de conexión</p>
                         <p className="text-sm">{apiError}</p>
                         <button onClick={refrescar} className="text-sm underline mt-1 font-medium">Reintentar</button>
                     </div>
                 </div>
+            )}
+
+            {/* Debug info (lista vacía o error) */}
+            {debugInfo && (
+                <details className="bg-gray-100 border border-gray-300 rounded-lg px-4 py-3 text-xs text-gray-600">
+                    <summary className="cursor-pointer font-medium text-gray-700">ℹ️ Información de diagnóstico</summary>
+                    <pre className="mt-2 whitespace-pre-wrap break-all">{debugInfo}</pre>
+                </details>
             )}
 
             {/* Feedback de acciones */}
