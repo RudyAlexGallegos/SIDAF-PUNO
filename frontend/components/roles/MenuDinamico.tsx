@@ -56,7 +56,7 @@ export function MenuDinamico() {
       menuBasico.push({
         icon: Users,
         label: 'Mi Perfil',
-        href: '/roles/perfil',
+        href: '/dashboard/roles/perfil',
         visible: true,
         color: 'blue'
       });
@@ -66,7 +66,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: Users,
           label: 'Aprobar Usuarios',
-          href: '/roles/usuarios-pendientes',
+          href: '/dashboard/roles/usuarios-pendientes',
           visible: true,
           badge: 'Nuevo',
           color: 'amber'
@@ -75,7 +75,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: FileText,
           label: 'Solicitudes de Permisos',
-          href: '/roles/solicitudes',
+          href: '/dashboard/roles/solicitudes',
           visible: true,
           color: 'purple'
         });
@@ -83,7 +83,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: Key,
           label: 'Asignar Permisos',
-          href: '/roles/permisos',
+          href: '/dashboard/roles/permisos',
           visible: true,
           color: 'indigo'
         });
@@ -113,7 +113,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: Settings,
           label: 'Gestión de Usuarios',
-          href: '/roles/usuarios',
+          href: '/dashboard/roles/usuarios-pendientes',
           visible: true,
           color: 'emerald'
         });
@@ -121,7 +121,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: Key,
           label: 'Gestión de Permisos',
-          href: '/roles/permisos',
+          href: '/dashboard/roles/permisos',
           visible: true,
           color: 'indigo'
         });
@@ -137,7 +137,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: Zap,
           label: 'Panel Admin',
-          href: '/roles/admin',
+          href: '/dashboard/roles/admin',
           visible: true,
           badge: 'Pro',
           color: 'amber'
