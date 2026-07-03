@@ -111,12 +111,16 @@ interface Usuario {
 const PERMISO_TO_HREF: Record<string, string> = {
     "VER_ARBITROS": "/dashboard/arbitros",
     "GESTION_ARBITROS": "/dashboard/arbitros",
+    "GESTION_ASESORES": "/dashboard/asesores",
     "GESTION_ASISTENCIA": "/dashboard/asistencia",
     "GESTION_ASISTENCIA_HISTORIAL": "/dashboard/asistencia/historial",
+    "GESTION_ASISTENCIA_RANKING": "/dashboard/asistencia/ranking",
+    "GESTION_ASISTENCIA_RANKING_SEMANAL": "/dashboard/asistencia/ranking-semanal",
     "GESTION_DESIGNACIONES": "/dashboard/designaciones",
     "GESTION_CAMPEONATOS": "/dashboard/campeonatos",
     "GESTION_EQUIPOS": "/dashboard/campeonatos/equipos",
     "VER_REPORTES": "/dashboard/reportes",
+    "VER_AUDITORIA": "/dashboard/auditoria",
 }
 
 function getMenuItems(
@@ -156,13 +160,17 @@ function getMenuItems(
     const buildGestionItems = (permsArray: string[]): Array<{ name: string; href: string; icon: LucideIcon }> => {
         const allowedHrefs = [...new Set(permsArray.map(p => PERMISO_TO_HREF[p]).filter(Boolean))]
         const items: Array<{ name: string; href: string; icon: LucideIcon }> = []
-        if (allowedHrefs.includes("/dashboard/arbitros")) items.push({ name: "Árbitros", href: "/dashboard/arbitros", icon: Users })
-        if (allowedHrefs.includes("/dashboard/asistencia")) items.push({ name: "Control Asistencia", href: "/dashboard/asistencia", icon: UserCheck })
-        if (allowedHrefs.includes("/dashboard/asistencia/historial")) items.push({ name: "Historial Asistencia", href: "/dashboard/asistencia/historial", icon: History })
-        if (allowedHrefs.includes("/dashboard/designaciones")) items.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
-        if (allowedHrefs.includes("/dashboard/campeonatos")) items.push({ name: "Campeonatos", href: "/dashboard/campeonatos", icon: Trophy })
-        if (allowedHrefs.includes("/dashboard/campeonatos/equipos")) items.push({ name: "Equipos", href: "/dashboard/campeonatos/equipos", icon: Shield })
-        if (allowedHrefs.includes("/dashboard/reportes")) items.push({ name: "Reportes", href: "/dashboard/reportes", icon: FileText })
+        if (allowedHrefs.includes("/dashboard/arbitros"))                  items.push({ name: "Árbitros", href: "/dashboard/arbitros", icon: Users })
+        if (allowedHrefs.includes("/dashboard/asesores"))                  items.push({ name: "Asesores", href: "/dashboard/asesores", icon: BookOpen })
+        if (allowedHrefs.includes("/dashboard/asistencia"))               items.push({ name: "Control Asistencia", href: "/dashboard/asistencia", icon: UserCheck })
+        if (allowedHrefs.includes("/dashboard/asistencia/historial"))     items.push({ name: "Historial Asistencia", href: "/dashboard/asistencia/historial", icon: History })
+        if (allowedHrefs.includes("/dashboard/asistencia/ranking"))       items.push({ name: "Ranking Asistencia", href: "/dashboard/asistencia/ranking", icon: Award })
+        if (allowedHrefs.includes("/dashboard/asistencia/ranking-semanal")) items.push({ name: "Ranking Semanal", href: "/dashboard/asistencia/ranking-semanal", icon: Award })
+        if (allowedHrefs.includes("/dashboard/designaciones"))            items.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
+        if (allowedHrefs.includes("/dashboard/campeonatos"))              items.push({ name: "Campeonatos", href: "/dashboard/campeonatos", icon: Trophy })
+        if (allowedHrefs.includes("/dashboard/campeonatos/equipos"))      items.push({ name: "Equipos", href: "/dashboard/campeonatos/equipos", icon: Shield })
+        if (allowedHrefs.includes("/dashboard/reportes"))                 items.push({ name: "Reportes", href: "/dashboard/reportes", icon: FileText })
+        if (allowedHrefs.includes("/dashboard/auditoria"))                items.push({ name: "Auditoría", href: "/dashboard/auditoria", icon: FileText })
         return items
     }
 

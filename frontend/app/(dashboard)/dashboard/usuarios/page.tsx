@@ -30,11 +30,16 @@ function authHeaders() {
 const PERMISOS_DISPONIBLES = [
     { valor: "VER_ARBITROS", etiqueta: "Ver Árbitros" },
     { valor: "GESTION_ARBITROS", etiqueta: "Gestionar Árbitros" },
-    { valor: "GESTION_ASISTENCIA", etiqueta: "Gestionar Asistencia" },
+    { valor: "GESTION_ASESORES", etiqueta: "Gestionar Asesores" },
+    { valor: "GESTION_ASISTENCIA", etiqueta: "Control de Asistencia" },
+    { valor: "GESTION_ASISTENCIA_HISTORIAL", etiqueta: "Historial de Asistencia" },
+    { valor: "GESTION_ASISTENCIA_RANKING", etiqueta: "Ranking de Asistencia" },
+    { valor: "GESTION_ASISTENCIA_RANKING_SEMANAL", etiqueta: "Ranking Semanal" },
     { valor: "GESTION_DESIGNACIONES", etiqueta: "Gestionar Designaciones" },
     { valor: "GESTION_CAMPEONATOS", etiqueta: "Gestionar Campeonatos" },
     { valor: "GESTION_EQUIPOS", etiqueta: "Gestionar Equipos" },
     { valor: "VER_REPORTES", etiqueta: "Ver Reportes" },
+    { valor: "VER_AUDITORIA", etiqueta: "Ver Auditoría" },
 ]
 
 export default function GestionUsuariosPage() {
