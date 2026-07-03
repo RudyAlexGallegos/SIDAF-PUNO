@@ -3,25 +3,28 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { getStoredUser, getAsesores, createAsesor, updateAsesor, deleteAsesor, cambiarEstadoAsesor, Asesor, Usuario, getTodosUsuarios } from "@/services/api"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useCache } from "@/hooks/useCache"
-import { TableSkeleton } from "@/components/Skeletons"
-import { Plus, Edit2, Trash2, Eye, BookOpen, Search } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { CardSkeleton } from "@/components/Skeletons"
+import {
+    Plus, Edit2, Trash2, BookOpen, Search, X,
+    Mail, Phone, CheckCircle, XCircle, ArrowLeft,
+} from "lucide-react"
 
 export default function AsesoresPage() {
     const router = useRouter()
-    const { toast } = useToast()
     const [usuario, setUsuario] = useState<any>(null)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const [searchTerm, setSearchTerm] = useState("")
+    const [asesores, setAsesores] = useState<Asesor[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [deletingId, setDeletingId] = useState<number | null>(null)
 
     // Modal states
     const [mostrarModalCrear, setMostrarModalCrear] = useState(false)
@@ -30,515 +33,358 @@ export default function AsesoresPage() {
     const [usuariosDisponibles, setUsuariosDisponibles] = useState<Usuario[]>([])
     const [usuarioSeleccionadoId, setUsuarioSeleccionadoId] = useState<number | null>(null)
 
-    // Form states
     const [formData, setFormData] = useState<Asesor>({
-        usuarioId: 0,
-        nombre: "",
-        apellido: "",
-        dni: "",
-        email: "",
-        telefono: "",
-        especialidad: "",
-        estado: "ACTIVO",
-        descripcion: "",
+        usuarioId: 0, nombre: "", apellido: "", dni: "", email: "",
+        telefono: "", especialidad: "", estado: "ACTIVO", descripcion: "",
     })
 
-    // Fetch asesores
-    const fetchAsesores = async () => {
-        const data = await getAsesores().catch(() => [])
-        return data || []
+    const cargarAsesores = async () => {
+        setIsLoading(true)
+        try {
+            const data = await getAsesores()
+            setAsesores(Array.isArray(data) ? data : [])
+        } catch { setAsesores([]) }
+        finally { setIsLoading(false) }
     }
 
-    const { data: asesores = [], isLoading, refetch } = useCache(
-        "asesores",
-        fetchAsesores,
-        { ttl: 5 * 60 * 1000 }
-    )
-
     useEffect(() => {
-        try {
-            const user = getStoredUser()
-            if (!user) {
-                router.push("/login")
-                return
-            }
-            setUsuario(user)
-
-            // Verificar permisos
-            if (user.rol !== "ADMIN" && user.rol !== "PRESIDENCIA_CODAR") {
-                setError("No tienes permisos para acceder a esta página")
-                return
-            }
-        } catch (err: any) {
-            console.error("Error en useEffect:", err)
-            setError("Error al cargar la página")
-        }
+        const user = getStoredUser()
+        if (!user) { router.push("/login"); return }
+        setUsuario(user)
+        cargarAsesores()
     }, [router])
 
     useEffect(() => {
+        if (!mostrarModalCrear) return
         const cargarUsuarios = async () => {
-            if (!mostrarModalCrear) return
             try {
-                const [usuarios, asesoresExistentes] = await Promise.all([
+                const [usuarios, existentes] = await Promise.all([
                     getTodosUsuarios().catch(() => []),
                     getAsesores().catch(() => []),
                 ])
-
-                const usuariosAsignados = new Set((asesoresExistentes || []).map((asesor) => asesor.usuarioId).filter(Boolean))
-                setUsuariosDisponibles(
-                    (usuarios || []).filter((u: Usuario) => u.id && !usuariosAsignados.has(u.id))
-                )
-            } catch {
-                setUsuariosDisponibles([])
-            }
+                const asignados = new Set((existentes || []).map((a) => a.usuarioId).filter(Boolean))
+                setUsuariosDisponibles((usuarios || []).filter((u: Usuario) => u.id && !asignados.has(u.id)))
+            } catch { setUsuariosDisponibles([]) }
         }
-
         cargarUsuarios()
     }, [mostrarModalCrear])
 
-    // Filtrar asesores por búsqueda
-    const asesoreFiltrados = (asesores || []).filter(a => {
-        const nombreCompleto = `${a.nombre || ""} ${a.apellido || ""}`.toLowerCase()
-        const dni = `${a.dni || ""}`.toLowerCase()
-        const email = `${a.email || ""}`.toLowerCase()
-        const term = searchTerm.toLowerCase()
+    useEffect(() => {
+        if (!success) return
+        const t = setTimeout(() => setSuccess(""), 4000)
+        return () => clearTimeout(t)
+    }, [success])
 
-        return nombreCompleto.includes(term) || dni.includes(term) || email.includes(term)
+    const asesoreFiltrados = asesores.filter(a => {
+        const term = searchTerm.toLowerCase()
+        return `${a.nombre} ${a.apellido}`.toLowerCase().includes(term) ||
+            (a.dni || "").toLowerCase().includes(term) ||
+            (a.email || "").toLowerCase().includes(term)
     })
 
-    // Manejar crear asesor
     const handleCrearAsesor = async (e: React.FormEvent) => {
         e.preventDefault()
-        
         if (!formData.nombre || !formData.apellido || !formData.dni || !formData.email) {
-            setError("Por favor completa todos los campos requeridos")
-            return
+            setError("Completa todos los campos requeridos"); return
         }
-
         const usuarioId = formData.usuarioId || usuario?.id || 0
-        if (!usuarioId) {
-            setError("Selecciona un usuario existente para asociarlo al asesor")
-            return
-        }
-
+        if (!usuarioId) { setError("Selecciona un usuario existente"); return }
         try {
             await createAsesor({ ...formData, usuarioId })
             setSuccess("Asesor creado exitosamente")
             setError("")
-            setFormData({
-                usuarioId: 0,
-                nombre: "",
-                apellido: "",
-                dni: "",
-                email: "",
-                telefono: "",
-                especialidad: "",
-                estado: "ACTIVO",
-                descripcion: "",
-            })
+            setFormData({ usuarioId: 0, nombre: "", apellido: "", dni: "", email: "", telefono: "", especialidad: "", estado: "ACTIVO", descripcion: "" })
             setUsuarioSeleccionadoId(null)
             setMostrarModalCrear(false)
-            refetch()
-            toast({
-                title: "✅ Asesor creado",
-                description: `${formData.nombre} ${formData.apellido}`,
-            })
-        } catch (err: any) {
-            setError(err.message || "Error al crear asesor")
-        }
+            cargarAsesores()
+        } catch (err: any) { setError(err.message || "Error al crear asesor") }
     }
 
-    // Manejar editar asesor
     const handleEditarAsesor = async (e: React.FormEvent) => {
         e.preventDefault()
-        
         if (!asesorEditando?.id) return
-
         try {
             await updateAsesor(asesorEditando.id, asesorEditando)
-            setSuccess("Asesor actualizado exitosamente")
+            setSuccess("Asesor actualizado")
             setError("")
             setMostrarModalEditar(false)
             setAsesorEditando(null)
-            refetch()
-            toast({
-                title: "✅ Asesor actualizado",
-                description: `${asesorEditando.nombre} ${asesorEditando.apellido}`,
-            })
-        } catch (err: any) {
-            setError("Error: " + err.message)
-        }
+            cargarAsesores()
+        } catch (err: any) { setError("Error: " + err.message) }
     }
 
-    // Manejar cambiar estado
-    const handleCambiarEstado = async (id: number, nuevoEstado: string) => {
-        try {
-            await cambiarEstadoAsesor(id, nuevoEstado)
-            setSuccess("Estado actualizado")
-            setError("")
-            refetch()
-        } catch (err: any) {
-            setError("Error: " + err.message)
-        }
-    }
-
-    // Manejar eliminar asesor
     const handleEliminarAsesor = async (id: number) => {
-        if (!confirm("¿Estás seguro de que deseas eliminar este asesor?")) {
-            return
-        }
+        if (!confirm("¿Eliminar este asesor?")) return
+        setDeletingId(id)
         try {
             await deleteAsesor(id)
-            setSuccess("Asesor eliminado exitosamente")
-            setError("")
-            refetch()
-        } catch (err: any) {
-            setError("Error: " + err.message)
-        }
+            setSuccess("Asesor eliminado")
+            cargarAsesores()
+        } catch (err: any) { setError("Error: " + err.message) }
+        finally { setDeletingId(null) }
     }
 
-    if (error && !usuario) {
+    if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white p-4 md:p-8 flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-600 text-lg">{error}</p>
-                    <Button onClick={() => router.push("/login")} className="mt-4 bg-sky-600 hover:bg-sky-700">
-                        Volver al login
-                    </Button>
+            <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white">
+                <div className="container mx-auto w-full max-w-7xl px-4 py-8">
+                    <h1 className="text-3xl font-bold text-sky-900 mb-8">Gestión de Asesores</h1>
+                    <CardSkeleton count={8} />
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
+        <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white">
+            <div className="container mx-auto w-full max-w-7xl px-4 py-8">
+
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-sky-900 mb-2 flex items-center gap-3">
-                        <BookOpen className="w-10 h-10 text-sky-600" />
-                        Gestión de Asesores
-                    </h1>
-                    <p className="text-sky-600 text-lg">
-                        Administra los asesores de árbitros de la comisión
-                    </p>
-                </div>
-
-                {/* Alertas */}
-                {error && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-600 text-sm">{error}</p>
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                            <Link href="/dashboard">
+                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-sky-100">
+                                    <ArrowLeft className="h-5 w-5 text-sky-900" />
+                                </Button>
+                            </Link>
+                            <div>
+                                <h1 className="text-3xl font-bold text-sky-900">Gestión de Asesores</h1>
+                                <p className="text-sky-600 mt-1">{asesoreFiltrados.length} resultado{asesoreFiltrados.length !== 1 ? "s" : ""}</p>
+                            </div>
+                        </div>
+                        <Button onClick={() => setMostrarModalCrear(true)} className="bg-sky-600 hover:bg-sky-700 h-10">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nuevo
+                        </Button>
                     </div>
-                )}
-                {success && (
-                    <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                        <p className="text-emerald-600 text-sm">{success}</p>
-                    </div>
-                )}
 
-                {/* Barra de búsqueda y botón crear */}
-                <div className="mb-6 flex flex-col md:flex-row gap-3">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-3 w-5 h-5 text-sky-400" />
-                        <Input
-                            placeholder="Buscar por nombre, DNI o email..."
+                    {/* Alertas */}
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
+                            <XCircle className="h-4 w-4 shrink-0" />{error}
+                        </div>
+                    )}
+                    {success && (
+                        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-600 text-sm flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 shrink-0" />{success}
+                        </div>
+                    )}
+
+                    {/* Buscador */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-sky-400" />
+                        <input
+                            type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 border-sky-200 bg-white focus:ring-sky-500/50"
+                            placeholder="Buscar por nombre, email o DNI..."
+                            className="w-full pl-10 pr-10 py-2 rounded-lg border border-sky-200 bg-white text-sky-900 placeholder-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
                         />
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-sky-400 hover:text-sky-600">
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
-                    <Button
-                        onClick={() => setMostrarModalCrear(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Nuevo Asesor
-                    </Button>
                 </div>
 
-                {/* Tabla de asesores */}
-                {isLoading ? (
-                    <TableSkeleton />
-                ) : asesoreFiltrados.length === 0 ? (
-                    <Card className="border-2 border-sky-200 bg-white">
-                        <CardContent className="p-8 text-center">
-                            <p className="text-sky-600 text-lg">No hay asesores registrados</p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card className="border-2 border-sky-200 bg-white shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-sky-200 bg-gradient-to-r from-sky-50 to-sky-100">
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-sky-900">Nombre</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-sky-900">DNI</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-sky-900">Email</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-sky-900">Especialidad</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-sky-900">Estado</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-sky-900">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {asesoreFiltrados.map((asesor, idx) => (
-                                        <tr key={asesor.id} className={`border-b border-sky-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-sky-50/30'} hover:bg-sky-100/50 transition-all`}>
-                                            <td className="px-6 py-4">
-                                                <p className="font-semibold text-sky-900">{asesor.nombre} {asesor.apellido}</p>
-                                            </td>
-                                            <td className="px-6 py-4 text-sky-600">{asesor.dni}</td>
-                                            <td className="px-6 py-4 text-sky-600 text-sm">{asesor.email}</td>
-                                            <td className="px-6 py-4 text-sky-600">{asesor.especialidad || "-"}</td>
-                                            <td className="px-6 py-4">
-                                                <Badge className={`${
-                                                    asesor.estado === "ACTIVO"
-                                                        ? "bg-emerald-600 text-white"
-                                                        : "bg-red-600 text-white"
-                                                }`}>
-                                                    {asesor.estado || "ACTIVO"}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setAsesorEditando(asesor)
-                                                            setMostrarModalEditar(true)
-                                                        }}
-                                                        className="p-2 hover:bg-sky-100 rounded transition-all text-sky-600"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleEliminarAsesor(asesor.id!)}
-                                                        className="p-2 hover:bg-red-100 rounded transition-all text-red-600"
-                                                        title="Eliminar"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </Card>
-                )}
-
-                {/* Modal Crear Asesor */}
-                {mostrarModalCrear && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <Card className="border-2 border-sky-200 bg-white max-w-md w-full shadow-lg">
-                            <CardHeader className="bg-gradient-to-r from-sky-600 to-sky-500">
-                                <CardTitle className="text-white flex items-center gap-2">
-                                    <Plus className="w-5 h-5" />
-                                    Crear Nuevo Asesor
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6 space-y-4">
-                                <form onSubmit={handleCrearAsesor} className="space-y-4">
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Usuario asociado *</Label>
-                                        <select
-                                            value={usuarioSeleccionadoId ?? ""}
-                                            onChange={(e) => {
-                                                const id = Number(e.target.value)
-                                                setUsuarioSeleccionadoId(id || null)
-                                                const seleccionado = usuariosDisponibles.find((u) => u.id === id)
-                                                if (seleccionado) {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        usuarioId: seleccionado.id || 0,
-                                                        nombre: prev.nombre || seleccionado.nombre || "",
-                                                        apellido: prev.apellido || seleccionado.apellido || "",
-                                                        dni: prev.dni || seleccionado.dni || "",
-                                                        email: prev.email || seleccionado.email || "",
-                                                    }))
-                                                }
-                                            }}
-                                            className="w-full px-3 py-2 border border-sky-200 rounded-md text-sky-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                                        >
-                                            <option value="">Selecciona un usuario</option>
-                                            {usuariosDisponibles.map((usuarioDisponible) => (
-                                                <option key={usuarioDisponible.id} value={usuarioDisponible.id}>
-                                                    {`${usuarioDisponible.nombre || ""} ${usuarioDisponible.apellido || ""}`.trim() || usuarioDisponible.email || usuarioDisponible.dni}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Nombre *</Label>
-                                        <Input
-                                            value={formData.nombre}
-                                            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                                            placeholder="Nombre"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Apellido *</Label>
-                                        <Input
-                                            value={formData.apellido}
-                                            onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
-                                            placeholder="Apellido"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">DNI *</Label>
-                                        <Input
-                                            value={formData.dni}
-                                            onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
-                                            placeholder="DNI"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Email *</Label>
-                                        <Input
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            placeholder="Email"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Teléfono</Label>
-                                        <Input
-                                            value={formData.telefono || ""}
-                                            onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                                            placeholder="Teléfono"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Especialidad</Label>
-                                        <Input
-                                            value={formData.especialidad || ""}
-                                            onChange={(e) => setFormData({ ...formData, especialidad: e.target.value })}
-                                            placeholder="Especialidad"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div className="flex gap-3 pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => setMostrarModalCrear(false)}
-                                            className="flex-1 border-sky-200 text-sky-900 hover:bg-sky-50"
-                                        >
-                                            Cancelar
-                                        </Button>
-                                        <Button
-                                            type="submit"
-                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                        >
-                                            Crear
-                                        </Button>
-                                    </div>
-                                </form>
-                            </CardContent>
-                        </Card>
+                {/* Grid de cards */}
+                {asesoreFiltrados.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <BookOpen className="h-16 w-16 text-sky-200 mb-4" />
+                        <h3 className="text-lg font-semibold text-sky-900 mb-2">No se encontraron asesores</h3>
+                        <p className="text-sky-600 mb-6">
+                            {searchTerm ? "Intenta con otros términos de búsqueda" : "Comienza agregando el primer asesor"}
+                        </p>
+                        <Button onClick={() => setMostrarModalCrear(true)} className="bg-sky-600 hover:bg-sky-700">
+                            <Plus className="h-4 w-4 mr-2" />Nuevo Asesor
+                        </Button>
                     </div>
-                )}
+                ) : (
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {asesoreFiltrados.map((asesor) => (
+                            <Card key={asesor.id} className="bg-white border-sky-200 hover:shadow-lg hover:border-sky-300 transition-all">
+                                <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400" />
+                                <CardContent className="p-4">
+                                    {/* Nombre */}
+                                    <h3 className="font-bold text-sky-900 text-center mb-2 line-clamp-2">
+                                        {asesor.apellido} {asesor.nombre}
+                                    </h3>
 
-                {/* Modal Editar Asesor */}
-                {mostrarModalEditar && asesorEditando && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <Card className="border-2 border-sky-200 bg-white max-w-md w-full shadow-lg">
-                            <CardHeader className="bg-gradient-to-r from-sky-600 to-sky-500">
-                                <CardTitle className="text-white flex items-center gap-2">
-                                    <Edit2 className="w-5 h-5" />
-                                    Editar Asesor
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6 space-y-4">
-                                <form onSubmit={handleEditarAsesor} className="space-y-4">
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Nombre</Label>
-                                        <Input
-                                            value={asesorEditando.nombre}
-                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, nombre: e.target.value })}
-                                            placeholder="Nombre"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
+                                    {/* Especialidad badge */}
+                                    {asesor.especialidad && (
+                                        <div className="flex justify-center mb-3">
+                                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-700">
+                                                {asesor.especialidad}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Estado */}
+                                    <div className="flex items-center justify-center gap-2 mb-4 pb-4 border-b border-sky-100">
+                                        {asesor.estado === "ACTIVO" ? (
+                                            <>
+                                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                                <span className="text-sm font-medium text-emerald-600">Activo</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <XCircle className="h-4 w-4 text-red-600" />
+                                                <span className="text-sm font-medium text-red-600">{asesor.estado || "Inactivo"}</span>
+                                            </>
+                                        )}
                                     </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Apellido</Label>
-                                        <Input
-                                            value={asesorEditando.apellido}
-                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, apellido: e.target.value })}
-                                            placeholder="Apellido"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
+
+                                    {/* Contacto */}
+                                    <div className="space-y-2 mb-4 text-sm">
+                                        {asesor.telefono && (
+                                            <div className="flex items-center gap-2 text-sky-700">
+                                                <Phone className="h-4 w-4 text-sky-500 shrink-0" />
+                                                <span className="truncate">{asesor.telefono}</span>
+                                            </div>
+                                        )}
+                                        {asesor.email && (
+                                            <div className="flex items-center gap-2 text-sky-700">
+                                                <Mail className="h-4 w-4 text-sky-500 shrink-0" />
+                                                <span className="truncate text-xs">{asesor.email}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Email</Label>
-                                        <Input
-                                            type="email"
-                                            value={asesorEditando.email}
-                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, email: e.target.value })}
-                                            placeholder="Email"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Teléfono</Label>
-                                        <Input
-                                            value={asesorEditando.telefono || ""}
-                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, telefono: e.target.value })}
-                                            placeholder="Teléfono"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Especialidad</Label>
-                                        <Input
-                                            value={asesorEditando.especialidad || ""}
-                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, especialidad: e.target.value })}
-                                            placeholder="Especialidad"
-                                            className="border-sky-200 focus:ring-sky-500/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sky-900 font-semibold">Estado</Label>
-                                        <select
-                                            value={asesorEditando.estado || "ACTIVO"}
-                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, estado: e.target.value })}
-                                            className="w-full px-3 py-2 border border-sky-200 rounded-md text-sky-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                                        >
-                                            <option value="ACTIVO">Activo</option>
-                                            <option value="INACTIVO">Inactivo</option>
-                                            <option value="SUSPENDIDO">Suspendido</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex gap-3 pt-4">
+
+                                    {/* Acciones */}
+                                    <div className="flex gap-2">
                                         <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => {
-                                                setMostrarModalEditar(false)
-                                                setAsesorEditando(null)
-                                            }}
-                                            className="flex-1 border-sky-200 text-sky-900 hover:bg-sky-50"
+                                            size="sm"
+                                            className="flex-1 bg-sky-600 hover:bg-sky-700"
+                                            onClick={() => { setAsesorEditando(asesor); setMostrarModalEditar(true) }}
                                         >
-                                            Cancelar
+                                            <Edit2 className="h-3 w-3 mr-1" />Editar
                                         </Button>
                                         <Button
-                                            type="submit"
-                                            className="flex-1 bg-sky-600 hover:bg-sky-700 text-white"
+                                            size="sm"
+                                            variant="ghost"
+                                            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                            onClick={() => asesor.id && handleEliminarAsesor(asesor.id)}
+                                            disabled={deletingId === asesor.id}
                                         >
-                                            Guardar
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                </form>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 )}
             </div>
+
+            {/* Modal Crear Asesor */}
+            {mostrarModalCrear && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="border-2 border-sky-200 bg-white max-w-md w-full shadow-lg max-h-[90vh] overflow-y-auto">
+                        <CardHeader className="bg-gradient-to-r from-sky-600 to-sky-500 sticky top-0">
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <Plus className="w-5 h-5" />Crear Nuevo Asesor
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-4">
+                            <form onSubmit={handleCrearAsesor} className="space-y-4">
+                                <div>
+                                    <Label className="text-sky-900 font-semibold">Usuario asociado *</Label>
+                                    <select
+                                        value={usuarioSeleccionadoId ?? ""}
+                                        onChange={(e) => {
+                                            const id = Number(e.target.value)
+                                            setUsuarioSeleccionadoId(id || null)
+                                            const sel = usuariosDisponibles.find((u) => u.id === id)
+                                            if (sel) setFormData(prev => ({ ...prev, usuarioId: sel.id || 0, nombre: prev.nombre || sel.nombre || "", apellido: prev.apellido || sel.apellido || "", dni: prev.dni || sel.dni || "", email: prev.email || sel.email || "" }))
+                                        }}
+                                        className="w-full px-3 py-2 border border-sky-200 rounded-md text-sky-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                    >
+                                        <option value="">Selecciona un usuario</option>
+                                        {usuariosDisponibles.map((u) => (
+                                            <option key={u.id} value={u.id}>{`${u.nombre || ""} ${u.apellido || ""}`.trim() || u.email || u.dni}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {[
+                                    { label: "Nombre *", key: "nombre", placeholder: "Nombre" },
+                                    { label: "Apellido *", key: "apellido", placeholder: "Apellido" },
+                                    { label: "DNI *", key: "dni", placeholder: "DNI" },
+                                    { label: "Email *", key: "email", placeholder: "Email", type: "email" },
+                                    { label: "Teléfono", key: "telefono", placeholder: "Teléfono" },
+                                    { label: "Especialidad", key: "especialidad", placeholder: "Especialidad" },
+                                ].map(({ label, key, placeholder, type }) => (
+                                    <div key={key}>
+                                        <Label className="text-sky-900 font-semibold">{label}</Label>
+                                        <Input
+                                            type={type || "text"}
+                                            value={(formData as any)[key] || ""}
+                                            onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                                            placeholder={placeholder}
+                                            className="border-sky-200 focus:ring-sky-500/50"
+                                        />
+                                    </div>
+                                ))}
+                                <div className="flex gap-3 pt-2">
+                                    <Button type="button" variant="outline" onClick={() => setMostrarModalCrear(false)} className="flex-1 border-sky-200">Cancelar</Button>
+                                    <Button type="submit" className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">Crear</Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Modal Editar Asesor */}
+            {mostrarModalEditar && asesorEditando && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="border-2 border-sky-200 bg-white max-w-md w-full shadow-lg max-h-[90vh] overflow-y-auto">
+                        <CardHeader className="bg-gradient-to-r from-sky-600 to-sky-500 sticky top-0">
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <Edit2 className="w-5 h-5" />Editar Asesor
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-4">
+                            <form onSubmit={handleEditarAsesor} className="space-y-4">
+                                {[
+                                    { label: "Nombre", key: "nombre" },
+                                    { label: "Apellido", key: "apellido" },
+                                    { label: "Email", key: "email", type: "email" },
+                                    { label: "Teléfono", key: "telefono" },
+                                    { label: "Especialidad", key: "especialidad" },
+                                ].map(({ label, key, type }) => (
+                                    <div key={key}>
+                                        <Label className="text-sky-900 font-semibold">{label}</Label>
+                                        <Input
+                                            type={type || "text"}
+                                            value={(asesorEditando as any)[key] || ""}
+                                            onChange={(e) => setAsesorEditando({ ...asesorEditando, [key]: e.target.value })}
+                                            className="border-sky-200 focus:ring-sky-500/50"
+                                        />
+                                    </div>
+                                ))}
+                                <div>
+                                    <Label className="text-sky-900 font-semibold">Estado</Label>
+                                    <select
+                                        value={asesorEditando.estado || "ACTIVO"}
+                                        onChange={(e) => setAsesorEditando({ ...asesorEditando, estado: e.target.value })}
+                                        className="w-full px-3 py-2 border border-sky-200 rounded-md text-sky-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                    >
+                                        <option value="ACTIVO">Activo</option>
+                                        <option value="INACTIVO">Inactivo</option>
+                                        <option value="SUSPENDIDO">Suspendido</option>
+                                    </select>
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                    <Button type="button" variant="outline" onClick={() => { setMostrarModalEditar(false); setAsesorEditando(null) }} className="flex-1 border-sky-200">Cancelar</Button>
+                                    <Button type="submit" className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">Guardar</Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     )
 }
