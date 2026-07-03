@@ -55,7 +55,7 @@ export default function DashboardPage() {
         let timer: ReturnType<typeof setInterval> | null = null
 
         const fetchData = async () => {
-            const MAX_INTENTOS = 12      // hasta ~2 minutos
+            const MAX_INTENTOS = 8       // hasta ~80s (cubre cold start de Render)
             const ESPERA_MS    = 10_000  // 10s entre intentos
 
             for (let i = 1; i <= MAX_INTENTOS; i++) {
@@ -63,11 +63,8 @@ export default function DashboardPage() {
                 setIntento(i)
 
                 try {
-                    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api") + "/hello"
-                    const helloRes = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) })
-                    if (!helloRes.ok) throw new Error("API no disponible")
-                    setApiStatus("ok")
-
+                    // Cargar datos directamente — sin health check separado
+                    // (el health check usaba un fallback URL diferente y siempre fallaba en Vercel)
                     const [arbitrosData, designaciones, championships, equipos, asistenciasData] = await Promise.all([
                         getArbitros(),
                         getDesignaciones(),
@@ -75,6 +72,9 @@ export default function DashboardPage() {
                         getEquipos(),
                         getAsistencias(),
                     ])
+
+                    // Si llegamos aquí el backend está activo
+                    setApiStatus("ok")
 
                     const arbitrosActivos = arbitrosData.filter((a: Arbitro) => a.estado === "ACTIVO" || a.disponible).length
                     const designacionesPendientes = designaciones.filter((d: Designacion) => d.estado === "PENDIENTE" || d.estado === "CONFIRMADA").length
@@ -93,7 +93,6 @@ export default function DashboardPage() {
                         todayAsistencias: todayAsistCount,
                     })
 
-                    // Store real data for dashboard components
                     setAsistencias(asistenciasData)
                     setArbitros(arbitrosData)
                     if (timer) clearInterval(timer)
