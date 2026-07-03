@@ -545,12 +545,15 @@ export default function GestionUsuariosPage() {
                                                 <td className="px-4 py-3 text-gray-500 text-xs">{user.unidadOrganizacional || "—"}</td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex gap-1.5 flex-wrap">
+                                                        {/* Solo ADMIN puede gestionar permisos de otro ADMIN */}
+                                                        {(usuario?.rol === "ADMIN" || user.rol !== "ADMIN") && (
                                                         <button
                                                             onClick={() => abrirModalPermisos(user)}
                                                             className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 transition-colors"
                                                         >
                                                             <Shield className="h-3 w-3" />Permisos
                                                         </button>
+                                                        )}
                                                         {usuario?.rol === "ADMIN" && user.estado === "ACTIVO" && (
                                                             <button
                                                                 onClick={() => user.id && handleCambiarEstado(user.id, "INACTIVO")}

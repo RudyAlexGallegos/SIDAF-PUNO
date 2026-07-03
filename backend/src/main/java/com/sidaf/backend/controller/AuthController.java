@@ -411,6 +411,11 @@ public class AuthController {
         if (usuario == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Usuario no encontrado"));
         }
+
+        // Solo ADMIN puede modificar permisos de otro ADMIN
+        if (usuario.getRol() == Usuario.RolUsuario.ADMIN && usuarioActual.getRol() != Usuario.RolUsuario.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "No puedes modificar los permisos de un Administrador"));
+        }
         
         // Verificar unidad organizacional (excepto Admin)
         if (usuarioActual.getRol() != Usuario.RolUsuario.ADMIN && 
