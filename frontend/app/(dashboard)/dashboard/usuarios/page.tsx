@@ -3,17 +3,29 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from "react"
-import { getStoredUser, getUsuariosPendientes, getTodosUsuarios, aprobarUsuario, asignarPermisos, cambiarEstadoUsuario, logout, eliminarUsuario, Usuario, createAsesor } from "@/services/api"
+import { getStoredUser, aprobarUsuario, asignarPermisos, cambiarEstadoUsuario, eliminarUsuario, Usuario, createAsesor } from "@/services/api"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import {
     Users, UserCheck, UserX, RefreshCw, Search, Shield, Clock,
-    CheckCircle, XCircle, AlertCircle, Eye, ChevronDown
+    CheckCircle, XCircle, AlertCircle, ChevronDown
 } from "lucide-react"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
+
+function getToken(): string | null {
+    try { return typeof window !== "undefined" ? localStorage.getItem("token") : null } catch { return null }
+}
+
+function authHeaders() {
+    const token = getToken()
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+}
 
 const PERMISOS_DISPONIBLES = [
     { valor: "VER_ARBITROS", etiqueta: "Ver Árbitros" },
@@ -30,11 +42,10 @@ export default function GestionUsuariosPage() {
     const [usuario, setUsuario] = useState<Usuario | null>(null)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
-    const [tabActiva, setTabActiva] = useState<"pendientes" | "todos">("pendientes")
+    const [tabActiva, setTabActiva] = useState<"todos" | "pendientes">("todos")
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null)
     const [permisosSeleccionados, setPermisosSeleccionados] = useState<string[]>([])
     const [rolSeleccionado, setRolSeleccionado] = useState<string>("UNIDAD_TECNICA_CODAR")
-    const [usuarioParaAprobar, setUsuarioParaAprobar] = useState<Usuario | null>(null)
     const [busqueda, setBusqueda] = useState("")
     const [filtroRol, setFiltroRol] = useState("TODOS")
     const [filtroEstado, setFiltroEstado] = useState("TODOS")
@@ -46,13 +57,17 @@ export default function GestionUsuariosPage() {
 
     const cargarPendientes = useCallback(async () => {
         setLoadingPendientes(true)
-        setApiError(null)
         try {
-            const data = await getUsuariosPendientes()
-            setPendientes(data || [])
+            const res = await fetch(`${API_BASE}/auth/usuarios/pendientes`, { headers: authHeaders() })
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}))
+                throw new Error(`${res.status} – ${body.error || res.statusText}`)
+            }
+            const data = await res.json()
+            setPendientes(Array.isArray(data) ? data : [])
         } catch (err: any) {
-            console.error("Error cargando pendientes:", err)
-            setApiError("Error al conectar con el servidor. El backend puede estar iniciando (Render cold start). Intente refrescar.")
+            console.error("cargarPendientes:", err)
+            setApiError(`No se pudieron cargar los pendientes: ${err.message}`)
         } finally {
             setLoadingPendientes(false)
         }
@@ -62,11 +77,16 @@ export default function GestionUsuariosPage() {
         setLoadingTodos(true)
         setApiError(null)
         try {
-            const data = await getTodosUsuarios()
-            setTodosUsuarios(data || [])
+            const res = await fetch(`${API_BASE}/auth/usuarios`, { headers: authHeaders() })
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}))
+                throw new Error(`HTTP ${res.status} – ${body.error || res.statusText}`)
+            }
+            const data = await res.json()
+            setTodosUsuarios(Array.isArray(data) ? data : [])
         } catch (err: any) {
-            console.error("Error cargando usuarios:", err)
-            setApiError("Error al conectar con el servidor. El backend puede estar iniciando (Render cold start). Intente refrescar.")
+            console.error("cargarTodos:", err)
+            setApiError(`Error al cargar usuarios: ${err.message}`)
         } finally {
             setLoadingTodos(false)
         }
