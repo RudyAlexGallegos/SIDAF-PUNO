@@ -75,7 +75,7 @@ export function MenuDinamico() {
         menuBasico.push({
           icon: FileText,
           label: 'Solicitudes de Permisos',
-          href: '/dashboard/roles/solicitudes',
+          href: '/dashboard/solicitudes',
           visible: true,
           color: 'purple'
         });
