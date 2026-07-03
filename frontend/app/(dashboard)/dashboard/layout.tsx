@@ -136,7 +136,7 @@ function getMenuItems(
     // ADMIN tiene acceso a todo
     const isAdmin = rol === "ADMIN"
 
-    // Roles de presidencia siempre tienen menú completo (no filtrar por permisosEspecificos)
+    // Roles de presidencia
     const isPresidencia = ["PRESIDENCIA", "PRESIDENCIA_CODAR", "PRESIDENTE_SIDAF"].includes(rol || "")
     
     // Si tiene permiso "TODOS", tiene acceso completo
@@ -151,41 +151,43 @@ function getMenuItems(
             ],
         },
     ]
-    
-    // Si no es admin/presidencia ni tiene acceso total, filtrar por permisos específicos
-    if (!isAdmin && !isPresidencia && !hasAllAccess && permisos.length > 0) {
-        const allowedHrefs = permisos
-            .map(p => PERMISO_TO_HREF[p])
-            .filter(Boolean)
-        
-        // Eliminar duplicados
-        const uniqueHrefs = [...new Set(allowedHrefs)]
-        
-        // Construir menú basado en permisos
-        const menuItems: Array<{ name: string; href: string; icon: LucideIcon }> = []
-        
-        if (uniqueHrefs.includes("/dashboard/arbitros")) {
-            menuItems.push({ name: "Árbitros", href: "/dashboard/arbitros", icon: Users })
-        }
-        if (uniqueHrefs.includes("/dashboard/asistencia")) {
-            menuItems.push({ name: "Control Asistencia", href: "/dashboard/asistencia", icon: UserCheck })
-        }
-        if (uniqueHrefs.includes("/dashboard/asistencia/historial")) {
-            menuItems.push({ name: "Historial Asistencia", href: "/dashboard/asistencia/historial", icon: History })
-        }
-        if (uniqueHrefs.includes("/dashboard/designaciones")) {
-            menuItems.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
-        }
-        if (uniqueHrefs.includes("/dashboard/campeonatos")) {
-            menuItems.push({ name: "Campeonatos", href: "/dashboard/campeonatos", icon: Trophy })
-        }
-        if (uniqueHrefs.includes("/dashboard/campeonatos/equipos")) {
-            menuItems.push({ name: "Equipos", href: "/dashboard/campeonatos/equipos", icon: Shield })
-        }
-        if (uniqueHrefs.includes("/dashboard/reportes")) {
-            menuItems.push({ name: "Reportes", href: "/dashboard/reportes", icon: FileText })
-        }
-        
+
+    // Construir items de gestión según permisos reales almacenados
+    const buildGestionItems = (permsArray: string[]): Array<{ name: string; href: string; icon: LucideIcon }> => {
+        const allowedHrefs = [...new Set(permsArray.map(p => PERMISO_TO_HREF[p]).filter(Boolean))]
+        const items: Array<{ name: string; href: string; icon: LucideIcon }> = []
+        if (allowedHrefs.includes("/dashboard/arbitros")) items.push({ name: "Árbitros", href: "/dashboard/arbitros", icon: Users })
+        if (allowedHrefs.includes("/dashboard/asistencia")) items.push({ name: "Control Asistencia", href: "/dashboard/asistencia", icon: UserCheck })
+        if (allowedHrefs.includes("/dashboard/asistencia/historial")) items.push({ name: "Historial Asistencia", href: "/dashboard/asistencia/historial", icon: History })
+        if (allowedHrefs.includes("/dashboard/designaciones")) items.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
+        if (allowedHrefs.includes("/dashboard/campeonatos")) items.push({ name: "Campeonatos", href: "/dashboard/campeonatos", icon: Trophy })
+        if (allowedHrefs.includes("/dashboard/campeonatos/equipos")) items.push({ name: "Equipos", href: "/dashboard/campeonatos/equipos", icon: Shield })
+        if (allowedHrefs.includes("/dashboard/reportes")) items.push({ name: "Reportes", href: "/dashboard/reportes", icon: FileText })
+        return items
+    }
+
+    // Para roles de PRESIDENCIA: menú con sus secciones propias + permisos reales del usuario
+    if (isPresidencia) {
+        const gestionItems = buildGestionItems(permisos)
+        return [
+            ...menuPrincipal,
+            {
+                title: "Gestión de Usuarios",
+                items: [
+                    { name: "Usuarios", href: "/dashboard/usuarios", icon: UserCog },
+                    { name: "Solicitudes de Permisos", href: "/dashboard/solicitudes", icon: Inbox },
+                ],
+            },
+            ...(gestionItems.length > 0 ? [{
+                title: "Gestión",
+                items: gestionItems,
+            }] : []),
+        ]
+    }
+
+    // Para otros roles con permisos específicos
+    if (!isAdmin && !hasAllAccess && permisos.length > 0) {
+        const gestionItems = buildGestionItems(permisos)
         return [
             ...menuPrincipal,
             {
@@ -195,10 +197,10 @@ function getMenuItems(
                     { name: "Ver Solicitudes", href: "/dashboard/solicitudes", icon: Inbox },
                 ],
             },
-            {
+            ...(gestionItems.length > 0 ? [{
                 title: "Gestión",
-                items: menuItems,
-            },
+                items: gestionItems,
+            }] : []),
         ]
     }
 
