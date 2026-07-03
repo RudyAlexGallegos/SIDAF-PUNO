@@ -311,12 +311,20 @@ public class AuthController {
             usuario.setRol(Usuario.RolUsuario.UNIDAD_TECNICA);
         }
         
-        if (permisos != null && !permisos.isEmpty()) {
+        // Aplicar permisos: si viene vacío o "[]" usar defaults del rol
+        boolean permisosExplicitos = permisos != null && !permisos.isEmpty() && !permisos.equals("[]");
+        if (permisosExplicitos) {
             usuario.setPermisosEspecificos(permisos);
         } else {
-            if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA || usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR) {
-                usuario.setPermisosEspecificos("[\"GESTION_ARBITROS\",\"GESTION_ASISTENCIA\",\"GESTION_DESIGNACIONES\",\"GESTION_CAMPEONATOS\",\"GESTION_EQUIPOS\",\"VER_REPORTES\"]");
-            } else if (usuario.getRol() == Usuario.RolUsuario.UNIDAD_TECNICA) {
+            // Defaults según rol
+            if (usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA ||
+                usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR ||
+                usuario.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF) {
+                usuario.setPermisosEspecificos("[\"GESTION_ARBITROS\",\"GESTION_ASISTENCIA\",\"GESTION_DESIGNACIONES\",\"GESTION_CAMPEONATOS\",\"GESTION_EQUIPOS\",\"VER_REPORTES\",\"VER_ARBITROS\"]");
+            } else if (usuario.getRol() == Usuario.RolUsuario.ARBITRO ||
+                       usuario.getRol() == Usuario.RolUsuario.ASESOR) {
+                usuario.setPermisosEspecificos("[\"VER_ARBITROS\",\"GESTION_ASISTENCIA\"]");
+            } else {
                 usuario.setPermisosEspecificos("[]");
             }
         }

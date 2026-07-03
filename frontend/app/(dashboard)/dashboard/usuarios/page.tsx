@@ -141,7 +141,7 @@ export default function GestionUsuariosPage() {
             return
         }
         try {
-            await aprobarUsuario(id, rolSeleccionado, "[]")
+            await aprobarUsuario(id, rolSeleccionado, "")  // vacío = backend aplica defaults del rol
             
             // Si el rol es ASESOR, crear automáticamente el asesor
             if (rolSeleccionado === "ASESOR" && user) {
@@ -219,20 +219,25 @@ export default function GestionUsuariosPage() {
         }
     }
 
+    const TODOS_PERMISOS = PERMISOS_DISPONIBLES.map(p => p.valor)
+
     const abrirModalPermisos = (user: Usuario) => {
         setUsuarioSeleccionado(user)
-        // Parsear permisos existentes
         try {
-            if (user.permisosEspecificos) {
-                const permisos = typeof user.permisosEspecificos === 'string' 
-                    ? JSON.parse(user.permisosEspecificos)
-                    : user.permisosEspecificos
-                setPermisosSeleccionados(Array.isArray(permisos) ? permisos : [])
-            } else {
+            const raw = user.permisosEspecificos
+            if (!raw) {
                 setPermisosSeleccionados([])
+                return
             }
-        } catch (err) {
-            console.error("Error al parsear permisos:", err)
+            const parsed: string[] = typeof raw === 'string' ? JSON.parse(raw) : raw
+            if (!Array.isArray(parsed)) { setPermisosSeleccionados([]); return }
+            // Si tiene 'TODOS' → marcar todos los permisos disponibles
+            if (parsed.includes('TODOS')) {
+                setPermisosSeleccionados(TODOS_PERMISOS)
+            } else {
+                setPermisosSeleccionados(parsed)
+            }
+        } catch {
             setPermisosSeleccionados([])
         }
     }
@@ -652,31 +657,75 @@ export default function GestionUsuariosPage() {
             {usuarioSeleccionado && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-                        <div className="flex items-center gap-3 mb-5">
+                        <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-blue-100 rounded-lg">
                                 <Shield className="h-5 w-5 text-blue-600" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <h2 className="text-lg font-bold">Gestionar Permisos</h2>
-                                <p className="text-sm text-gray-500">{usuarioSeleccionado.nombre} {usuarioSeleccionado.apellido}</p>
+                                <p className="text-sm text-gray-500">
+                                    {usuarioSeleccionado.nombre} {usuarioSeleccionado.apellido}
+                                    <span className="ml-2 text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">
+                                        {getRolLabel(usuarioSeleccionado.rol)}
+                                    </span>
+                                </p>
                             </div>
                         </div>
-                        <div className="space-y-2 mb-5 max-h-64 overflow-y-auto pr-1">
-                            {PERMISOS_DISPONIBLES.map(permiso => (
-                                <label key={permiso.valor} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={permisosSeleccionados.includes(permiso.valor)}
-                                        onChange={() => togglePermiso(permiso.valor)}
-                                        className="w-4 h-4 accent-blue-600"
-                                    />
-                                    <span className="text-sm">{permiso.etiqueta}</span>
-                                </label>
-                            ))}
+
+                        {/* Seleccionar todos / ninguno */}
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b">
+                            <span className="text-xs text-gray-500">
+                                {permisosSeleccionados.length} de {PERMISOS_DISPONIBLES.length} permisos activos
+                            </span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setPermisosSeleccionados(TODOS_PERMISOS)}
+                                    className="text-xs text-blue-600 hover:underline"
+                                >
+                                    Seleccionar todos
+                                </button>
+                                <span className="text-gray-300">|</span>
+                                <button
+                                    onClick={() => setPermisosSeleccionados([])}
+                                    className="text-xs text-gray-500 hover:underline"
+                                >
+                                    Ninguno
+                                </button>
+                            </div>
                         </div>
+
+                        <div className="space-y-1 mb-5 max-h-64 overflow-y-auto pr-1">
+                            {PERMISOS_DISPONIBLES.map(permiso => {
+                                const activo = permisosSeleccionados.includes(permiso.valor)
+                                return (
+                                    <label
+                                        key={permiso.valor}
+                                        className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${
+                                            activo ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50 border border-transparent"
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={activo}
+                                            onChange={() => togglePermiso(permiso.valor)}
+                                            className="w-4 h-4 accent-blue-600"
+                                        />
+                                        <span className={`text-sm font-medium ${activo ? "text-blue-700" : "text-gray-700"}`}>
+                                            {permiso.etiqueta}
+                                        </span>
+                                        {activo && (
+                                            <CheckCircle className="h-3.5 w-3.5 text-blue-500 ml-auto" />
+                                        )}
+                                    </label>
+                                )
+                            })}
+                        </div>
+
                         <div className="flex gap-2 justify-end pt-3 border-t">
                             <Button variant="outline" onClick={() => setUsuarioSeleccionado(null)}>Cancelar</Button>
-                            <Button onClick={handleAsignarPermisos}>Guardar Permisos</Button>
+                            <Button onClick={handleAsignarPermisos}>
+                                Guardar {permisosSeleccionados.length > 0 ? `(${permisosSeleccionados.length})` : ""}
+                            </Button>
                         </div>
                     </div>
                 </div>
