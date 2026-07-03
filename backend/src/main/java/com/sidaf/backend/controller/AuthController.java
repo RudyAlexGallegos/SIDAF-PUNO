@@ -9,6 +9,8 @@ import com.sidaf.backend.repository.SolicitudPermisoRepository;
 import com.sidaf.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -31,6 +33,9 @@ public class AuthController {
 
     @Autowired
     private AuditoriaPermisoRepository auditoriaPermisoRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     // Login
     @PostMapping("/login")
@@ -470,39 +475,47 @@ public class AuthController {
 
     // Eliminar usuario
     @DeleteMapping("/usuarios/{id}")
+    @Transactional
     public ResponseEntity<?> eliminarUsuario(@PathVariable Long id, @RequestHeader("Authorization") String authHeader) {
-        Usuario usuarioActual = verificarAuth(authHeader);
-        if (usuarioActual == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
+        try {
+            Usuario usuarioActual = verificarAuth(authHeader);
+            if (usuarioActual == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
+            }
+            
+            if (usuarioActual.getRol() != Usuario.RolUsuario.ADMIN) {
+                return ResponseEntity.status(403).body(Map.of("error", "Solo el administrador puede eliminar usuarios"));
+            }
+            
+            Usuario usuarioAEliminar = usuarioRepository.findById(id).orElse(null);
+            if (usuarioAEliminar == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Usuario no encontrado"));
+            }
+            
+            if (id.equals(usuarioActual.getId())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No puedes eliminarte a ti mismo"));
+            }
+            
+            // 1. Nullificar referencias en auditoria_permisos (no eliminar el historial)
+            jdbcTemplate.update("UPDATE auditoria_permisos SET usuario_afectado_id = NULL WHERE usuario_afectado_id = ?", id);
+            jdbcTemplate.update("UPDATE auditoria_permisos SET usuario_id = NULL WHERE usuario_id = ?", id);
+            jdbcTemplate.update("UPDATE auditoria_permisos SET realizado_por = NULL WHERE realizado_por = ?", id);
+            
+            // 2. Eliminar permisos dinámicos asignados o asignados por este usuario
+            jdbcTemplate.update("DELETE FROM usuario_permiso_dinamico WHERE usuario_id = ?", id);
+            jdbcTemplate.update("UPDATE usuario_permiso_dinamico SET asignado_por = NULL WHERE asignado_por = ?", id);
+            
+            // 3. Eliminar solicitudes de permisos del usuario
+            jdbcTemplate.update("DELETE FROM solicitud_permiso WHERE usuario_id = ?", id);
+            
+            // 4. Eliminar el usuario
+            usuarioRepository.deleteById(id);
+            
+            return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado exitosamente"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Error al eliminar: " + e.getMessage()));
         }
-        
-        if (usuarioActual.getRol() != Usuario.RolUsuario.ADMIN) {
-            return ResponseEntity.status(403).body(Map.of("error", "Solo el administrador puede eliminar usuarios"));
-        }
-        
-        Usuario usuarioAEliminar = usuarioRepository.findById(id).orElse(null);
-        if (usuarioAEliminar == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Usuario no encontrado"));
-        }
-        
-        // No permitir eliminarse a sí mismo
-        if (id.equals(usuarioActual.getId())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "No puedes eliminarte a ti mismo"));
-        }
-        
-        // Registrar en auditoría
-        AuditoriaPermiso auditoria = new AuditoriaPermiso();
-        auditoria.setUsuarioAfectado(usuarioAEliminar);
-        auditoria.setRealizadoPor(usuarioActual);
-        auditoria.setTipoCambio(TipoCambio.CAMBIO_ESTADO);
-        auditoria.setDescripcion("Usuario eliminado");
-        auditoria.setRazon("Eliminado por administrador");
-        auditoria.setFechaCambio(LocalDateTime.now());
-        auditoriaPermisoRepository.save(auditoria);
-        
-        usuarioRepository.deleteById(id);
-        
-        return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado"));
     }
 
     // Eliminar todos los usuarios (solo para testing)
