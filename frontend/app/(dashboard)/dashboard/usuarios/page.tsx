@@ -221,9 +221,16 @@ export default function GestionUsuariosPage() {
 
     const TODOS_PERMISOS = PERMISOS_DISPONIBLES.map(p => p.valor)
 
+    const ROLES_PRESIDENCIA = ["PRESIDENCIA", "PRESIDENCIA_CODAR", "PRESIDENTE_SIDAF"]
+
     const abrirModalPermisos = (user: Usuario) => {
         setUsuarioSeleccionado(user)
         try {
+            // Roles de presidencia siempre tienen todos los permisos
+            if (ROLES_PRESIDENCIA.includes(user.rol || "")) {
+                setPermisosSeleccionados(TODOS_PERMISOS)
+                return
+            }
             const raw = user.permisosEspecificos
             if (!raw) {
                 setPermisosSeleccionados([])

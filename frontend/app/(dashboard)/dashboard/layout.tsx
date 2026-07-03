@@ -135,6 +135,9 @@ function getMenuItems(
     
     // ADMIN tiene acceso a todo
     const isAdmin = rol === "ADMIN"
+
+    // Roles de presidencia siempre tienen menú completo (no filtrar por permisosEspecificos)
+    const isPresidencia = ["PRESIDENCIA", "PRESIDENCIA_CODAR", "PRESIDENTE_SIDAF"].includes(rol || "")
     
     // Si tiene permiso "TODOS", tiene acceso completo
     const hasAllAccess = permisos.includes("TODOS")
@@ -149,8 +152,8 @@ function getMenuItems(
         },
     ]
     
-    // Si no es admin ni tiene acceso total, filtrar por permisos específicos
-    if (!isAdmin && !hasAllAccess && permisos.length > 0) {
+    // Si no es admin/presidencia ni tiene acceso total, filtrar por permisos específicos
+    if (!isAdmin && !isPresidencia && !hasAllAccess && permisos.length > 0) {
         const allowedHrefs = permisos
             .map(p => PERMISO_TO_HREF[p])
             .filter(Boolean)
