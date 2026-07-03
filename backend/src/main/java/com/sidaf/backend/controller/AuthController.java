@@ -496,10 +496,10 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "No puedes eliminarte a ti mismo"));
             }
             
-            // 1. Nullificar referencias en auditoria_permisos (no eliminar el historial)
-            jdbcTemplate.update("UPDATE auditoria_permisos SET usuario_afectado_id = NULL WHERE usuario_afectado_id = ?", id);
-            jdbcTemplate.update("UPDATE auditoria_permisos SET usuario_id = NULL WHERE usuario_id = ?", id);
-            jdbcTemplate.update("UPDATE auditoria_permisos SET realizado_por = NULL WHERE realizado_por = ?", id);
+            // 1. Eliminar registros de auditoría que referencian al usuario
+            jdbcTemplate.update("DELETE FROM auditoria_permisos WHERE usuario_afectado_id = ?", id);
+            jdbcTemplate.update("DELETE FROM auditoria_permisos WHERE usuario_id = ?", id);
+            jdbcTemplate.update("DELETE FROM auditoria_permisos WHERE realizado_por = ?", id);
             
             // 2. Eliminar permisos dinámicos asignados o asignados por este usuario
             jdbcTemplate.update("DELETE FROM usuario_permiso_dinamico WHERE usuario_id = ?", id);
