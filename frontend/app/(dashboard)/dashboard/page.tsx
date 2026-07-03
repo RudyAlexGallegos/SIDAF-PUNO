@@ -47,21 +47,27 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
     const [asistencias, setAsistencias] = useState<Asistencia[]>([])
     const [arbitros, setArbitros] = useState<Arbitro[]>([])
+    const [intento, setIntento] = useState(0)
+    const [segundos, setSegundos] = useState(0)
 
     useEffect(() => {
+        let cancelled = false
+        let timer: ReturnType<typeof setInterval> | null = null
+
         const fetchData = async () => {
-            let retries = 3
-            let lastError = null
-            
-            while (retries > 0) {
+            const MAX_INTENTOS = 12      // hasta ~2 minutos
+            const ESPERA_MS    = 10_000  // 10s entre intentos
+
+            for (let i = 1; i <= MAX_INTENTOS; i++) {
+                if (cancelled) return
+                setIntento(i)
+
                 try {
-                    // Check API connection first
                     const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api") + "/hello"
-                    const helloRes = await fetch(apiUrl)
+                    const helloRes = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) })
                     if (!helloRes.ok) throw new Error("API no disponible")
                     setApiStatus("ok")
 
-                    // Fetch all data in parallel
                     const [arbitrosData, designaciones, championships, equipos, asistenciasData] = await Promise.all([
                         getArbitros(),
                         getDesignaciones(),
@@ -70,7 +76,6 @@ export default function DashboardPage() {
                         getAsistencias(),
                     ])
 
-                    // Calculate stats
                     const arbitrosActivos = arbitrosData.filter((a: Arbitro) => a.estado === "ACTIVO" || a.disponible).length
                     const designacionesPendientes = designaciones.filter((d: Designacion) => d.estado === "PENDIENTE" || d.estado === "CONFIRMADA").length
                     const championshipsActivos = championships.filter((c: Campeonato) => c.estado === "ACTIVO" || c.estado === "EN_CURSO").length
@@ -91,29 +96,35 @@ export default function DashboardPage() {
                     // Store real data for dashboard components
                     setAsistencias(asistenciasData)
                     setArbitros(arbitrosData)
-                    
-                    // Success - set loading to false and exit the retry loop
+                    if (timer) clearInterval(timer)
                     setLoading(false)
                     return
                 } catch (error) {
-                    console.error(`Attempt failed (${3 - retries + 1}/3):`, error)
-                    lastError = error
-                    retries--
-                    
-                    if (retries > 0) {
-                        // Wait 3 seconds before retrying
-                        await new Promise(resolve => setTimeout(resolve, 3000))
+                    console.warn(`Intento ${i}/${MAX_INTENTOS} fallido:`, error)
+
+                    if (i === MAX_INTENTOS) {
+                        setApiStatus("error")
+                        setLoading(false)
+                        return
                     }
+
+                    // Cuenta regresiva visual antes del siguiente intento
+                    let segs = ESPERA_MS / 1000
+                    setSegundos(segs)
+                    timer = setInterval(() => {
+                        segs--
+                        setSegundos(segs)
+                        if (segs <= 0 && timer) clearInterval(timer)
+                    }, 1000)
+
+                    await new Promise(resolve => setTimeout(resolve, ESPERA_MS))
+                    if (timer) clearInterval(timer)
                 }
             }
-            
-            // All retries failed
-            console.error("Error fetching dashboard data after 3 attempts:", lastError)
-            setApiStatus("error")
-            setLoading(false)
         }
 
         fetchData()
+        return () => { cancelled = true }
     }, [])
 
     return (
@@ -133,9 +144,27 @@ export default function DashboardPage() {
 
             {/* Loading State */}
             {loading && (
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <span className="ml-3 text-slate-500">Cargando datos del sistema...</span>
+                <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                    <div>
+                        <p className="font-semibold text-slate-700">
+                            {intento <= 1 ? "Conectando con el servidor…" : `Despertando el servidor (intento ${intento}/12)…`}
+                        </p>
+                        <p className="text-sm text-slate-400 mt-1">
+                            {intento <= 1
+                                ? "El servidor puede tardar unos segundos en responder."
+                                : segundos > 0
+                                    ? `Próximo intento en ${segundos}s. Render.com puede tardar hasta 60s en despertar.`
+                                    : "Reintentando…"}
+                        </p>
+                    </div>
+                    {/* Barra de progreso visual */}
+                    <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                            style={{ width: `${Math.min((intento / 12) * 100, 100)}%` }}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -145,15 +174,15 @@ export default function DashboardPage() {
                     <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div>
-                            <p className="font-medium text-amber-800">Backend en modo suspensión</p>
+                            <p className="font-medium text-amber-800">El servidor no respondió tras 12 intentos</p>
                             <p className="text-sm text-amber-700 mt-1">
-                                El servidor puede tardar 30-60 segundos en despertar. Por favor, espere un momento y actualice la página.
+                                El backend en Render.com puede estar experimentando problemas. Intente recargar la página.
                             </p>
-                            <button 
+                            <button
                                 onClick={() => window.location.reload()}
                                 className="mt-3 px-4 py-2 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 transition-colors"
                             >
-                                Actualizar página
+                                Recargar y reintentar
                             </button>
                         </div>
                     </div>
