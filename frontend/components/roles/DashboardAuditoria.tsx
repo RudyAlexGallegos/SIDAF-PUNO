@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -33,7 +34,7 @@ type TipoCambio =
   | 'SOLICITUD_APROBADA'
   | 'SOLICITUD_RECHAZADA'
   | 'USUARIO_APROBADO'
-  | 'USUARIO_RECHAZADA'
+  | 'USUARIO_RECHAZADO'
   | string;
 
 interface UsuarioInfo {
@@ -41,23 +42,21 @@ interface UsuarioInfo {
   nombre: string;
   apellido: string;
   dni?: string;
+  email?: string;
+  telefono?: string;
 }
 
 interface PermisoInfo {
   id: number;
   codigo: string;
   nombre: string;
+  descripcion?: string;
 }
 
 interface AuditoriaLog {
   id: number;
   tipoCambio: TipoCambio;
-  usuario?: {
-    id: number;
-    nombre: string;
-    apellido: string;
-    dni?: string;
-  };
+  usuario?: UsuarioInfo;
   usuarioAfectado?: UsuarioInfo;
   permiso?: PermisoInfo;
   rolAnterior?: string;
@@ -71,7 +70,7 @@ interface AuditoriaLog {
 type SortKey = 'fechaCambio' | 'tipoCambio';
 type SortDir = 'asc' | 'desc';
 
-export default function AuditoriaPage() {
+function DashboardAuditoria() {
   const [auditoria, setAuditoria] = useState<AuditoriaLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,31 +124,23 @@ export default function AuditoriaPage() {
 
   const totalPaginas = Math.max(1, Math.ceil(totalElementos / size));
 
+  const parseDate = (s: string | undefined): Date | null => {
+    if (!s) return null;
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   const datosFiltrados = useMemo(() => {
     const texto = filtroBusqueda.toLowerCase().trim();
     const desde = filtroFechaDesde ? new Date(filtroFechaDesde) : null;
     const hasta = filtroFechaHasta ? new Date(filtroFechaHasta + 'T23:59:59') : null;
 
-    const parseDate = (s: string | undefined): Date | null => {
-      if (!s) return null;
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? null : d;
-    };
-
     let results = auditoria.filter((log) => {
       if (filtroTipo && log.tipoCambio !== filtroTipo) return false;
 
-      const desdeFilter = parseDate(
-        (log as any).fechaCambio || undefined,
-      );
-      if (desde) {
-        const logDate = desdeFilter;
-        if (!logDate || logDate < desde) return false;
-      }
-      if (hasta) {
-        const logDate = parseDate((log as any).fechaCambio || undefined);
-        if (!logDate || logDate > hasta) return false;
-      }
+      const logDate = parseDate(log.fechaCambio);
+      if (desde && logDate && logDate < desde) return false;
+      if (hasta && logDate && logDate > hasta) return false;
 
       if (filtroUsuario) {
         const nombreCompleto =
@@ -174,6 +165,7 @@ export default function AuditoriaPage() {
           log.razon,
           log.permiso?.nombre || '',
           log.permiso?.codigo || '',
+          log.permiso?.descripcion || '',
           log.rolAnterior || '',
           log.rolNuevo || '',
           log.usuarioAfectado?.nombre || '',
@@ -201,8 +193,8 @@ export default function AuditoriaPage() {
       } else {
         av = (av || '').toString().toLowerCase();
         bv = (bv || '').toString().toLowerCase();
-        av = av.localeCompare(bv, 'es');
-        bv = 0;
+        const cmp = av.localeCompare(bv, 'es');
+        return sortDir === 'asc' ? cmp : -cmp;
       }
 
       if (av < bv) return sortDir === 'asc' ? -1 : 1;
@@ -268,6 +260,7 @@ export default function AuditoriaPage() {
         ? `${log.usuarioAfectado.nombre} ${log.usuarioAfectado.apellido}`
         : '-',
       DNI_Afectado: log.usuarioAfectado?.dni || '-',
+      Email_Afectado: log.usuarioAfectado?.email || '-',
       'Permiso / Rol': log.permiso
         ? `${log.permiso.nombre} (${log.permiso.codigo})`
         : log.rolAnterior || log.rolNuevo || '-',
@@ -276,11 +269,13 @@ export default function AuditoriaPage() {
       'Realizado Por': log.realizadoPor
         ? `${log.realizadoPor.nombre} ${log.realizadoPor.apellido}`
         : '-',
+      ID_Realizado_Por: log.realizadoPor?.id || '-',
       Razón: log.razon || '-',
       Descripción: log.descripcion || '-',
       'Fecha y Hora': log.fechaCambio
         ? new Date(log.fechaCambio).toLocaleString('es-PE')
         : '-',
+      Timestamp: log.fechaCambio || '',
     }));
 
     const ws = XLSX.utils.json_to_sheet(datosParaExportar);
@@ -289,21 +284,75 @@ export default function AuditoriaPage() {
     XLSX.writeFile(wb, `auditoria_sidaf_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const exportarJSON = () => {
+    const datosLSTM = datosFiltrados.map((log) => {
+      const fecha = log.fechaCambio ? new Date(log.fechaCambio) : new Date();
+      return {
+        id: log.id,
+        tipoCambio: log.tipoCambio,
+        fechaTimestamp: fecha.toISOString(),
+        fechaISO: fecha.toISOString().split('T')[0],
+        hora: fecha.getHours(),
+        minuto: fecha.getMinutes(),
+        diaSemana: fecha.getDay(),
+        mes: fecha.getMonth() + 1,
+        año: fecha.getFullYear(),
+        usuario: log.usuarioAfectado ? {
+          id: log.usuarioAfectado.id,
+          nombreCompleto: `${log.usuarioAfectado.nombre || ''} ${log.usuarioAfectado.apellido || ''}`.trim(),
+          dni: log.usuarioAfectado.dni || '',
+        } : null,
+        permiso: log.permiso ? {
+          id: log.permiso.id,
+          codigo: log.permiso.codigo,
+          nombre: log.permiso.nombre,
+        } : null,
+        rolAnterior: log.rolAnterior || null,
+        rolNuevo: log.rolNuevo || null,
+        realizadoPor: log.realizadoPor ? {
+          id: log.realizadoPor.id,
+          nombreCompleto: `${log.realizadoPor.nombre || ''} ${log.realizadoPor.apellido || ''}`.trim(),
+        } : null,
+        descripcion: log.descripcion,
+        razon: log.razon || null,
+      };
+    });
+
+    const exportData = {
+      metadata: {
+        generado: new Date().toISOString(),
+        totalRegistros: datosFiltrados.length,
+        version: '1.0',
+        descripcion: 'Dataset de auditoría para entrenamiento de modelo LSTM de designación de árbitros',
+      },
+      registros: datosLSTM,
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auditoria_lstm_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportarPDF = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     doc.setFontSize(16);
-    doc.text('Reporte de Auditoría - SIDAF PUNO', 14, 14);
+    doc.text('Reporte de Auditoría - SIDAF PUNO', 14, 15);
     doc.setFontSize(10);
-    doc.text(`Generado: ${new Date().toLocaleString('es-PE')}`, 14, 20);
-    doc.text(`Total registros mostrados: ${datosFiltrados.length}`, 14, 25);
+    doc.text(`Generado: ${new Date().toLocaleString('es-PE')}`, 14, 22);
+    doc.text(`Total registros mostrados: ${datosFiltrados.length}`, 14, 28);
+    doc.text('Datos para entrenamiento LSTM de designación de árbitros', 14, 34);
 
     const head = [
       'ID',
       'Tipo',
-      'Usuario Afectado',
+      'Usuario',
       'Permiso/Rol',
-      'Realizado Por',
-      'Razón',
+      'Operador',
       'Fecha',
     ];
 
@@ -319,7 +368,6 @@ export default function AuditoriaPage() {
       log.realizadoPor
         ? `${log.realizadoPor.nombre} ${log.realizadoPor.apellido}`
         : '-',
-      (log.razon || '-').substring(0, 40),
       log.fechaCambio
         ? new Date(log.fechaCambio).toLocaleString('es-PE')
         : '-',
@@ -328,7 +376,7 @@ export default function AuditoriaPage() {
     autoTable(doc, {
       head: [head],
       body,
-      startY: 30,
+      startY: 38,
       theme: 'grid',
       styles: { fontSize: 7, cellPadding: 1 },
       headStyles: { fontSize: 7, fillColor: [30, 58, 138] },
@@ -459,7 +507,7 @@ export default function AuditoriaPage() {
           </h1>
           <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
             Registro histórico completo de eventos del sistema. Esta información es usada para
-            análisis predictivo y entrenamiento de modelos inteligentes.
+            análisis predictivo y entrenamiento de modelos LSTM inteligentes de designación de árbitros.
           </p>
         </section>
         <Card>
@@ -490,7 +538,7 @@ export default function AuditoriaPage() {
             </h1>
             <p className="text-slate-500 mt-1 max-w-3xl text-xs md:text-sm lg:text-base">
               Registro histórico completo de eventos del sistema. Esta información es usada para
-              análisis predictivo y entrenamiento de modelos inteligentes de designaciones.
+              análisis predictivo y entrenamiento de modelos LSTM inteligentes de designación de árbitros.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -524,6 +572,57 @@ export default function AuditoriaPage() {
             >
               <Download className="h-3.5 w-3.5 mr-1.5" />
               Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportarJSON}
+              disabled={datosFiltrados.length === 0}
+              className="h-8 text-xs"
+            >
+              <Database className="h-3.5 w-3.5 mr-1.5" />
+              JSON (LSTM)
+            </Button>
+            {/** CSV Export for Data Analysis **/}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const csvData = datosFiltrados.map(log => ({
+                  id: log.id,
+                  tipoCambio: log.tipoCambio,
+                  usuarioId: log.usuarioAfectado?.id || '',
+                  usuarioNombre: log.usuarioAfectado ? `${log.usuarioAfectado.nombre || ''} ${log.usuarioAfectado.apellido || ''}`.trim() : '',
+                  usuarioDni: log.usuarioAfectado?.dni || '',
+                  permisoCodigo: log.permiso?.codigo || '',
+                  permisoNombre: log.permiso?.nombre || '',
+                  rolAnterior: log.rolAnterior || '',
+                  rolNuevo: log.rolNuevo || '',
+                  realizadoPorId: log.realizadoPor?.id || '',
+                  realizadoPorNombre: log.realizadoPor ? `${log.realizadoPor.nombre || ''} ${log.realizadoPor.apellido || ''}`.trim() : '',
+                  fecha: log.fechaCambio ? new Date(log.fechaCambio).toISOString().split('T')[0] : '',
+                  hora: log.fechaCambio ? new Date(log.fechaCambio).getHours() : '',
+                  minuto: log.fechaCambio ? new Date(log.fechaCambio).getMinutes() : '',
+                  timestamp: log.fechaCambio || '',
+                }));
+                const csvHeaders = ['id', 'tipoCambio', 'usuarioId', 'usuarioNombre', 'usuarioDni', 'permisoCodigo', 'permisoNombre', 'rolAnterior', 'rolNuevo', 'realizadoPorId', 'realizadoPorNombre', 'fecha', 'hora', 'minuto', 'timestamp'];
+                const csvContent = [
+                  csvHeaders.join(','),
+                  ...csvData.map(row => csvHeaders.map(h => `"${String((row as any)[h] || '').replace(/"/g, '""')}"`).join(','))
+                ].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `auditoria_dataset_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              disabled={datosFiltrados.length === 0}
+              className="h-8 text-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              CSV
             </Button>
             <Button
               variant="outline"
@@ -593,7 +692,7 @@ export default function AuditoriaPage() {
       )}
 
       {/* Type distribution strip */}
-      {!loading && (
+      {!loading && Object.keys(estadisticas).filter(k => !['total', 'usuariosActivos', 'usuariosAfectados', 'registrosHoy'].includes(k)).length > 0 && (
         <section className="flex flex-wrap gap-2">
           {Object.entries(estadisticas).map(([tipo, cantidad]) => {
             if (['total', 'usuariosActivos', 'usuariosAfectados', 'registrosHoy'].includes(tipo))
@@ -613,12 +712,17 @@ export default function AuditoriaPage() {
         </section>
       )}
 
-      {/* Filters */}
+      {/* Filters Panel - Enhanced for LSTM Training */}
       {showFilters && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Filtros de Búsqueda</CardTitle>
-            <CardDescription>Refine la consulta por tipo, fecha, usuario o texto</CardDescription>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Filtros de Búsqueda | Datos para Entrenamiento LSTM
+            </CardTitle>
+            <CardDescription>
+              Refine la consulta por tipo, fecha, usuario o texto. Los datos exportados incluyen timestamps para análisis temporal.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -632,7 +736,7 @@ export default function AuditoriaPage() {
                   }}
                   className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Todos</option>
+                  <option value="">Todos los tipos</option>
                   {tiposUnicos.map((t) => (
                     <option key={t} value={t}>
                       {getTipoConfig(t).label}
@@ -727,12 +831,15 @@ export default function AuditoriaPage() {
         </Card>
       )}
 
-      {/* Table */}
+      {/* Table - Enhanced for LSTM training data */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Registro de Eventos</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Database className="h-4 w-4 text-blue-600" />
+            Registro de Eventos | Dataset LSTM
+          </CardTitle>
           <CardDescription>
-            Historial completo de cambios con {totalElementos} eventos registrados
+            Historial completo de cambios con {totalElementos} eventos registrados. Campos incluidos: ID, tipo, usuarios, permisos, roles, timestamps.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -804,6 +911,7 @@ export default function AuditoriaPage() {
                   datosFiltrados.map((log) => {
                     const config = getTipoConfig(log.tipoCambio);
                     const Icon = config.icon;
+                    const fechaDate = log.fechaCambio ? new Date(log.fechaCambio) : null;
                     return (
                       <tr
                         key={log.id}
@@ -826,6 +934,11 @@ export default function AuditoriaPage() {
                               {log.usuarioAfectado.dni && (
                                 <p className="text-xs text-slate-500">
                                   DNI: {log.usuarioAfectado.dni}
+                                </p>
+                              )}
+                              {log.usuarioAfectado.email && (
+                                <p className="text-xs text-slate-400 truncate">
+                                  {log.usuarioAfectado.email}
                                 </p>
                               )}
                             </div>
@@ -905,8 +1018,9 @@ export default function AuditoriaPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setPage((p) => Math.max(0, p - 1));
-                    cargarAuditoria(Math.max(0, page - 1));
+                    const newPage = Math.max(0, page - 1);
+                    setPage(newPage);
+                    cargarAuditoria(newPage);
                   }}
                   disabled={page === 0 || loading}
                   className="h-8 text-xs"
@@ -921,8 +1035,9 @@ export default function AuditoriaPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setPage((p) => p + 1);
-                    cargarAuditoria(page + 1);
+                    const newPage = page + 1;
+                    setPage(newPage);
+                    cargarAuditoria(newPage);
                   }}
                   disabled={page >= totalPaginas - 1 || loading}
                   className="h-8 text-xs"
@@ -938,3 +1053,5 @@ export default function AuditoriaPage() {
     </div>
   );
 }
+
+export default DashboardAuditoria;

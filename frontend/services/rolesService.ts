@@ -17,7 +17,16 @@ export const rolesService = {
     if (!this.private) {
       this.private = axios.create({
         baseURL: API_BASE_URL,
-        headers: getAuthHeaders(),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      // Interceptor dinámico: añade token en cada request (no solo al crear)
+      this.private.interceptors.request.use((config) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (token) {
+          config.headers = config.headers || {};
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
       });
     }
     return this.private;

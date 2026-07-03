@@ -25,6 +25,32 @@ export interface Arbitro {
     categoria: string
     telefono: string
     email?: string
+    apellido?: string
+    nombre?: string
+    dni?: string
+    genero?: string
+    lugarNacimiento?: string
+    estatura?: string
+    foto?: string
+    provincia?: string
+    distrito?: string
+    direccion?: string
+    especialidad?: string
+    telefonoEmergencia?: string
+    estado?: string
+    experiencia?: number
+    nivelPreparacion?: string
+    observaciones?: string
+    disponible?: boolean
+    fechaNacimiento?: string
+    fechaRegistro?: string
+    fechaAfiliacion?: string
+    fechaExamenTeorico?: string
+    fechaExamenPractico?: string
+    academiaFormadora?: string
+    roles?: string
+    especialidades?: string
+    declaracionJurada?: boolean
 }
 
 export interface AsistenciaArbitro {

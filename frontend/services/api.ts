@@ -81,10 +81,32 @@ export interface Arbitro {
     nombre?: string;
     apellido?: string;
     dni?: string;
-    email?: string;
-    telefono?: string;
+    genero?: string;
+    lugarNacimiento?: string;
+    estatura?: string;
+    foto?: string;
+    provincia?: string;
+    distrito?: string;
     categoria?: string;
+    direccion?: string;
+    email?: string;
+    especialidad?: string;
+    telefono?: string;
+    telefonoEmergencia?: string;
     estado?: string;
+    experiencia?: number;
+    nivelPreparacion?: string;
+    observaciones?: string;
+    disponible?: boolean;
+    fechaNacimiento?: string;
+    fechaRegistro?: string;
+    fechaAfiliacion?: string;
+    fechaExamenTeorico?: string;
+    fechaExamenPractico?: string;
+    academiaFormadora?: string;
+    roles?: string;
+    especialidades?: string;
+    declaracionJurada?: boolean;
 }
 
 export interface Asesor {
@@ -1122,6 +1144,53 @@ export async function getReporteConsolidado(inicio?: string, fin?: string): Prom
         return data;
     } catch (error) {
         console.error("❌ Error getReporteConsolidado:", error);
+        return null;
+    }
+}
+
+// ============================================================
+// AUDITORÍA
+// ============================================================
+
+export interface AuditoriaLog {
+    id: number;
+    tipoCambio: string;
+    usuarioAfectado?: UsuarioInfo;
+    permiso?: PermisoInfo;
+    rolAnterior?: string;
+    rolNuevo?: string;
+    realizadoPor?: UsuarioInfo;
+    descripcion: string;
+    razon?: string;
+    fechaCambio: string;
+}
+
+export interface UsuarioInfo {
+    id: number;
+    nombre: string;
+    apellido: string;
+    dni?: string;
+    email?: string;
+}
+
+export interface PermisoInfo {
+    id: number;
+    codigo: string;
+    nombre: string;
+    descripcion?: string;
+}
+
+export async function getAuditoria(page: number = 0, size: number = 50): Promise<{ datos: AuditoriaLog[]; totalElementos: number } | null> {
+    try {
+        const response = await fetch(buildUrl(`/auditoria?page=${page}&size=${size}`), {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error("Error HTTP");
+        const data = await response.json();
+        console.log("✅ Auditoría obtenida:", data);
+        return data;
+    } catch (error) {
+        console.error("❌ Error getAuditoria:", error);
         return null;
     }
 }
