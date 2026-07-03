@@ -45,7 +45,7 @@ export default function GestionUsuariosPage() {
     const [tabActiva, setTabActiva] = useState<"todos" | "pendientes">("todos")
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null)
     const [permisosSeleccionados, setPermisosSeleccionados] = useState<string[]>([])
-    const [rolSeleccionado, setRolSeleccionado] = useState<string>("UNIDAD_TECNICA_CODAR")
+    const [rolSeleccionado, setRolSeleccionado] = useState<string>("UNIDAD_TECNICA")
     const [busqueda, setBusqueda] = useState("")
     const [filtroRol, setFiltroRol] = useState("TODOS")
     const [filtroEstado, setFiltroEstado] = useState("TODOS")
@@ -164,7 +164,7 @@ export default function GestionUsuariosPage() {
             setSuccess("Usuario aprobado exitosamente")
             setError("")
             setUsuarioParaAprobar(null)
-            setRolSeleccionado("UNIDAD_TECNICA_CODAR")
+            setRolSeleccionado("UNIDAD_TECNICA")
             cargarPendientes()
             cargarTodos()
         } catch (err: any) {
@@ -253,10 +253,14 @@ export default function GestionUsuariosPage() {
     const getRolLabel = (rol: string | undefined) => {
         switch (rol) {
             case "ADMIN": return "Administrador"
-            case "PRESIDENCIA_CODAR": return "Presidente CODAR"
+            case "PRESIDENTE_SIDAF": return "Presidente SIDAF"
+            case "PRESIDENCIA": return "Presidencia"
+            case "PRESIDENCIA_CODAR": return "Presidencia CODAR"
+            case "UNIDAD_TECNICA": return "Unidad Técnica"
             case "UNIDAD_TECNICA_CODAR": return "Unidad Técnica CODAR"
             case "ARBITRO": return "Árbitro"
             case "ASESOR": return "Asesor"
+            case "USUARIO_TECNICO": return "Técnico"
             default: return rol || "Sin rol"
         }
     }
@@ -451,8 +455,9 @@ export default function GestionUsuariosPage() {
                                 >
                                     <option value="TODOS">Todos los roles</option>
                                     <option value="ADMIN">Administrador</option>
-                                    <option value="PRESIDENCIA_CODAR">Presidente CODAR</option>
-                                    <option value="UNIDAD_TECNICA_CODAR">Unidad Técnica</option>
+                                    <option value="PRESIDENTE_SIDAF">Presidente SIDAF</option>
+                                    <option value="PRESIDENCIA">Presidencia</option>
+                                    <option value="UNIDAD_TECNICA">Unidad Técnica</option>
                                     <option value="ARBITRO">Árbitro</option>
                                     <option value="ASESOR">Asesor</option>
                                 </select>
@@ -539,14 +544,15 @@ export default function GestionUsuariosPage() {
                                                         >
                                                             <Shield className="h-3 w-3" />Permisos
                                                         </button>
-                                                        {user.estado === "ACTIVO" ? (
+                                                        {usuario?.rol === "ADMIN" && user.estado === "ACTIVO" && (
                                                             <button
                                                                 onClick={() => user.id && handleCambiarEstado(user.id, "INACTIVO")}
                                                                 className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-red-200 text-red-600 rounded hover:bg-red-50 transition-colors"
                                                             >
                                                                 <XCircle className="h-3 w-3" />Desactivar
                                                             </button>
-                                                        ) : (
+                                                        )}
+                                                        {usuario?.rol === "ADMIN" && user.estado !== "ACTIVO" && (
                                                             <button
                                                                 onClick={() => user.id && handleCambiarEstado(user.id, "ACTIVO")}
                                                                 className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-green-200 text-green-600 rounded hover:bg-green-50 transition-colors"
@@ -615,12 +621,12 @@ export default function GestionUsuariosPage() {
                                                     onChange={(e) => setRolSeleccionado(e.target.value)}
                                                     className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 >
-                                                    <option value="UNIDAD_TECNICA_CODAR">Unidad Técnica CODAR</option>
+                                    <option value="UNIDAD_TECNICA">Unidad Técnica</option>
                                                     <option value="ARBITRO">Árbitro</option>
                                                     <option value="ASESOR">Asesor</option>
-                                                    {usuario?.rol === "ADMIN" && (
+                                                    {(usuario?.rol === "ADMIN" || usuario?.rol === "PRESIDENTE_SIDAF") && (
                                                         <>
-                                                            <option value="PRESIDENCIA_CODAR">Presidente CODAR</option>
+                                                            <option value="PRESIDENCIA">Presidencia</option>
                                                             <option value="ADMIN">Administrador</option>
                                                         </>
                                                     )}

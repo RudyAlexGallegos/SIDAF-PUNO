@@ -542,8 +542,8 @@ public class AuthController {
     
     private boolean puedeGestionarUsuarios(Usuario usuario) {
         if (usuario == null) return false;
-        // ADMIN y PRESIDENCIA pueden gestionar usuarios
-        return usuario.getRol() == Usuario.RolUsuario.ADMIN || 
+        return usuario.getRol() == Usuario.RolUsuario.ADMIN ||
+               usuario.getRol() == Usuario.RolUsuario.PRESIDENTE_SIDAF ||
                usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA ||
                usuario.getRol() == Usuario.RolUsuario.PRESIDENCIA_CODAR;
     }
