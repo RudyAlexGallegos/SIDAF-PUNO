@@ -519,7 +519,25 @@ export default function DashboardLayout({
             return
         }
         setUsuario(user)
-        
+
+        // Refrescar permisos desde el servidor para que el menú esté siempre actualizado
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+        if (token) {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
+            fetch(`${API_BASE}/auth/perfil`, {
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+            })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data && data.permisosEspecificos !== undefined) {
+                        const updated = { ...user, permisosEspecificos: data.permisosEspecificos, rol: data.rol }
+                        localStorage.setItem("user", JSON.stringify(updated))
+                        setUsuario(updated)
+                    }
+                })
+                .catch(() => { /* sin conexión, usar datos de localStorage */ })
+        }
+
         // Check if mobile
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 768)

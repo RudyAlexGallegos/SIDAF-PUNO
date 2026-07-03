@@ -37,6 +37,16 @@ public class AuthController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    // Perfil del usuario actual (para refrescar permisos sin re-login)
+    @GetMapping("/perfil")
+    public ResponseEntity<?> getPerfil(@RequestHeader("Authorization") String authHeader) {
+        Usuario usuario = verificarAuth(authHeader);
+        if (usuario == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
+        }
+        return ResponseEntity.ok(usuarioToMap(usuario));
+    }
+
     // Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
