@@ -53,8 +53,14 @@ public class MigrationController {
                 "UPDATE usuarios SET rol = 'UNIDAD_TECNICA' WHERE rol = 'CODAR'"
             );
             resultado.put("codar_migrados", updated3);
-            
-            // 4. Crear índice
+
+            // 4. Migrar USUARIO_TECNICO → UNIDAD_TECNICA
+            int updated4 = jdbcTemplate.update(
+                "UPDATE usuarios SET rol = 'UNIDAD_TECNICA' WHERE rol = 'USUARIO_TECNICO'"
+            );
+            resultado.put("usuario_tecnico_migrados", updated4);
+
+            // 5. Crear índice
             try {
                 jdbcTemplate.execute(
                     "CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON usuarios(rol)"
@@ -65,20 +71,20 @@ public class MigrationController {
                 resultado.put("indice_info", e.getMessage());
             }
             
-            // 5. Verificar resultado
+            // 6. Verificar resultado
             List<Map<String, Object>> roles = jdbcTemplate.queryForList(
                 "SELECT DISTINCT rol FROM usuarios ORDER BY rol"
             );
             resultado.put("roles_finales", roles);
             
-            // 6. Contar usuarios por rol
+            // 7. Contar usuarios por rol
             List<Map<String, Object>> estadisticas = jdbcTemplate.queryForList(
                 "SELECT rol, COUNT(*) as cantidad FROM usuarios GROUP BY rol ORDER BY rol"
             );
             resultado.put("estadisticas", estadisticas);
             
             resultado.put("estado", "✅ MIGRACIÓN COMPLETADA");
-            resultado.put("total_migrados", updated1 + updated2 + updated3);
+            resultado.put("total_migrados", updated1 + updated2 + updated3 + updated4);
             
             return ResponseEntity.ok(resultado);
             

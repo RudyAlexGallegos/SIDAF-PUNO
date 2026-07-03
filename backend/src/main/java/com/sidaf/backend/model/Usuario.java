@@ -106,9 +106,14 @@ public class Usuario {
     // Enum para roles jerárquicos con propiedades
     public enum RolUsuario {
         ADMIN(1L, "ADMIN", 1),
+        PRESIDENTE_SIDAF(2L, "PRESIDENTE_SIDAF", 2),
         PRESIDENCIA(2L, "PRESIDENCIA", 2),
         PRESIDENCIA_CODAR(2L, "PRESIDENCIA_CODAR", 2),
-        UNIDAD_TECNICA(3L, "UNIDAD_TECNICA", 3);
+        UNIDAD_TECNICA(3L, "UNIDAD_TECNICA", 3),
+        UNIDAD_TECNICA_CODAR(3L, "UNIDAD_TECNICA_CODAR", 3),
+        ARBITRO(4L, "ARBITRO", 4),
+        ASESOR(4L, "ASESOR", 4),
+        USUARIO_TECNICO(4L, "USUARIO_TECNICO", 4);
         
         private final Long id;
         private final String nombre;
