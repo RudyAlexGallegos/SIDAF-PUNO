@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Save, Trash2 } from "lucide-react"
-import { getDesignacionById, updateDesignacion, deleteDesignacion, getCampeonatos, getEquipos, getArbitros, type Designacion } from "@/services/api"
+import { getDesignacionById, updateDesignacion, deleteDesignacion, getCampeonatos, getEquipos, getArbitros, getAsesores, type Designacion, type Asesor } from "@/services/api"
 import { toast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ interface DesignacionEditData {
   arbitroAsistente1?: string
   arbitroAsistente2?: string
   cuartoArbitro?: string
+  asesor?: string
   estado?: string
 }
 
@@ -52,6 +53,7 @@ export default function EditarDesignacionPage() {
   const [campeonatos, setCampeonatos] = useState<any[]>([])
   const [equipos, setEquipos] = useState<any[]>([])
   const [arbitros, setArbitros] = useState<any[]>([])
+  const [asesores, setAsesores] = useState<Asesor[]>([])
 
   useEffect(() => {
     async function loadData() {
@@ -62,11 +64,12 @@ export default function EditarDesignacionPage() {
           return
         }
 
-        const [designacion, camps, equips, arbs] = await Promise.all([
+        const [designacion, camps, equips, arbs, ases] = await Promise.all([
           getDesignacionById(designacionId),
           getCampeonatos(),
           getEquipos(),
           getArbitros(),
+          getAsesores(),
         ])
 
         if (designacion) {
@@ -84,6 +87,7 @@ export default function EditarDesignacionPage() {
             arbitroAsistente1: designacion.arbitroAsistente1?.toString() || "",
             arbitroAsistente2: designacion.arbitroAsistente2?.toString() || "",
             cuartoArbitro: designacion.cuartoArbitro?.toString() || "",
+            asesor: designacion.asesor?.toString() || "",
             estado: designacion.estado || "PROGRAMADA",
           })
         }
@@ -91,6 +95,7 @@ export default function EditarDesignacionPage() {
         setCampeonatos(camps)
         setEquipos(equips)
         setArbitros(arbs)
+        setAsesores(ases)
       } catch (error) {
         console.error("Error cargando datos:", error)
         toast({ title: "Error", description: "No se pudieron cargar los datos", variant: "destructive" })
@@ -153,6 +158,7 @@ export default function EditarDesignacionPage() {
         arbitroAsistente1: formData.arbitroAsistente1 ? parseInt(formData.arbitroAsistente1) : undefined,
         arbitroAsistente2: formData.arbitroAsistente2 ? parseInt(formData.arbitroAsistente2) : undefined,
         cuartoArbitro: formData.cuartoArbitro ? parseInt(formData.cuartoArbitro) : undefined,
+        asesor: formData.asesor ? parseInt(formData.asesor) : undefined,
         estado: formData.estado,
       }
 
@@ -192,34 +198,41 @@ export default function EditarDesignacionPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/dashboard/designaciones">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Editar Designación</h1>
-            <p className="text-sm text-slate-500">
-              {formData.nombreEquipoLocal} vs {formData.nombreEquipoVisitante} • {formData.fecha}
-            </p>
+    <div className="space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <section className="border-b pb-3 md:pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" asChild>
+                <Link href="/dashboard/designaciones">
+                  <ArrowLeft className="w-4 h-4" />
+                </Link>
+              </Button>
+              <div>
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                  Editar Designación
+                </p>
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">
+                  {formData.nombreEquipoLocal} vs {formData.nombreEquipoVisitante}
+                </h1>
+                <p className="text-sm text-slate-500">
+                  {formData.fecha}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Formulario */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Contenido Principal */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Información Básica */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Información del Partido</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Formulario */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Contenido Principal */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Información Básica */}
+            <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
+              <CardHeader>
+                <CardTitle className="text-slate-900">Información del Partido</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="campeonato">Campeonato</Label>
                 <Select value={formData.idCampeonato?.toString() || ""} onValueChange={(value) => {
@@ -367,15 +380,31 @@ export default function EditarDesignacionPage() {
                   )
                 })}
               </div>
+
+              <div>
+                <Label>Asesor</Label>
+                <Select value={formData.asesor || ""} onValueChange={(value) => handleChange("asesor", value)}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Seleccionar asesor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {asesores.map((a) => (
+                      <SelectItem key={a.id} value={a.id?.toString() || ""}>
+                        {a.nombre} {a.apellido}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Sidebar con acciones */}
         <div className="lg:col-span-1 space-y-4">
-          <Card>
+          <Card className="rounded-xl border bg-card hover:shadow-md transition-all duration-200">
             <CardHeader>
-              <CardTitle>Acciones</CardTitle>
+              <CardTitle className="text-slate-900">Acciones</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button onClick={handleSave} disabled={saving} className="w-full bg-blue-600 hover:bg-blue-700">

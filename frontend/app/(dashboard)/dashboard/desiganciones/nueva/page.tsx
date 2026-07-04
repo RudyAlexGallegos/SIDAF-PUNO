@@ -276,30 +276,27 @@ export default function NuevaDesignacionPage() {
   const campeonatoSeleccionado = campeonatos.find((c) => c.id === partidoData.campeonatoId)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b-2 border-purple-600">
+      <section className="border-b pb-3 md:pb-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            <Link href="/dashboard/designaciones" className="flex items-center space-x-3 text-gray-700 hover:text-gray-900">
-              <ArrowLeft className="h-6 w-6 sm:h-8 sm:w-8" />
-              <span className="text-lg sm:text-xl font-semibold">Volver</span>
-            </Link>
-            <div className="text-right">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nueva Designación</h1>
-              <p className="text-sm sm:text-base text-gray-600">Asignar árbitros a partido</p>
-            </div>
-          </div>
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            Comisión Departamental de Árbitros · Puno
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+            Nueva Designación
+          </h1>
+          <p className="text-slate-500 mt-2 text-xs md:text-sm">Asignar árbitros a partido</p>
         </div>
-      </header>
+      </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Selector de modo */}
-        <Card className="bg-white shadow-md mb-6">
+        <Card className="rounded-xl border bg-card hover:shadow-md transition-all duration-200 mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl text-gray-900">Modo de Designación</CardTitle>
+                <CardTitle className="text-slate-900">Modo de Designación</CardTitle>
                 <CardDescription>Elige cómo asignar los árbitros al partido</CardDescription>
               </div>
               <div className="flex items-center space-x-4">
@@ -318,9 +315,9 @@ export default function NuevaDesignacionPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Información del Partido */}
-          <Card className="bg-white shadow-md">
+          <Card className="rounded-xl border bg-card hover:shadow-md transition-all duration-200">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-900 flex items-center space-x-2">
+              <CardTitle className="text-slate-900 flex items-center space-x-2">
                 <Trophy className="h-6 w-6 text-purple-600" />
                 <span>Información del Partido</span>
               </CardTitle>
@@ -457,9 +454,9 @@ export default function NuevaDesignacionPage() {
           </Card>
 
           {/* Designación de Árbitros */}
-          <Card className="bg-white shadow-md">
+          <Card className="rounded-xl border bg-card hover:shadow-md transition-all duration-200">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-900 flex items-center space-x-2">
+              <CardTitle className="text-slate-900 flex items-center space-x-2">
                 <Users className="h-6 w-6 text-purple-600" />
                 <span>Designación de Árbitros</span>
               </CardTitle>

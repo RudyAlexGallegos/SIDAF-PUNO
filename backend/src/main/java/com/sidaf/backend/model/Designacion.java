@@ -72,6 +72,9 @@ public class Designacion {
     @Column(name = "cuarto_arbitro")
     private String cuartoArbitro;
     
+    @Column(name = "asesor")
+    private String asesor;
+    
     private String posicion;
     
     @Enumerated(EnumType.STRING)
@@ -99,6 +102,11 @@ public class Designacion {
         DEPARTAMENTAL
     }
     
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();

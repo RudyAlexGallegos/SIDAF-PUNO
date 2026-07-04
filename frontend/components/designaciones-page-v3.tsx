@@ -56,6 +56,7 @@ interface Designacion {
    arbitroAsistente1?: number | string | null
    arbitroAsistente2?: number | string | null
    cuartoArbitro?: number | string | null
+   asesor?: number | string | null
    fecha?: string | Date
    hora?: string
    estadio?: string
@@ -125,44 +126,40 @@ function DesignacionesPageContent() {
   const [isDeleting, setIsDeleting] = useState(false)
 
    // Fetch designaciones
-  const cacheDesignaciones = useCache(
-    "designaciones",
-    async () => {
-      const data = await getDesignaciones()
-      return Array.isArray(data) ? data : []
-    },
-    { skipCache: true }
-  )
+   const cacheDesignaciones = useCache(
+     "designaciones",
+     async () => {
+       const data = await getDesignaciones()
+       return Array.isArray(data) ? data : []
+     }
+   )
 
-  // Fetch arbitros
-  const cacheArbitros = useCache(
-    "arbitros",
-    async () => {
-      const data = await getArbitros()
-      return Array.isArray(data) ? data : []
-    },
-    { skipCache: true }
-  )
+   // Fetch arbitros
+   const cacheArbitros = useCache(
+     "arbitros",
+     async () => {
+       const data = await getArbitros()
+       return Array.isArray(data) ? data : []
+     }
+   )
 
-  // Fetch campeonatos
-  const cacheCampeonatos = useCache(
-    "campeonatos",
-    async () => {
-      const data = await getCampeonatos()
-      return Array.isArray(data) ? data : []
-    },
-    { skipCache: true }
-  )
+   // Fetch campeonatos
+   const cacheCampeonatos = useCache(
+     "campeonatos",
+     async () => {
+       const data = await getCampeonatos()
+       return Array.isArray(data) ? data : []
+     }
+   )
 
-  // Fetch equipos
-  const cacheEquipos = useCache(
-    "equipos",
-    async () => {
-      const data = await getEquipos()
-      return Array.isArray(data) ? data : []
-    },
-    { skipCache: true }
-  )
+   // Fetch equipos
+   const cacheEquipos = useCache(
+     "equipos",
+     async () => {
+       const data = await getEquipos()
+       return Array.isArray(data) ? data : []
+     }
+   )
 
   const designaciones = Array.isArray(cacheDesignaciones.data) ? cacheDesignaciones.data : []
   const arbitros = Array.isArray(cacheArbitros.data) ? cacheArbitros.data : []
@@ -383,72 +380,80 @@ useEffect(() => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* HEADER */}
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Comisión Departamental de Árbitros</p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">Gestión de Designaciones</h1>
-              <p className="text-sm text-gray-600 mt-2">Administra árbitros y asignaciones de partidos • {designacionesFiltradas.length} designaciones</p>
-            </div>
-            <div className="flex gap-2">
-              <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white border-0 font-medium text-sm">
-                <Link href="/dashboard/designaciones/nueva">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Designación
-                </Link>
-              </Button>
-              <Button onClick={exportToPDF} className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <section className="border-b pb-3 md:pb-4 lg:pb-6">
+        <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+          Comisión Departamental de Árbitros · Puno
+        </p>
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+          Gestión de Designaciones
+        </h1>
+        <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
+          Administra árbitros y asignaciones de partidos • {designacionesFiltradas.length} designaciones
+        </p>
+      </section>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="space-y-4 md:space-y-6 lg:space-y-8">
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Total</div>
-                <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Hoy</div>
-                <div className="text-3xl font-bold text-blue-600">{stats.hoy}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Esta Semana</div>
-                <div className="text-3xl font-bold text-blue-600">{stats.semana}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Confirmadas</div>
-                <div className="text-3xl font-bold text-green-600">{stats.confirmadas}</div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
+            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <ClipboardList className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+                </div>
+              </div>
+              <div className="mt-2 md:mt-3">
+                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.total}</p>
+                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Total</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Calendar className="h-4 md:h-5 w-4 md:w-5 text-emerald-600" />
+                </div>
+              </div>
+              <div className="mt-2 md:mt-3">
+                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.hoy}</p>
+                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Hoy</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <Calendar className="h-4 md:h-5 w-4 md:w-5 text-amber-600" />
+                </div>
+              </div>
+              <div className="mt-2 md:mt-3">
+                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.semana}</p>
+                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Esta Semana</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 md:h-5 w-4 md:w-5 text-indigo-600" />
+                </div>
+              </div>
+              <div className="mt-2 md:mt-3">
+                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.confirmadas}</p>
+                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Confirmadas</p>
+              </div>
+            </div>
           </div>
 
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="p-6 space-y-4">
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+            <CardContent className="p-4 md:p-6 space-y-4">
               <div className="flex items-center gap-2 text-slate-900 font-semibold">
                 <Filter className="w-4 h-4" />
                 <span>Filtros</span>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-2 block">Búsqueda</label>
+                  <label className="text-xs font-semibold text-slate-700 mb-2 block">Búsqueda</label>
                   <Input
                     placeholder="Buscar por equipo, estadio..."
                     value={searchTerm}
@@ -457,7 +462,7 @@ useEffect(() => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-2 block">Campeonato</label>
+                  <label className="text-xs font-semibold text-slate-700 mb-2 block">Campeonato</label>
                   <Select value={championshipFilter} onValueChange={setChampionshipFilter}>
                     <SelectTrigger className="h-9">
                       <SelectValue />
@@ -473,7 +478,7 @@ useEffect(() => {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-2 block">Estado</label>
+                  <label className="text-xs font-semibold text-slate-700 mb-2 block">Estado</label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="h-9">
                       <SelectValue />
@@ -491,38 +496,38 @@ useEffect(() => {
             </CardContent>
           </Card>
 
-<div ref={printRef} className="space-y-4">
-         {campeonatos.length === 0 ? (
-           <Card>
-             <CardContent className="p-12 text-center">
-               <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-               <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
-             </CardContent>
-           </Card>
-             ) : (
-               campeonatos.map((campeonato) => (
-                 <Card key={campeonato} className="overflow-hidden border border-gray-200 shadow-sm">
-                   <button
-                     onClick={() => toggleCampeonato(campeonato)}
-                     className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
-                   >
-                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                         <Trophy className="w-5 h-5" />
-                       </div>
-                       <div className="text-left">
-                         <span className="font-bold text-lg text-slate-900">{campeonato}</span>
-                         <span className="ml-2 text-sm text-gray-600 font-medium">
-                           {Object.values(designacionesAgrupadas[campeonato] || {}).reduce((sum, arr) => sum + arr.length, 0)} designaciones
-                         </span>
-                       </div>
-                     </div>
-                     {expandedProvincias.has(campeonato) ? (
-                       <ChevronDown className="w-5 h-5 text-gray-600" />
-                     ) : (
-                       <ChevronRight className="w-5 h-5 text-gray-600" />
-                     )}
-                   </button>
+          <div ref={printRef} className="space-y-4">
+            {campeonatos.length === 0 ? (
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-12 text-center">
+                  <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
+                </CardContent>
+              </Card>
+            ) : (
+              campeonatos.map((campeonato) => (
+                <Card key={campeonato} className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                  <button
+                    onClick={() => toggleCampeonato(campeonato)}
+                    className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <Trophy className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-bold text-lg text-slate-900">{campeonato}</span>
+                        <span className="ml-2 text-sm text-slate-600 font-medium">
+                          {Object.values(designacionesAgrupadas[campeonato] || {}).reduce((sum, arr) => sum + arr.length, 0)} designaciones
+                        </span>
+                      </div>
+                    </div>
+                    {expandedProvincias.has(campeonato) ? (
+                      <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+                    )}
+                  </button>
 
                    {expandedProvincias.has(campeonato) && (
                      <CardContent className="p-0 space-y-3 bg-gray-50">

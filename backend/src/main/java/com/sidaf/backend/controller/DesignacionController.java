@@ -4,6 +4,7 @@ import com.sidaf.backend.model.Designacion;
 import com.sidaf.backend.model.Designacion.EstadoDesignacion;
 import com.sidaf.backend.repository.DesignacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,11 @@ public class DesignacionController {
     
     @Autowired
     private DesignacionRepository designacionRepository;
+    
+    @ExceptionHandler(DuplicateAssignmentException.class)
+    public ResponseEntity<String> handleDuplicate(DuplicateAssignmentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
     
     // GET all designaciones
     @GetMapping
@@ -93,8 +99,20 @@ public class DesignacionController {
     
     // POST create designacion
     @PostMapping
-    public Designacion createDesignacion(@RequestBody Designacion designacion) {
-        return designacionRepository.save(designacion);
+    public ResponseEntity<?> createDesignacion(@RequestBody Designacion designacion) {
+        validarDuplicados(designacion);
+        Designacion saved = designacionRepository.save(designacion);
+        return ResponseEntity.ok(saved);
+    }
+    
+    // POST create designaciones batch
+    @PostMapping("/batch")
+    public ResponseEntity<?> createDesignacionesBatch(@RequestBody List<Designacion> designaciones) {
+        for (Designacion d : designaciones) {
+            validarDuplicados(d);
+        }
+        List<Designacion> saved = designacionRepository.saveAll(designaciones);
+        return ResponseEntity.ok(saved);
     }
     
     // PUT update designacion
@@ -103,6 +121,11 @@ public class DesignacionController {
         Optional<Designacion> designacion = designacionRepository.findById(id);
         if (designacion.isPresent()) {
             Designacion updatedDesignacion = designacion.get();
+            updatedDesignacion.setTemporada(designacionDetails.getTemporada());
+            updatedDesignacion.setEtapa(designacionDetails.getEtapa());
+            updatedDesignacion.setRegion(designacionDetails.getRegion());
+            updatedDesignacion.setProvincia(designacionDetails.getProvincia());
+            updatedDesignacion.setDistrito(designacionDetails.getDistrito());
             updatedDesignacion.setPartidoId(designacionDetails.getPartidoId());
             updatedDesignacion.setIdCampeonato(designacionDetails.getIdCampeonato());
             updatedDesignacion.setNombreCampeonato(designacionDetails.getNombreCampeonato());
@@ -117,6 +140,7 @@ public class DesignacionController {
             updatedDesignacion.setArbitroAsistente1(designacionDetails.getArbitroAsistente1());
             updatedDesignacion.setArbitroAsistente2(designacionDetails.getArbitroAsistente2());
             updatedDesignacion.setCuartoArbitro(designacionDetails.getCuartoArbitro());
+            updatedDesignacion.setAsesor(designacionDetails.getAsesor());
             updatedDesignacion.setPosicion(designacionDetails.getPosicion());
             updatedDesignacion.setEstado(designacionDetails.getEstado());
             updatedDesignacion.setObservaciones(designacionDetails.getObservaciones());
@@ -134,4 +158,39 @@ public class DesignacionController {
         }
         return ResponseEntity.notFound().build();
     }
-}
+    
+    // Validar que un arbitro no este asignado en multiples partidos la misma fecha
+    private void validarDuplicados(Designacion designacion) {
+        if (designacion.getFecha() == null) {
+            return;
+        }
+        
+        String[] arbitros = {
+            designacion.getArbitroPrincipal(),
+            designacion.getArbitroAsistente1(),
+            designacion.getArbitroAsistente2(),
+            designacion.getCuartoArbitro(),
+            designacion.getAsesor()
+        };
+        
+        for (String arbitroId : arbitros) {
+            if (arbitroId == null || arbitroId.isBlank()) {
+                continue;
+            }
+            List<Designacion> existentes = designacionRepository.findByFechaAndArbitro(
+                designacion.getFecha(), arbitroId
+            );
+            if (!existentes.isEmpty()) {
+                throw new DuplicateAssignmentException(
+                    "El arbitro " + arbitroId + " ya esta asignado en la fecha " + designacion.getFecha()
+                );
+            }
+        }
+    }
+    
+    // Excepcion personalizada para asignaciones duplicadas
+    public static class DuplicateAssignmentException extends RuntimeException {
+        public DuplicateAssignmentException(String message) {
+            super(message);
+        }
+    }

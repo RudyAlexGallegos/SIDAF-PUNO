@@ -27,4 +27,7 @@ public interface DesignacionRepository extends JpaRepository<Designacion, Long> 
     List<Designacion> findByIdEquipoLocal(Long idEquipoLocal);
     
     List<Designacion> findByIdEquipoVisitante(Long idEquipoVisitante);
+    
+    @Query("SELECT d FROM Designacion d WHERE d.fecha = :fecha AND (d.arbitroPrincipal = :arbitroId OR d.arbitroAsistente1 = :arbitroId OR d.arbitroAsistente2 = :arbitroId OR d.cuartoArbitro = :arbitroId OR d.asesor = :arbitroId)")
+    List<Designacion> findByFechaAndArbitro(@Param("fecha") String fecha, @Param("arbitroId") String arbitroId);
 }
