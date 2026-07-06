@@ -581,15 +581,15 @@ export default function NuevoCampeonatoPage() {
                   <Users className="h-5 w-5" />
                   Selección de Equipos
                 </CardTitle>
-<CardDescription>
-                   Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
-                   {formData.categoria !== "CAMPEONATO FUNDAMENTAL" && equiposSeleccionados.length < 2 && (
-                     <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
-                   )}
-                   {formData.categoria === "CAMPEONATO FUNDAMENTAL" && (
-                      <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL u OFICIAL: equipos opcionales</span>
-                   )}
-                 </CardDescription>
+                   <CardDescription>
+                    Selecciona los equipos participantes ({equiposSeleccionados.length}/16)
+                    {!["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && equiposSeleccionados.length < 2 && (
+                      <span className="text-red-500"> - Mínimo 2 equipos requeridos</span>
+                    )}
+                    {["CAMPEONATO FUNDAMENTAL", "CAMPEONATO OFICIAL"].includes(formData.categoria) && (
+                       <span className="text-blue-600"> - CAMPEONATO FUNDAMENTAL u OFICIAL: equipos opcionales</span>
+                    )}
+                  </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {equiposLoading ? (
