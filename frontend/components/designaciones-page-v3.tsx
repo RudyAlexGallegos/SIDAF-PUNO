@@ -273,7 +273,7 @@ function DesignacionesPageContent() {
     }, [championships])
 
     const esCampeonatoFundamental = (nombre: string) => {
-      return campeonatoCategoriaMap.get(nombre) === "CAMPEONATO FUNDAMENTAL"
+      return campeonatoCategoriaMap.get(nombre) === "CAMPEONATO FUNDAMENTAL" || campeonatoCategoriaMap.get(nombre) === "CAMPEONATO OFICIAL"
     }
 
     useEffect(() => {
