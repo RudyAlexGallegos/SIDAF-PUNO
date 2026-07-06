@@ -185,13 +185,18 @@ export interface Designacion {
     fecha?: string;
     hora?: string;
     estadio?: string;
-    posicion?: string;
-    estado?: string;
-    arbitroPrincipal?: string;
-    arbitroAsistente1?: string;
-    arbitroAsistente2?: string;
-    cuartoArbitro?: string;
-    asesor?: string;
+    posicion?: string | null;
+    estado?: string | null;
+    arbitroPrincipal?: string | null;
+    arbitroAsistente1?: string | null;
+    arbitroAsistente2?: string | null;
+    cuartoArbitro?: string | null;
+    asesor?: string | null;
+    temporada?: number | null;
+    etapa?: string | null;
+    region?: string | null;
+    provincia?: string | null;
+    distrito?: string | null;
 }
 
 export interface Asistencia {
