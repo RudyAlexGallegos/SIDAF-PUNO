@@ -150,8 +150,8 @@ export default function NuevaDesignacionPage() {
   // Árbitros seleccionados (para CAMPEONATO FUNDAMENTAL)
   const [arbitrosSeleccionados, setArbitrosSeleccionados] = useState<Arbitro[]>([])
 
-  // Detectar si es CAMPEONATO FUNDAMENTAL
-  const esCampeonatoFundamental = campeonatoSeleccionado?.categoria === "CAMPEONATO FUNDAMENTAL"
+  // Detectar si es CAMPEONATO FUNDAMENTAL u OFICIAL
+  const esCampeonatoFundamental = campeonatoSeleccionado?.categoria === "CAMPEONATO FUNDAMENTAL" || campeonatoSeleccionado?.categoria === "CAMPEONATO OFICIAL"
 
   // Obtener steps activos según el tipo de campeonato
   const activeSteps = esCopaPeruActual
@@ -574,7 +574,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   setArbitrosSeleccionados([])
                   if (camp.nombre === "COPA PERÚ 2026") {
                     setCurrentStep("etapa")
-                  } else if (camp.categoria === "CAMPEONATO FUNDAMENTAL") {
+                  } else if (camp.categoria === "CAMPEONATO FUNDAMENTAL" || camp.categoria === "CAMPEONATO OFICIAL") {
                     setCurrentStep("designacionGeneral")
                   } else {
                     setCurrentStep("provincia")
