@@ -389,12 +389,22 @@ useEffect(() => {
         <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
           Comisión Departamental de Árbitros · Puno
         </p>
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
-          Gestión de Designaciones
-        </h1>
-        <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
-          Administra árbitros y asignaciones de partidos • {designacionesFiltradas.length} designaciones
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-1">
+          <div>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">
+              Gestión de Designaciones
+            </h1>
+            <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
+              Administra árbitros y asignaciones de partidos • {designacionesFiltradas.length} designaciones
+            </p>
+          </div>
+          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Link href="/dashboard/designaciones/nueva">
+              <Plus className="w-4 h-4 mr-2" />
+              Nueva Designación
+            </Link>
+          </Button>
+        </div>
       </section>
 
       {/* CONTENIDO PRINCIPAL */}
