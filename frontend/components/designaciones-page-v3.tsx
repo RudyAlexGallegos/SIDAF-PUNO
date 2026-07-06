@@ -45,6 +45,7 @@ import {
   ClipboardList,
   Calendar,
   CheckCircle2,
+  Printer,
 } from "lucide-react"
 import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns"
 import { es } from "date-fns/locale"
@@ -315,54 +316,159 @@ useEffect(() => {
     }
   }
 
-  const exportToPDF = async () => {
-    try {
-      const jsPDF = (await import("jspdf")).jsPDF
-      const autoTable = (await import("jspdf-autotable")).default
+   const exportToPDF = async () => {
+     try {
+       const jsPDF = (await import("jspdf")).jsPDF
+       const autoTable = (await import("jspdf-autotable")).default
 
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      })
+       const doc = new jsPDF({
+         orientation: "landscape",
+         unit: "mm",
+         format: "a4",
+       })
 
-      let yPosition = 15
+       let yPosition = 15
 
-      doc.setFont("Arial", "bold")
-      doc.setFontSize(14)
-      doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
-      yPosition += 8
+       doc.setFont("helvetica", "bold")
+       doc.setFontSize(16)
+       doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
+       yPosition += 8
 
-      const tableData = designacionesFiltradas.map((d, idx) => {
-        const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+       doc.setFont("helvetica", "normal")
+       doc.setFontSize(10)
+       doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
+       yPosition += 6
+       doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
+       yPosition += 10
 
-        return [
-          (idx + 1).toString(),
-          d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy HH:mm", { locale: es }) : "-",
-          d.nombreCampeonato || "-",
-          `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
-          d.estadio || "-",
-          arbPrincipal ? `${arbPrincipal.nombre} ${arbPrincipal.apellido}`.trim() : "-",
-          d.estado || "-",
-        ]
-      })
+       const tableData = designacionesFiltradas.map((d, idx) => {
+         const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+         const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+         const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+         const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
 
-      autoTable(doc, {
-        head: [["N°", "FECHA", "CAMPEONATO", "PARTIDO", "ESTADIO", "ÁRBITRO PRINCIPAL", "ESTADO"]],
-        body: tableData,
-        startY: yPosition,
-        margin: 10,
-        styles: { fontSize: 9, cellPadding: 4, halign: "center" },
-        headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
-      })
+         return [
+           (idx + 1).toString(),
+           d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+           d.hora || "-",
+           d.nombreCampeonato || "-",
+           `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+           d.estadio || "-",
+           getArbNombre(arbPrincipal),
+           getArbCategoria(arbPrincipal),
+           getArbNombre(arbAsist1),
+           getArbCategoria(arbAsist1),
+           getArbNombre(arbAsist2),
+           getArbCategoria(arbAsist2),
+           getArbNombre(arbCuarto),
+           getArbCategoria(arbCuarto),
+           d.estado || "-",
+         ]
+       })
 
-      doc.save(`designaciones-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
-      toast({ title: "✅ PDF exportado", description: "El archivo se descargó correctamente" })
-    } catch (error) {
-      console.error("Error exportando:", error)
-      toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
-    }
-  }
+       autoTable(doc, {
+         head: [
+           ["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]
+         ],
+         body: tableData,
+         startY: yPosition,
+         margin: { left: 10, right: 10 },
+         styles: { fontSize: 8, cellPadding: 3, halign: "center" },
+         headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
+         alternateRowStyles: { fillColor: [245, 247, 250] },
+         columnStyles: {
+           4: { cellWidth: 35 },
+           6: { cellWidth: 28 },
+           8: { cellWidth: 28 },
+           10: { cellWidth: 28 },
+           12: { cellWidth: 28 },
+         },
+       })
+
+       doc.save(`designaciones-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
+       toast({ title: "✅ PDF exportado", description: `Se exportaron ${designacionesFiltradas.length} designaciones` })
+     } catch (error) {
+       console.error("Error exportando:", error)
+       toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
+     }
+   }
+
+   const exportarPDFSemanal = async (semana: string, designacionesSemana: Designacion[]) => {
+     try {
+       const jsPDF = (await import("jspdf")).jsPDF
+       const autoTable = (await import("jspdf-autotable")).default
+
+       const doc = new jsPDF({
+         orientation: "landscape",
+         unit: "mm",
+         format: "a4",
+       })
+
+       let yPosition = 15
+
+       doc.setFont("helvetica", "bold")
+       doc.setFontSize(16)
+       doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
+       yPosition += 8
+
+       doc.setFont("helvetica", "normal")
+       doc.setFontSize(10)
+       doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
+       yPosition += 6
+       doc.text(`Semana: ${semana} · Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
+       yPosition += 10
+
+       const tableData = designacionesSemana.map((d, idx) => {
+         const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+         const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+         const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+         const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+
+         return [
+           (idx + 1).toString(),
+           d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+           d.hora || "-",
+           d.nombreCampeonato || "-",
+           `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+           d.estadio || "-",
+           getArbNombre(arbPrincipal),
+           getArbCategoria(arbPrincipal),
+           getArbNombre(arbAsist1),
+           getArbCategoria(arbAsist1),
+           getArbNombre(arbAsist2),
+           getArbCategoria(arbAsist2),
+           getArbNombre(arbCuarto),
+           getArbCategoria(arbCuarto),
+           d.estado || "-",
+         ]
+       })
+
+       autoTable(doc, {
+         head: [
+           ["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]
+         ],
+         body: tableData,
+         startY: yPosition,
+         margin: { left: 10, right: 10 },
+         styles: { fontSize: 8, cellPadding: 3, halign: "center" },
+         headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
+         alternateRowStyles: { fillColor: [245, 247, 250] },
+         columnStyles: {
+           4: { cellWidth: 35 },
+           6: { cellWidth: 28 },
+           8: { cellWidth: 28 },
+           10: { cellWidth: 28 },
+           12: { cellWidth: 28 },
+         },
+       })
+
+       doc.save(`designaciones-semana-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
+       toast({ title: "✅ PDF exportado", description: `Se exportaron ${designacionesSemana.length} designaciones de la semana` })
+     } catch (error) {
+       console.error("Error exportando:", error)
+       toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
+     }
+   }
 
   if (loading && designacionesFiltradas.length === 0) {
     return (
@@ -398,12 +504,20 @@ useEffect(() => {
               Administra árbitros y asignaciones de partidos • {designacionesFiltradas.length} designaciones
             </p>
           </div>
-          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Link href="/dashboard/designaciones/nueva">
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva Designación
-            </Link>
-          </Button>
+           <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+             <Link href="/dashboard/designaciones/nueva">
+               <Plus className="w-4 h-4 mr-2" />
+               Nueva Designación
+             </Link>
+           </Button>
+           <Button
+             variant="outline"
+             onClick={exportToPDF}
+             className="border-gray-200 text-slate-700 hover:bg-white hover:text-slate-900"
+           >
+             <Download className="w-4 h-4 mr-2" />
+             Descargar PDF
+           </Button>
         </div>
       </section>
 
@@ -411,60 +525,64 @@ useEffect(() => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div className="space-y-4 md:space-y-6 lg:space-y-8">
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
-            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
-              <div className="flex items-start justify-between">
-                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <ClipboardList className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
-                </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center">
+                <ClipboardList className="h-5 md:h-5 w-5 md:w-5 text-blue-600" />
               </div>
-              <div className="mt-2 md:mt-3">
-                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.total}</p>
-                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Total</p>
-              </div>
+              <Badge className="bg-blue-50 text-blue-700 border border-blue-200">TOTAL</Badge>
             </div>
-            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
-              <div className="flex items-start justify-between">
-                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <Calendar className="h-4 md:h-5 w-4 md:w-5 text-emerald-600" />
-                </div>
-              </div>
-              <div className="mt-2 md:mt-3">
-                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.hoy}</p>
-                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Hoy</p>
-              </div>
-            </div>
-            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
-              <div className="flex items-start justify-between">
-                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Calendar className="h-4 md:h-5 w-4 md:w-5 text-amber-600" />
-                </div>
-              </div>
-              <div className="mt-2 md:mt-3">
-                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.semana}</p>
-                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Esta Semana</p>
-              </div>
-            </div>
-            <div className="rounded-xl bg-white border border-gray-200 p-3 md:p-4 lg:p-5 hover:shadow-md transition-all duration-200">
-              <div className="flex items-start justify-between">
-                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <CheckCircle2 className="h-4 md:h-5 w-4 md:w-5 text-indigo-600" />
-                </div>
-              </div>
-              <div className="mt-2 md:mt-3">
-                <p className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">{stats.confirmadas}</p>
-                <p className="text-xs md:text-sm text-slate-600 mt-0.5">Confirmadas</p>
-              </div>
+            <div className="mt-3">
+              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.total}</p>
+              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Designaciones totales</p>
             </div>
           </div>
+          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <Calendar className="h-5 md:h-5 w-5 md:w-5 text-emerald-600" />
+              </div>
+              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">HOY</Badge>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.hoy}</p>
+              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Programadas hoy</p>
+            </div>
+          </div>
+          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Calendar className="h-5 md:h-5 w-5 md:w-5 text-amber-600" />
+              </div>
+              <Badge className="bg-amber-50 text-amber-700 border border-amber-200">SEMANA</Badge>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.semana}</p>
+              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Esta semana</p>
+            </div>
+          </div>
+          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <CheckCircle2 className="h-5 md:h-5 w-5 md:w-5 text-indigo-600" />
+              </div>
+              <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200">CONFIRMADAS</Badge>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.confirmadas}</p>
+              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Confirmadas</p>
+            </div>
+          </div>
+        </div>
 
-          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+          <Card className="bg-white border border-gray-200 shadow-sm">
             <CardContent className="p-4 md:p-6 space-y-4">
               <div className="flex items-center gap-2 text-slate-900 font-semibold">
                 <Filter className="w-4 h-4" />
                 <span>Filtros</span>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 mb-2 block">Búsqueda</label>
                   <Input
@@ -542,163 +660,183 @@ useEffect(() => {
                     )}
                   </button>
 
-                   {expandedProvincias.has(campeonato) && (
-                     <CardContent className="p-0 space-y-3 bg-gray-50">
-                     {Object.entries(designacionesAgrupadas[campeonato] || {})
-                       .sort(([, a], [, b]) => b.length - a.length)
-                       .map(([semana, designacionesSemana]) => (
-                         <div key={semana} className="border-l-4 border-emerald-500 bg-white p-4 m-4 rounded-lg">
-                           <div className="flex items-center justify-between mb-4">
-                             <div>
-                               <h3 className="text-lg font-bold text-slate-900">Semana {semana}</h3>
-                               <p className="text-sm text-gray-600">{designacionesSemana.length} partidos</p>
-                             </div>
-                           </div>
+                    {expandedProvincias.has(campeonato) && (
+                      <CardContent className="p-0 space-y-4 bg-gray-50/60">
+                      {Object.entries(designacionesAgrupadas[campeonato] || {})
+                        .sort(([, a], [, b]) => b.length - a.length)
+                        .map(([semana, designacionesSemana]) => (
+                          <div key={semana} className="rounded-xl border border-gray-200 bg-white mx-3 md:mx-4 mb-3 md:mb-4 overflow-hidden">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 bg-slate-50/60 px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                  <Calendar className="h-4 md:h-5 w-4 md:w-5 text-emerald-600" />
+                                </div>
+                                <div>
+                                  <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
+                                    {semana}
+                                  </h3>
+                                  <p className="text-xs md:text-sm text-slate-600 font-medium">
+                                    {designacionesSemana.length} {designacionesSemana.length === 1 ? "designación" : "designaciones"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => exportarPDFSemanal(semana, designacionesSemana)}
+                                  className="h-8 text-xs border-gray-200 hover:border-emerald-400 hover:text-emerald-700"
+                                >
+                                  <Printer className="w-3.5 h-3.5 mr-1.5" />
+                                  Imprimir semana
+                                </Button>
+                              </div>
+                            </div>
 
-                          <div className="overflow-x-auto">
-                            <Table className="text-sm">
-                              <TableHeader className="bg-gray-100 border-t border-b border-gray-200">
-                              <TableRow>
-<TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Fecha</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Hora</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Partido</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estadio</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Principal</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Asist. 1</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Asist. 2</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">4to Árbitro</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Estado</TableHead>
-                                <TableHead className="h-10 text-xs font-bold text-slate-700 uppercase tracking-wide px-3">Acciones</TableHead>
-                              </TableRow>
-                            </TableHeader>
-<TableBody>
-                               {designacionesSemana
-                                 .sort((a, b) => {
-                                   const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
-                                   const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
-                                   return dateA - dateB
-                                 })
-                                 .map((designacion, idx) => {
-                                  const arbPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
-                                  const arbAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
-                                  const arbAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
-                                  const arbCuarto = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
+                           <div className="overflow-x-auto">
+                             <Table className="text-sm">
+                               <TableHeader className="bg-gray-50 border-b border-gray-200">
+                               <TableRow>
+ <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Fecha</TableHead>
+                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Hora</TableHead>
+                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Partido</TableHead>
+                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estadio</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Principal</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 1</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 2</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">4to Árbitro</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estado</TableHead>
+                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">Acciones</TableHead>
+                               </TableRow>
+                             </TableHeader>
+ <TableBody>
+                                {designacionesSemana
+                                  .sort((a, b) => {
+                                    const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
+                                    const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
+                                    return dateA - dateB
+                                  })
+                                  .map((designacion, idx) => {
+                                   const arbPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
+                                   const arbAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
+                                   const arbAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
+                                   const arbCuarto = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
 
-                                  const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
-                                  const getArbCategoria = (arb: any) => arb?.categoria || ""
+                                   const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
+                                   const getArbCategoria = (arb: any) => arb?.categoria || ""
 
-                                  return (
-                                    <TableRow
-                                      key={designacion.id}
-                                      className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-blue-50 transition-colors h-14`}
-                                    >
-<TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
-                                         <div>
-                                           <div className="text-slate-900 font-bold text-xs">
-                                             {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
+                                   return (
+                                     <TableRow
+                                       key={designacion.id}
+                                       className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-blue-50/70 transition-colors`}
+                                     >
+ <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                          <div>
+                                            <div className="text-slate-900 font-bold text-xs">
+                                              {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
+                                            </div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                          {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
+                                        </TableCell>
+                                        <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                          <div className="space-y-1">
+                                            <div>
+                                              <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
+                                                {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
+                                              </span>
+                                            </div>
+                                            <div className="text-slate-400 text-xs font-bold">vs</div>
+                                            <div>
+                                              <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
+                                                {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
+                                          {designacion.estadio || "-"}
+                                        </TableCell>
+                                       <TableCell className="text-xs px-3">
+                                         <div className="space-y-0.5">
+                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                             {getArbNombre(arbPrincipal)}
                                            </div>
+                                           <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
                                          </div>
                                        </TableCell>
-                                       <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
-                                         {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
-                                       </TableCell>
-                                       <TableCell className="text-xs font-bold text-slate-900 px-3">
-                                         <div className="space-y-1">
-                                           <div>
-                                             <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
-                                               {(designacion.nombreEquipoLocal || "-").substring(0, 10)}
-                                             </span>
+                                       <TableCell className="text-xs px-3">
+                                         <div className="space-y-0.5">
+                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                             {getArbNombre(arbAsist1)}
                                            </div>
-                                           <div className="text-slate-400 text-xs font-bold">vs</div>
-                                           <div>
-                                             <span className="inline-block bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">
-                                               {(designacion.nombreEquipoVisitante || "-").substring(0, 10)}
-                                             </span>
-                                           </div>
+                                           <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
                                          </div>
                                        </TableCell>
-                                       <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[120px]">
-                                         {designacion.estadio || "-"}
+                                       <TableCell className="text-xs px-3">
+                                         <div className="space-y-0.5">
+                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                             {getArbNombre(arbAsist2)}
+                                           </div>
+                                           <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
+                                         </div>
                                        </TableCell>
-                                      <TableCell className="text-xs px-3">
-                                        <div className="space-y-0.5">
-                                          <div className="font-semibold text-slate-900 text-xs">
-                                            {getArbNombre(arbPrincipal)}
-                                          </div>
-                                          <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-xs px-3">
-                                        <div className="space-y-0.5">
-                                          <div className="font-semibold text-slate-900 text-xs">
-                                            {getArbNombre(arbAsist1)}
-                                          </div>
-                                          <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-xs px-3">
-                                        <div className="space-y-0.5">
-                                          <div className="font-semibold text-slate-900 text-xs">
-                                            {getArbNombre(arbAsist2)}
-                                          </div>
-                                          <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-xs px-3">
-                                        <div className="space-y-0.5">
-                                          <div className="font-semibold text-slate-900 text-xs">
-                                            {getArbNombre(arbCuarto)}
-                                          </div>
-                                          <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
-                                      <TableCell className="text-xs px-3">
-                                        <div className="flex gap-1">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                            className="h-7 w-7 p-0 hover:bg-blue-50"
-                                            title="Ver detalles"
-                                          >
-                                            <Link href={`/dashboard/designaciones/${designacion.id}`}>
-                                              <Eye className="w-3.5 h-3.5 text-blue-600" />
-                                            </Link>
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                            className="h-7 w-7 p-0 hover:bg-slate-100"
-                                            title="Editar"
-                                          >
-                                            <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
-                                              <Edit className="w-3.5 h-3.5 text-slate-600" />
-                                            </Link>
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setDeleteId(designacion.id || null)}
-                                            className="h-7 w-7 p-0 hover:bg-red-50"
-                                            title="Eliminar"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                                          </Button>
-                                        </div>
-                                      </TableCell>
-                                    </TableRow>
-                                  )
-                                })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                )}
-              </Card>
+                                       <TableCell className="text-xs px-3">
+                                         <div className="space-y-0.5">
+                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                             {getArbNombre(arbCuarto)}
+                                           </div>
+                                           <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
+                                         </div>
+                                       </TableCell>
+                                       <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
+                                       <TableCell className="text-xs px-3">
+                                         <div className="flex gap-1 justify-end">
+                                           <Button
+                                             variant="ghost"
+                                             size="sm"
+                                             asChild
+                                             className="h-7 w-7 p-0 hover:bg-blue-50"
+                                             title="Ver detalles"
+                                           >
+                                             <Link href={`/dashboard/designaciones/${designacion.id}`}>
+                                               <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                             </Link>
+                                           </Button>
+                                           <Button
+                                             variant="ghost"
+                                             size="sm"
+                                             asChild
+                                             className="h-7 w-7 p-0 hover:bg-slate-100"
+                                             title="Editar"
+                                           >
+                                             <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
+                                               <Edit className="w-3.5 h-3.5 text-slate-600" />
+                                             </Link>
+                                           </Button>
+                                           <Button
+                                             variant="ghost"
+                                             size="sm"
+                                             onClick={() => setDeleteId(designacion.id || null)}
+                                             className="h-7 w-7 p-0 hover:bg-red-50"
+                                             title="Eliminar"
+                                           >
+                                             <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                           </Button>
+                                         </div>
+                                       </TableCell>
+                                     </TableRow>
+                                   )
+                                 })}
+                             </TableBody>
+                           </Table>
+                         </div>
+                       </div>
+                     ))}
+                   </CardContent>
+                 )}
+               </Card>
             ))
           )}
           </div>
