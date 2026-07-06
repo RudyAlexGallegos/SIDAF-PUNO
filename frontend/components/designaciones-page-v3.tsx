@@ -258,11 +258,25 @@ function DesignacionesPageContent() {
      return grupos
    }, [designacionesFiltradas])
 
-   const campeonatos = useMemo(() => {
-     return Object.keys(designacionesAgrupadas).sort()
-   }, [designacionesAgrupadas])
+    const campeonatos = useMemo(() => {
+      return Object.keys(designacionesAgrupadas).sort()
+    }, [designacionesAgrupadas])
 
-useEffect(() => {
+    const campeonatoCategoriaMap = useMemo(() => {
+      const map = new Map<string, string>()
+      championships.forEach((c) => {
+        if (c.nombre) {
+          map.set(c.nombre, c.categoria || "")
+        }
+      })
+      return map
+    }, [championships])
+
+    const esCampeonatoFundamental = (nombre: string) => {
+      return campeonatoCategoriaMap.get(nombre) === "CAMPEONATO FUNDAMENTAL"
+    }
+
+    useEffect(() => {
      const camps = Object.keys(designacionesAgrupadas)
      if (camps.length > 0 && expandedProvincias.size === 0) {
        setExpandedProvincias(new Set([camps[0]]))
@@ -317,158 +331,194 @@ useEffect(() => {
   }
 
    const exportToPDF = async () => {
-     try {
-       const jsPDF = (await import("jspdf")).jsPDF
-       const autoTable = (await import("jspdf-autotable")).default
+      try {
+        const jsPDF = (await import("jspdf")).jsPDF
+        const autoTable = (await import("jspdf-autotable")).default
 
-       const doc = new jsPDF({
-         orientation: "landscape",
-         unit: "mm",
-         format: "a4",
-       })
+        const doc = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: "a4",
+        })
 
-       let yPosition = 15
+        let yPosition = 15
 
-       doc.setFont("helvetica", "bold")
-       doc.setFontSize(16)
-       doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
-       yPosition += 8
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(16)
+        doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
+        yPosition += 8
 
-       doc.setFont("helvetica", "normal")
-       doc.setFontSize(10)
-       doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
-       yPosition += 6
-       doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
-       yPosition += 10
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(10)
+        doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
+        yPosition += 6
+        doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
+        yPosition += 10
 
-       const tableData = designacionesFiltradas.map((d, idx) => {
-         const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
-         const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
-         const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
-         const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+        const esCampeonatoFundamentalLocal = (nombreCampeonato: string | undefined) => {
+          return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
+        }
 
-         return [
-           (idx + 1).toString(),
-           d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
-           d.hora || "-",
-           d.nombreCampeonato || "-",
-           `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
-           d.estadio || "-",
-           getArbNombre(arbPrincipal),
-           getArbCategoria(arbPrincipal),
-           getArbNombre(arbAsist1),
-           getArbCategoria(arbAsist1),
-           getArbNombre(arbAsist2),
-           getArbCategoria(arbAsist2),
-           getArbNombre(arbCuarto),
-           getArbCategoria(arbCuarto),
-           d.estado || "-",
-         ]
-       })
+        const tableData = designacionesFiltradas.map((d, idx) => {
+          const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+          const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+          const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+          const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+          const arbUnico = arbPrincipal || arbAsist1 || arbAsist2 || arbCuarto
+          const esFund = esCampeonatoFundamentalLocal(d.nombreCampeonato)
 
-       autoTable(doc, {
-         head: [
-           ["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]
-         ],
-         body: tableData,
-         startY: yPosition,
-         margin: { left: 10, right: 10 },
-         styles: { fontSize: 8, cellPadding: 3, halign: "center" },
-         headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
-         alternateRowStyles: { fillColor: [245, 247, 250] },
-         columnStyles: {
-           4: { cellWidth: 35 },
-           6: { cellWidth: 28 },
-           8: { cellWidth: 28 },
-           10: { cellWidth: 28 },
-           12: { cellWidth: 28 },
-         },
-       })
+          if (esFund) {
+            return [
+              (idx + 1).toString(),
+              d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+              d.hora || "-",
+              d.nombreCampeonato || "-",
+              `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+              d.estadio || "-",
+              getArbNombre(arbUnico),
+              getArbCategoria(arbUnico),
+              d.estado || "-",
+            ]
+          }
 
-       doc.save(`designaciones-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
-       toast({ title: "✅ PDF exportado", description: `Se exportaron ${designacionesFiltradas.length} designaciones` })
-     } catch (error) {
-       console.error("Error exportando:", error)
-       toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
-     }
-   }
+          return [
+            (idx + 1).toString(),
+            d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+            d.hora || "-",
+            d.nombreCampeonato || "-",
+            `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+            d.estadio || "-",
+            getArbNombre(arbPrincipal),
+            getArbCategoria(arbPrincipal),
+            getArbNombre(arbAsist1),
+            getArbCategoria(arbAsist1),
+            getArbNombre(arbAsist2),
+            getArbCategoria(arbAsist2),
+            getArbNombre(arbCuarto),
+            getArbCategoria(arbCuarto),
+            d.estado || "-",
+          ]
+        })
 
-   const exportarPDFSemanal = async (semana: string, designacionesSemana: Designacion[]) => {
-     try {
-       const jsPDF = (await import("jspdf")).jsPDF
-       const autoTable = (await import("jspdf-autotable")).default
+        const esTodoFundamental = designacionesFiltradas.every((d) => esCampeonatoFundamentalLocal(d.nombreCampeonato))
 
-       const doc = new jsPDF({
-         orientation: "landscape",
-         unit: "mm",
-         format: "a4",
-       })
+        autoTable(doc, {
+          head: esTodoFundamental
+            ? [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "ÁRBITRO", "CAT.", "ESTADO"]]
+            : [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]],
+          body: tableData,
+          startY: yPosition,
+          margin: { left: 10, right: 10 },
+          styles: { fontSize: 8, cellPadding: 3, halign: "center" },
+          headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 247, 250] },
+          columnStyles: esTodoFundamental
+            ? { 4: { cellWidth: 35 }, 6: { cellWidth: 38 } }
+            : { 4: { cellWidth: 35 }, 6: { cellWidth: 28 }, 8: { cellWidth: 28 }, 10: { cellWidth: 28 }, 12: { cellWidth: 28 } },
+        })
 
-       let yPosition = 15
+        doc.save(`designaciones-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
+        toast({ title: "✅ PDF exportado", description: `Se exportaron ${designacionesFiltradas.length} designaciones` })
+      } catch (error) {
+        console.error("Error exportando:", error)
+        toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
+      }
+    }
 
-       doc.setFont("helvetica", "bold")
-       doc.setFontSize(16)
-       doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
-       yPosition += 8
+    const exportarPDFSemanal = async (semana: string, designacionesSemana: Designacion[]) => {
+      try {
+        const jsPDF = (await import("jspdf")).jsPDF
+        const autoTable = (await import("jspdf-autotable")).default
 
-       doc.setFont("helvetica", "normal")
-       doc.setFontSize(10)
-       doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
-       yPosition += 6
-       doc.text(`Semana: ${semana} · Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
-       yPosition += 10
+        const doc = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: "a4",
+        })
 
-       const tableData = designacionesSemana.map((d, idx) => {
-         const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
-         const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
-         const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
-         const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+        let yPosition = 15
 
-         return [
-           (idx + 1).toString(),
-           d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
-           d.hora || "-",
-           d.nombreCampeonato || "-",
-           `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
-           d.estadio || "-",
-           getArbNombre(arbPrincipal),
-           getArbCategoria(arbPrincipal),
-           getArbNombre(arbAsist1),
-           getArbCategoria(arbAsist1),
-           getArbNombre(arbAsist2),
-           getArbCategoria(arbAsist2),
-           getArbNombre(arbCuarto),
-           getArbCategoria(arbCuarto),
-           d.estado || "-",
-         ]
-       })
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(16)
+        doc.text("DESIGNACIÓN DE ÁRBITROS", 105, yPosition, { align: "center" })
+        yPosition += 8
 
-       autoTable(doc, {
-         head: [
-           ["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]
-         ],
-         body: tableData,
-         startY: yPosition,
-         margin: { left: 10, right: 10 },
-         styles: { fontSize: 8, cellPadding: 3, halign: "center" },
-         headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
-         alternateRowStyles: { fillColor: [245, 247, 250] },
-         columnStyles: {
-           4: { cellWidth: 35 },
-           6: { cellWidth: 28 },
-           8: { cellWidth: 28 },
-           10: { cellWidth: 28 },
-           12: { cellWidth: 28 },
-         },
-       })
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(10)
+        doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
+        yPosition += 6
+        doc.text(`Semana: ${semana} · Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
+        yPosition += 10
 
-       doc.save(`designaciones-semana-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
-       toast({ title: "✅ PDF exportado", description: `Se exportaron ${designacionesSemana.length} designaciones de la semana` })
-     } catch (error) {
-       console.error("Error exportando:", error)
-       toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
-     }
-   }
+        const esCampeonatoFundamentalLocal = (nombreCampeonato: string | undefined) => {
+          return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
+        }
+
+        const tableData = designacionesSemana.map((d, idx) => {
+          const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+          const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+          const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+          const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+          const arbUnico = arbPrincipal || arbAsist1 || arbAsist2 || arbCuarto
+          const esFund = esCampeonatoFundamentalLocal(d.nombreCampeonato)
+
+          if (esFund) {
+            return [
+              (idx + 1).toString(),
+              d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+              d.hora || "-",
+              d.nombreCampeonato || "-",
+              `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+              d.estadio || "-",
+              getArbNombre(arbUnico),
+              getArbCategoria(arbUnico),
+              d.estado || "-",
+            ]
+          }
+
+          return [
+            (idx + 1).toString(),
+            d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+            d.hora || "-",
+            d.nombreCampeonato || "-",
+            `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+            d.estadio || "-",
+            getArbNombre(arbPrincipal),
+            getArbCategoria(arbPrincipal),
+            getArbNombre(arbAsist1),
+            getArbCategoria(arbAsist1),
+            getArbNombre(arbAsist2),
+            getArbCategoria(arbAsist2),
+            getArbNombre(arbCuarto),
+            getArbCategoria(arbCuarto),
+            d.estado || "-",
+          ]
+        })
+
+        const esTodoFundamental = designacionesSemana.every((d) => esCampeonatoFundamentalLocal(d.nombreCampeonato))
+
+        autoTable(doc, {
+          head: esTodoFundamental
+            ? [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "ÁRBITRO", "CAT.", "ESTADO"]]
+            : [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]],
+          body: tableData,
+          startY: yPosition,
+          margin: { left: 10, right: 10 },
+          styles: { fontSize: 8, cellPadding: 3, halign: "center" },
+          headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 247, 250] },
+          columnStyles: esTodoFundamental
+            ? { 4: { cellWidth: 35 }, 6: { cellWidth: 38 } }
+            : { 4: { cellWidth: 35 }, 6: { cellWidth: 28 }, 8: { cellWidth: 28 }, 10: { cellWidth: 28 }, 12: { cellWidth: 28 } },
+        })
+
+        doc.save(`designaciones-semana-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
+        toast({ title: "✅ PDF exportado", description: `Se exportaron ${designacionesSemana.length} designaciones de la semana` })
+      } catch (error) {
+        console.error("Error exportando:", error)
+        toast({ title: "❌ Error", description: "Error al exportar PDF", variant: "destructive" })
+      }
+    }
 
   if (loading && designacionesFiltradas.length === 0) {
     return (
@@ -698,15 +748,26 @@ useEffect(() => {
                                <TableHeader className="bg-gray-50 border-b border-gray-200">
                                <TableRow>
  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Fecha</TableHead>
-                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Hora</TableHead>
-                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Partido</TableHead>
-                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estadio</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Principal</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 1</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 2</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">4to Árbitro</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estado</TableHead>
-                                 <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">Acciones</TableHead>
+                                   <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Hora</TableHead>
+                                   <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Partido</TableHead>
+                                   <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estadio</TableHead>
+                                  {!esCampeonatoFundamental(campeonato) && (
+                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Principal</TableHead>
+                                  )}
+                                  {!esCampeonatoFundamental(campeonato) && (
+                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 1</TableHead>
+                                  )}
+                                  {!esCampeonatoFundamental(campeonato) && (
+                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 2</TableHead>
+                                  )}
+                                  {!esCampeonatoFundamental(campeonato) && (
+                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">4to Árbitro</TableHead>
+                                  )}
+                                  {esCampeonatoFundamental(campeonato) && (
+                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Árbitro</TableHead>
+                                  )}
+                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estado</TableHead>
+                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">Acciones</TableHead>
                                </TableRow>
                              </TableHeader>
  <TableBody>
@@ -722,10 +783,12 @@ useEffect(() => {
                                    const arbAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
                                    const arbCuarto = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
 
-                                   const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
-                                   const getArbCategoria = (arb: any) => arb?.categoria || ""
+                                    const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
+                                    const getArbCategoria = (arb: any) => arb?.categoria || ""
 
-                                   return (
+                                    const arbUnico = arbPrincipal || arbAsist1 || arbAsist2 || arbCuarto
+
+                                    return (
                                      <TableRow
                                        key={designacion.id}
                                        className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-blue-50/70 transition-colors`}
@@ -756,40 +819,58 @@ useEffect(() => {
                                           </div>
                                         </TableCell>
                                         <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
-                                          {designacion.estadio || "-"}
-                                        </TableCell>
-                                       <TableCell className="text-xs px-3">
-                                         <div className="space-y-0.5">
-                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                             {getArbNombre(arbPrincipal)}
-                                           </div>
-                                           <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
-                                         </div>
-                                       </TableCell>
-                                       <TableCell className="text-xs px-3">
-                                         <div className="space-y-0.5">
-                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                             {getArbNombre(arbAsist1)}
-                                           </div>
-                                           <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
-                                         </div>
-                                       </TableCell>
-                                       <TableCell className="text-xs px-3">
-                                         <div className="space-y-0.5">
-                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                             {getArbNombre(arbAsist2)}
-                                           </div>
-                                           <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
-                                         </div>
-                                       </TableCell>
-                                       <TableCell className="text-xs px-3">
-                                         <div className="space-y-0.5">
-                                           <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                             {getArbNombre(arbCuarto)}
-                                           </div>
-                                           <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
-                                         </div>
-                                       </TableCell>
+                                           {designacion.estadio || "-"}
+                                         </TableCell>
+                                        {!esCampeonatoFundamental(campeonato) && (
+                                          <TableCell className="text-xs px-3">
+                                            <div className="space-y-0.5">
+                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                                {getArbNombre(arbPrincipal)}
+                                              </div>
+                                              <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
+                                            </div>
+                                          </TableCell>
+                                        )}
+                                        {!esCampeonatoFundamental(campeonato) && (
+                                          <TableCell className="text-xs px-3">
+                                            <div className="space-y-0.5">
+                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                                {getArbNombre(arbAsist1)}
+                                              </div>
+                                              <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
+                                            </div>
+                                          </TableCell>
+                                        )}
+                                        {!esCampeonatoFundamental(campeonato) && (
+                                          <TableCell className="text-xs px-3">
+                                            <div className="space-y-0.5">
+                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                                {getArbNombre(arbAsist2)}
+                                              </div>
+                                              <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
+                                            </div>
+                                          </TableCell>
+                                        )}
+                                        {!esCampeonatoFundamental(campeonato) && (
+                                          <TableCell className="text-xs px-3">
+                                            <div className="space-y-0.5">
+                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                                {getArbNombre(arbCuarto)}
+                                              </div>
+                                              <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
+                                            </div>
+                                          </TableCell>
+                                        )}
+                                        {esCampeonatoFundamental(campeonato) && (
+                                          <TableCell className="text-xs px-3">
+                                            <div className="space-y-0.5">
+                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                                {getArbNombre(arbUnico)}
+                                              </div>
+                                              <div className="text-xs text-slate-500">{getArbCategoria(arbUnico)}</div>
+                                            </div>
+                                          </TableCell>
+                                        )}
                                        <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
                                        <TableCell className="text-xs px-3">
                                          <div className="flex gap-1 justify-end">
