@@ -42,6 +42,9 @@ import {
   Edit,
   Trash2,
   Filter,
+  ClipboardList,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react"
 import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns"
 import { es } from "date-fns/locale"
