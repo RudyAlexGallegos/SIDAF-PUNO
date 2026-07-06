@@ -2016,9 +2016,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                 <Button
                   variant="outline"
                   className="flex-1 border-gray-200 hover:bg-white text-slate-900"
-                  onClick={() => router.push("/dashboard/designaciones")}
+                  asChild
                 >
-                  Ver Designaciones
+                  <Link href="/dashboard/designaciones">
+                    Ver Designaciones
+                  </Link>
                 </Button>
                 <Button
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
