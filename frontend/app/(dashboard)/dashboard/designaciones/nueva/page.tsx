@@ -51,7 +51,7 @@ interface EtapaState {
   }
 }
 
-type Step = "campeonato" | "etapa" | "provincia" | "distrito" | "partidos" | "designar" | "resumen" | "confirmacion" | "designacionGeneral"
+type Step = "campeonato" | "etapa" | "provincia" | "distrito" | "partidos" | "designar" | "resumen" | "confirmacion" | "designacionGeneral" | "resumenGeneral"
 
 const ETAPAS = [
   "Etapa Distrital",
