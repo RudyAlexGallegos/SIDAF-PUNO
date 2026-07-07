@@ -621,6 +621,40 @@ export async function deleteDesignacion(id: number): Promise<boolean> {
     }
 }
 
+export async function getDesignacionesByCampeonatoAndFecha(idCampeonato: number, fecha: string): Promise<Designacion[]> {
+    const response = await fetch(buildUrl(`/designaciones/campeonato/${idCampeonato}/fecha/${fecha}`));
+    if (!response.ok) throw new Error("Error al obtener designaciones por campeonato y fecha");
+    return await response.json();
+}
+
+export async function getDesignacionesAnterioresByCampeonato(idCampeonato: number, fechaActual: string): Promise<Designacion[]> {
+    const response = await fetch(buildUrl(`/designaciones/campeonato/${idCampeonato}/anteriores?fechaActual=${encodeURIComponent(fechaActual)}`));
+    if (!response.ok) throw new Error("Error al obtener designaciones anteriores");
+    return await response.json();
+}
+
+export async function getDesignacionesByCampeonatoAndArbitro(idCampeonato: number, arbitroId: string): Promise<Designacion[]> {
+    const response = await fetch(buildUrl(`/designaciones/campeonato/${idCampeonato}/arbitro/${encodeURIComponent(arbitroId)}`));
+    if (!response.ok) throw new Error("Error al obtener designaciones por árbitro");
+    return await response.json();
+}
+
+export async function getConflictosByArbitroAndFecha(arbitroId: string, fecha: string): Promise<Designacion[]> {
+    const response = await fetch(buildUrl(`/designaciones/conflictos/arbitro/${encodeURIComponent(arbitroId)}/fecha/${encodeURIComponent(fecha)}`));
+    if (!response.ok) throw new Error("Error al obtener conflictos");
+    return await response.json();
+}
+
+export async function publicarDesignaciones(ids: number[]): Promise<Designacion[]> {
+    const response = await fetch(buildUrl("/designaciones/publicar"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) throw new Error("Error al publicar designaciones");
+    return await response.json();
+}
+
 export async function getDesignacionesByCampeonato(campeonatoId: number): Promise<Designacion[]> {
     try {
         const response = await fetch(buildUrl(`/designaciones/campeonato/${campeonatoId}`));

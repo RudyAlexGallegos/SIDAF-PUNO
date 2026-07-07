@@ -126,8 +126,19 @@ export default function NuevaDesignacionPage() {
   // Distritos que no participan (se retiran)
   const [distritosNoParticipantes, setDistritosNoParticipantes] = useState<string[]>([])
 
-  // Lista de asesores
-  const [asesores, setAsesores] = useState<Asesor[]>([])
+   // Lista de asesores
+   const [asesores, setAsesores] = useState<Asesor[]>([])
+
+   // Fecha y hora para designación general (CAMPEONATO FUNDAMENTAL u OFICIAL)
+   const [fechaGeneral, setFechaGeneral] = useState<string>("")
+   const [horaGeneral, setHoraGeneral] = useState<string>("")
+
+   // Modo de designación: manual, semiautomatica, automatica
+   const [modoDesignacion, setModoDesignacion] = useState<"manual" | "semiautomatica" | "automatica">("manual")
+
+   // Designaciones anteriores del campeonato
+   const [designacionesAnteriores, setDesignacionesAnteriores] = useState<Designacion[]>([])
+   const [loadingAnteriores, setLoadingAnteriores] = useState(false)
 
   // Obtener distritos según la provincia seleccionada (para COPA PERÚ)
   const distritosDeProvinciaSeleccionada = provinciaSeleccionada
@@ -2044,183 +2055,327 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
     )
   }
 
-  // ============================================================
-  // STEP: DESIGNACIÓN GENERAL (CAMPEONATO FUNDAMENTAL)
-  // ============================================================
+   // ============================================================
+   // STEP: DESIGNACIÓN GENERAL (CAMPEONATO FUNDAMENTAL)
+   // ============================================================
 
-  if (currentStep === "designacionGeneral" && campeonatoSeleccionado && esCampeonatoFundamental) {
-    return (
-      <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
-        {/* Header */}
-        <section className="border-b pb-3 md:pb-4">
-          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-            Designar Árbitros · {campeonatoSeleccionado.nombre}
-          </p>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
-            <Users className="w-8 h-8 text-blue-600" />
-            Designar Árbitros
-          </h1>
-          <p className="text-slate-500 mt-2 text-xs md:text-sm">
-            CAMPEONATO FUNDAMENTAL (Sin requisitos)
-          </p>
-        </section>
+   if (currentStep === "designacionGeneral" && campeonatoSeleccionado && esCampeonatoFundamental) {
+     return (
+       <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
+         {/* Header */}
+         <section className="border-b pb-3 md:pb-4">
+           <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+             Designar Árbitros · {campeonatoSeleccionado.nombre}
+           </p>
+           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+             <Users className="w-8 h-8 text-blue-600" />
+             Asignación de Árbitros
+           </h1>
+           <p className="text-slate-500 mt-2 text-xs md:text-sm">
+             CAMPEONATO FUNDAMENTAL · Selección por categoría
+           </p>
+         </section>
 
-        {/* Botón de retroceso */}
-        <div className="flex justify-start">
-          <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Cambiar Campeonato
-          </Button>
-        </div>
+         {/* Botón de retroceso */}
+         <div className="flex justify-start">
+           <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
+             <ChevronLeft className="w-4 h-4 mr-1" />
+             Cambiar Campeonato
+           </Button>
+         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          {/* Panel de árbitros disponibles */}
-          <Card className="border-2 border-gray-200 bg-card">
-            <CardHeader>
-              <CardTitle className="text-slate-900">
-                Árbitros Disponibles
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {arbitros.map((arb) => {
-                  const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
-                  return (
-                    <div
-                      key={arb.id}
-                      onClick={() => {
-                        if (estaSeleccionado) {
-                          setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
-                        } else {
-                          setArbitrosSeleccionados(prev => [...prev, arb])
-                        }
-                      }}
-                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                        estaSeleccionado
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-200 bg-white hover:border-blue-600/50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-sm">{arb.nombre} {arb.apellido}</p>
-                          <Badge className={`${
-                            estaSeleccionado ? "bg-white/20 text-white" : "bg-blue-600 text-white"
-                          } text-xs mt-1`}>
-                            {arb.categoria}
-                          </Badge>
-                        </div>
-                        {estaSeleccionado && (
-                          <CheckCircle2 className="w-5 h-5 text-white" />
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+         <Card className="bg-white border border-gray-200">
+           <CardContent className="p-4">
+             <p className="text-sm text-slate-800">
+               <strong>Programa la fecha y hora</strong> de la designación, luego selecciona los árbitros. Esta información será visible en el PDF de la semana.
+             </p>
+           </CardContent>
+         </Card>
 
-          {/* Árbitros seleccionados */}
-          <Card className="border-2 border-gray-200 bg-card">
-            <CardHeader>
-              <CardTitle className="text-slate-900">
-                Árbitros Seleccionados ({arbitrosSeleccionados.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {arbitrosSeleccionados.length === 0 ? (
-                <p className="text-slate-500 text-center py-8">
-                  Selecciona al menos 1 árbitro
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {arbitrosSeleccionados.map((arb) => (
-                    <div key={arb.id} className="p-3 bg-blue-600/10 rounded-lg flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-900">{arb.nombre} {arb.apellido}</p>
-                        <Badge className="bg-blue-600 text-white text-xs">{arb.categoria}</Badge>
-                      </div>
-                      <button
-                        onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div>
+             <label className="block text-sm font-semibold text-slate-700 mb-2">
+               📅 Fecha de la designación
+             </label>
+             <input
+               type="date"
+               value={fechaGeneral}
+               onChange={(e) => setFechaGeneral(e.target.value)}
+               className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+             />
+           </div>
+           <div>
+             <label className="block text-sm font-semibold text-slate-700 mb-2">
+               🕒 Hora de la designación
+             </label>
+             <input
+               type="time"
+               value={horaGeneral}
+               onChange={(e) => setHoraGeneral(e.target.value)}
+               className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+             />
+           </div>
+         </div>
 
-        {/* Botón de confirmar */}
-        <div className="mt-8">
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep("campeonato")}
-              className="flex-1"
-            >
-              ← Cancelar
-            </Button>
-<Button
-                type="button"
-                onClick={async () => {
-                if (arbitrosSeleccionados.length < 1) {
-                  toast({
-                    title: "Validación",
-                    description: "Selecciona al menos 1 árbitro",
-                    variant: "destructive"
-                  })
-                  return
-                }
+         <div>
+           <label className="block text-sm font-semibold text-slate-700 mb-2">
+             Modo de designación
+           </label>
+           <select
+             value={modoDesignacion}
+             onChange={(e) => setModoDesignacion(e.target.value as "manual" | "semiautomatica" | "automatica")}
+             className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+           >
+             <option value="manual">Manual</option>
+             <option value="semiautomatica">Semiautomática</option>
+             <option value="automatica">Automática</option>
+           </select>
+         </div>
 
-                setIsSaving(true)
-                try {
-                  console.log("Guardando designaciones para campeonato:", campeonatoSeleccionado?.nombre)
-                  console.log("Árbitros a guardar:", arbitrosSeleccionados.length)
-                  // Crear designación individual para cada árbitro seleccionado
-                  for (const arbitro of arbitrosSeleccionados) {
-                    console.log("Guardando árbitro:", arbitro.id, arbitro.nombre)
-                    const result = await createDesignacion({
-                      idCampeonato: campeonatoSeleccionado?.id,
-                      nombreCampeonato: campeonatoSeleccionado?.nombre?.toUpperCase(),
-                      fecha: new Date().toISOString().split('T')[0],
-                      estado: "PROGRAMADA",
-                      arbitroPrincipal: String(arbitro.id),
-                    })
-                    console.log("Resultado:", result)
-                  }
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+           {/* Panel de árbitros disponibles */}
+           <Card className="border-2 border-gray-200 bg-card">
+             <CardHeader>
+               <CardTitle className="text-slate-900">
+                 Árbitros Disponibles
+               </CardTitle>
+             </CardHeader>
+             <CardContent>
+               <div className="space-y-2 max-h-96 overflow-y-auto">
+                 {arbitros.map((arb) => {
+                   const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
+                   return (
+                     <div
+                       key={arb.id}
+                       onClick={() => {
+                         if (estaSeleccionado) {
+                           setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
+                         } else {
+                           setArbitrosSeleccionados(prev => [...prev, arb])
+                         }
+                       }}
+                       className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                         estaSeleccionado
+                           ? "border-blue-600 bg-blue-600 text-white"
+                           : "border-gray-200 bg-white hover:border-blue-600/50"
+                       }`}
+                     >
+                       <div className="flex items-center justify-between">
+                         <div>
+                           <p className="font-semibold text-sm">{arb.nombre} {arb.apellido}</p>
+                           <Badge className={`${
+                             estaSeleccionado ? "bg-white/20 text-white" : "bg-blue-600 text-white"
+                           } text-xs mt-1`}>
+                             {arb.categoria}
+                           </Badge>
+                         </div>
+                         {estaSeleccionado && (
+                           <CheckCircle2 className="w-5 h-5 text-white" />
+                         )}
+                       </div>
+                     </div>
+                   )
+                 })}
+               </div>
+             </CardContent>
+           </Card>
 
-                  toast({
-                    title: "¡Éxito!",
-                    description: `Se asignaron ${arbitrosSeleccionados.length} árbitros al campeonato`,
-                  })
+           {/* Árbitros seleccionados */}
+           <Card className="border-2 border-gray-200 bg-card">
+             <CardHeader>
+               <CardTitle className="text-slate-900">
+                 Árbitros Seleccionados ({arbitrosSeleccionados.length})
+               </CardTitle>
+             </CardHeader>
+             <CardContent>
+               {arbitrosSeleccionados.length === 0 ? (
+                 <p className="text-slate-500 text-center py-8">
+                   Selecciona al menos 1 árbitro
+                 </p>
+               ) : (
+                 <div className="space-y-2 max-h-96 overflow-y-auto">
+                   {arbitrosSeleccionados.map((arb) => (
+                     <div key={arb.id} className="p-3 bg-blue-600/10 rounded-lg flex items-center justify-between">
+                       <div>
+                         <p className="font-semibold text-slate-900">{arb.nombre} {arb.apellido}</p>
+                         <Badge className="bg-blue-600 text-white text-xs">{arb.categoria}</Badge>
+                       </div>
+                       <button
+                         onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
+                         className="text-red-600 hover:text-red-700"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </button>
+                     </div>
+                   ))}
+                 </div>
+               )}
+             </CardContent>
+           </Card>
+         </div>
 
-                  setCurrentStep("confirmacion")
-                } catch (error) {
-                  console.error("Error al guardar designaciones:", error)
-                  toast({
-                    title: "Error",
-                    description: "No se pudieron guardar las designaciones",
-                    variant: "destructive",
-                  })
-                } finally {
-                  setIsSaving(false)
-                }
-              }}
-              disabled={arbitrosSeleccionados.length < 1 || isSaving}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-            >
-              {isSaving ? "Guardando..." : "Confirmar Designación"}
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+         {/* Botón de confirmar */}
+         <div className="mt-8">
+           <div className="flex gap-3">
+             <Button
+               variant="outline"
+               onClick={() => setCurrentStep("campeonato")}
+               className="flex-1 border-gray-200"
+             >
+               <ChevronLeft className="w-4 h-4 mr-2" />
+               Cancelar
+             </Button>
+             <Button
+               type="button"
+               onClick={() => {
+                 if (arbitrosSeleccionados.length < 1) {
+                   toast({
+                     title: "Validación",
+                     description: "Selecciona al menos 1 árbitro",
+                     variant: "destructive",
+                   })
+                   return
+                 }
 
-return null
+                 if (!fechaGeneral) {
+                   toast({
+                     title: "Validación",
+                     description: "Selecciona la fecha de la designación",
+                     variant: "destructive",
+                   })
+                   return
+                 }
+
+                 setCurrentStep("resumenGeneral")
+               }}
+               disabled={arbitrosSeleccionados.length < 1 || isSaving}
+               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+               {isSaving ? "Guardando..." : "Revisar Selección"}
+               <ChevronRight className="w-5 h-5 ml-2" />
+             </Button>
+           </div>
+         </div>
+       </div>
+     )
+   }
+
+   // ============================================================
+   // STEP: RESUMEN GENERAL (CAMPEONATO FUNDAMENTAL)
+   // ============================================================
+
+   if (currentStep === "resumenGeneral" && campeonatoSeleccionado && esCampeonatoFundamental) {
+     return (
+       <div className="space-y-4 md:space-y-6 max-w-5xl mx-auto">
+         {/* Header */}
+         <section className="border-b pb-3 md:pb-4">
+           <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+             {campeonatoSeleccionado.nombre}
+           </p>
+           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+             Revisar Designación
+           </h1>
+           <p className="text-slate-500 mt-2 text-xs md:text-sm">
+             CAMPEONATO FUNDAMENTAL · Confirmación
+           </p>
+         </section>
+
+         <div className="flex justify-start">
+           <Button variant="outline" size="sm" onClick={() => setCurrentStep("designacionGeneral")} className="border-gray-200">
+             <ChevronLeft className="w-4 h-4 mr-1" />
+             Volver a Asignación
+           </Button>
+         </div>
+
+         <Card className="bg-amber-50 border-amber-200">
+           <CardContent className="p-4">
+             <p className="text-sm text-amber-800">
+               <strong>Revisa la información</strong> antes de confirmar. Se asignarán {arbitrosSeleccionados.length} árbitros para el {fechaGeneral} a las {horaGeneral}.
+             </p>
+           </CardContent>
+         </Card>
+
+         <div className="space-y-4">
+           {arbitrosSeleccionados.map((arb) => (
+             <Card key={arb.id} className="border-2 border-gray-200 bg-card">
+               <CardContent className="p-4 flex items-center justify-between">
+                 <div>
+                   <p className="text-xs font-bold text-slate-500 uppercase mb-1">Árbitro</p>
+                   <p className="text-base font-bold text-slate-900">{arb.nombre} {arb.apellido}</p>
+                   <div className="flex items-center gap-2 mt-2">
+                     <Badge className="bg-blue-600 text-white">{arb.categoria}</Badge>
+                     <Badge className="bg-emerald-600 text-white">PROGRAMADA</Badge>
+                   </div>
+                 </div>
+                 <div className="text-right">
+                   <p className="text-xs text-slate-500">Campeonato</p>
+                   <p className="text-sm font-semibold text-slate-900">{campeonatoSeleccionado?.nombre}</p>
+                   <p className="text-xs text-slate-600 mt-1">📅 {fechaGeneral}</p>
+                   <p className="text-xs text-slate-600">🕒 {horaGeneral}</p>
+                 </div>
+               </CardContent>
+             </Card>
+           ))}
+         </div>
+
+         <div className="flex gap-3 pt-4">
+           <Button
+             variant="outline"
+             onClick={() => setCurrentStep("designacionGeneral")}
+             className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
+           >
+             ← Corregir
+           </Button>
+           <Button
+             onClick={async () => {
+               if (!fechaGeneral || !horaGeneral) {
+                 toast({
+                   title: "Validación",
+                   description: "Ingresa fecha y hora de la designación",
+                   variant: "destructive",
+                 })
+                 return
+               }
+
+               setIsSaving(true)
+               try {
+                 for (const arbitro of arbitrosSeleccionados) {
+                   await createDesignacion({
+                     idCampeonato: campeonatoSeleccionado?.id,
+                     nombreCampeonato: campeonatoSeleccionado?.nombre?.toUpperCase(),
+                     fecha: `${fechaGeneral}T${horaGeneral}:00`,
+                     hora: horaGeneral,
+                     estado: "PROGRAMADA",
+                     arbitroPrincipal: String(arbitro.id),
+                   })
+                 }
+
+                 toast({
+                   title: "✅ Designaciones creadas",
+                   description: `Se asignaron ${arbitrosSeleccionados.length} árbitros al campeonato`,
+                 })
+
+                 setCurrentStep("confirmacion")
+               } catch (error) {
+                 console.error("Error guardando:", error)
+                 toast({
+                   title: "❌ Error",
+                   description: "No se pudieron guardar las designaciones",
+                   variant: "destructive",
+                 })
+               } finally {
+                 setIsSaving(false)
+               }
+             }}
+             disabled={isSaving}
+             className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+             {isSaving ? "Guardando..." : "Guardar Designaciones ✓"}
+           </Button>
+         </div>
+       </div>
+     )
+   }
+
+ return null
 }
