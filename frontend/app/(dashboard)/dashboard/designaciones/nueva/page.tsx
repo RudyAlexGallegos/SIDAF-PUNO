@@ -701,7 +701,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
           </div>
 
-           {!esCopaPeruActual && ultimaFechaCampeonato && designacionesAnteriores.length > 0 && (
+           {!esCopaPeruActual && ultimaFechaCampeonato && designacionesAnteriores && designacionesAnteriores.length > 0 && (
             <Card className="bg-amber-50 border-amber-200">
               <CardContent className="p-4">
                 <p className="text-sm font-semibold text-amber-800 mb-2">
