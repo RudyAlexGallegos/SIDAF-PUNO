@@ -701,7 +701,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
           </div>
 
-          {!esCopaPeruActual && ultimaFechaCampeonato && (
+           {!esCopaPeruActual && ultimaFechaCampeonato && designacionesAnteriores.length > 0 && (
             <Card className="bg-amber-50 border-amber-200">
               <CardContent className="p-4">
                 <p className="text-sm font-semibold text-amber-800 mb-2">
@@ -2204,53 +2204,57 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
            </select>
          </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-           {/* Panel de árbitros disponibles */}
-           <Card className="border-2 border-gray-200 bg-card">
-             <CardHeader>
-               <CardTitle className="text-slate-900">
-                 Árbitros Disponibles
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-               <div className="space-y-2 max-h-96 overflow-y-auto">
-                 {arbitros.map((arb) => {
-                   const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
-                   return (
-                     <div
-                       key={arb.id}
-                       onClick={() => {
-                         if (estaSeleccionado) {
-                           setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
-                         } else {
-                           setArbitrosSeleccionados(prev => [...prev, arb])
-                         }
-                       }}
-                       className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                         estaSeleccionado
-                           ? "border-blue-600 bg-blue-600 text-white"
-                           : "border-gray-200 bg-white hover:border-blue-600/50"
-                       }`}
-                     >
-                       <div className="flex items-center justify-between">
-                         <div>
-                           <p className="font-semibold text-sm">{arb.nombre} {arb.apellido}</p>
-                           <Badge className={`${
-                             estaSeleccionado ? "bg-white/20 text-white" : "bg-blue-600 text-white"
-                           } text-xs mt-1`}>
-                             {arb.categoria}
-                           </Badge>
-                         </div>
-                         {estaSeleccionado && (
-                           <CheckCircle2 className="w-5 h-5 text-white" />
-                         )}
-                       </div>
-                     </div>
-                   )
-                 })}
-               </div>
-             </CardContent>
-           </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            {/* Panel de árbitros disponibles */}
+            <Card className="border-2 border-gray-200 bg-card">
+              <CardHeader>
+                <CardTitle className="text-slate-900">
+                  Árbitros Disponibles
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!arbitros || arbitros.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">No hay árbitros disponibles</p>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {arbitros.map((arb) => {
+                      const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
+                      return (
+                        <div
+                          key={arb.id}
+                          onClick={() => {
+                            if (estaSeleccionado) {
+                              setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
+                            } else {
+                              setArbitrosSeleccionados(prev => [...prev, arb])
+                            }
+                          }}
+                          className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            estaSeleccionado
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : "border-gray-200 bg-white hover:border-blue-600/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-sm">{arb.nombre} {arb.apellido}</p>
+                              <Badge className={`${
+                                estaSeleccionado ? "bg-white/20 text-white" : "bg-blue-600 text-white"
+                              } text-xs mt-1`}>
+                                {arb.categoria}
+                              </Badge>
+                            </div>
+                            {estaSeleccionado && (
+                              <CheckCircle2 className="w-5 h-5 text-white" />
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
            {/* Árbitros seleccionados */}
            <Card className="border-2 border-gray-200 bg-card">
