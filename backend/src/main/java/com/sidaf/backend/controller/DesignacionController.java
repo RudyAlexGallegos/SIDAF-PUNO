@@ -3,11 +3,13 @@ package com.sidaf.backend.controller;
 import com.sidaf.backend.model.Designacion;
 import com.sidaf.backend.model.Designacion.EstadoDesignacion;
 import com.sidaf.backend.repository.DesignacionRepository;
+import com.sidaf.backend.service.DesignacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -17,6 +19,9 @@ public class DesignacionController {
     
     @Autowired
     private DesignacionRepository designacionRepository;
+    
+    @Autowired
+    private DesignacionService designacionService;
     
     // GET all designaciones
     @GetMapping
@@ -138,5 +143,36 @@ public class DesignacionController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+    
+    // GET designaciones por campeonato y fecha
+    @GetMapping("/campeonato/{idCampeonato}/fecha/{fecha}")
+    public List<Designacion> getDesignacionesByCampeonatoAndFecha(@PathVariable Long idCampeonato, @PathVariable String fecha) {
+        return designacionService.obtenerDesignacionesPorCampeonatoYFecha(idCampeonato, fecha);
+    }
+    
+    // GET designaciones anteriores por campeonato
+    @GetMapping("/campeonato/{idCampeonato}/anteriores")
+    public List<Designacion> getDesignacionesAnterioresByCampeonato(@PathVariable Long idCampeonato, @RequestParam String fechaActual) {
+        return designacionService.obtenerDesignacionesAnterioresPorCampeonato(idCampeonato, fechaActual);
+    }
+    
+    // GET designaciones por campeonato y arbitro
+    @GetMapping("/campeonato/{idCampeonato}/arbitro/{arbitroId}")
+    public List<Designacion> getDesignacionesByCampeonatoAndArbitro(@PathVariable Long idCampeonato, @PathVariable String arbitroId) {
+        return designacionService.obtenerDesignacionesPorCampeonatoYArbitro(idCampeonato, arbitroId);
+    }
+    
+    // GET conflictos de arbitro en una fecha
+    @GetMapping("/conflictos/arbitro/{arbitroId}/fecha/{fecha}")
+    public List<Designacion> getConflictosByArbitroAndFecha(@PathVariable String arbitroId, @PathVariable String fecha) {
+        return designacionService.obtenerDesignacionesConflictivasPorArbitro(arbitroId, fecha);
+    }
+    
+    // POST publicar designaciones (cambiar estado a CONFIRMADA)
+    @PostMapping("/publicar")
+    public List<Designacion> publicarDesignaciones(@RequestBody Map<String, List<Long>> body) {
+        List<Long> ids = body.getOrDefault("ids", List.of());
+        return designacionService.publicarDesignaciones(ids);
     }
 }

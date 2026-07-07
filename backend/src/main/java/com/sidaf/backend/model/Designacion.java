@@ -72,6 +72,9 @@ public class Designacion {
     @Column(name = "cuarto_arbitro")
     private String cuartoArbitro;
     
+    @Column(name = "asesor")
+    private String asesor;
+    
     private String posicion;
     
     @Enumerated(EnumType.STRING)
