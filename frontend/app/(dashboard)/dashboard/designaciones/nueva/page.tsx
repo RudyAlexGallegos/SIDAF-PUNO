@@ -136,11 +136,16 @@ export default function NuevaDesignacionPage() {
    // Modo de designación: manual, semiautomatica, automatica
    const [modoDesignacion, setModoDesignacion] = useState<"manual" | "semiautomatica" | "automatica">("manual")
 
-   // Designaciones anteriores y fechas del campeonato
-   const [designacionesAnteriores, setDesignacionesAnteriores] = useState<Designacion[]>([])
-   const [loadingAnteriores, setLoadingAnteriores] = useState(false)
-   const [fechasCampeonato, setFechasCampeonato] = useState<string[]>([])
-   const [ultimaFechaCampeonato, setUltimaFechaCampeonato] = useState<string>("")
+    // Designaciones anteriores y fechas del campeonato
+    const [designacionesAnteriores, setDesignacionesAnteriores] = useState<Designacion[]>([])
+    const [loadingAnteriores, setLoadingAnteriores] = useState(false)
+    const [fechasCampeonato, setFechasCampeonato] = useState<string[]>([])
+    const [ultimaFechaCampeonato, setUltimaFechaCampeonato] = useState<string>("")
+
+    // Conflictos y publicación
+    const [conflictos, setConflictos] = useState<Designacion[]>([])
+    const [validandoConflictos, setValidandoConflictos] = useState(false)
+    const [publicando, setPublicando] = useState(false)
 
   // Estado de desbloqueo de etapas
   const [etapasState, setEtapasState] = useState<EtapaState>({
