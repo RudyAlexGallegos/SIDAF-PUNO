@@ -136,14 +136,11 @@ export default function NuevaDesignacionPage() {
    // Modo de designación: manual, semiautomatica, automatica
    const [modoDesignacion, setModoDesignacion] = useState<"manual" | "semiautomatica" | "automatica">("manual")
 
-   // Designaciones anteriores del campeonato
+   // Designaciones anteriores y fechas del campeonato
    const [designacionesAnteriores, setDesignacionesAnteriores] = useState<Designacion[]>([])
    const [loadingAnteriores, setLoadingAnteriores] = useState(false)
-
-  // Obtener distritos según la provincia seleccionada (para COPA PERÚ)
-  const distritosDeProvinciaSeleccionada = provinciaSeleccionada
-    ? getDistritosByProvincia(provinciaSeleccionada).map(d => d.nombre)
-    : []
+   const [fechasCampeonato, setFechasCampeonato] = useState<string[]>([])
+   const [ultimaFechaCampeonato, setUltimaFechaCampeonato] = useState<string>("")
 
   // Estado de desbloqueo de etapas
   const [etapasState, setEtapasState] = useState<EtapaState>({
@@ -202,6 +199,31 @@ export default function NuevaDesignacionPage() {
     }
     loadData()
   }, [])
+
+  // Cargar fechas y designaciones anteriores cuando se selecciona un campeonato
+  useEffect(() => {
+    if (!campeonatoSeleccionado?.id) return
+
+    async function loadHistory() {
+      try {
+        setLoadingAnteriores(true)
+        const [fechas, anteriores] = await Promise.all([
+          getFechasUnicasPorCampeonato(campeonatoSeleccionado.id),
+          getDesignacionesAnterioresByCampeonato(campeonatoSeleccionado.id, new Date().toISOString().split('T')[0]),
+        ])
+        setFechasCampeonato(fechas)
+        setDesignacionesAnteriores(anteriores)
+        if (fechas.length > 0) {
+          setUltimaFechaCampeonato(fechas[fechas.length - 1])
+        }
+      } catch (error) {
+        console.error("Error cargando historial:", error)
+      } finally {
+        setLoadingAnteriores(false)
+      }
+    }
+    loadHistory()
+  }, [campeonatoSeleccionado?.id])
 
   // ============================================================
   // 🔐 FUNCIONES DE VALIDACIÓN Y DESBLOQUEO
@@ -666,13 +688,58 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 2 de 7</p>
         </section>
 
-        {/* Botón de retroceso */}
-        <div className="flex justify-start">
-          <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Cambiar Campeonato
-          </Button>
-        </div>
+          {/* Botón de retroceso */}
+          <div className="flex justify-start">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Cambiar Campeonato
+            </Button>
+          </div>
+
+          {!esCopaPeruActual && ultimaFechaCampeonato && (
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-4">
+                <p className="text-sm font-semibold text-amber-800 mb-2">
+                  Jornada anterior: {ultimaFechaCampeonato}
+                </p>
+                {loadingAnteriores ? (
+                  <p className="text-xs text-amber-700">Cargando árbitros...</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {designacionesAnteriores
+                      .filter(d => d.fecha === ultimaFechaCampeonato)
+                      .map((d, idx) => {
+                        const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+                        const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+                        const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+                        const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+
+                        const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
+                        const getArbCategoria = (arb: any) => arb?.categoria || ""
+
+                        return (
+                          <div key={d.id || idx} className="p-3 bg-white rounded-lg border border-amber-200">
+                            <p className="text-xs font-bold text-slate-700 mb-1">Partido {idx + 1}</p>
+                            <p className="text-xs text-slate-600">
+                              Principal: <span className="font-semibold">{getArbNombre(arbPrincipal)}</span>
+                            </p>
+                            <p className="text-xs text-slate-600">
+                              Asist. 1: <span className="font-semibold">{getArbNombre(arbAsist1)}</span>
+                            </p>
+                            <p className="text-xs text-slate-600">
+                              Asist. 2: <span className="font-semibold">{getArbNombre(arbAsist2)}</span>
+                            </p>
+                            <p className="text-xs text-slate-600">
+                              4to: <span className="font-semibold">{getArbNombre(arbCuarto)}</span>
+                            </p>
+                          </div>
+                        )
+                      })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
         {/* 🔐 ADVERTENCIA DE DESBLOQUEO (COPA PERÚ) */}
         {esCopaPeruActual && !validarDistritosCompletos() && (
