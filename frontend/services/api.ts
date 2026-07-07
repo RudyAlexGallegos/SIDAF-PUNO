@@ -655,6 +655,18 @@ export async function publicarDesignaciones(ids: number[]): Promise<Designacion[
     return await response.json();
 }
 
+export async function getFechasUnicasPorCampeonato(idCampeonato: number): Promise<string[]> {
+    const response = await fetch(buildUrl(`/designaciones/campeonato/${idCampeonato}/fechas`));
+    if (!response.ok) throw new Error("Error al obtener fechas");
+    return await response.json();
+}
+
+export async function getDesignacionesAnterioresPorCampeonato(idCampeonato: number, fechaActual: string): Promise<Designacion[]> {
+    const response = await fetch(buildUrl(`/designaciones/campeonato/${idCampeonato}/anteriores?fechaActual=${encodeURIComponent(fechaActual)}`));
+    if (!response.ok) throw new Error("Error al obtener designaciones anteriores");
+    return await response.json();
+}
+
 export async function getDesignacionesByCampeonato(campeonatoId: number): Promise<Designacion[]> {
     try {
         const response = await fetch(buildUrl(`/designaciones/campeonato/${campeonatoId}`));

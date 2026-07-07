@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/api/designaciones")
@@ -174,5 +176,22 @@ public class DesignacionController {
     public List<Designacion> publicarDesignaciones(@RequestBody Map<String, List<Long>> body) {
         List<Long> ids = body.getOrDefault("ids", List.of());
         return designacionService.publicarDesignaciones(ids);
+    }
+    
+    // GET fechas únicas por campeonato
+    @GetMapping("/campeonato/{idCampeonato}/fechas")
+    public List<String> getFechasUnicasPorCampeonato(@PathVariable Long idCampeonato) {
+        return designacionService.obtenerFechasUnicasPorCampeonato(idCampeonato);
+    }
+    
+    // POST sugerencias de designaciones sin repetir árbitros de la jornada anterior
+    @PostMapping("/campeonato/{idCampeonato}/sugerencias-sin-repetir")
+    public List<Designacion> sugerirDesignacionesSinRepetir(@PathVariable Long idCampeonato, @RequestBody Map<String, String> body) {
+        String fechaActual = body.getOrDefault("fechaActual", "");
+        List<Designacion> designacionesBase = body.containsKey("designaciones") ? new ObjectMapper().convertValue(body.get("designaciones"), new TypeReference<List<Designacion>>() {}) : List.of();
+        if (fechaActual.isEmpty() || designacionesBase.isEmpty()) {
+            return designacionesBase;
+        }
+        return designacionService.sugerirDesignacionesSinRepetir(idCampeonato, fechaActual, designacionesBase);
     }
 }

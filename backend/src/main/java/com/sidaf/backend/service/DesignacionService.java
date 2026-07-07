@@ -34,6 +34,15 @@ public class DesignacionService {
                 .collect(Collectors.toList());
     }
 
+    public List<String> obtenerFechasUnicasPorCampeonato(Long idCampeonato) {
+        return designacionRepository.findByIdCampeonato(idCampeonato).stream()
+                .map(Designacion::getFecha)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
     public List<Designacion> obtenerDesignacionesPorCampeonatoYArbitro(Long idCampeonato, String arbitroId) {
         return designacionRepository.findByIdCampeonato(idCampeonato).stream()
                 .filter(d -> arbitroId.equals(d.getArbitroPrincipal())
@@ -69,5 +78,40 @@ public class DesignacionService {
             });
         }
         return actualizadas;
+    }
+
+    public List<Designacion> sugerirDesignacionesSinRepetir(Long idCampeonato, String fechaActual, List<Designacion> designacionesBase) {
+        List<Designacion> anteriores = obtenerDesignacionesAnterioresPorCampeonato(idCampeonato, fechaActual);
+        if (anteriores.isEmpty()) {
+            return designacionesBase;
+        }
+
+        List<String> arbitrosExcluidos = new ArrayList<>();
+        for (Designacion d : anteriores) {
+            if (d.getArbitroPrincipal() != null) arbitrosExcluidos.add(d.getArbitroPrincipal());
+            if (d.getArbitroAsistente1() != null) arbitrosExcluidos.add(d.getArbitroAsistente1());
+            if (d.getArbitroAsistente2() != null) arbitrosExcluidos.add(d.getArbitroAsistente2());
+            if (d.getCuartoArbitro() != null) arbitrosExcluidos.add(d.getCuartoArbitro());
+            if (d.getAsesor() != null) arbitrosExcluidos.add(d.getAsesor());
+        }
+
+        return designacionesBase.stream()
+                .filter(d -> {
+                    String principal = d.getArbitroPrincipal();
+                    String asistente1 = d.getArbitroAsistente1();
+                    String asistente2 = d.getArbitroAsistente2();
+                    String cuarto = d.getCuartoArbitro();
+                    String asesor = d.getAsesor();
+
+                    boolean repetido = false;
+                    if (principal != null && arbitrosExcluidos.contains(principal)) repetido = true;
+                    if (asistente1 != null && arbitrosExcluidos.contains(asistente1)) repetido = true;
+                    if (asistente2 != null && arbitrosExcluidos.contains(asistente2)) repetido = true;
+                    if (cuarto != null && arbitrosExcluidos.contains(cuarto)) repetido = true;
+                    if (asesor != null && arbitrosExcluidos.contains(asesor)) repetido = true;
+
+                    return !repetido;
+                })
+                .collect(Collectors.toList());
     }
 }
