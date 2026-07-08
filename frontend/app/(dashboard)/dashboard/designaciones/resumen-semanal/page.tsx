@@ -107,12 +107,9 @@ export default function ResumenSemanalDesignacionesPage() {
     return { id, nombre, categoria }
   }
 
-  const getTipoDesignacion = (d: Designacion) => {
-    const { nombre, categoria } = resolverCampeonato(d)
-    if (nombre === "COPA PERÚ 2026") return "Copa Perú 2026"
-    const cat = categoria.toUpperCase()
-    if (cat === "CAMPEONATO FUNDAMENTAL" || cat === "CAMPEONATO OFICIAL") return "Designación General"
-    return "Designación de Partido"
+  const esGeneral = (d: Designacion) => {
+    const cat = resolverCampeonato(d).categoria.toUpperCase()
+    return cat === "CAMPEONATO FUNDAMENTAL" || cat === "CAMPEONATO OFICIAL"
   }
 
   const getEstadoBadge = (estado?: string | null) => {
@@ -149,10 +146,17 @@ export default function ResumenSemanalDesignacionesPage() {
       })
   }, [designaciones, lunesSemana, domingoSemana])
 
-  // Agrupar por (campeonato, fecha, hora) y consolidar árbitros en una sola fila
-  const filas = useMemo(() => {
+  // Escenario A: COPA PERÚ 2026 y demás campeonatos (cuenta completa, sin consolidar)
+  const designacionesDetalladas = useMemo(
+    () => designacionesSemana.filter((d) => !esGeneral(d)),
+    [designacionesSemana],
+  )
+
+  // Escenario B: Fundamental / Oficial (Designación General) -> consolidar por campeonato+fecha+hora
+  const filasGenerales = useMemo(() => {
+    const generales = designacionesSemana.filter((d) => esGeneral(d))
     const grupos = new Map<string, Designacion[]>()
-    designacionesSemana.forEach((d) => {
+    generales.forEach((d) => {
       const key = `${d.idCampeonato ?? d.nombreCampeonato}|${d.fecha || ""}|${d.hora || ""}`
       if (!grupos.has(key)) grupos.set(key, [])
       grupos.get(key)!.push(d)
@@ -175,9 +179,7 @@ export default function ResumenSemanalDesignacionesPage() {
               }),
           )
           .filter((a) => a.nombre && a.nombre !== "-")
-          .filter(
-            (a, i, arr) => arr.findIndex((x) => x.nombre === a.nombre) === i,
-          )
+          .filter((a, i, arr) => arr.findIndex((x) => x.nombre === a.nombre) === i)
 
         return {
           key: `${primera.idCampeonato}|${primera.fecha}|${primera.hora}`,
@@ -186,7 +188,6 @@ export default function ResumenSemanalDesignacionesPage() {
           fecha: primera.fecha,
           hora: primera.hora,
           estadio,
-          tipo: getTipoDesignacion(primera),
           arbitros: arbitrosResueltos,
           estado: primera.estado,
           ids: lista.map((d) => d.id || null),
@@ -251,45 +252,121 @@ export default function ResumenSemanalDesignacionesPage() {
       )
       yPosition += 10
 
-      if (filas.length === 0) {
+      if (designacionesSemana.length === 0) {
         doc.text("No hay designaciones registradas para esta semana.", 15, yPosition)
       } else {
-        const tableData = filas.map((f, idx) => {
-          const arbitrosTexto = f.arbitros
-            .map((a) => (a.categoria ? `${a.nombre} (${a.categoria})` : a.nombre))
-            .join("\n")
-          return [
-            (idx + 1).toString(),
-            f.nombreCampeonato,
-            f.fecha ? format(new Date(f.fecha), "dd/MM/yyyy", { locale: es }) : "-",
-            f.hora || "-",
-            f.tipo,
-            f.estadio,
-            arbitrosTexto,
-            f.estado || "-",
-          ]
-        })
+        // Escenario A: COPA PERÚ y demás campeonatos (detallado)
+        if (designacionesDetalladas.length > 0) {
+          doc.setFont("helvetica", "bold")
+          doc.setFontSize(12)
+          doc.text("COPA PERÚ 2026 Y CAMPEONATOS OFICIALES", 15, yPosition)
+          yPosition += 4
 
-        autoTable(doc, {
-          head: [["N°", "CAMPEONATO", "FECHA", "HORA", "TIPO", "UBICACIÓN", "ÁRBITROS", "ESTADO"]],
-          body: tableData,
-          startY: yPosition,
-          margin: { left: 10, right: 10 },
-          styles: { fontSize: 8, cellPadding: 3, halign: "center", valign: "middle" },
-          headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
-          alternateRowStyles: { fillColor: [245, 247, 250] },
-          columnStyles: {
-            1: { cellWidth: 38, halign: "left" },
-            5: { cellWidth: 30 },
-            6: { cellWidth: 55, halign: "left" },
-          },
-        })
+          const tableDataA = designacionesDetalladas.map((d, idx) => {
+            const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
+            const arbAsist1 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente1?.toString())
+            const arbAsist2 = arbitros.find((a) => a.id?.toString() === d.arbitroAsistente2?.toString())
+            const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
+            return [
+              (idx + 1).toString(),
+              d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+              d.hora || "-",
+              `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
+              d.estadio || "-",
+              getArbNombre(arbPrincipal),
+              getArbCategoria(arbPrincipal),
+              getArbNombre(arbAsist1),
+              getArbCategoria(arbAsist1),
+              getArbNombre(arbAsist2),
+              getArbCategoria(arbAsist2),
+              getArbNombre(arbCuarto),
+              getArbCategoria(arbCuarto),
+              d.estado || "-",
+            ]
+          })
+
+          autoTable(doc, {
+            head: [
+              [
+                "N°",
+                "FECHA",
+                "HORA",
+                "PARTIDO",
+                "ESTADIO",
+                "PRINCIPAL",
+                "CAT.",
+                "ASIS. 1",
+                "CAT.",
+                "ASIS. 2",
+                "CAT.",
+                "4TO",
+                "CAT.",
+                "ESTADO",
+              ],
+            ],
+            body: tableDataA,
+            startY: yPosition,
+            margin: { left: 10, right: 10 },
+            styles: { fontSize: 8, cellPadding: 3, halign: "center" },
+            headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
+            alternateRowStyles: { fillColor: [245, 247, 250] },
+            columnStyles: {
+              3: { cellWidth: 38 },
+              5: { cellWidth: 26 },
+              7: { cellWidth: 26 },
+              9: { cellWidth: 26 },
+              11: { cellWidth: 26 },
+            },
+          })
+
+          // @ts-ignore
+          yPosition = (doc as any).lastAutoTable.finalY + 10
+        }
+
+        // Escenario B: Fundamental / Oficial (consolidado)
+        if (filasGenerales.length > 0) {
+          doc.setFont("helvetica", "bold")
+          doc.setFontSize(12)
+          doc.text("CAMPEONATOS FUNDAMENTALES Y OFICIALES (DESIGNACIÓN GENERAL)", 15, yPosition)
+          yPosition += 4
+
+          const tableDataB = filasGenerales.map((f, idx) => {
+            const arbitrosTexto = f.arbitros
+              .map((a) => (a.categoria ? `${a.nombre} (${a.categoria})` : a.nombre))
+              .join("\n")
+            return [
+              (idx + 1).toString(),
+              f.nombreCampeonato,
+              f.fecha ? format(new Date(f.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+              f.hora || "-",
+              "Designación General",
+              f.estadio,
+              arbitrosTexto,
+              f.estado || "-",
+            ]
+          })
+
+          autoTable(doc, {
+            head: [["N°", "CAMPEONATO", "FECHA", "HORA", "TIPO", "UBICACIÓN", "ÁRBITROS", "ESTADO"]],
+            body: tableDataB,
+            startY: yPosition,
+            margin: { left: 10, right: 10 },
+            styles: { fontSize: 8, cellPadding: 3, halign: "center", valign: "middle" },
+            headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
+            alternateRowStyles: { fillColor: [245, 247, 250] },
+            columnStyles: {
+              1: { cellWidth: 38, halign: "left" },
+              5: { cellWidth: 30 },
+              6: { cellWidth: 55, halign: "left" },
+            },
+          })
+        }
       }
 
       doc.save(`resumen-semanal-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
       toast({
         title: "✅ PDF exportado",
-        description: `Se exportaron ${filas.length} designaciones de la semana`,
+        description: `Se exportaron ${designacionesSemana.length} designaciones de la semana`,
       })
     } catch (error) {
       console.error("Error exportando:", error)
@@ -297,7 +374,7 @@ export default function ResumenSemanalDesignacionesPage() {
     }
   }
 
-  if (loading && filas.length === 0) {
+  if (loading && designacionesSemana.length === 0) {
     return (
       <div className="p-6 min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto space-y-3">
@@ -347,14 +424,14 @@ export default function ResumenSemanalDesignacionesPage() {
               Semana: {rangoSemana}
             </p>
             <p className="text-slate-500 mt-1 text-xs md:text-sm">
-              {filas.length} {filas.length === 1 ? "designación agrupada" : "designaciones agrupadas"} ·
-              cada fila consolida los árbitros asignados al mismo campeonato, fecha y hora.
+              {designacionesSemana.length} designaciones esta semana · Copa Perú 2026 se muestra en
+              formato detallado; Fundamental/Oficial se consolida por fecha y hora.
             </p>
           </div>
           <Button
             onClick={exportarPDFResumen}
             className="bg-blue-600 hover:bg-blue-700 text-white"
-            disabled={filas.length === 0}
+            disabled={designacionesSemana.length === 0}
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar PDF
@@ -364,7 +441,7 @@ export default function ResumenSemanalDesignacionesPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div ref={printRef} className="space-y-6">
-          {filas.length === 0 ? (
+          {designacionesSemana.length === 0 ? (
             <Card className="bg-white border border-gray-200 shadow-sm">
               <CardContent className="p-12 text-center">
                 <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
@@ -375,109 +452,264 @@ export default function ResumenSemanalDesignacionesPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="overflow-hidden border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 p-4 bg-slate-50/60 border-b border-gray-100">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <ClipboardList className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
-                    Designaciones de la semana
-                  </h2>
-                  <p className="text-xs md:text-sm text-slate-600 font-medium">
-                    Agrupadas por campeonato, fecha y hora
-                  </p>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <Table className="text-sm">
-                  <TableHeader className="bg-gray-50 border-b border-gray-200">
-                    <TableRow>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Campeonato
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Fecha
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Hora
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Tipo de Designación
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Ubicación
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Árbitros
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                        Estado
-                      </TableHead>
-                      <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">
-                        Acciones
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filas.map((f, idx) => (
-                      <TableRow
-                        key={f.key}
-                        className={`border-b border-slate-100 ${
-                          idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
-                        } hover:bg-blue-50/70 transition-colors`}
-                      >
-                        <TableCell className="text-xs font-bold text-slate-900 px-3 align-top">
-                          <div className="space-y-0.5">
-                            <span>{f.nombreCampeonato}</span>
-                            {f.categoria ? (
-                              <span className="block text-[11px] font-medium text-slate-500 uppercase">
-                                {f.categoria}
-                              </span>
-                            ) : null}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm font-semibold px-3 whitespace-nowrap align-top">
-                          <div className="text-slate-900 font-bold text-xs">
-                            {f.fecha ? format(new Date(f.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm font-medium px-3 whitespace-nowrap align-top">
-                          {f.fecha ? format(new Date(f.fecha), "HH:mm", { locale: es }) : "-"}
-                        </TableCell>
-                        <TableCell className="text-xs px-3 align-top">
-                          <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-semibold border border-slate-200">
-                            <ClipboardList className="w-3.5 h-3.5" />
-                            {f.tipo}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[160px] align-top">
-                          {f.estadio}
-                        </TableCell>
-                        <TableCell className="text-xs px-3 align-top">
-                          <div className="space-y-1">
-                            {f.arbitros.length > 0 ? (
-                              f.arbitros.map((a, i) => (
-                                <div key={i} className="leading-tight">
-                                  <span className="font-semibold text-slate-900 text-xs">{a.nombre}</span>
-                                  {a.categoria ? (
-                                    <span className="text-xs text-slate-500"> ({a.categoria})</span>
-                                  ) : null}
+            <>
+              {/* Escenario A: COPA PERÚ 2026 y demás campeonatos (detallado) */}
+              {designacionesDetalladas.length > 0 && (
+                <Card className="overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/60 border-b border-gray-100">
+                    <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
+                        Copa Perú 2026 y Campeonatos Oficiales
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-600 font-medium">
+                        {designacionesDetalladas.length}{" "}
+                        {designacionesDetalladas.length === 1 ? "designación" : "designaciones"} ·
+                        formato detallado
+                      </p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table className="text-sm">
+                      <TableHeader className="bg-gray-50 border-b border-gray-200">
+                        <TableRow>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Fecha
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Hora
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Partido
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Estadio
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Principal
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Asist. 1
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Asist. 2
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            4to Árbitro
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Estado
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">
+                            Acciones
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {designacionesDetalladas.map((d, idx) => {
+                          const arbPrincipal = arbitros.find(
+                            (a) => a.id?.toString() === d.arbitroPrincipal?.toString(),
+                          )
+                          const arbAsist1 = arbitros.find(
+                            (a) => a.id?.toString() === d.arbitroAsistente1?.toString(),
+                          )
+                          const arbAsist2 = arbitros.find(
+                            (a) => a.id?.toString() === d.arbitroAsistente2?.toString(),
+                          )
+                          const arbCuarto = arbitros.find(
+                            (a) => a.id?.toString() === d.cuartoArbitro?.toString(),
+                          )
+                          return (
+                            <TableRow
+                              key={d.id}
+                              className={`border-b border-slate-100 ${
+                                idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                              } hover:bg-blue-50/70 transition-colors`}
+                            >
+                              <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                <div className="text-slate-900 font-bold text-xs">
+                                  {d.fecha
+                                    ? format(new Date(d.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                    : "-"}
                                 </div>
-                              ))
-                            ) : (
-                              <span className="text-slate-400">-</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-3 text-xs align-top">{getEstadoBadge(f.estado)}</TableCell>
-                        <TableCell className="text-xs px-3 align-top">{renderAcciones(f.ids)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
+                              </TableCell>
+                              <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                {d.fecha ? format(new Date(d.fecha), "HH:mm", { locale: es }) : "-"}
+                              </TableCell>
+                              <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                <div className="space-y-1">
+                                  <div>
+                                    <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
+                                      {(d.nombreEquipoLocal || "-").substring(0, 12)}
+                                    </span>
+                                  </div>
+                                  <div className="text-slate-400 text-xs font-bold">vs</div>
+                                  <div>
+                                    <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
+                                      {(d.nombreEquipoVisitante || "-").substring(0, 12)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
+                                {d.estadio || "-"}
+                              </TableCell>
+                              <TableCell className="text-xs px-3">
+                                <div className="space-y-0.5">
+                                  <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                    {getArbNombre(arbPrincipal)}
+                                  </div>
+                                  <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs px-3">
+                                <div className="space-y-0.5">
+                                  <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                    {getArbNombre(arbAsist1)}
+                                  </div>
+                                  <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs px-3">
+                                <div className="space-y-0.5">
+                                  <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                    {getArbNombre(arbAsist2)}
+                                  </div>
+                                  <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs px-3">
+                                <div className="space-y-0.5">
+                                  <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                    {getArbNombre(arbCuarto)}
+                                  </div>
+                                  <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-3 text-xs">{getEstadoBadge(d.estado)}</TableCell>
+                              <TableCell className="text-xs px-3">{renderAcciones([d.id || null])}</TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+
+              {/* Escenario B: Fundamental / Oficial (consolidado) */}
+              {filasGenerales.length > 0 && (
+                <Card className="overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/60 border-b border-gray-100">
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <ClipboardList className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
+                        Campeonatos Fundamentales y Oficiales
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-600 font-medium">
+                        {filasGenerales.length}{" "}
+                        {filasGenerales.length === 1 ? "designación agrupada" : "designaciones agrupadas"}{" "}
+                        · Designación General
+                      </p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table className="text-sm">
+                      <TableHeader className="bg-gray-50 border-b border-gray-200">
+                        <TableRow>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Campeonato
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Fecha
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Hora
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Tipo de Designación
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Ubicación
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Árbitros
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Estado
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">
+                            Acciones
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filasGenerales.map((f, idx) => (
+                          <TableRow
+                            key={f.key}
+                            className={`border-b border-slate-100 ${
+                              idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                            } hover:bg-blue-50/70 transition-colors`}
+                          >
+                            <TableCell className="text-xs font-bold text-slate-900 px-3 align-top">
+                              <div className="space-y-0.5">
+                                <span>{f.nombreCampeonato}</span>
+                                {f.categoria ? (
+                                  <span className="block text-[11px] font-medium text-slate-500 uppercase">
+                                    {f.categoria}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm font-semibold px-3 whitespace-nowrap align-top">
+                              <div className="text-slate-900 font-bold text-xs">
+                                {f.fecha
+                                  ? format(new Date(f.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                  : "-"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm font-medium px-3 whitespace-nowrap align-top">
+                              {f.fecha ? format(new Date(f.fecha), "HH:mm", { locale: es }) : "-"}
+                            </TableCell>
+                            <TableCell className="text-xs px-3 align-top">
+                              <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-semibold border border-slate-200">
+                                <ClipboardList className="w-3.5 h-3.5" />
+                                Designación General
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[160px] align-top">
+                              {f.estadio}
+                            </TableCell>
+                            <TableCell className="text-xs px-3 align-top">
+                              <div className="space-y-1">
+                                {f.arbitros.length > 0 ? (
+                                  f.arbitros.map((a, i) => (
+                                    <div key={i} className="leading-tight">
+                                      <span className="font-semibold text-slate-900 text-xs">{a.nombre}</span>
+                                      {a.categoria ? (
+                                        <span className="text-xs text-slate-500"> ({a.categoria})</span>
+                                      ) : null}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <span className="text-slate-400">-</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-3 text-xs align-top">{getEstadoBadge(f.estado)}</TableCell>
+                            <TableCell className="text-xs px-3 align-top">{renderAcciones(f.ids)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </main>
