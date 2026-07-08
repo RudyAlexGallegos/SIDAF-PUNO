@@ -429,6 +429,21 @@ const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equ
       loadProvincial()
     }, [campeonatoSeleccionado, esCopaPeruActual, distritosDeProvinciaSeleccionada])
 
+   // 🔒 Autocompletar fecha y hora de la designación general desde datos del campeonato
+    useEffect(() => {
+      if (currentStep === "designacionGeneral" && campeonatoSeleccionado) {
+        if (!fechaGeneral && campeonatoSeleccionado.fechaInicio) {
+          setFechaGeneral(campeonatoSeleccionado.fechaInicio)
+        }
+        if (!horaGeneral && campeonatoSeleccionado.horaInicio) {
+          const hora = campeonatoSeleccionado.horaInicio.includes(":")
+            ? campeonatoSeleccionado.horaInicio.slice(0, 5)
+            : campeonatoSeleccionado.horaInicio
+          setHoraGeneral(hora)
+        }
+      }
+    }, [currentStep, campeonatoSeleccionado, fechaGeneral, horaGeneral])
+
    // 🔒 Cargar resultados de etapa distrital para detectar equipos participantes
    useEffect(() => {
      const loadDistrital = async () => {
@@ -2153,46 +2168,59 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
            </p>
          </section>
 
-         {/* Botón de retroceso */}
-         <div className="flex justify-start">
-           <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
-             <ChevronLeft className="w-4 h-4 mr-1" />
-             Cambiar Campeonato
-           </Button>
-         </div>
+          {/* Botón de retroceso */}
+          <div className="flex justify-start">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Cambiar Campeonato
+            </Button>
+          </div>
 
-         <Card className="bg-white border border-gray-200">
-           <CardContent className="p-4">
-             <p className="text-sm text-slate-800">
-               <strong>Programa la fecha y hora</strong> de la designación, luego selecciona los árbitros. Esta información será visible en el PDF de la semana.
-             </p>
-           </CardContent>
-         </Card>
+          {campeonatoSeleccionado?.horaInicio && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Hora de inicio del campeonato:</strong> {campeonatoSeleccionado.horaInicio}
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Usa esta hora como referencia para la designación.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div>
-             <label className="block text-sm font-semibold text-slate-700 mb-2">
-               📅 Fecha de la designación
-             </label>
-             <input
-               type="date"
-               value={fechaGeneral}
-               onChange={(e) => setFechaGeneral(e.target.value)}
-               className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
-             />
-           </div>
-           <div>
-             <label className="block text-sm font-semibold text-slate-700 mb-2">
-               🕒 Hora de la designación
-             </label>
-             <input
-               type="time"
-               value={horaGeneral}
-               onChange={(e) => setHoraGeneral(e.target.value)}
-               className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
-             />
-           </div>
-         </div>
+          <Card className="bg-white border border-gray-200">
+            <CardContent className="p-4">
+              <p className="text-sm text-slate-800">
+                <strong>Programa la fecha y hora</strong> de la designación, luego selecciona los árbitros. Esta información será visible en el PDF de la semana.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                📅 Fecha de la designación
+              </label>
+              <input
+                type="date"
+                value={fechaGeneral}
+                onChange={(e) => setFechaGeneral(e.target.value)}
+                className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                🕒 Hora de la designación
+              </label>
+              <input
+                type="time"
+                value={horaGeneral}
+                onChange={(e) => setHoraGeneral(e.target.value)}
+                className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
 
          <div>
            <label className="block text-sm font-semibold text-slate-700 mb-2">
