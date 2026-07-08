@@ -26,6 +26,8 @@ import {
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
 import { useAutoLogout } from "@/hooks/useAutoLogout"
+import { format, startOfWeek, endOfWeek } from "date-fns"
+import { es } from "date-fns/locale"
 
 /* =======================
    NAV LINK
@@ -146,12 +148,31 @@ function getMenuItems(
     // Si tiene permiso "TODOS", tiene acceso completo
     const hasAllAccess = permisos.includes("TODOS")
     
+    const hoy = new Date()
+    const lunesSemana = startOfWeek(hoy, { weekStartsOn: 1 })
+    const domingoSemana = endOfWeek(hoy, { weekStartsOn: 1 })
+    const weekLabel = `${format(lunesSemana, "dd").toUpperCase()} AL ${format(
+        domingoSemana,
+        "dd MMM",
+        { locale: es },
+    ).toUpperCase()}`
+
     const menuPrincipal = [
         {
             title: "Principal",
             items: [
                 { name: "Inicio", href: "/dashboard", icon: Home },
                 { name: "Perfil", href: "/dashboard/perfil", icon: User },
+            ],
+        },
+        {
+            title: `Designación de Árbitros - ${weekLabel}`,
+            items: [
+                {
+                    name: "Resumen Semanal",
+                    href: "/dashboard/designaciones/resumen-semanal",
+                    icon: ClipboardList,
+                },
             ],
         },
     ]
