@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ import {
   UserCheck,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor } from "@/services/api"
+import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato } from "@/services/api"
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 
 interface Partido {
@@ -105,7 +105,12 @@ export default function NuevaDesignacionPage() {
   const [etapaSeleccionada, setEtapaSeleccionada] = useState<string | null>(null)
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string | null>(null)
   const [distritoSeleccionado, setDistritoSeleccionado] = useState<string | null>(null)
-  
+
+  const distritosDeProvinciaSeleccionada = useMemo(() => {
+    if (!provinciaSeleccionada) return []
+    return getDistritosByProvincia(provinciaSeleccionada).map(d => d.nombre)
+  }, [provinciaSeleccionada])
+
   // Gestión de partidos
   const [equipoLocal, setEquipoLocal] = useState<Equipo | null>(null)
   const [equipoVisitante, setEquipoVisitante] = useState<Equipo | null>(null)
