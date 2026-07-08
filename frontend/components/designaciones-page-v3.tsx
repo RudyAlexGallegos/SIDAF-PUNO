@@ -49,7 +49,7 @@ import {
 } from "lucide-react"
 import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns"
 import { es } from "date-fns/locale"
-import { getDesignaciones, getArbitros, getCampeonatos, getEquipos, deleteDesignacion } from "@/services/api"
+import { getDesignaciones, getArbitros, getCampeonatos, getEquipos, deleteDesignacion, type Designacion } from "@/services/api"
 import { useCache } from "@/hooks/useCache"
 
 interface Campeonato {
@@ -59,24 +59,6 @@ interface Campeonato {
    provincia?: string
    distrito?: string
    estado?: string
-}
-
-interface Designacion {
-   id?: number | null
-   nombreEquipoLocal?: string
-   nombreEquipoVisitante?: string
-   arbitroPrincipal?: number | string | null
-   arbitroAsistente1?: number | string | null
-   arbitroAsistente2?: number | string | null
-   cuartoArbitro?: number | string | null
-   asesor?: number | string | null
-   fecha?: string | Date
-   hora?: string
-   estadio?: string
-   nombreCampeonato?: string
-   estado?: string
-   provinciaEquipo?: string
-   distritoEquipo?: string
 }
 
 interface Arbitro {
@@ -183,6 +165,22 @@ function DesignacionesPageContent() {
   const championships = Array.isArray(cacheCampeonatos.data) ? cacheCampeonatos.data : []
   const equipos = Array.isArray(cacheEquipos.data) ? cacheEquipos.data : []
 
+  const championshipsById = useMemo(() => {
+    const map = new Map<number, Campeonato>()
+    championships.forEach((c) => {
+      if (c.id != null) map.set(Number(c.id), c)
+    })
+    return map
+  }, [championships])
+
+  const resolverCampeonato = (d: Designacion) => {
+    const id = d.idCampeonato != null ? Number(d.idCampeonato) : null
+    const camp = id != null ? championshipsById.get(id) : undefined
+    const nombre = (camp?.nombre || d.nombreCampeonato || "Sin campeonato") as string
+    const categoria = (camp?.categoria || "") as string
+    return { id, nombre, categoria }
+  }
+
   const loading = cacheDesignaciones.isLoading || cacheArbitros.isLoading || cacheCampeonatos.isLoading || cacheEquipos.isLoading
 
   // Filter designaciones
@@ -200,12 +198,12 @@ function DesignacionesPageContent() {
         if (!local.includes(term) && !visitante.includes(term) && !estadio.includes(term)) return false
       }
 
-      if (championshipFilter !== "todos" && d.nombreCampeonato !== championshipFilter) return false
+      if (championshipFilter !== "todos" && resolverCampeonato(d).nombre !== championshipFilter) return false
       if (statusFilter !== "todos" && d.estado?.toUpperCase() !== statusFilter) return false
 
       return true
     })
-  }, [designaciones, searchTerm, championshipFilter, statusFilter])
+  }, [designaciones, searchTerm, championshipFilter, statusFilter, resolverCampeonato])
 
    // Calculate stats from all designaciones (real snapshot).
    const allDesignaciones = Array.isArray(designaciones) ? designaciones : []
@@ -281,36 +279,36 @@ function DesignacionesPageContent() {
      } catch {
        return "Fecha inválida"
      }
-   }
+    }
 
-   const designacionesAgrupadas = useMemo(() => {
-     const grupos: Record<string, Record<string, Designacion[]>> = {}
+     const designacionesAgrupadas = useMemo(() => {
+      const grupos: Record<string, Record<string, Designacion[]>> = {}
 
-     designacionesFiltradas.forEach((d) => {
-       if (!d) return
-       const campeonato = d.nombreCampeonato || "Sin campeonato"
-       const semanaLabel = getSemanaLabel(d.fecha)
-       if (!grupos[campeonato]) grupos[campeonato] = {}
-       if (!grupos[campeonato][semanaLabel]) grupos[campeonato][semanaLabel] = []
-       grupos[campeonato][semanaLabel].push(d)
-     })
+      designacionesFiltradas.forEach((d) => {
+        if (!d) return
+        const { nombre } = resolverCampeonato(d)
+        const semanaLabel = getSemanaLabel(d.fecha)
+        if (!grupos[nombre]) grupos[nombre] = {}
+        if (!grupos[nombre][semanaLabel]) grupos[nombre][semanaLabel] = []
+        grupos[nombre][semanaLabel].push(d)
+      })
 
-     return grupos
-   }, [designacionesFiltradas])
+      return grupos
+    }, [designacionesFiltradas, resolverCampeonato])
 
-     const campeonatos = useMemo(() => {
-       return Object.keys(designacionesAgrupadas).sort()
-     }, [designacionesAgrupadas])
+      const campeonatos = useMemo(() => {
+        return Object.keys(designacionesAgrupadas).sort()
+      }, [designacionesAgrupadas])
 
-     const campeonatoCategoriaMap = useMemo(() => {
-       const map = new Map<string, string>()
-       championships.forEach((c) => {
-         if (c.nombre) {
-           map.set(c.nombre, c.categoria || "")
-         }
-       })
-       return map
-     }, [championships])
+      const campeonatoCategoriaMap = useMemo(() => {
+        const map = new Map<string, string>()
+        championships.forEach((c) => {
+          if (c.nombre) {
+            map.set(c.nombre, c.categoria || "")
+          }
+        })
+        return map
+      }, [championships])
 
      const campeonatosAgrupados = useMemo(() => {
        const grupos: {
@@ -671,7 +669,7 @@ function DesignacionesPageContent() {
       )
     }
 
-  const getEstadoBadge = (estado?: string) => {
+  const getEstadoBadge = (estado?: string | null) => {
     const estadoUpper = estado?.toUpperCase() || ""
     const variants: Record<string, { bg: string; text: string; dot: string }> = {
       PROGRAMADA: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
@@ -733,9 +731,9 @@ function DesignacionesPageContent() {
         doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
         yPosition += 10
 
-        const esCampeonatoFundamentalLocal = (nombreCampeonato: string | undefined) => {
-          return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
-        }
+         const esCampeonatoFundamentalLocal = (nombreCampeonato: string | null | undefined) => {
+           return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
+         }
 
         const tableData = designacionesFiltradas.map((d, idx) => {
           const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())
@@ -828,9 +826,9 @@ function DesignacionesPageContent() {
         doc.text(`Semana: ${semana} · Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
         yPosition += 10
 
-        const esCampeonatoFundamentalLocal = (nombreCampeonato: string | undefined) => {
-          return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
-        }
+         const esCampeonatoFundamentalLocal = (nombreCampeonato: string | null | undefined) => {
+           return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
+         }
 
         const tableData = designacionesSemana.map((d, idx) => {
           const arbPrincipal = arbitros.find((a) => a.id?.toString() === d.arbitroPrincipal?.toString())

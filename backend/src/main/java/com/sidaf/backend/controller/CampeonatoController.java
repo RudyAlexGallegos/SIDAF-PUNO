@@ -3,7 +3,9 @@ package com.sidaf.backend.controller;
 import com.sidaf.backend.dto.CampeonatoCreateDTO;
 import com.sidaf.backend.model.Campeonato;
 import com.sidaf.backend.model.Campeonato.EstadoCampeonato;
+import com.sidaf.backend.model.Designacion;
 import com.sidaf.backend.repository.CampeonatoRepository;
+import com.sidaf.backend.repository.DesignacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,9 @@ public class CampeonatoController {
     
     @Autowired
     private CampeonatoRepository campeonatoRepository;
+
+    @Autowired
+    private DesignacionRepository designacionRepository;
 
     @Autowired
     private CacheManager cacheManager;
@@ -159,6 +164,15 @@ public class CampeonatoController {
 
             updatedCampeonato.setEtapas(campeonatoDetails.getEtapas());
             Campeonato saved = campeonatoRepository.save(updatedCampeonato);
+
+            // Sincronizar el nombre del campeonato en las designaciones asociadas
+            // para mantener la agrupación y relaciones consistentes tras una edición.
+            List<Designacion> designacionesRelacionadas = designacionRepository.findByIdCampeonato(id);
+            for (Designacion d : designacionesRelacionadas) {
+                d.setNombreCampeonato(saved.getNombre());
+                designacionRepository.save(d);
+            }
+
             return ResponseEntity.ok(saved);
         }
         return ResponseEntity.notFound().build();
