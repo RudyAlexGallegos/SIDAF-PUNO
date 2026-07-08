@@ -59,6 +59,7 @@ interface Campeonato {
    provincia?: string
    distrito?: string
    estado?: string
+   estadio?: string
 }
 
 interface Arbitro {
@@ -76,6 +77,7 @@ interface Campeonato {
   provincia?: string
   distrito?: string
   estado?: string
+  estadio?: string
 }
 
 interface Equipo {
@@ -469,7 +471,7 @@ function DesignacionesPageContent() {
                             Hora
                           </TableHead>
                           <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
-                            Partido
+                            {esFund ? "Asignación" : "Partido"}
                           </TableHead>
                           <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
                             Estadio
@@ -552,22 +554,33 @@ function DesignacionesPageContent() {
                                     : "-"}
                                 </TableCell>
                                 <TableCell className="text-xs font-bold text-slate-900 px-3">
-                                  <div className="space-y-1">
-                                    <div>
-                                      <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
-                                        {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
-                                      </span>
+                                  {esFund ? (
+                                    <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-semibold border border-slate-200">
+                                      <ClipboardList className="w-3.5 h-3.5" />
+                                      Designación General
+                                    </span>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      <div>
+                                        <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
+                                          {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
+                                        </span>
+                                      </div>
+                                      <div className="text-slate-400 text-xs font-bold">vs</div>
+                                      <div>
+                                        <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
+                                          {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="text-slate-400 text-xs font-bold">vs</div>
-                                    <div>
-                                      <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
-                                        {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
-                                      </span>
-                                    </div>
-                                  </div>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
-                                  {designacion.estadio || "-"}
+                                  {esFund
+                                    ? championshipsById.get(Number(designacion.idCampeonato))?.estadio ||
+                                      designacion.estadio ||
+                                      "-"
+                                    : designacion.estadio || "-"}
                                 </TableCell>
                                 {!esFund && (
                                   <TableCell className="text-xs px-3">
@@ -731,8 +744,13 @@ function DesignacionesPageContent() {
         doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 105, yPosition, { align: "center" })
         yPosition += 10
 
-         const esCampeonatoFundamentalLocal = (nombreCampeonato: string | null | undefined) => {
-           return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
+          const esCampeonatoFundamentalLocal = (nombreCampeonato: string | null | undefined) => {
+            const cat = campeonatoCategoriaMap.get(nombreCampeonato || "") || ""
+            return cat === "CAMPEONATO FUNDAMENTAL" || cat === "CAMPEONATO OFICIAL"
+          }
+
+         const getEstadioDesignacion = (d: Designacion) => {
+           return championshipsById.get(Number(d.idCampeonato))?.estadio || d.estadio || "-"
          }
 
         const tableData = designacionesFiltradas.map((d, idx) => {
@@ -749,8 +767,8 @@ function DesignacionesPageContent() {
               d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
               d.hora || "-",
               d.nombreCampeonato || "-",
-              `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
-              d.estadio || "-",
+              "Designación General",
+              getEstadioDesignacion(d),
               getArbNombre(arbUnico),
               getArbCategoria(arbUnico),
               d.estado || "-",
@@ -780,7 +798,7 @@ function DesignacionesPageContent() {
 
         autoTable(doc, {
           head: esTodoFundamental
-            ? [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "ÁRBITRO", "CAT.", "ESTADO"]]
+            ? [["N°", "FECHA", "HORA", "CAMPEONATO", "ASIGNACIÓN", "ESTADIO", "ÁRBITRO", "CAT.", "ESTADO"]]
             : [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]],
           body: tableData,
           startY: yPosition,
@@ -827,7 +845,12 @@ function DesignacionesPageContent() {
         yPosition += 10
 
          const esCampeonatoFundamentalLocal = (nombreCampeonato: string | null | undefined) => {
-           return campeonatoCategoriaMap.get(nombreCampeonato || "") === "CAMPEONATO FUNDAMENTAL"
+           const cat = campeonatoCategoriaMap.get(nombreCampeonato || "") || ""
+           return cat === "CAMPEONATO FUNDAMENTAL" || cat === "CAMPEONATO OFICIAL"
+         }
+
+         const getEstadioDesignacion = (d: Designacion) => {
+           return championshipsById.get(Number(d.idCampeonato))?.estadio || d.estadio || "-"
          }
 
         const tableData = designacionesSemana.map((d, idx) => {
@@ -844,8 +867,8 @@ function DesignacionesPageContent() {
               d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
               d.hora || "-",
               d.nombreCampeonato || "-",
-              `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
-              d.estadio || "-",
+              "Designación General",
+              getEstadioDesignacion(d),
               getArbNombre(arbUnico),
               getArbCategoria(arbUnico),
               d.estado || "-",
@@ -875,7 +898,7 @@ function DesignacionesPageContent() {
 
         autoTable(doc, {
           head: esTodoFundamental
-            ? [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "ÁRBITRO", "CAT.", "ESTADO"]]
+            ? [["N°", "FECHA", "HORA", "CAMPEONATO", "ASIGNACIÓN", "ESTADIO", "ÁRBITRO", "CAT.", "ESTADO"]]
             : [["N°", "FECHA", "HORA", "CAMPEONATO", "PARTIDO", "ESTADIO", "PRINCIPAL", "CAT.", "ASIS. 1", "CAT.", "ASIS. 2", "CAT.", "4TO", "CAT.", "ESTADO"]],
           body: tableData,
           startY: yPosition,
