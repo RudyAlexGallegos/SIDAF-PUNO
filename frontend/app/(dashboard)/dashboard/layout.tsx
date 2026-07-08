@@ -26,8 +26,6 @@ import {
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
 import { useAutoLogout } from "@/hooks/useAutoLogout"
-import { format, startOfWeek, endOfWeek } from "date-fns"
-import { es } from "date-fns/locale"
 
 /* =======================
    NAV LINK
@@ -148,31 +146,12 @@ function getMenuItems(
     // Si tiene permiso "TODOS", tiene acceso completo
     const hasAllAccess = permisos.includes("TODOS")
     
-    const hoy = new Date()
-    const lunesSemana = startOfWeek(hoy, { weekStartsOn: 1 })
-    const domingoSemana = endOfWeek(hoy, { weekStartsOn: 1 })
-    const weekLabel = `${format(lunesSemana, "dd").toUpperCase()} AL ${format(
-        domingoSemana,
-        "dd MMM",
-        { locale: es },
-    ).toUpperCase()}`
-
     const menuPrincipal = [
         {
             title: "Principal",
             items: [
                 { name: "Inicio", href: "/dashboard", icon: Home },
                 { name: "Perfil", href: "/dashboard/perfil", icon: User },
-            ],
-        },
-        {
-            title: `Designación de Árbitros - ${weekLabel}`,
-            items: [
-                {
-                    name: "Resumen Semanal",
-                    href: "/dashboard/designaciones/resumen-semanal",
-                    icon: ClipboardList,
-                },
             ],
         },
     ]
@@ -187,7 +166,10 @@ function getMenuItems(
         if (allowedHrefs.includes("/dashboard/asistencia/historial"))     items.push({ name: "Historial Asistencia", href: "/dashboard/asistencia/historial", icon: History })
         if (allowedHrefs.includes("/dashboard/asistencia/ranking"))       items.push({ name: "Ranking Asistencia", href: "/dashboard/asistencia/ranking", icon: Award })
         if (allowedHrefs.includes("/dashboard/asistencia/ranking-semanal")) items.push({ name: "Ranking Semanal", href: "/dashboard/asistencia/ranking-semanal", icon: Award })
-        if (allowedHrefs.includes("/dashboard/designaciones"))            items.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
+        if (allowedHrefs.includes("/dashboard/designaciones")) {
+            items.push({ name: "Designaciones", href: "/dashboard/designaciones", icon: Calendar })
+            items.push({ name: "Resumen Semanal", href: "/dashboard/designaciones/resumen-semanal", icon: ClipboardList })
+        }
         if (allowedHrefs.includes("/dashboard/campeonatos"))              items.push({ name: "Campeonatos", href: "/dashboard/campeonatos", icon: Trophy })
         if (allowedHrefs.includes("/dashboard/campeonatos/equipos"))      items.push({ name: "Equipos", href: "/dashboard/campeonatos/equipos", icon: Shield })
         if (allowedHrefs.includes("/dashboard/reportes"))                 items.push({ name: "Reportes", href: "/dashboard/reportes", icon: FileText })
@@ -337,6 +319,11 @@ function getMenuItems(
                         href: "/dashboard/designaciones",
                         icon: Calendar,
                     },
+                    {
+                        name: "Resumen Semanal",
+                        href: "/dashboard/designaciones/resumen-semanal",
+                        icon: ClipboardList,
+                    },
                 ],
             },
             {
@@ -421,6 +408,11 @@ function getMenuItems(
                         name: "Designaciones",
                         href: "/dashboard/designaciones",
                         icon: Calendar,
+                    },
+                    {
+                        name: "Resumen Semanal",
+                        href: "/dashboard/designaciones/resumen-semanal",
+                        icon: ClipboardList,
                     },
                 ],
             },
