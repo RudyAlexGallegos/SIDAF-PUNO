@@ -52,6 +52,15 @@ import { es } from "date-fns/locale"
 import { getDesignaciones, getArbitros, getCampeonatos, getEquipos, deleteDesignacion } from "@/services/api"
 import { useCache } from "@/hooks/useCache"
 
+interface Campeonato {
+   id?: number | null
+   nombre?: string
+   categoria?: string
+   provincia?: string
+   distrito?: string
+   estado?: string
+}
+
 interface Designacion {
    id?: number | null
    nombreEquipoLocal?: string
@@ -81,6 +90,10 @@ interface Arbitro {
 interface Campeonato {
   id?: number | null
   nombre?: string
+  categoria?: string
+  provincia?: string
+  distrito?: string
+  estado?: string
 }
 
 interface Equipo {
@@ -194,40 +207,67 @@ function DesignacionesPageContent() {
     })
   }, [designaciones, searchTerm, championshipFilter, statusFilter])
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    if (!Array.isArray(designacionesFiltradas)) {
-      return { total: 0, hoy: 0, semana: 0, confirmadas: 0 }
-    }
+   // Calculate stats from all designaciones (real snapshot).
+   const allDesignaciones = Array.isArray(designaciones) ? designaciones : []
 
-    const today = new Date()
-    return {
-      total: designacionesFiltradas.length,
-      hoy: designacionesFiltradas.filter((d) => {
-        if (!d?.fecha) return false
-        try {
-          const fecha = new Date(d.fecha)
-          return fecha.getDate() === today.getDate() && 
-                 fecha.getMonth() === today.getMonth() &&
-                 fecha.getFullYear() === today.getFullYear()
-        } catch {
-          return false
-        }
-      }).length,
-      semana: designacionesFiltradas.filter((d) => {
-        if (!d?.fecha) return false
-        try {
-          const fecha = new Date(d.fecha)
-          const weekStart = startOfWeek(today, { weekStartsOn: 1 })
-          const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
-          return isWithinInterval(fecha, { start: weekStart, end: weekEnd })
-        } catch {
-          return false
-        }
-      }).length,
-      confirmadas: designacionesFiltradas.filter((d) => d?.estado?.toUpperCase() === "CONFIRMADA").length,
-    }
-}, [designacionesFiltradas])
+   const stats = useMemo(() => {
+     const today = new Date()
+     const weekStart = startOfWeek(today, { weekStartsOn: 1 })
+     const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
+
+     const total = allDesignaciones.length
+     const hoy = allDesignaciones.filter((d) => {
+       if (!d?.fecha) return false
+       try {
+         const fecha = new Date(d.fecha)
+         return fecha.getDate() === today.getDate() &&
+                fecha.getMonth() === today.getMonth() &&
+                fecha.getFullYear() === today.getFullYear()
+       } catch {
+         return false
+       }
+     }).length
+     const semana = allDesignaciones.filter((d) => {
+       if (!d?.fecha) return false
+       try {
+         const fecha = new Date(d.fecha)
+         return isWithinInterval(fecha, { start: weekStart, end: weekEnd })
+       } catch {
+         return false
+       }
+     }).length
+     const confirmadas = allDesignaciones.filter((d) => d?.estado?.toUpperCase() === "CONFIRMADA").length
+
+     const championshipsThisWeek = new Set(
+       allDesignaciones
+         .filter((d) => {
+           if (!d?.fecha || !d?.nombreCampeonato) return false
+           try {
+             const fecha = new Date(d.fecha)
+             return isWithinInterval(fecha, { start: weekStart, end: weekEnd })
+           } catch {
+             return false
+           }
+         })
+         .map((d) => d.nombreCampeonato)
+     )
+
+     const activeChampionships = Array.isArray(championships)
+       ? championships.filter((c) => (c.estado || "").toUpperCase() !== "FINALIZADO" && (c.estado || "").toUpperCase() !== "CANCELADO")
+       : []
+
+     const campeonatosAsignadosSemana = championshipsThisWeek.size
+     const campeonatosPendientesSemana = Math.max(activeChampionships.length - campeonatosAsignadosSemana, 0)
+
+     return {
+       total,
+       hoy,
+       semana,
+       confirmadas,
+       campeonatosAsignadosSemana,
+       campeonatosPendientesSemana,
+     }
+   }, [allDesignaciones, championships])
 
    const getSemanaLabel = (fecha: string | Date | undefined) => {
      if (!fecha) return "Sin fecha"
@@ -550,9 +590,12 @@ function DesignacionesPageContent() {
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900">
               Gestión de Designaciones
             </h1>
-            <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
-              Administra árbitros y asignaciones de partidos • {designacionesFiltradas.length} designaciones
-            </p>
+          <p className="text-slate-500 mt-2 max-w-3xl text-xs md:text-sm lg:text-base">
+             Administra árbitros y asignaciones de partidos • {stats.total} designaciones
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+             Semana del {format(startOfWeek(new Date(), { weekStartsOn: 1 }), "dd MMM", { locale: es })} al {format(endOfWeek(new Date(), { weekStartsOn: 1 }), "dd MMM yyyy", { locale: es })}
+          </p>
           </div>
            <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
              <Link href="/dashboard/designaciones/nueva">
@@ -575,56 +618,56 @@ function DesignacionesPageContent() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div className="space-y-4 md:space-y-6 lg:space-y-8">
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
-          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center">
-                <ClipboardList className="h-5 md:h-5 w-5 md:w-5 text-blue-600" />
-              </div>
-              <Badge className="bg-blue-50 text-blue-700 border border-blue-200">TOTAL</Badge>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.total}</p>
-              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Designaciones totales</p>
-            </div>
-          </div>
-          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <Calendar className="h-5 md:h-5 w-5 md:w-5 text-emerald-600" />
-              </div>
-              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">HOY</Badge>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.hoy}</p>
-              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Programadas hoy</p>
-            </div>
-          </div>
-          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Calendar className="h-5 md:h-5 w-5 md:w-5 text-amber-600" />
-              </div>
-              <Badge className="bg-amber-50 text-amber-700 border border-amber-200">SEMANA</Badge>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.semana}</p>
-              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Esta semana</p>
-            </div>
-          </div>
-          <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <CheckCircle2 className="h-5 md:h-5 w-5 md:w-5 text-indigo-600" />
-              </div>
-              <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200">CONFIRMADAS</Badge>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.confirmadas}</p>
-              <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Confirmadas</p>
-            </div>
-          </div>
-        </div>
+           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+           <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
+             <div className="flex items-center justify-between">
+               <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center">
+                 <ClipboardList className="h-5 md:h-5 w-5 md:w-5 text-blue-600" />
+               </div>
+               <Badge className="bg-blue-50 text-blue-700 border border-blue-200">TOTAL</Badge>
+             </div>
+             <div className="mt-3">
+               <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.total}</p>
+               <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Designaciones totales</p>
+             </div>
+           </div>
+           <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-200">
+             <div className="flex items-center justify-between">
+               <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-emerald-100 flex items-center justify-center">
+                 <Calendar className="h-5 md:h-5 w-5 md:w-5 text-emerald-600" />
+               </div>
+               <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">ASIGNADOS</Badge>
+             </div>
+             <div className="mt-3">
+               <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.campeonatosAsignadosSemana}</p>
+               <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Campeonatos asignados esta semana</p>
+             </div>
+           </div>
+           <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200">
+             <div className="flex items-center justify-between">
+               <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-amber-100 flex items-center justify-center">
+                 <Calendar className="h-5 md:h-5 w-5 md:w-5 text-amber-600" />
+               </div>
+               <Badge className="bg-amber-50 text-amber-700 border border-amber-200">PENDIENTES</Badge>
+             </div>
+             <div className="mt-3">
+               <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.campeonatosPendientesSemana}</p>
+               <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Campeonatos pendientes esta semana</p>
+             </div>
+           </div>
+           <div className="group rounded-xl bg-white border border-gray-200 p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+             <div className="flex items-center justify-between">
+               <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-indigo-100 flex items-center justify-center">
+                 <CheckCircle2 className="h-5 md:h-5 w-5 md:w-5 text-indigo-600" />
+               </div>
+               <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200">CONFIRMADAS</Badge>
+             </div>
+             <div className="mt-3">
+               <p className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stats.confirmadas}</p>
+               <p className="text-xs md:text-sm text-slate-600 mt-0.5 font-medium">Confirmadas</p>
+             </div>
+           </div>
+         </div>
 
           <Card className="bg-white border border-gray-200 shadow-sm">
             <CardContent className="p-4 md:p-6 space-y-4">
