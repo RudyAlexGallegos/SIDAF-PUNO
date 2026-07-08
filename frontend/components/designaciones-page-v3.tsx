@@ -509,169 +509,270 @@ function DesignacionesPageContent() {
                           </TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody>
-                        {designacionesSemana
-                          .sort((a, b) => {
-                            const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
-                            const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
-                            return dateA - dateB
-                          })
-                          .map((designacion, idx) => {
-                            const arbPrincipal = arbitros.find(
-                              (a) => a.id?.toString() === designacion.arbitroPrincipal?.toString(),
-                            )
-                            const arbAsist1 = arbitros.find(
-                              (a) => a.id?.toString() === designacion.arbitroAsistente1?.toString(),
-                            )
-                            const arbAsist2 = arbitros.find(
-                              (a) => a.id?.toString() === designacion.arbitroAsistente2?.toString(),
-                            )
-                            const arbCuarto = arbitros.find(
-                              (a) => a.id?.toString() === designacion.cuartoArbitro?.toString(),
-                            )
+                      {(() => {
+                        type FilaGeneral = {
+                          key: string
+                          fecha: string | Date | undefined
+                          hora: string | undefined
+                          estadio: string
+                          arbitros: { nombre: string; categoria: string }[]
+                          estado: string | null | undefined
+                          ids: (number | null)[]
+                        }
 
-                            const arbUnico = arbPrincipal || arbAsist1 || arbAsist2 || arbCuarto
+                        const filasGenerales: FilaGeneral[] = esFund
+                          ? (() => {
+                              const grupos = new Map<string, Designacion[]>()
+                              designacionesSemana.forEach((d) => {
+                                const key = `${d.fecha || ""}|${d.hora || ""}`
+                                if (!grupos.has(key)) grupos.set(key, [])
+                                grupos.get(key)!.push(d)
+                              })
+                              return Array.from(grupos.values())
+                                .map((lista) => {
+                                  const primera = lista[0]
+                                  const arbitrosResueltos = lista
+                                    .map((d) => {
+                                      const arb = arbitros.find(
+                                        (a) => a.id?.toString() === d.arbitroPrincipal?.toString(),
+                                      )
+                                      return { nombre: getArbNombre(arb), categoria: getArbCategoria(arb) }
+                                    })
+                                    .filter((a) => a.nombre && a.nombre !== "-")
+                                  const estadio =
+                                    championshipsById.get(Number(primera.idCampeonato))?.estadio ||
+                                    primera.estadio ||
+                                    "-"
+                                  return {
+                                    key: `${primera.fecha || ""}|${primera.hora || ""}`,
+                                    fecha: primera.fecha,
+                                    hora: primera.hora,
+                                    estadio,
+                                    arbitros: arbitrosResueltos,
+                                    estado: primera.estado,
+                                    ids: lista.map((d) => d.id || null),
+                                  }
+                                })
+                                .sort((a, b) => {
+                                  const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
+                                  const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
+                                  return dateA - dateB
+                                })
+                            })()
+                          : []
 
-                            return (
-                              <TableRow
-                                key={designacion.id}
-                                className={`border-b border-slate-100 ${
-                                  idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
-                                } hover:bg-blue-50/70 transition-colors`}
-                              >
-                                <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
-                                  <div>
-                                    <div className="text-slate-900 font-bold text-xs">
-                                      {designacion.fecha
-                                        ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase()
+                        return (
+                          <TableBody>
+                            {esFund
+                              ? filasGenerales.map((fila, idx) => (
+                                  <TableRow
+                                    key={fila.key}
+                                    className={`border-b border-slate-100 ${
+                                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                                    } hover:bg-blue-50/70 transition-colors`}
+                                  >
+                                    <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                      <div className="text-slate-900 font-bold text-xs">
+                                        {fila.fecha
+                                          ? format(new Date(fila.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                          : "-"}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                      {fila.fecha
+                                        ? format(new Date(fila.fecha), "HH:mm", { locale: es })
                                         : "-"}
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
-                                  {designacion.fecha
-                                    ? format(new Date(designacion.fecha), "HH:mm", { locale: es })
-                                    : "-"}
-                                </TableCell>
-                                <TableCell className="text-xs font-bold text-slate-900 px-3">
-                                  {esFund ? (
-                                    <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-semibold border border-slate-200">
-                                      <ClipboardList className="w-3.5 h-3.5" />
-                                      Designación General
-                                    </span>
-                                  ) : (
-                                    <div className="space-y-1">
-                                      <div>
-                                        <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
-                                          {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
-                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                      <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-semibold border border-slate-200">
+                                        <ClipboardList className="w-3.5 h-3.5" />
+                                        Designación General
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
+                                      {fila.estadio || "-"}
+                                    </TableCell>
+                                    <TableCell className="text-xs px-3">
+                                      <div className="space-y-1">
+                                        {fila.arbitros.map((arb, i) => (
+                                          <div key={i} className="leading-tight">
+                                            <span className="font-semibold text-slate-900 text-xs">{arb.nombre}</span>
+                                            {arb.categoria ? (
+                                              <span className="text-xs text-slate-500"> ({arb.categoria})</span>
+                                            ) : null}
+                                          </div>
+                                        ))}
                                       </div>
-                                      <div className="text-slate-400 text-xs font-bold">vs</div>
-                                      <div>
-                                        <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
-                                          {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
-                                        </span>
+                                    </TableCell>
+                                    <TableCell className="px-3 text-xs">{getEstadoBadge(fila.estado)}</TableCell>
+                                    <TableCell className="text-xs px-3">
+                                      <div className="flex gap-1 justify-end">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          asChild
+                                          className="h-7 w-7 p-0 hover:bg-blue-50"
+                                          title="Ver detalles"
+                                        >
+                                          <Link href={`/dashboard/designaciones/${fila.ids[0]}`}>
+                                            <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                          </Link>
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          asChild
+                                          className="h-7 w-7 p-0 hover:bg-slate-100"
+                                          title="Editar"
+                                        >
+                                          <Link href={`/dashboard/designaciones/${fila.ids[0]}/editar`}>
+                                            <Edit className="w-3.5 h-3.5 text-slate-600" />
+                                          </Link>
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setDeleteId(fila.ids[0] || null)}
+                                          className="h-7 w-7 p-0 hover:bg-red-50"
+                                          title="Eliminar"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                        </Button>
                                       </div>
-                                    </div>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
-                                  {esFund
-                                    ? championshipsById.get(Number(designacion.idCampeonato))?.estadio ||
-                                      designacion.estadio ||
-                                      "-"
-                                    : designacion.estadio || "-"}
-                                </TableCell>
-                                {!esFund && (
-                                  <TableCell className="text-xs px-3">
-                                    <div className="space-y-0.5">
-                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                        {getArbNombre(arbPrincipal)}
-                                      </div>
-                                      <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
-                                    </div>
-                                  </TableCell>
-                                )}
-                                {!esFund && (
-                                  <TableCell className="text-xs px-3">
-                                    <div className="space-y-0.5">
-                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                        {getArbNombre(arbAsist1)}
-                                      </div>
-                                      <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
-                                    </div>
-                                  </TableCell>
-                                )}
-                                {!esFund && (
-                                  <TableCell className="text-xs px-3">
-                                    <div className="space-y-0.5">
-                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                        {getArbNombre(arbAsist2)}
-                                      </div>
-                                      <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
-                                    </div>
-                                  </TableCell>
-                                )}
-                                {!esFund && (
-                                  <TableCell className="text-xs px-3">
-                                    <div className="space-y-0.5">
-                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                        {getArbNombre(arbCuarto)}
-                                      </div>
-                                      <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
-                                    </div>
-                                  </TableCell>
-                                )}
-                                {esFund && (
-                                  <TableCell className="text-xs px-3">
-                                    <div className="space-y-0.5">
-                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                        {getArbNombre(arbUnico)}
-                                      </div>
-                                      <div className="text-xs text-slate-500">{getArbCategoria(arbUnico)}</div>
-                                    </div>
-                                  </TableCell>
-                                )}
-                                <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
-                                <TableCell className="text-xs px-3">
-                                  <div className="flex gap-1 justify-end">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      asChild
-                                      className="h-7 w-7 p-0 hover:bg-blue-50"
-                                      title="Ver detalles"
-                                    >
-                                      <Link href={`/dashboard/designaciones/${designacion.id}`}>
-                                        <Eye className="w-3.5 h-3.5 text-blue-600" />
-                                      </Link>
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      asChild
-                                      className="h-7 w-7 p-0 hover:bg-slate-100"
-                                      title="Editar"
-                                    >
-                                      <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
-                                        <Edit className="w-3.5 h-3.5 text-slate-600" />
-                                      </Link>
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setDeleteId(designacion.id || null)}
-                                      className="h-7 w-7 p-0 hover:bg-red-50"
-                                      title="Eliminar"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                      </TableBody>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              : designacionesSemana
+                                  .sort((a, b) => {
+                                    const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
+                                    const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
+                                    return dateA - dateB
+                                  })
+                                  .map((designacion, idx) => {
+                                    const arbPrincipal = arbitros.find(
+                                      (a) => a.id?.toString() === designacion.arbitroPrincipal?.toString(),
+                                    )
+                                    const arbAsist1 = arbitros.find(
+                                      (a) => a.id?.toString() === designacion.arbitroAsistente1?.toString(),
+                                    )
+                                    const arbAsist2 = arbitros.find(
+                                      (a) => a.id?.toString() === designacion.arbitroAsistente2?.toString(),
+                                    )
+                                    const arbCuarto = arbitros.find(
+                                      (a) => a.id?.toString() === designacion.cuartoArbitro?.toString(),
+                                    )
+
+                                    return (
+                                      <TableRow
+                                        key={designacion.id}
+                                        className={`border-b border-slate-100 ${
+                                          idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                                        } hover:bg-blue-50/70 transition-colors`}
+                                      >
+                                        <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                          <div className="text-slate-900 font-bold text-xs">
+                                            {designacion.fecha
+                                              ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                              : "-"}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                          {designacion.fecha
+                                            ? format(new Date(designacion.fecha), "HH:mm", { locale: es })
+                                            : "-"}
+                                        </TableCell>
+                                        <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                          <div className="space-y-1">
+                                            <div>
+                                              <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
+                                                {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
+                                              </span>
+                                            </div>
+                                            <div className="text-slate-400 text-xs font-bold">vs</div>
+                                            <div>
+                                              <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
+                                                {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
+                                          {designacion.estadio || "-"}
+                                        </TableCell>
+                                        <TableCell className="text-xs px-3">
+                                          <div className="space-y-0.5">
+                                            <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                              {getArbNombre(arbPrincipal)}
+                                            </div>
+                                            <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-xs px-3">
+                                          <div className="space-y-0.5">
+                                            <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                              {getArbNombre(arbAsist1)}
+                                            </div>
+                                            <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-xs px-3">
+                                          <div className="space-y-0.5">
+                                            <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                              {getArbNombre(arbAsist2)}
+                                            </div>
+                                            <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-xs px-3">
+                                          <div className="space-y-0.5">
+                                            <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                              {getArbNombre(arbCuarto)}
+                                            </div>
+                                            <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
+                                        <TableCell className="text-xs px-3">
+                                          <div className="flex gap-1 justify-end">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              asChild
+                                              className="h-7 w-7 p-0 hover:bg-blue-50"
+                                              title="Ver detalles"
+                                            >
+                                              <Link href={`/dashboard/designaciones/${designacion.id}`}>
+                                                <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                              </Link>
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              asChild
+                                              className="h-7 w-7 p-0 hover:bg-slate-100"
+                                              title="Editar"
+                                            >
+                                              <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
+                                                <Edit className="w-3.5 h-3.5 text-slate-600" />
+                                              </Link>
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => setDeleteId(designacion.id || null)}
+                                              className="h-7 w-7 p-0 hover:bg-red-50"
+                                              title="Eliminar"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                            </Button>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    )
+                                  })}
+                          </TableBody>
+                        )
+                      })()}
                     </Table>
                   </div>
                 </div>
