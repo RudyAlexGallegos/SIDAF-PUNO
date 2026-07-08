@@ -2176,14 +2176,17 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
           </div>
 
-          {campeonatoSeleccionado?.horaInicio && (
-            <Card className="bg-blue-50 border-blue-200">
+          {(campeonatoSeleccionado?.fechaInicio || campeonatoSeleccionado?.horaInicio) && (
+            <Card className="bg-amber-50 border-amber-200">
               <CardContent className="p-4">
-                <p className="text-sm text-blue-800">
-                  <strong>Hora de inicio del campeonato:</strong> {campeonatoSeleccionado.horaInicio}
+                <p className="text-sm text-amber-800">
+                  <strong>Inicio oficial del campeonato (referencia):</strong>{" "}
+                  {campeonatoSeleccionado?.fechaInicio || "—"}
+                  {campeonatoSeleccionado?.horaInicio ? ` · ${campeonatoSeleccionado.horaInicio}` : ""}
                 </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  Usa esta hora como referencia para la designación.
+                <p className="text-xs text-amber-700 mt-1">
+                  Esta es la fecha y hora de inicio del campeonato. La fecha y hora que programes abajo
+                  corresponden a esta designación en particular y pueden ser distintas.
                 </p>
               </CardContent>
             </Card>

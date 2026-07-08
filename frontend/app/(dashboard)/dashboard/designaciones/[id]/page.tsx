@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Trash2, Users, Trophy, Edit } from "lucide-react"
-import { getDesignacionById, getArbitros, deleteDesignacion } from "@/services/api"
+import { getDesignacionById, getArbitros, getCampeonatos, deleteDesignacion, type Campeonato } from "@/services/api"
 import { useToast } from "@/components/ui/use-toast"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -21,6 +21,7 @@ export default function DesignacionDetallePage() {
   const [loading, setLoading] = useState(true)
   const [designacion, setDesignacion] = useState<any>(null)
   const [arbitros, setArbitros] = useState<any[]>([])
+  const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
 
   useEffect(() => {
     async function loadData() {
@@ -31,9 +32,10 @@ export default function DesignacionDetallePage() {
           return
         }
 
-        const [designacionData, arbitrosData] = await Promise.all([
+        const [designacionData, arbitrosData, campeonatosData] = await Promise.all([
           getDesignacionById(designacionId),
           getArbitros(),
+          getCampeonatos(),
         ])
 
         if (!designacionData) {
@@ -44,6 +46,7 @@ export default function DesignacionDetallePage() {
 
         setDesignacion(designacionData)
         setArbitros(arbitrosData || [])
+        setCampeonatos(campeonatosData || [])
       } catch (error) {
         console.error("Error cargando detalle:", error)
         toast({ title: "Error", description: "No se pudo cargar la información", variant: "destructive" })
@@ -208,9 +211,30 @@ export default function DesignacionDetallePage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase">Fecha y hora</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase">Fecha y hora de la designación</p>
                     <p className="text-sm font-medium text-slate-900 mt-1">
                       {formatFecha(designacion.fecha)}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Cuándo se disputa el partido asignado a los árbitros
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase">Inicio del campeonato</p>
+                    <p className="text-sm font-medium text-slate-900 mt-1">
+                      {(() => {
+                        const camp = campeonatos.find(
+                          (c) => c.id?.toString() === designacion.idCampeonato?.toString(),
+                        )
+                        if (!camp?.fechaInicio && !camp?.horaInicio) return "-"
+                        const fecha = camp.fechaInicio
+                          ? format(new Date(camp.fechaInicio), "dd/MM/yyyy", { locale: es })
+                          : ""
+                        return `${fecha}${camp.horaInicio ? ` · ${camp.horaInicio}` : ""}`.trim()
+                      })()}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Fecha/hora oficial de inicio del campeonato (no la de la designación)
                     </p>
                   </div>
                   <div>
