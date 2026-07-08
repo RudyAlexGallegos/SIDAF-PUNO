@@ -298,40 +298,378 @@ function DesignacionesPageContent() {
      return grupos
    }, [designacionesFiltradas])
 
-    const campeonatos = useMemo(() => {
-      return Object.keys(designacionesAgrupadas).sort()
-    }, [designacionesAgrupadas])
+     const campeonatos = useMemo(() => {
+       return Object.keys(designacionesAgrupadas).sort()
+     }, [designacionesAgrupadas])
 
-    const campeonatoCategoriaMap = useMemo(() => {
-      const map = new Map<string, string>()
-      championships.forEach((c) => {
-        if (c.nombre) {
-          map.set(c.nombre, c.categoria || "")
-        }
-      })
-      return map
-    }, [championships])
+     const campeonatoCategoriaMap = useMemo(() => {
+       const map = new Map<string, string>()
+       championships.forEach((c) => {
+         if (c.nombre) {
+           map.set(c.nombre, c.categoria || "")
+         }
+       })
+       return map
+     }, [championships])
 
-    const esCampeonatoFundamental = (nombre: string) => {
-      return campeonatoCategoriaMap.get(nombre) === "CAMPEONATO FUNDAMENTAL" || campeonatoCategoriaMap.get(nombre) === "CAMPEONATO OFICIAL"
+     const campeonatosAgrupados = useMemo(() => {
+       const grupos: {
+         copaPeru: string[]
+         fundamentales: string[]
+         oficiales: string[]
+         otros: string[]
+       } = {
+         copaPeru: [],
+         fundamentales: [],
+         oficiales: [],
+         otros: [],
+       }
+
+       campeonatos.forEach((nombre) => {
+         if (nombre === "COPA PERÚ 2026") {
+           grupos.copaPeru.push(nombre)
+           return
+         }
+         const cat = (campeonatoCategoriaMap.get(nombre) || "").toUpperCase()
+         if (cat === "CAMPEONATO FUNDAMENTAL") {
+           grupos.fundamentales.push(nombre)
+         } else if (cat === "CAMPEONATO OFICIAL") {
+           grupos.oficiales.push(nombre)
+         } else {
+           grupos.otros.push(nombre)
+         }
+       })
+
+       return grupos
+     }, [campeonatos, campeonatoCategoriaMap])
+
+      const primerCampeonatoVisible = useMemo(() => {
+        const lista = [
+          ...campeonatosAgrupados.copaPeru,
+          ...campeonatosAgrupados.fundamentales,
+          ...campeonatosAgrupados.oficiales,
+          ...campeonatosAgrupados.otros,
+        ]
+        return lista[0] || null
+      }, [campeonatosAgrupados])
+
+      const seccionesCampeonatos = useMemo(() => {
+        const secciones = [
+          { titulo: "COPA PERÚ 2026", campeonatos: campeonatosAgrupados.copaPeru },
+          { titulo: "Campeonatos Fundamentales", campeonatos: campeonatosAgrupados.fundamentales },
+          { titulo: "Campeonatos Oficiales", campeonatos: campeonatosAgrupados.oficiales },
+          { titulo: "Otros Campeonatos", campeonatos: campeonatosAgrupados.otros },
+        ]
+        return secciones.filter((s) => s.campeonatos.length > 0)
+      }, [campeonatosAgrupados])
+
+     const esCampeonatoFundamental = (nombre: string) => {
+       return campeonatoCategoriaMap.get(nombre) === "CAMPEONATO FUNDAMENTAL" || campeonatoCategoriaMap.get(nombre) === "CAMPEONATO OFICIAL"
+     }
+
+     useEffect(() => {
+      const camps = Object.keys(designacionesAgrupadas)
+      const primer = primerCampeonatoVisible || camps[0]
+      if (primer && expandedProvincias.size === 0) {
+        setExpandedProvincias(new Set([primer]))
+      }
+    }, [designacionesAgrupadas, primerCampeonatoVisible])
+
+  const toggleCampeonato = (campeonato: string) => {
+      const newSet = new Set(expandedProvincias)
+      if (newSet.has(campeonato)) {
+        newSet.delete(campeonato)
+      } else {
+        newSet.add(campeonato)
+      }
+      setExpandedProvincias(newSet)
     }
 
-    useEffect(() => {
-     const camps = Object.keys(designacionesAgrupadas)
-     if (camps.length > 0 && expandedProvincias.size === 0) {
-       setExpandedProvincias(new Set([camps[0]]))
-     }
-   }, [designacionesAgrupadas])
+    const getArbNombre = (arb: any) => (arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-")
+    const getArbCategoria = (arb: any) => arb?.categoria || ""
 
-   const toggleCampeonato = (campeonato: string) => {
-     const newSet = new Set(expandedProvincias)
-     if (newSet.has(campeonato)) {
-       newSet.delete(campeonato)
-     } else {
-       newSet.add(campeonato)
-     }
-     setExpandedProvincias(newSet)
-   }
+    const renderCampeonatoCard = (campeonato: string) => {
+      const esFund = esCampeonatoFundamental(campeonato)
+      const semanas = Object.entries(designacionesAgrupadas[campeonato] || {}).sort(
+        ([, a], [, b]) => b.length - a.length,
+      )
+      const totalDesignaciones = Object.values(designacionesAgrupadas[campeonato] || {}).reduce(
+        (sum, arr) => sum + arr.length,
+        0,
+      )
+
+      return (
+        <Card
+          key={campeonato}
+          className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+        >
+          <button
+            onClick={() => toggleCampeonato(campeonato)}
+            className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Trophy className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <span className="font-bold text-lg text-slate-900">{campeonato}</span>
+                <span className="ml-2 text-sm text-slate-600 font-medium">
+                  {totalDesignaciones} designaciones
+                </span>
+              </div>
+            </div>
+            {expandedProvincias.has(campeonato) ? (
+              <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+            ) : (
+              <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+            )}
+          </button>
+
+          {expandedProvincias.has(campeonato) && (
+            <CardContent className="p-0 space-y-4 bg-gray-50/60">
+              {semanas.map(([semana, designacionesSemana]) => (
+                <div
+                  key={semana}
+                  className="rounded-xl border border-gray-200 bg-white mx-3 md:mx-4 mb-3 md:mb-4 overflow-hidden"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 bg-slate-50/60 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <Calendar className="h-4 md:h-5 w-4 md:w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
+                          {semana}
+                        </h3>
+                        <p className="text-xs md:text-sm text-slate-600 font-medium">
+                          {designacionesSemana.length}{" "}
+                          {designacionesSemana.length === 1 ? "designación" : "designaciones"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => exportarPDFSemanal(semana, designacionesSemana)}
+                        className="h-8 text-xs border-gray-200 hover:border-emerald-400 hover:text-emerald-700"
+                      >
+                        <Printer className="w-3.5 h-3.5 mr-1.5" />
+                        Imprimir semana
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <Table className="text-sm">
+                      <TableHeader className="bg-gray-50 border-b border-gray-200">
+                        <TableRow>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Fecha
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Hora
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Partido
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Estadio
+                          </TableHead>
+                          {!esFund && (
+                            <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                              Principal
+                            </TableHead>
+                          )}
+                          {!esFund && (
+                            <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                              Asist. 1
+                            </TableHead>
+                          )}
+                          {!esFund && (
+                            <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                              Asist. 2
+                            </TableHead>
+                          )}
+                          {!esFund && (
+                            <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                              4to Árbitro
+                            </TableHead>
+                          )}
+                          {esFund && (
+                            <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                              Árbitro
+                            </TableHead>
+                          )}
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                            Estado
+                          </TableHead>
+                          <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">
+                            Acciones
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {designacionesSemana
+                          .sort((a, b) => {
+                            const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
+                            const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
+                            return dateA - dateB
+                          })
+                          .map((designacion, idx) => {
+                            const arbPrincipal = arbitros.find(
+                              (a) => a.id?.toString() === designacion.arbitroPrincipal?.toString(),
+                            )
+                            const arbAsist1 = arbitros.find(
+                              (a) => a.id?.toString() === designacion.arbitroAsistente1?.toString(),
+                            )
+                            const arbAsist2 = arbitros.find(
+                              (a) => a.id?.toString() === designacion.arbitroAsistente2?.toString(),
+                            )
+                            const arbCuarto = arbitros.find(
+                              (a) => a.id?.toString() === designacion.cuartoArbitro?.toString(),
+                            )
+
+                            const arbUnico = arbPrincipal || arbAsist1 || arbAsist2 || arbCuarto
+
+                            return (
+                              <TableRow
+                                key={designacion.id}
+                                className={`border-b border-slate-100 ${
+                                  idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                                } hover:bg-blue-50/70 transition-colors`}
+                              >
+                                <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
+                                  <div>
+                                    <div className="text-slate-900 font-bold text-xs">
+                                      {designacion.fecha
+                                        ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                        : "-"}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
+                                  {designacion.fecha
+                                    ? format(new Date(designacion.fecha), "HH:mm", { locale: es })
+                                    : "-"}
+                                </TableCell>
+                                <TableCell className="text-xs font-bold text-slate-900 px-3">
+                                  <div className="space-y-1">
+                                    <div>
+                                      <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
+                                        {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
+                                      </span>
+                                    </div>
+                                    <div className="text-slate-400 text-xs font-bold">vs</div>
+                                    <div>
+                                      <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
+                                        {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
+                                  {designacion.estadio || "-"}
+                                </TableCell>
+                                {!esFund && (
+                                  <TableCell className="text-xs px-3">
+                                    <div className="space-y-0.5">
+                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                        {getArbNombre(arbPrincipal)}
+                                      </div>
+                                      <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
+                                    </div>
+                                  </TableCell>
+                                )}
+                                {!esFund && (
+                                  <TableCell className="text-xs px-3">
+                                    <div className="space-y-0.5">
+                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                        {getArbNombre(arbAsist1)}
+                                      </div>
+                                      <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
+                                    </div>
+                                  </TableCell>
+                                )}
+                                {!esFund && (
+                                  <TableCell className="text-xs px-3">
+                                    <div className="space-y-0.5">
+                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                        {getArbNombre(arbAsist2)}
+                                      </div>
+                                      <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
+                                    </div>
+                                  </TableCell>
+                                )}
+                                {!esFund && (
+                                  <TableCell className="text-xs px-3">
+                                    <div className="space-y-0.5">
+                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                        {getArbNombre(arbCuarto)}
+                                      </div>
+                                      <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
+                                    </div>
+                                  </TableCell>
+                                )}
+                                {esFund && (
+                                  <TableCell className="text-xs px-3">
+                                    <div className="space-y-0.5">
+                                      <div className="font-semibold text-slate-900 text-xs leading-tight">
+                                        {getArbNombre(arbUnico)}
+                                      </div>
+                                      <div className="text-xs text-slate-500">{getArbCategoria(arbUnico)}</div>
+                                    </div>
+                                  </TableCell>
+                                )}
+                                <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
+                                <TableCell className="text-xs px-3">
+                                  <div className="flex gap-1 justify-end">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      asChild
+                                      className="h-7 w-7 p-0 hover:bg-blue-50"
+                                      title="Ver detalles"
+                                    >
+                                      <Link href={`/dashboard/designaciones/${designacion.id}`}>
+                                        <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                      </Link>
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      asChild
+                                      className="h-7 w-7 p-0 hover:bg-slate-100"
+                                      title="Editar"
+                                    >
+                                      <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
+                                        <Edit className="w-3.5 h-3.5 text-slate-600" />
+                                      </Link>
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setDeleteId(designacion.id || null)}
+                                      className="h-7 w-7 p-0 hover:bg-red-50"
+                                      title="Eliminar"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          )}
+        </Card>
+      )
+    }
 
   const getEstadoBadge = (estado?: string) => {
     const estadoUpper = estado?.toUpperCase() || ""
@@ -720,250 +1058,34 @@ function DesignacionesPageContent() {
             </CardContent>
           </Card>
 
-          <div ref={printRef} className="space-y-4">
-            {campeonatos.length === 0 ? (
-              <Card className="bg-white border border-gray-200 shadow-sm">
-                <CardContent className="p-12 text-center">
-                  <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
-                </CardContent>
-              </Card>
-            ) : (
-              campeonatos.map((campeonato) => (
-                <Card key={campeonato} className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
-                  <button
-                    onClick={() => toggleCampeonato(campeonato)}
-                    className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                        <Trophy className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
-                      </div>
-                      <div className="text-left">
-                        <span className="font-bold text-lg text-slate-900">{campeonato}</span>
-                        <span className="ml-2 text-sm text-slate-600 font-medium">
-                          {Object.values(designacionesAgrupadas[campeonato] || {}).reduce((sum, arr) => sum + arr.length, 0)} designaciones
-                        </span>
-                      </div>
-                    </div>
-                    {expandedProvincias.has(campeonato) ? (
-                      <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
-                    )}
-                  </button>
-
-                    {expandedProvincias.has(campeonato) && (
-                      <CardContent className="p-0 space-y-4 bg-gray-50/60">
-                      {Object.entries(designacionesAgrupadas[campeonato] || {})
-                        .sort(([, a], [, b]) => b.length - a.length)
-                        .map(([semana, designacionesSemana]) => (
-                          <div key={semana} className="rounded-xl border border-gray-200 bg-white mx-3 md:mx-4 mb-3 md:mb-4 overflow-hidden">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 bg-slate-50/60 px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                  <Calendar className="h-4 md:h-5 w-4 md:w-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                  <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
-                                    {semana}
-                                  </h3>
-                                  <p className="text-xs md:text-sm text-slate-600 font-medium">
-                                    {designacionesSemana.length} {designacionesSemana.length === 1 ? "designación" : "designaciones"}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => exportarPDFSemanal(semana, designacionesSemana)}
-                                  className="h-8 text-xs border-gray-200 hover:border-emerald-400 hover:text-emerald-700"
-                                >
-                                  <Printer className="w-3.5 h-3.5 mr-1.5" />
-                                  Imprimir semana
-                                </Button>
-                              </div>
-                            </div>
-
-                           <div className="overflow-x-auto">
-                             <Table className="text-sm">
-                               <TableHeader className="bg-gray-50 border-b border-gray-200">
-                               <TableRow>
- <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Fecha</TableHead>
-                                   <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Hora</TableHead>
-                                   <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Partido</TableHead>
-                                   <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estadio</TableHead>
-                                  {!esCampeonatoFundamental(campeonato) && (
-                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Principal</TableHead>
-                                  )}
-                                  {!esCampeonatoFundamental(campeonato) && (
-                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 1</TableHead>
-                                  )}
-                                  {!esCampeonatoFundamental(campeonato) && (
-                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Asist. 2</TableHead>
-                                  )}
-                                  {!esCampeonatoFundamental(campeonato) && (
-                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">4to Árbitro</TableHead>
-                                  )}
-                                  {esCampeonatoFundamental(campeonato) && (
-                                    <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Árbitro</TableHead>
-                                  )}
-                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">Estado</TableHead>
-                                  <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3 text-right">Acciones</TableHead>
-                               </TableRow>
-                             </TableHeader>
- <TableBody>
-                                {designacionesSemana
-                                  .sort((a, b) => {
-                                    const dateA = a.fecha ? new Date(a.fecha).getTime() : 0
-                                    const dateB = b.fecha ? new Date(b.fecha).getTime() : 0
-                                    return dateA - dateB
-                                  })
-                                  .map((designacion, idx) => {
-                                   const arbPrincipal = arbitros.find((a) => a.id?.toString() === designacion.arbitroPrincipal?.toString())
-                                   const arbAsist1 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente1?.toString())
-                                   const arbAsist2 = arbitros.find((a) => a.id?.toString() === designacion.arbitroAsistente2?.toString())
-                                   const arbCuarto = arbitros.find((a) => a.id?.toString() === designacion.cuartoArbitro?.toString())
-
-                                    const getArbNombre = (arb: any) => arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
-                                    const getArbCategoria = (arb: any) => arb?.categoria || ""
-
-                                    const arbUnico = arbPrincipal || arbAsist1 || arbAsist2 || arbCuarto
-
-                                    return (
-                                     <TableRow
-                                       key={designacion.id}
-                                       className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-blue-50/70 transition-colors`}
-                                     >
- <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
-                                          <div>
-                                            <div className="text-slate-900 font-bold text-xs">
-                                              {designacion.fecha ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase() : "-"}
-                                            </div>
-                                          </div>
-                                        </TableCell>
-                                        <TableCell className="text-sm font-medium px-3 whitespace-nowrap">
-                                          {designacion.fecha ? format(new Date(designacion.fecha), "HH:mm", { locale: es }) : "-"}
-                                        </TableCell>
-                                        <TableCell className="text-xs font-bold text-slate-900 px-3">
-                                          <div className="space-y-1">
-                                            <div>
-                                              <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold border border-blue-100">
-                                                {(designacion.nombreEquipoLocal || "-").substring(0, 12)}
-                                              </span>
-                                            </div>
-                                            <div className="text-slate-400 text-xs font-bold">vs</div>
-                                            <div>
-                                              <span className="inline-block bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold border border-orange-100">
-                                                {(designacion.nombreEquipoVisitante || "-").substring(0, 12)}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        </TableCell>
-                                        <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
-                                           {designacion.estadio || "-"}
-                                         </TableCell>
-                                        {!esCampeonatoFundamental(campeonato) && (
-                                          <TableCell className="text-xs px-3">
-                                            <div className="space-y-0.5">
-                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                                {getArbNombre(arbPrincipal)}
-                                              </div>
-                                              <div className="text-xs text-slate-500">{getArbCategoria(arbPrincipal)}</div>
-                                            </div>
-                                          </TableCell>
-                                        )}
-                                        {!esCampeonatoFundamental(campeonato) && (
-                                          <TableCell className="text-xs px-3">
-                                            <div className="space-y-0.5">
-                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                                {getArbNombre(arbAsist1)}
-                                              </div>
-                                              <div className="text-xs text-slate-500">{getArbCategoria(arbAsist1)}</div>
-                                            </div>
-                                          </TableCell>
-                                        )}
-                                        {!esCampeonatoFundamental(campeonato) && (
-                                          <TableCell className="text-xs px-3">
-                                            <div className="space-y-0.5">
-                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                                {getArbNombre(arbAsist2)}
-                                              </div>
-                                              <div className="text-xs text-slate-500">{getArbCategoria(arbAsist2)}</div>
-                                            </div>
-                                          </TableCell>
-                                        )}
-                                        {!esCampeonatoFundamental(campeonato) && (
-                                          <TableCell className="text-xs px-3">
-                                            <div className="space-y-0.5">
-                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                                {getArbNombre(arbCuarto)}
-                                              </div>
-                                              <div className="text-xs text-slate-500">{getArbCategoria(arbCuarto)}</div>
-                                            </div>
-                                          </TableCell>
-                                        )}
-                                        {esCampeonatoFundamental(campeonato) && (
-                                          <TableCell className="text-xs px-3">
-                                            <div className="space-y-0.5">
-                                              <div className="font-semibold text-slate-900 text-xs leading-tight">
-                                                {getArbNombre(arbUnico)}
-                                              </div>
-                                              <div className="text-xs text-slate-500">{getArbCategoria(arbUnico)}</div>
-                                            </div>
-                                          </TableCell>
-                                        )}
-                                       <TableCell className="px-3 text-xs">{getEstadoBadge(designacion.estado)}</TableCell>
-                                       <TableCell className="text-xs px-3">
-                                         <div className="flex gap-1 justify-end">
-                                           <Button
-                                             variant="ghost"
-                                             size="sm"
-                                             asChild
-                                             className="h-7 w-7 p-0 hover:bg-blue-50"
-                                             title="Ver detalles"
-                                           >
-                                             <Link href={`/dashboard/designaciones/${designacion.id}`}>
-                                               <Eye className="w-3.5 h-3.5 text-blue-600" />
-                                             </Link>
-                                           </Button>
-                                           <Button
-                                             variant="ghost"
-                                             size="sm"
-                                             asChild
-                                             className="h-7 w-7 p-0 hover:bg-slate-100"
-                                             title="Editar"
-                                           >
-                                             <Link href={`/dashboard/designaciones/${designacion.id}/editar`}>
-                                               <Edit className="w-3.5 h-3.5 text-slate-600" />
-                                             </Link>
-                                           </Button>
-                                           <Button
-                                             variant="ghost"
-                                             size="sm"
-                                             onClick={() => setDeleteId(designacion.id || null)}
-                                             className="h-7 w-7 p-0 hover:bg-red-50"
-                                             title="Eliminar"
-                                           >
-                                             <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                                           </Button>
-                                         </div>
-                                       </TableCell>
-                                     </TableRow>
-                                   )
-                                 })}
-                             </TableBody>
-                           </Table>
-                         </div>
-                       </div>
-                     ))}
-                   </CardContent>
-                 )}
+           <div ref={printRef} className="space-y-8">
+             {campeonatos.length === 0 ? (
+               <Card className="bg-white border border-gray-200 shadow-sm">
+                 <CardContent className="p-12 text-center">
+                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                   <p className="text-slate-500 font-medium">No hay designaciones que coincidan con los filtros</p>
+                 </CardContent>
                </Card>
-            ))
-          )}
-          </div>
+             ) : (
+               seccionesCampeonatos.map((seccion) => (
+                 <section key={seccion.titulo}>
+                   <div className="flex items-center gap-3 mb-3 md:mb-4 px-1">
+                     <div className="h-6 w-1.5 rounded-full bg-blue-600" />
+                     <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">
+                       {seccion.titulo}
+                     </h2>
+                     <Badge className="bg-slate-100 text-slate-600 border border-slate-200">
+                       {seccion.campeonatos.length}{" "}
+                       {seccion.campeonatos.length === 1 ? "campeonato" : "campeonatos"}
+                     </Badge>
+                   </div>
+                   <div className="space-y-4">
+                     {seccion.campeonatos.map((campeonato) => renderCampeonatoCard(campeonato))}
+                   </div>
+                 </section>
+               ))
+             )}
+           </div>
         </div>
       </main>
 
