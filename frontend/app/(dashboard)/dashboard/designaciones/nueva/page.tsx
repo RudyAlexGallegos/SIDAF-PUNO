@@ -21,6 +21,7 @@ import {
   Shield,
   UserCheck,
   AlertCircle,
+  Clock,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato } from "@/services/api"
@@ -709,6 +710,31 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                 <p className="flex items-center gap-2">
                                   <Users className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
                                   {camp.numeroEquipos} equipos
+                                </p>
+                              )}
+                              {camp.diasJuego && (() => {
+                                const dias = camp.diasJuego.split(",").map(d => d.trim()).filter(Boolean)
+                                if (dias.length === 0) return null
+                                return (
+                                  <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {dias.map((dia) => (
+                                      <span
+                                        key={dia}
+                                        className="px-2 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold"
+                                        title={`Juega: ${dia}`}
+                                      >
+                                        {dia.slice(0, 3).toUpperCase()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )
+                              })()}
+                              {(camp.horaInicio || camp.horaFin) && (
+                                <p className="flex items-center gap-2 text-xs">
+                                  <Clock className="w-3 h-3 text-slate-500" />
+                                  {camp.horaInicio || "??:??"}
+                                  {camp.horaFin && <> - {camp.horaFin}</>}
+                                  <span className="text-slate-400">hrs</span>
                                 </p>
                               )}
                             </div>
