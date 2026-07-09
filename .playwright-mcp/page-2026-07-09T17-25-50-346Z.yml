@@ -1,0 +1,117 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - generic [ref=f1e5]:
+          - img "Logo" [ref=f1e6]
+          - generic [ref=f1e7]:
+            - heading "SIDAF PUNO" [level=1] [ref=f1e8]
+            - paragraph [ref=f1e9]: Comisión de Árbitros
+        - button [ref=f1e10] [cursor=pointer]:
+          - img [ref=f1e11]
+      - navigation [ref=f1e12]:
+        - generic [ref=f1e13]:
+          - paragraph [ref=f1e14]: Principal
+          - generic [ref=f1e15]:
+            - link "Inicio" [ref=f1e16] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=f1e17]
+              - generic [ref=f1e20]: Inicio
+            - link "Perfil" [ref=f1e21] [cursor=pointer]:
+              - /url: /dashboard/perfil
+              - img [ref=f1e22]
+              - generic [ref=f1e25]: Perfil
+        - generic [ref=f1e26]:
+          - paragraph [ref=f1e27]: Permisos
+          - generic [ref=f1e28]:
+            - link "Solicitar Permiso" [ref=f1e29] [cursor=pointer]:
+              - /url: /dashboard/solicitar-permiso
+              - img [ref=f1e30]
+              - generic [ref=f1e33]: Solicitar Permiso
+            - link "Ver Solicitudes" [ref=f1e34] [cursor=pointer]:
+              - /url: /dashboard/solicitudes
+              - img [ref=f1e35]
+              - generic [ref=f1e38]: Ver Solicitudes
+        - generic [ref=f1e39]:
+          - paragraph [ref=f1e40]: Administración
+          - generic [ref=f1e41]:
+            - link "Usuarios" [ref=f1e42] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+              - img [ref=f1e43]
+              - generic [ref=f1e55]: Usuarios
+            - link "Árbitros" [ref=f1e56] [cursor=pointer]:
+              - /url: /dashboard/arbitros
+              - img [ref=f1e57]
+              - generic [ref=f1e62]: Árbitros
+            - link "Asesores" [ref=f1e63] [cursor=pointer]:
+              - /url: /dashboard/asesores
+              - img [ref=f1e64]
+              - generic [ref=f1e66]: Asesores
+        - generic [ref=f1e67]:
+          - paragraph [ref=f1e68]: Auditoría
+          - link "Ver Auditoría" [ref=f1e70] [cursor=pointer]:
+            - /url: /dashboard/auditoria
+            - img [ref=f1e71]
+            - generic [ref=f1e74]: Ver Auditoría
+        - generic [ref=f1e75]:
+          - paragraph [ref=f1e76]: Evaluación y Desempeño
+          - generic [ref=f1e77]:
+            - button "Evaluaciones" [ref=f1e78] [cursor=pointer]:
+              - img [ref=f1e79]
+              - generic [ref=f1e82]: Evaluaciones
+            - button "Desempeño Arbitral" [ref=f1e83] [cursor=pointer]:
+              - img [ref=f1e84]
+              - generic [ref=f1e86]: Desempeño Arbitral
+        - generic [ref=f1e87]:
+          - paragraph [ref=f1e88]: Asistencia
+          - generic [ref=f1e89]:
+            - link "Control Asistencia" [ref=f1e90] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+              - img [ref=f1e91]
+              - generic [ref=f1e95]: Control Asistencia
+            - link "Historial Asistencia" [ref=f1e96] [cursor=pointer]:
+              - /url: /dashboard/asistencia/historial
+              - img [ref=f1e97]
+              - generic [ref=f1e101]: Historial Asistencia
+            - link "Ranking Semanal" [ref=f1e102] [cursor=pointer]:
+              - /url: /dashboard/asistencia/ranking-semanal
+              - img [ref=f1e103]
+              - generic [ref=f1e106]: Ranking Semanal
+        - generic [ref=f1e107]:
+          - paragraph [ref=f1e108]: Designaciones
+          - generic [ref=f1e109]:
+            - link "Designaciones" [ref=f1e110] [cursor=pointer]:
+              - /url: /dashboard/designaciones
+              - img [ref=f1e111]
+              - generic [ref=f1e113]: Designaciones
+            - link "Resumen Semanal" [ref=f1e114] [cursor=pointer]:
+              - /url: /dashboard/designaciones/resumen-semanal
+              - img [ref=f1e115]
+              - generic [ref=f1e118]: Resumen Semanal
+        - generic [ref=f1e119]:
+          - paragraph [ref=f1e120]: Campeonato
+          - generic [ref=f1e121]:
+            - link "Campeonatos" [ref=f1e122] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+              - img [ref=f1e123]
+              - generic [ref=f1e129]: Campeonatos
+            - link "Equipos" [ref=f1e130] [cursor=pointer]:
+              - /url: /dashboard/campeonatos/equipos
+              - img [ref=f1e131]
+              - generic [ref=f1e136]: Equipos
+            - link "Reportes" [ref=f1e137] [cursor=pointer]:
+              - /url: /dashboard/reportes
+              - img [ref=f1e138]
+              - generic [ref=f1e141]: Reportes
+      - generic [ref=f1e143]:
+        - img [ref=f1e145]
+        - generic [ref=f1e147]:
+          - paragraph [ref=f1e148]: Administrador SIDAF Puno
+          - paragraph [ref=f1e149]: Administrador
+        - button "Cerrar sesión" [ref=f1e150] [cursor=pointer]:
+          - img [ref=f1e151]
+    - main [ref=f1e154]:
+      - generic [ref=f1e156]:
+        - img [ref=f1e157]
+        - paragraph [ref=f1e166]: Cargando sistema de designación...
+  - alert [ref=f1e167]

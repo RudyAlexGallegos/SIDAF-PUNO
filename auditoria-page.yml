@@ -1,0 +1,60 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e98]: SIDAF PUNO
+  - generic [ref=e102]:
+    - generic [ref=e104]:
+      - generic [ref=e105]:
+        - img [ref=e108]
+        - generic [ref=e114]:
+          - heading "SIDAF PUNO" [level=1] [ref=e115]
+          - paragraph [ref=e116]: Sistema Inteligente de Designación de Árbitros de Fútbol
+          - paragraph [ref=e117]: Comisión Departamental de Árbitros del Departamento de Puno
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - img [ref=e121]
+          - generic [ref=e123]:
+            - heading "Gestión Eficiente" [level=3] [ref=e124]
+            - paragraph [ref=e125]: Designa árbitros automáticamente en segundos
+        - generic [ref=e126]:
+          - img [ref=e128]
+          - generic [ref=e133]:
+            - heading "Control de Permisos" [level=3] [ref=e134]
+            - paragraph [ref=e135]: Sistema jerárquico de roles y permisos
+        - generic [ref=e136]:
+          - img [ref=e138]
+          - generic [ref=e141]:
+            - heading "Seguridad Certificada" [level=3] [ref=e142]
+            - paragraph [ref=e143]: Autenticación segura y auditoría completa
+    - generic [ref=e145]:
+      - generic [ref=e148]:
+        - generic [ref=e149]: Ingresar al Sistema
+        - generic [ref=e150]: Acceso seguro para árbitros y directivos
+      - generic [ref=e151]:
+        - generic [ref=e152]:
+          - generic [ref=e153]:
+            - text: Número de DNI
+            - generic [ref=e154]:
+              - img [ref=e155]
+              - textbox "Número de DNI" [ref=e158]:
+                - /placeholder: Ej. 12345678
+          - generic [ref=e159]:
+            - text: Contraseña
+            - generic [ref=e160]:
+              - textbox "Contraseña" [ref=e161]:
+                - /placeholder: Ingrese su contraseña
+              - button [ref=e162] [cursor=pointer]:
+                - img [ref=e163]
+          - button "Ingresar al Sistema" [ref=e166] [cursor=pointer]:
+            - generic [ref=e167]:
+              - img
+              - text: Ingresar al Sistema
+          - generic [ref=e172]: o
+          - link "Crear una Nueva Cuenta" [ref=e173] [cursor=pointer]:
+            - /url: /login/registro
+            - button "Crear una Nueva Cuenta" [ref=e174]:
+              - img
+              - text: Crear una Nueva Cuenta
+        - generic [ref=e175]:
+          - generic [ref=e176]:
+            - img [ref=e177]
+            - generic [ref=e180]: Acceso restringido y protegido
+          - paragraph [ref=e181]: © 2026 Comisión Departamental de Árbitros - Puno

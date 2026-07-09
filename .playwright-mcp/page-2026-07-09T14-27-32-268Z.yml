@@ -1,0 +1,66 @@
+- generic [ref=f3e2]:
+  - complementary [ref=f3e3]:
+    - generic [ref=f3e4]:
+      - generic [ref=f3e5]:
+        - img "Logo" [ref=f3e6]
+        - generic [ref=f3e7]:
+          - heading "SIDAF PUNO" [level=1] [ref=f3e8]
+          - paragraph [ref=f3e9]: Comisión de Árbitros
+      - button [ref=f3e10] [cursor=pointer]:
+        - img [ref=f3e11]
+    - navigation [ref=f3e12]:
+      - generic [ref=f3e13]:
+        - paragraph [ref=f3e14]: Principal
+        - generic [ref=f3e15]:
+          - link "Inicio" [ref=f3e16] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=f3e17]
+            - generic [ref=f3e20]: Inicio
+          - link "Perfil" [ref=f3e21] [cursor=pointer]:
+            - /url: /dashboard/perfil
+            - img [ref=f3e22]
+            - generic [ref=f3e25]: Perfil
+      - generic [ref=f3e26]:
+        - paragraph [ref=f3e27]: Gestión
+        - link "Árbitros" [ref=f3e29] [cursor=pointer]:
+          - /url: /dashboard/arbitros
+          - img [ref=f3e30]
+          - generic [ref=f3e35]: Árbitros
+      - generic [ref=f3e36]:
+        - paragraph [ref=f3e37]: Asistencia
+        - generic [ref=f3e38]:
+          - link "Control Asistencia" [ref=f3e39] [cursor=pointer]:
+            - /url: /dashboard/asistencia
+            - img [ref=f3e40]
+            - generic [ref=f3e44]: Control Asistencia
+          - link "Historial Asistencia" [ref=f3e45] [cursor=pointer]:
+            - /url: /dashboard/asistencia/historial
+            - img [ref=f3e46]
+            - generic [ref=f3e50]: Historial Asistencia
+          - link "Ranking Semanal" [ref=f3e51] [cursor=pointer]:
+            - /url: /dashboard/asistencia/ranking-semanal
+            - img [ref=f3e52]
+            - generic [ref=f3e55]: Ranking Semanal
+      - generic [ref=f3e56]:
+        - paragraph [ref=f3e57]: Designaciones
+        - link "Designaciones" [ref=f3e59] [cursor=pointer]:
+          - /url: /dashboard/designaciones
+          - img [ref=f3e60]
+          - generic [ref=f3e62]: Designaciones
+      - generic [ref=f3e63]:
+        - paragraph [ref=f3e64]: Campeonato
+        - generic [ref=f3e65]:
+          - link "Campeonatos" [ref=f3e66] [cursor=pointer]:
+            - /url: /dashboard/campeonatos
+            - img [ref=f3e67]
+            - generic [ref=f3e73]: Campeonatos
+          - link "Equipos" [ref=f3e74] [cursor=pointer]:
+            - /url: /dashboard/campeonatos/equipos
+            - img [ref=f3e75]
+            - generic [ref=f3e80]: Equipos
+          - link "Reportes" [ref=f3e81] [cursor=pointer]:
+            - /url: /dashboard/reportes
+            - img [ref=f3e82]
+            - generic [ref=f3e85]: Reportes
+  - main [ref=f3e86]:
+    - generic [ref=f3e87]: Cargando...

@@ -1,0 +1,193 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - img "Logo" [ref=e6]
+          - generic [ref=e7]:
+            - heading "SIDAF PUNO" [level=1] [ref=e8]
+            - paragraph [ref=e9]: Comisión de Árbitros
+        - button [ref=e10] [cursor=pointer]:
+          - img [ref=e11]
+      - navigation [ref=e12]:
+        - generic [ref=e13]:
+          - paragraph [ref=e14]: Principal
+          - generic [ref=e15]:
+            - link "Inicio" [ref=e16] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e17]
+              - generic [ref=e20]: Inicio
+            - link "Perfil" [ref=e21] [cursor=pointer]:
+              - /url: /dashboard/perfil
+              - img [ref=e22]
+              - generic [ref=e25]: Perfil
+        - generic [ref=e26]:
+          - paragraph [ref=e27]: Permisos
+          - generic [ref=e28]:
+            - link "Solicitar Permiso" [ref=e29] [cursor=pointer]:
+              - /url: /dashboard/solicitar-permiso
+              - img [ref=e30]
+              - generic [ref=e33]: Solicitar Permiso
+            - link "Ver Solicitudes" [ref=e34] [cursor=pointer]:
+              - /url: /dashboard/solicitudes
+              - img [ref=e35]
+              - generic [ref=e38]: Ver Solicitudes
+        - generic [ref=e39]:
+          - paragraph [ref=e40]: Administración
+          - generic [ref=e41]:
+            - link "Usuarios" [ref=e42] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+              - img [ref=e43]
+              - generic [ref=e55]: Usuarios
+            - link "Árbitros" [ref=e56] [cursor=pointer]:
+              - /url: /dashboard/arbitros
+              - img [ref=e57]
+              - generic [ref=e62]: Árbitros
+            - link "Asesores" [ref=e63] [cursor=pointer]:
+              - /url: /dashboard/asesores
+              - img [ref=e64]
+              - generic [ref=e66]: Asesores
+        - generic [ref=e67]:
+          - paragraph [ref=e68]: Auditoría
+          - link "Ver Auditoría" [ref=e70] [cursor=pointer]:
+            - /url: /dashboard/auditoria
+            - img [ref=e71]
+            - generic [ref=e74]: Ver Auditoría
+        - generic [ref=e75]:
+          - paragraph [ref=e76]: Evaluación y Desempeño
+          - generic [ref=e77]:
+            - button "Evaluaciones" [ref=e78] [cursor=pointer]:
+              - img [ref=e79]
+              - generic [ref=e82]: Evaluaciones
+            - button "Desempeño Arbitral" [ref=e83] [cursor=pointer]:
+              - img [ref=e84]
+              - generic [ref=e86]: Desempeño Arbitral
+        - generic [ref=e87]:
+          - paragraph [ref=e88]: Asistencia
+          - generic [ref=e89]:
+            - link "Control Asistencia" [ref=e90] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+              - img [ref=e91]
+              - generic [ref=e95]: Control Asistencia
+            - link "Historial Asistencia" [ref=e96] [cursor=pointer]:
+              - /url: /dashboard/asistencia/historial
+              - img [ref=e97]
+              - generic [ref=e101]: Historial Asistencia
+            - link "Ranking Semanal" [ref=e102] [cursor=pointer]:
+              - /url: /dashboard/asistencia/ranking-semanal
+              - img [ref=e103]
+              - generic [ref=e106]: Ranking Semanal
+        - generic [ref=e107]:
+          - paragraph [ref=e108]: Designaciones
+          - generic [ref=e109]:
+            - link "Designaciones" [ref=e110] [cursor=pointer]:
+              - /url: /dashboard/designaciones
+              - img [ref=e111]
+              - generic [ref=e113]: Designaciones
+            - link "Resumen Semanal" [ref=e114] [cursor=pointer]:
+              - /url: /dashboard/designaciones/resumen-semanal
+              - img [ref=e115]
+              - generic [ref=e118]: Resumen Semanal
+        - generic [ref=e119]:
+          - paragraph [ref=e120]: Campeonato
+          - generic [ref=e121]:
+            - link "Campeonatos" [ref=e122] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+              - img [ref=e123]
+              - generic [ref=e129]: Campeonatos
+            - link "Equipos" [ref=e130] [cursor=pointer]:
+              - /url: /dashboard/campeonatos/equipos
+              - img [ref=e131]
+              - generic [ref=e136]: Equipos
+            - link "Reportes" [ref=e137] [cursor=pointer]:
+              - /url: /dashboard/reportes
+              - img [ref=e138]
+              - generic [ref=e141]: Reportes
+      - generic [ref=e143]:
+        - img [ref=e145]
+        - generic [ref=e147]:
+          - paragraph [ref=e148]: Administrador SIDAF Puno
+          - paragraph [ref=e149]: Administrador
+        - button "Cerrar sesión" [ref=e150] [cursor=pointer]:
+          - img [ref=e151]
+    - main [ref=e154]:
+      - generic [ref=e155]:
+        - generic [ref=e169]:
+          - generic [ref=e171]: Campeonato
+          - generic [ref=e174]: Provincia
+          - generic [ref=e177]: Partidos
+          - generic [ref=e180]: Árbitros
+          - generic [ref=e183]: Resumen
+          - generic [ref=e186]: Confirmar
+        - generic [ref=e190]:
+          - paragraph [ref=e191]: Designación
+          - heading "Selecciona un Campeonato" [level=1] [ref=e192]:
+            - img [ref=e193]
+            - text: Selecciona un Campeonato
+          - paragraph [ref=e199]: Paso 1 de 7
+        - link "Volver al Listado" [ref=e201] [cursor=pointer]:
+          - /url: /dashboard/designaciones
+          - button "Volver al Listado" [ref=e202]:
+            - img
+            - text: Volver al Listado
+        - paragraph [ref=e205]:
+          - strong [ref=e206]: "Tip:"
+          - text: Selecciona el campeonato al que deseas asignar árbitros. Los campeonatos protegidos como
+          - strong [ref=e207]: COPA PERÚ 2026
+          - text: requieren completar etapas previas.
+        - generic [ref=e208]:
+          - generic [ref=e210] [cursor=pointer]:
+            - generic [ref=e211]:
+              - generic [ref=e212]:
+                - img [ref=e213]
+                - generic [ref=e219]: SIN REQUISITOS
+              - heading "TRABAJADORES ( YANAMAYO)" [level=3] [ref=e220]
+              - generic [ref=e221]:
+                - paragraph [ref=e222]:
+                  - generic [ref=e223]: CAMPEONATO FUNDAMENTAL
+                - text: "0"
+            - generic [ref=e225]: PROGRAMADO
+          - generic [ref=e227] [cursor=pointer]:
+            - generic [ref=e228]:
+              - generic [ref=e229]:
+                - img [ref=e230]
+                - generic [ref=e236]: SIN REQUISITOS
+              - heading "CAMPEONATO ICHU" [level=3] [ref=e237]
+              - generic [ref=e238]:
+                - paragraph [ref=e239]:
+                  - generic [ref=e240]: CAMPEONATO FUNDAMENTAL
+                - text: "0"
+            - generic [ref=e242]: PROGRAMADO
+          - generic [ref=e244] [cursor=pointer]:
+            - generic [ref=e245]:
+              - img [ref=e247]
+              - heading "COPA ELITE" [level=3] [ref=e253]
+              - generic [ref=e254]:
+                - paragraph [ref=e255]:
+                  - generic [ref=e256]: CAMPEONATO OFICIAL
+                - text: "0"
+            - generic [ref=e258]: PROGRAMADO
+          - generic [ref=e260] [cursor=pointer]:
+            - generic [ref=e261]:
+              - generic [ref=e262]:
+                - img [ref=e263]
+                - generic "Campeonato protegido" [ref=e269]:
+                  - img [ref=e270]
+              - heading "COPA PERÚ 2026" [level=3] [ref=e273]
+              - generic [ref=e274]:
+                - paragraph [ref=e275]:
+                  - generic [ref=e276]: Nacional
+                - paragraph [ref=e277]:
+                  - img [ref=e278]
+                  - text: 32 equipos
+            - generic [ref=e284]: PROGRAMADO
+          - generic [ref=e286] [cursor=pointer]:
+            - generic [ref=e287]:
+              - img [ref=e289]
+              - heading "CRECIENDO CON EL FUTBOL" [level=3] [ref=e295]
+              - generic [ref=e296]:
+                - paragraph [ref=e297]:
+                  - generic [ref=e298]: CAMPEONATO OFICIAL
+                - text: "0"
+            - generic [ref=e300]: PROGRAMADO
+  - alert [ref=e167]

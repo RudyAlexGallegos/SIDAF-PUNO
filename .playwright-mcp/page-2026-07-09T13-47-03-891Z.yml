@@ -1,0 +1,439 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - generic [ref=f1e5]:
+          - img "Logo" [ref=f1e6]
+          - generic [ref=f1e7]:
+            - heading "SIDAF PUNO" [level=1] [ref=f1e8]
+            - paragraph [ref=f1e9]: Comisión de Árbitros
+        - button [ref=f1e10] [cursor=pointer]:
+          - img [ref=f1e11]
+      - navigation [ref=f1e12]:
+        - generic [ref=f1e13]:
+          - paragraph [ref=f1e14]: Principal
+          - generic [ref=f1e15]:
+            - link "Inicio" [ref=f1e16] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=f1e17]
+              - generic [ref=f1e20]: Inicio
+            - link "Perfil" [ref=f1e21] [cursor=pointer]:
+              - /url: /dashboard/perfil
+              - img [ref=f1e22]
+              - generic [ref=f1e25]: Perfil
+        - generic [ref=f1e26]:
+          - paragraph [ref=f1e27]: Permisos
+          - generic [ref=f1e28]:
+            - link "Solicitar Permiso" [ref=f1e29] [cursor=pointer]:
+              - /url: /dashboard/solicitar-permiso
+              - img [ref=f1e30]
+              - generic [ref=f1e33]: Solicitar Permiso
+            - link "Ver Solicitudes" [ref=f1e34] [cursor=pointer]:
+              - /url: /dashboard/solicitudes
+              - img [ref=f1e35]
+              - generic [ref=f1e38]: Ver Solicitudes
+        - generic [ref=f1e39]:
+          - paragraph [ref=f1e40]: Administración
+          - generic [ref=f1e41]:
+            - link "Usuarios" [ref=f1e42] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+              - img [ref=f1e43]
+              - generic [ref=f1e55]: Usuarios
+            - link "Árbitros" [ref=f1e56] [cursor=pointer]:
+              - /url: /dashboard/arbitros
+              - img [ref=f1e57]
+              - generic [ref=f1e62]: Árbitros
+            - link "Asesores" [ref=f1e63] [cursor=pointer]:
+              - /url: /dashboard/asesores
+              - img [ref=f1e64]
+              - generic [ref=f1e66]: Asesores
+        - generic [ref=f1e67]:
+          - paragraph [ref=f1e68]: Auditoría
+          - link "Ver Auditoría" [ref=f1e70] [cursor=pointer]:
+            - /url: /dashboard/auditoria
+            - img [ref=f1e71]
+            - generic [ref=f1e74]: Ver Auditoría
+        - generic [ref=f1e75]:
+          - paragraph [ref=f1e76]: Evaluación y Desempeño
+          - generic [ref=f1e77]:
+            - button "Evaluaciones" [active] [ref=f1e78] [cursor=pointer]:
+              - img [ref=f1e79]
+              - generic [ref=f1e82]: Evaluaciones
+            - button "Desempeño Arbitral" [ref=f1e83] [cursor=pointer]:
+              - img [ref=f1e84]
+              - generic [ref=f1e86]: Desempeño Arbitral
+        - generic [ref=f1e87]:
+          - paragraph [ref=f1e88]: Asistencia
+          - generic [ref=f1e89]:
+            - link "Control Asistencia" [ref=f1e90] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+              - img [ref=f1e91]
+              - generic [ref=f1e95]: Control Asistencia
+            - link "Historial Asistencia" [ref=f1e96] [cursor=pointer]:
+              - /url: /dashboard/asistencia/historial
+              - img [ref=f1e97]
+              - generic [ref=f1e101]: Historial Asistencia
+            - link "Ranking Semanal" [ref=f1e102] [cursor=pointer]:
+              - /url: /dashboard/asistencia/ranking-semanal
+              - img [ref=f1e103]
+              - generic [ref=f1e106]: Ranking Semanal
+        - generic [ref=f1e107]:
+          - paragraph [ref=f1e108]: Designaciones
+          - generic [ref=f1e109]:
+            - link "Designaciones" [ref=f1e110] [cursor=pointer]:
+              - /url: /dashboard/designaciones
+              - img [ref=f1e111]
+              - generic [ref=f1e113]: Designaciones
+            - link "Resumen Semanal" [ref=f1e114] [cursor=pointer]:
+              - /url: /dashboard/designaciones/resumen-semanal
+              - img [ref=f1e115]
+              - generic [ref=f1e118]: Resumen Semanal
+        - generic [ref=f1e119]:
+          - paragraph [ref=f1e120]: Campeonato
+          - generic [ref=f1e121]:
+            - link "Campeonatos" [ref=f1e122] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+              - img [ref=f1e123]
+              - generic [ref=f1e129]: Campeonatos
+            - link "Equipos" [ref=f1e130] [cursor=pointer]:
+              - /url: /dashboard/campeonatos/equipos
+              - img [ref=f1e131]
+              - generic [ref=f1e136]: Equipos
+            - link "Reportes" [ref=f1e137] [cursor=pointer]:
+              - /url: /dashboard/reportes
+              - img [ref=f1e138]
+              - generic [ref=f1e141]: Reportes
+      - generic [ref=f1e143]:
+        - img [ref=f1e145]
+        - generic [ref=f1e147]:
+          - paragraph [ref=f1e148]: Administrador SIDAF Puno
+          - paragraph [ref=f1e149]: Administrador
+        - button "Cerrar sesión" [ref=f1e150] [cursor=pointer]:
+          - img [ref=f1e151]
+    - main [ref=f1e154]:
+      - generic [ref=f1e155]:
+        - generic [ref=f1e156]:
+          - paragraph [ref=f1e157]: Comisión Departamental de Árbitros · Puno
+          - heading "Panel de Control" [level=1] [ref=f1e158]
+          - paragraph [ref=f1e159]: Bienvenido al sistema de gestión arbitral. Aquí encontrará un resumen de la actividad actual.
+        - generic [ref=f1e168]:
+          - link "32 Árbitros 29 activos" [ref=f1e169] [cursor=pointer]:
+            - /url: /dashboard/arbitros
+            - generic [ref=f1e170]:
+              - generic [ref=f1e171]:
+                - img [ref=f1e173]
+                - img [ref=f1e178]
+              - generic [ref=f1e180]:
+                - paragraph [ref=f1e181]: "32"
+                - paragraph [ref=f1e182]: Árbitros
+                - paragraph [ref=f1e183]: 29 activos
+          - link "21 Designaciones 0 pendientes" [ref=f1e184] [cursor=pointer]:
+            - /url: /dashboard/designaciones
+            - generic [ref=f1e185]:
+              - generic [ref=f1e186]:
+                - img [ref=f1e188]
+                - img [ref=f1e191]
+              - generic [ref=f1e193]:
+                - paragraph [ref=f1e194]: "21"
+                - paragraph [ref=f1e195]: Designaciones
+                - paragraph [ref=f1e196]: 0 pendientes
+          - link "5 Campeonatos 0 activos" [ref=f1e197] [cursor=pointer]:
+            - /url: /dashboard/campeonatos
+            - generic [ref=f1e198]:
+              - generic [ref=f1e199]:
+                - img [ref=f1e201]
+                - img [ref=f1e207]
+              - generic [ref=f1e209]:
+                - paragraph [ref=f1e210]: "5"
+                - paragraph [ref=f1e211]: Campeonatos
+                - paragraph [ref=f1e212]: 0 activos
+          - link "115 Equipos Registrados" [ref=f1e213] [cursor=pointer]:
+            - /url: /dashboard/campeonatos/equipos
+            - generic [ref=f1e214]:
+              - generic [ref=f1e215]:
+                - img [ref=f1e217]
+                - img [ref=f1e219]
+              - generic [ref=f1e221]:
+                - paragraph [ref=f1e222]: "115"
+                - paragraph [ref=f1e223]: Equipos
+                - paragraph [ref=f1e224]: Registrados
+        - generic [ref=f1e225]:
+          - generic [ref=f1e227]:
+            - img [ref=f1e229]
+            - generic [ref=f1e232]:
+              - paragraph [ref=f1e233]: Estado del sistema
+              - paragraph [ref=f1e234]: Sistema operativo
+          - generic [ref=f1e237]:
+            - img [ref=f1e239]
+            - generic [ref=f1e241]:
+              - paragraph [ref=f1e242]: Resumen rápido
+              - paragraph [ref=f1e243]: 0 designaciones pendientes
+              - paragraph [ref=f1e244]: 29 árbitros activos disponibles
+        - generic [ref=f1e245]:
+          - heading "Módulos del Sistema" [level=2] [ref=f1e246]
+          - generic [ref=f1e247]:
+            - link "Árbitros" [ref=f1e248] [cursor=pointer]:
+              - /url: /dashboard/arbitros
+              - generic [ref=f1e249]:
+                - generic [ref=f1e250]:
+                  - img [ref=f1e252]
+                  - img [ref=f1e257]
+                - heading "Árbitros" [level=3] [ref=f1e259]
+                - paragraph [ref=f1e260]: Gestión del padrón arbitral.
+                - generic [ref=f1e262]: 32 total
+            - link "Asistencia" [ref=f1e263] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+              - generic [ref=f1e264]:
+                - generic [ref=f1e265]:
+                  - img [ref=f1e267]
+                  - img [ref=f1e271]
+                - heading "Asistencia" [level=3] [ref=f1e273]
+                - paragraph [ref=f1e274]: Control y estadísticas.
+            - link "Designaciones" [ref=f1e275] [cursor=pointer]:
+              - /url: /dashboard/designaciones
+              - generic [ref=f1e276]:
+                - generic [ref=f1e277]:
+                  - img [ref=f1e279]
+                  - img [ref=f1e281]
+                - heading "Designaciones" [level=3] [ref=f1e283]
+                - paragraph [ref=f1e284]: Asignaciones oficiales.
+                - generic [ref=f1e286]: 0 pendientes
+            - link "Campeonatos" [ref=f1e287] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+              - generic [ref=f1e288]:
+                - generic [ref=f1e289]:
+                  - img [ref=f1e291]
+                  - img [ref=f1e297]
+                - heading "Campeonatos" [level=3] [ref=f1e299]
+                - paragraph [ref=f1e300]: Gestión institucional.
+                - generic [ref=f1e302]: 0 activos
+        - generic [ref=f1e303]:
+          - generic [ref=f1e304]:
+            - generic [ref=f1e305]:
+              - generic [ref=f1e307]:
+                - img [ref=f1e308]
+                - paragraph [ref=f1e313]: "43"
+                - paragraph [ref=f1e314]: Total Registros
+              - generic [ref=f1e316]:
+                - img [ref=f1e317]
+                - paragraph [ref=f1e320]: "2"
+                - paragraph [ref=f1e321]: Presentes
+              - generic [ref=f1e323]:
+                - img [ref=f1e324]
+                - paragraph [ref=f1e328]: "15"
+                - paragraph [ref=f1e329]: Ausentes
+              - generic [ref=f1e331]:
+                - img [ref=f1e332]
+                - paragraph [ref=f1e335]: "0"
+                - paragraph [ref=f1e336]: Tardanzas
+              - generic [ref=f1e338]:
+                - img [ref=f1e339]
+                - paragraph [ref=f1e343]: "0"
+                - paragraph [ref=f1e344]: Justificados
+              - generic [ref=f1e346]:
+                - img [ref=f1e347]
+                - paragraph [ref=f1e350]: 5%
+                - paragraph [ref=f1e351]: "% Asistencia"
+            - generic [ref=f1e352]:
+              - generic [ref=f1e353]:
+                - generic [ref=f1e355]:
+                  - img [ref=f1e356]
+                  - text: Asistencia por Día de la Semana
+                - generic [ref=f1e360]:
+                  - list [ref=f1e362]:
+                    - listitem [ref=f1e363]:
+                      - img "Ausentes legend icon" [ref=f1e364]
+                      - text: Ausentes
+                    - listitem [ref=f1e366]:
+                      - img "Justificados legend icon" [ref=f1e367]
+                      - text: Justificados
+                    - listitem [ref=f1e369]:
+                      - img "Presentes legend icon" [ref=f1e370]
+                      - text: Presentes
+                    - listitem [ref=f1e372]:
+                      - img "Tardanzas legend icon" [ref=f1e373]
+                      - text: Tardanzas
+                  - application [ref=f1e375]:
+                    - generic [ref=f1e415]:
+                      - generic [ref=f1e416]:
+                        - generic [ref=f1e418]: Lunes
+                        - generic [ref=f1e420]: Martes
+                        - generic [ref=f1e422]: Miércoles
+                        - generic [ref=f1e424]: Jueves
+                        - generic [ref=f1e426]: Viernes
+                        - generic [ref=f1e428]: Sábado
+                        - generic [ref=f1e430]: Domingo
+                      - generic [ref=f1e431]:
+                        - generic [ref=f1e433]: "0"
+                        - generic [ref=f1e435]: "1"
+                        - generic [ref=f1e437]: "2"
+                        - generic [ref=f1e439]: "3"
+                        - generic [ref=f1e441]: "4"
+              - generic [ref=f1e442]:
+                - generic [ref=f1e444]:
+                  - img [ref=f1e445]
+                  - text: Tendencia de Asistencia Mensual
+                - generic [ref=f1e450]:
+                  - list [ref=f1e452]:
+                    - listitem [ref=f1e453]:
+                      - img "% Asistencia legend icon" [ref=f1e454]
+                      - text: "% Asistencia"
+                  - application [ref=f1e456]:
+                    - generic [ref=f1e480]:
+                      - generic [ref=f1e481]:
+                        - generic [ref=f1e483]: Feb 26
+                        - generic [ref=f1e485]: Mar 26
+                        - generic [ref=f1e487]: Abr 26
+                        - generic [ref=f1e489]: May 26
+                        - generic [ref=f1e491]: Jun 26
+                        - generic [ref=f1e493]: Jul 26
+                      - generic [ref=f1e494]:
+                        - generic [ref=f1e496]: "0"
+                        - generic [ref=f1e498]: "25"
+                        - generic [ref=f1e500]: "50"
+                        - generic [ref=f1e502]: "75"
+                        - generic [ref=f1e504]: "100"
+            - generic [ref=f1e505]:
+              - generic [ref=f1e507]:
+                - img [ref=f1e508]
+                - text: Distribución de Estados de Asistencia
+              - generic [ref=f1e514]:
+                - list [ref=f1e516]:
+                  - listitem [ref=f1e517]:
+                    - img "Ausentes legend icon" [ref=f1e518]
+                    - text: Ausentes
+                  - listitem [ref=f1e520]:
+                    - img "Presentes legend icon" [ref=f1e521]
+                    - text: Presentes
+                - application [ref=f1e523]:
+                  - generic [ref=f1e533]:
+                    - generic [ref=f1e535]: "Presentes: 12%"
+                    - generic [ref=f1e537]: "Ausentes: 88%"
+            - generic [ref=f1e540]:
+              - img [ref=f1e541]
+              - paragraph [ref=f1e543]: "Período analizado: 09 jun. 2026 a 09 jul. 2026"
+          - generic [ref=f1e544]:
+            - generic [ref=f1e546]:
+              - img [ref=f1e547]
+              - text: Alertas de Asistencia
+            - generic [ref=f1e549]:
+              - generic [ref=f1e552]:
+                - img [ref=f1e554]
+                - generic [ref=f1e556]:
+                  - generic [ref=f1e557]:
+                    - heading "Asistencia General Baja" [level=3] [ref=f1e558]
+                    - generic [ref=f1e559]: Crítica
+                  - paragraph [ref=f1e560]: El porcentaje de asistencia actual es del 5%, lo cual está por debajo del objetivo del 80%.
+                  - generic [ref=f1e561]:
+                    - img [ref=f1e562]
+                    - generic [ref=f1e565]: "Acción recomendada: Revisar causas y tomar medidas correctivas"
+              - generic [ref=f1e568]:
+                - img [ref=f1e570]
+                - generic [ref=f1e573]:
+                  - generic [ref=f1e574]:
+                    - heading "Alto Índice de Ausentismo" [level=3] [ref=f1e575]
+                    - generic [ref=f1e576]: Advertencia
+                  - paragraph [ref=f1e577]: Hay 15 ausencias de 43 registros (35%).
+                  - generic [ref=f1e578]:
+                    - img [ref=f1e579]
+                    - generic [ref=f1e582]: "Acción recomendada: Investigar causas recurrentes de ausencias"
+              - generic [ref=f1e585]:
+                - img [ref=f1e587]
+                - generic [ref=f1e590]:
+                  - generic [ref=f1e591]:
+                    - heading "Días Obligatorios Sin Registro" [level=3] [ref=f1e592]
+                    - generic [ref=f1e593]: Advertencia
+                  - paragraph [ref=f1e594]: "Los siguientes días obligatorios no tienen registro: jueves, 9 jul., martes, 7 jul., lunes, 6 jul., sábado, 4 jul."
+                  - generic [ref=f1e595]:
+                    - img [ref=f1e596]
+                    - generic [ref=f1e599]: "Acción recomendada: Registrar la asistencia pendiente"
+            - generic [ref=f1e602]:
+              - img [ref=f1e603]
+              - paragraph [ref=f1e605]: "Período analizado: 09 jun. 2026 a 09 jul. 2026"
+        - generic [ref=f1e606]:
+          - heading "Acceso Rápido" [level=2] [ref=f1e607]
+          - generic [ref=f1e608]:
+            - link "Nueva Designación Crear una nueva asignación arbitral" [ref=f1e609] [cursor=pointer]:
+              - /url: /dashboard/designaciones/nueva
+              - generic [ref=f1e611]:
+                - img [ref=f1e613]
+                - generic [ref=f1e616]:
+                  - heading "Nueva Designación" [level=3] [ref=f1e617]
+                  - paragraph [ref=f1e618]: Crear una nueva asignación arbitral
+            - link "Registrar Árbitro Agregar nuevo árbitro al sistema" [ref=f1e619] [cursor=pointer]:
+              - /url: /dashboard/arbitros/nuevo
+              - generic [ref=f1e621]:
+                - img [ref=f1e623]
+                - generic [ref=f1e628]:
+                  - heading "Registrar Árbitro" [level=3] [ref=f1e629]
+                  - paragraph [ref=f1e630]: Agregar nuevo árbitro al sistema
+            - link "Ver Reportes Generar informes de actividad" [ref=f1e631] [cursor=pointer]:
+              - /url: /dashboard/reportes
+              - generic [ref=f1e633]:
+                - img [ref=f1e635]
+                - generic [ref=f1e638]:
+                  - heading "Ver Reportes" [level=3] [ref=f1e639]
+                  - paragraph [ref=f1e640]: Generar informes de actividad
+    - generic [ref=f1e644]:
+      - button "Cerrar" [ref=f1e645] [cursor=pointer]:
+        - img [ref=f1e646]
+      - generic [ref=f1e649]:
+        - generic [ref=f1e650]:
+          - img [ref=f1e651]
+          - generic [ref=f1e654]: Evaluación de desempeño
+        - img "Evaluación de árbitro" [ref=f1e657]:
+          - generic [ref=f1e663]: "8.4"
+          - generic [ref=f1e664]: / 10
+        - generic [ref=f1e675]:
+          - generic [ref=f1e678]:
+            - img [ref=f1e680]
+            - generic [ref=f1e685]:
+              - paragraph [ref=f1e686]: Árbitros Evaluados
+              - paragraph [ref=f1e687]: "112"
+          - generic [ref=f1e690]:
+            - img [ref=f1e692]
+            - generic [ref=f1e694]:
+              - paragraph [ref=f1e695]: Promedio
+              - paragraph [ref=f1e696]:
+                - generic [ref=f1e697]: 7.4 /10
+          - generic [ref=f1e700]:
+            - img [ref=f1e702]
+            - generic [ref=f1e706]:
+              - paragraph [ref=f1e707]: Etapas Cubiertas
+              - paragraph [ref=f1e708]: "4"
+          - generic [ref=f1e711]:
+            - img [ref=f1e713]
+            - generic [ref=f1e715]:
+              - paragraph [ref=f1e716]: Observaciones
+              - paragraph [ref=f1e717]: "49"
+      - generic [ref=f1e718]:
+        - generic [ref=f1e720]: Próximamente
+        - heading "Evaluaciones" [level=2] [ref=f1e721]
+        - paragraph [ref=f1e722]: Próximamente, el módulo de evaluaciones permitirá calificar a los árbitros en las etapas de distrital, provincial, departamental y examen de ascenso, garantizando una valoración objetiva y transparente de su desempeño.
+        - generic [ref=f1e723]:
+          - generic [ref=f1e726]:
+            - img [ref=f1e728]
+            - generic [ref=f1e731]:
+              - paragraph [ref=f1e732]: Distrital
+              - paragraph [ref=f1e733]: Evaluación en la etapa distrital.
+          - generic [ref=f1e736]:
+            - img [ref=f1e738]
+            - generic [ref=f1e742]:
+              - paragraph [ref=f1e743]: Provincial
+              - paragraph [ref=f1e744]: Evaluación en la etapa provincial.
+          - generic [ref=f1e747]:
+            - img [ref=f1e749]
+            - generic [ref=f1e755]:
+              - paragraph [ref=f1e756]: Departamental
+              - paragraph [ref=f1e757]: Evaluación en la etapa departamental.
+          - generic [ref=f1e760]:
+            - img [ref=f1e762]
+            - generic [ref=f1e765]:
+              - paragraph [ref=f1e766]: Examen de Ascenso
+              - paragraph [ref=f1e767]: Evaluación para el ascenso de categoría.
+        - generic [ref=f1e768]:
+          - img [ref=f1e770]
+          - paragraph [ref=f1e772]: Impulsamos la excelencia arbitral con evaluaciones objetivas en cada etapa del campeonato.
+        - button "Entendido" [ref=f1e774] [cursor=pointer]
+  - alert [ref=f1e167]
+  - generic [ref=f1e641]: "25"

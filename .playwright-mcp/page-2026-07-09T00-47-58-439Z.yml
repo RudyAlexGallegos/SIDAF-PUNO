@@ -1,0 +1,281 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - generic [ref=f1e5]:
+          - img "Logo" [ref=f1e6]
+          - generic [ref=f1e7]:
+            - heading "SIDAF PUNO" [level=1] [ref=f1e8]
+            - paragraph [ref=f1e9]: Comisión de Árbitros
+        - button [ref=f1e10] [cursor=pointer]:
+          - img [ref=f1e11]
+      - navigation [ref=f1e12]:
+        - generic [ref=f1e13]:
+          - paragraph [ref=f1e14]: Principal
+          - generic [ref=f1e15]:
+            - link "Inicio" [ref=f1e16] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=f1e17]
+              - generic [ref=f1e20]: Inicio
+            - link "Perfil" [ref=f1e21] [cursor=pointer]:
+              - /url: /dashboard/perfil
+              - img [ref=f1e22]
+              - generic [ref=f1e25]: Perfil
+        - generic [ref=f1e26]:
+          - paragraph [ref=f1e27]: Permisos
+          - generic [ref=f1e28]:
+            - link "Solicitar Permiso" [ref=f1e29] [cursor=pointer]:
+              - /url: /dashboard/solicitar-permiso
+              - img [ref=f1e30]
+              - generic [ref=f1e33]: Solicitar Permiso
+            - link "Ver Solicitudes" [ref=f1e34] [cursor=pointer]:
+              - /url: /dashboard/solicitudes
+              - img [ref=f1e35]
+              - generic [ref=f1e38]: Ver Solicitudes
+        - generic [ref=f1e39]:
+          - paragraph [ref=f1e40]: Administración
+          - generic [ref=f1e41]:
+            - link "Usuarios" [ref=f1e42] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+              - img [ref=f1e43]
+              - generic [ref=f1e55]: Usuarios
+            - link "Árbitros" [ref=f1e56] [cursor=pointer]:
+              - /url: /dashboard/arbitros
+              - img [ref=f1e57]
+              - generic [ref=f1e62]: Árbitros
+            - link "Asesores" [ref=f1e63] [cursor=pointer]:
+              - /url: /dashboard/asesores
+              - img [ref=f1e64]
+              - generic [ref=f1e66]: Asesores
+        - generic [ref=f1e67]:
+          - paragraph [ref=f1e68]: Auditoría
+          - link "Ver Auditoría" [ref=f1e70] [cursor=pointer]:
+            - /url: /dashboard/auditoria
+            - img [ref=f1e71]
+            - generic [ref=f1e74]: Ver Auditoría
+        - generic [ref=f1e75]:
+          - paragraph [ref=f1e76]: Evaluación y Desempeño
+          - generic [ref=f1e77]:
+            - button "Evaluaciones" [ref=f1e78] [cursor=pointer]:
+              - img [ref=f1e79]
+              - generic [ref=f1e82]: Evaluaciones
+            - button "Desempeño Arbitral" [ref=f1e83] [cursor=pointer]:
+              - img [ref=f1e84]
+              - generic [ref=f1e86]: Desempeño Arbitral
+        - generic [ref=f1e87]:
+          - paragraph [ref=f1e88]: Asistencia
+          - generic [ref=f1e89]:
+            - link "Control Asistencia" [ref=f1e90] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+              - img [ref=f1e91]
+              - generic [ref=f1e95]: Control Asistencia
+            - link "Historial Asistencia" [ref=f1e96] [cursor=pointer]:
+              - /url: /dashboard/asistencia/historial
+              - img [ref=f1e97]
+              - generic [ref=f1e101]: Historial Asistencia
+            - link "Ranking Semanal" [ref=f1e102] [cursor=pointer]:
+              - /url: /dashboard/asistencia/ranking-semanal
+              - img [ref=f1e103]
+              - generic [ref=f1e106]: Ranking Semanal
+        - generic [ref=f1e107]:
+          - paragraph [ref=f1e108]: Designaciones
+          - generic [ref=f1e109]:
+            - link "Designaciones" [ref=f1e110] [cursor=pointer]:
+              - /url: /dashboard/designaciones
+              - img [ref=f1e111]
+              - generic [ref=f1e113]: Designaciones
+            - link "Resumen Semanal" [ref=f1e114] [cursor=pointer]:
+              - /url: /dashboard/designaciones/resumen-semanal
+              - img [ref=f1e115]
+              - generic [ref=f1e118]: Resumen Semanal
+        - generic [ref=f1e119]:
+          - paragraph [ref=f1e120]: Campeonato
+          - generic [ref=f1e121]:
+            - link "Campeonatos" [ref=f1e122] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+              - img [ref=f1e123]
+              - generic [ref=f1e129]: Campeonatos
+            - link "Equipos" [ref=f1e130] [cursor=pointer]:
+              - /url: /dashboard/campeonatos/equipos
+              - img [ref=f1e131]
+              - generic [ref=f1e136]: Equipos
+            - link "Reportes" [ref=f1e137] [cursor=pointer]:
+              - /url: /dashboard/reportes
+              - img [ref=f1e138]
+              - generic [ref=f1e141]: Reportes
+      - generic [ref=f1e143]:
+        - img [ref=f1e145]
+        - generic [ref=f1e147]:
+          - paragraph [ref=f1e148]: Administrador SIDAF Puno
+          - paragraph [ref=f1e149]: Administrador
+        - button "Cerrar sesión" [ref=f1e150] [cursor=pointer]:
+          - img [ref=f1e151]
+    - main [ref=f1e154]:
+      - generic [ref=f1e155]:
+        - generic [ref=f1e156]:
+          - paragraph [ref=f1e157]: Comisión Departamental de Árbitros · Puno
+          - generic [ref=f1e158]:
+            - generic [ref=f1e159]:
+              - heading "Resumen Semanal de Designaciones de Árbitros" [level=1] [ref=f1e160]
+              - paragraph [ref=f1e161]: "Semana: 06 de julio al 12 de julio 2026"
+              - paragraph [ref=f1e162]: 9 designaciones esta semana · Copa Perú 2026 se muestra en formato detallado; Fundamental/Oficial se consolida por fecha y hora.
+            - button "Exportar PDF" [ref=f1e163] [cursor=pointer]:
+              - img
+              - text: Exportar PDF
+        - main [ref=f1e164]:
+          - generic [ref=f1e165]:
+            - generic [ref=f1e166]:
+              - generic [ref=f1e167]:
+                - img [ref=f1e169]
+                - generic [ref=f1e171]:
+                  - heading "Copa Perú 2026 y Campeonatos Oficiales" [level=2] [ref=f1e172]
+                  - paragraph [ref=f1e173]: 1 designación · formato detallado
+              - table [ref=f1e176]:
+                - rowgroup [ref=f1e177]:
+                  - row "Fecha Hora Partido Estadio Principal Asist. 1 Asist. 2 4to Árbitro Estado Acciones" [ref=f1e178]:
+                    - columnheader "Fecha" [ref=f1e179]
+                    - columnheader "Hora" [ref=f1e180]
+                    - columnheader "Partido" [ref=f1e181]
+                    - columnheader "Estadio" [ref=f1e182]
+                    - columnheader "Principal" [ref=f1e183]
+                    - columnheader "Asist. 1" [ref=f1e184]
+                    - columnheader "Asist. 2" [ref=f1e185]
+                    - columnheader "4to Árbitro" [ref=f1e186]
+                    - columnheader "Estado" [ref=f1e187]
+                    - columnheader "Acciones" [ref=f1e188]
+                - rowgroup [ref=f1e189]:
+                  - row "06 JUL 15:24 SAN JOSE DE vs FC. FAMILIA - LENIN ABEL ESPINOZA ÁVALOS Nacional PERCY QUISPE GUTIERREZ Segunda Categoría HEBER CHAMBILLA RIVERA Segunda Categoría JOSÉ FLORES CONDORI Primera Categoría PROGRAMADA" [ref=f1e190]:
+                    - cell "06 JUL" [ref=f1e191]:
+                      - generic [ref=f1e192]: 06 JUL
+                    - cell "15:24" [ref=f1e193]
+                    - cell "SAN JOSE DE vs FC. FAMILIA" [ref=f1e194]:
+                      - generic [ref=f1e195]:
+                        - generic [ref=f1e197]: SAN JOSE DE
+                        - generic [ref=f1e198]: vs
+                        - generic [ref=f1e200]: FC. FAMILIA
+                    - cell "-" [ref=f1e201]
+                    - cell "LENIN ABEL ESPINOZA ÁVALOS Nacional" [ref=f1e202]:
+                      - generic [ref=f1e203]:
+                        - generic [ref=f1e204]: LENIN ABEL ESPINOZA ÁVALOS
+                        - generic [ref=f1e205]: Nacional
+                    - cell "PERCY QUISPE GUTIERREZ Segunda Categoría" [ref=f1e206]:
+                      - generic [ref=f1e207]:
+                        - generic [ref=f1e208]: PERCY QUISPE GUTIERREZ
+                        - generic [ref=f1e209]: Segunda Categoría
+                    - cell "HEBER CHAMBILLA RIVERA Segunda Categoría" [ref=f1e210]:
+                      - generic [ref=f1e211]:
+                        - generic [ref=f1e212]: HEBER CHAMBILLA RIVERA
+                        - generic [ref=f1e213]: Segunda Categoría
+                    - cell "JOSÉ FLORES CONDORI Primera Categoría" [ref=f1e214]:
+                      - generic [ref=f1e215]:
+                        - generic [ref=f1e216]: JOSÉ FLORES CONDORI
+                        - generic [ref=f1e217]: Primera Categoría
+                    - cell "PROGRAMADA" [ref=f1e218]:
+                      - generic [ref=f1e221]: PROGRAMADA
+                    - cell [ref=f1e222]:
+                      - generic [ref=f1e223]:
+                        - link "Ver detalles" [ref=f1e224] [cursor=pointer]:
+                          - /url: /dashboard/designaciones/39
+                          - img
+                        - link "Editar" [ref=f1e225] [cursor=pointer]:
+                          - /url: /dashboard/designaciones/39/editar
+                          - img
+                        - button "Eliminar" [ref=f1e226] [cursor=pointer]:
+                          - img
+            - generic [ref=f1e227]:
+              - generic [ref=f1e228]:
+                - img [ref=f1e230]
+                - generic [ref=f1e233]:
+                  - heading "Campeonatos Fundamentales y Oficiales" [level=2] [ref=f1e234]
+                  - paragraph [ref=f1e235]: 2 designaciones agrupadas · Designación General
+              - table [ref=f1e238]:
+                - rowgroup [ref=f1e239]:
+                  - row "Campeonato Fecha Hora Tipo de Designación Ubicación Árbitros Estado Acciones" [ref=f1e240]:
+                    - columnheader "Campeonato" [ref=f1e241]
+                    - columnheader "Fecha" [ref=f1e242]
+                    - columnheader "Hora" [ref=f1e243]
+                    - columnheader "Tipo de Designación" [ref=f1e244]
+                    - columnheader "Ubicación" [ref=f1e245]
+                    - columnheader "Árbitros" [ref=f1e246]
+                    - columnheader "Estado" [ref=f1e247]
+                    - columnheader "Acciones" [ref=f1e248]
+                - rowgroup [ref=f1e249]:
+                  - row "TRABAJADORES ( YANAMAYO) CAMPEONATO FUNDAMENTAL 08 JUL 12:49 Designación General ESTADIO DE YANAMAYO GEDEÓN MAQUERA JACINTO (Nacional) JOSÉ FLORES CONDORI (Primera Categoría) MÁXIMO DIAZ UMIÑA (Primera Categoría) NESTOR QUISPE ROQUE (Primera Categoría) PROGRAMADA" [ref=f1e250]:
+                    - cell "TRABAJADORES ( YANAMAYO) CAMPEONATO FUNDAMENTAL" [ref=f1e251]:
+                      - generic [ref=f1e252]:
+                        - text: TRABAJADORES ( YANAMAYO)
+                        - generic [ref=f1e253]: CAMPEONATO FUNDAMENTAL
+                    - cell "08 JUL" [ref=f1e254]:
+                      - generic [ref=f1e255]: 08 JUL
+                    - cell "12:49" [ref=f1e256]
+                    - cell "Designación General" [ref=f1e257]:
+                      - generic [ref=f1e258]:
+                        - img [ref=f1e259]
+                        - text: Designación General
+                    - cell "ESTADIO DE YANAMAYO" [ref=f1e262]
+                    - cell "GEDEÓN MAQUERA JACINTO (Nacional) JOSÉ FLORES CONDORI (Primera Categoría) MÁXIMO DIAZ UMIÑA (Primera Categoría) NESTOR QUISPE ROQUE (Primera Categoría)" [ref=f1e263]:
+                      - generic [ref=f1e264]:
+                        - generic [ref=f1e265]:
+                          - text: GEDEÓN MAQUERA JACINTO
+                          - generic [ref=f1e266]: (Nacional)
+                        - generic [ref=f1e267]:
+                          - text: JOSÉ FLORES CONDORI
+                          - generic [ref=f1e268]: (Primera Categoría)
+                        - generic [ref=f1e269]:
+                          - text: MÁXIMO DIAZ UMIÑA
+                          - generic [ref=f1e270]: (Primera Categoría)
+                        - generic [ref=f1e271]:
+                          - text: NESTOR QUISPE ROQUE
+                          - generic [ref=f1e272]: (Primera Categoría)
+                    - cell "PROGRAMADA" [ref=f1e273]:
+                      - generic [ref=f1e276]: PROGRAMADA
+                    - cell [ref=f1e277]:
+                      - generic [ref=f1e278]:
+                        - link "Ver detalles" [ref=f1e279] [cursor=pointer]:
+                          - /url: /dashboard/designaciones/47
+                          - img
+                        - link "Editar" [ref=f1e280] [cursor=pointer]:
+                          - /url: /dashboard/designaciones/47/editar
+                          - img
+                        - button "Eliminar" [ref=f1e281] [cursor=pointer]:
+                          - img
+                  - row "CRECIENDO CON EL FUTBOL CAMPEONATO OFICIAL 11 JUL 07:00 Designación General ENRIQUE TORRES BELÓN HEBER CHAMBILLA RIVERA (Segunda Categoría) EDGAR LUNA CCAMA (Nacional) HENRY PINO JARA (Segunda Categoría) WALTER SUAREZ MIRANDA (Segunda Categoría) PROGRAMADA" [ref=f1e282]:
+                    - cell "CRECIENDO CON EL FUTBOL CAMPEONATO OFICIAL" [ref=f1e283]:
+                      - generic [ref=f1e284]:
+                        - text: CRECIENDO CON EL FUTBOL
+                        - generic [ref=f1e285]: CAMPEONATO OFICIAL
+                    - cell "11 JUL" [ref=f1e286]:
+                      - generic [ref=f1e287]: 11 JUL
+                    - cell "07:00" [ref=f1e288]
+                    - cell "Designación General" [ref=f1e289]:
+                      - generic [ref=f1e290]:
+                        - img [ref=f1e291]
+                        - text: Designación General
+                    - cell "ENRIQUE TORRES BELÓN" [ref=f1e294]
+                    - cell "HEBER CHAMBILLA RIVERA (Segunda Categoría) EDGAR LUNA CCAMA (Nacional) HENRY PINO JARA (Segunda Categoría) WALTER SUAREZ MIRANDA (Segunda Categoría)" [ref=f1e295]:
+                      - generic [ref=f1e296]:
+                        - generic [ref=f1e297]:
+                          - text: HEBER CHAMBILLA RIVERA
+                          - generic [ref=f1e298]: (Segunda Categoría)
+                        - generic [ref=f1e299]:
+                          - text: EDGAR LUNA CCAMA
+                          - generic [ref=f1e300]: (Nacional)
+                        - generic [ref=f1e301]:
+                          - text: HENRY PINO JARA
+                          - generic [ref=f1e302]: (Segunda Categoría)
+                        - generic [ref=f1e303]:
+                          - text: WALTER SUAREZ MIRANDA
+                          - generic [ref=f1e304]: (Segunda Categoría)
+                    - cell "PROGRAMADA" [ref=f1e305]:
+                      - generic [ref=f1e308]: PROGRAMADA
+                    - cell [ref=f1e309]:
+                      - generic [ref=f1e310]:
+                        - link "Ver detalles" [ref=f1e311] [cursor=pointer]:
+                          - /url: /dashboard/designaciones/61
+                          - img
+                        - link "Editar" [ref=f1e312] [cursor=pointer]:
+                          - /url: /dashboard/designaciones/61/editar
+                          - img
+                        - button "Eliminar" [ref=f1e313] [cursor=pointer]:
+                          - img
+  - alert [ref=f1e314]
