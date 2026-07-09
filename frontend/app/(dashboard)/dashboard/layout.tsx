@@ -27,6 +27,7 @@ import {
 import { getStoredUser } from "@/services/api"
 import { useAutoLogout } from "@/hooks/useAutoLogout"
 import { DesempenioArbitralModal } from "@/components/desempenio-arbitral/DesempenioArbitralModal"
+import { EvaluacionesModal } from "@/components/desempenio-arbitral/EvaluacionesModal"
 
 /* =======================
    NAV LINK
@@ -768,31 +769,10 @@ export default function DashboardLayout({
             </main>
 
             {/* MODAL EVALUACIONES */}
-            {modalAbiertoEvaluaciones && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-                        <div className="bg-gradient-to-r from-sky-500 to-sky-400 p-6 text-white">
-                            <div className="flex items-center gap-3">
-                                <ClipboardList className="w-8 h-8" />
-                                <h2 className="text-2xl font-bold">Evaluaciones</h2>
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-sky-900 text-base leading-relaxed">
-                                La función de evaluación de árbitros en las etapas de distrital, provincial, departamental y examen de ascenso estarán disponibles proximamente.
-                            </p>
-                        </div>
-                        <div className="bg-sky-50 px-6 py-4 flex justify-end gap-3">
-                            <button
-                                onClick={() => setModalAbiertoEvaluaciones(false)}
-                                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition"
-                            >
-                                Entendido
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <EvaluacionesModal
+                open={modalAbiertoEvaluaciones}
+                onClose={() => setModalAbiertoEvaluaciones(false)}
+            />
 
             {/* MODAL DESEMPEÑO ARBITRAL */}
             <DesempenioArbitralModal
