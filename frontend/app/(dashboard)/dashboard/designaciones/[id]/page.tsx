@@ -11,6 +11,16 @@ import { getDesignacionById, getArbitros, getCampeonatos, deleteDesignacion, typ
 import { useToast } from "@/components/ui/use-toast"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function DesignacionDetallePage() {
   const router = useRouter()
@@ -22,6 +32,7 @@ export default function DesignacionDetallePage() {
   const [designacion, setDesignacion] = useState<any>(null)
   const [arbitros, setArbitros] = useState<any[]>([])
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -71,6 +82,8 @@ export default function DesignacionDetallePage() {
     } catch (error) {
       console.error("Error eliminando:", error)
       toast({ title: "❌ Error", description: "No se pudo eliminar", variant: "destructive" })
+    } finally {
+      setDeleteConfirm(false)
     }
   }
 
@@ -338,6 +351,14 @@ export default function DesignacionDetallePage() {
                     Editar Designación
                   </Link>
                 </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteConfirm(true)}
+                  className="w-full"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar Designación
+                </Button>
               </CardContent>
             </Card>
 
@@ -368,5 +389,22 @@ export default function DesignacionDetallePage() {
         </div>
       </div>
     </div>
+
+    <AlertDialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Eliminar designación?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción no se puede deshacer. La designación será eliminada permanentemente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            Eliminar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
