@@ -80,9 +80,9 @@ export default function ResumenSemanalDesignacionesPage() {
   const hoy = new Date()
   const lunesSemana = startOfWeek(hoy, { weekStartsOn: 1 })
   const domingoSemana = endOfWeek(hoy, { weekStartsOn: 1 })
-  const rangoSemana = `${format(lunesSemana, "dd 'de' MMMM", { locale: es })} al ${format(
+  const rangoSemana = `${format(lunesSemana, "EEE dd 'de' MMMM", { locale: es })} al ${format(
     domingoSemana,
-    "dd 'de' MMMM yyyy",
+    "EEE dd 'de' MMMM yyyy",
     { locale: es },
   )}`
   const titulo = `Resumen Semanal de Designaciones de Árbitros`
