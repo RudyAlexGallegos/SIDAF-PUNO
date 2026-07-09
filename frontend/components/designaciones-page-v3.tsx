@@ -52,6 +52,14 @@ import { es } from "date-fns/locale"
 import { getDesignaciones, getArbitros, getCampeonatos, getEquipos, deleteDesignacion, type Designacion } from "@/services/api"
 import { useCache } from "@/hooks/useCache"
 
+const formatoFechaConDia = (fecha: string | Date | undefined) => {
+  if (!fecha) return "-"
+  const d = new Date(fecha)
+  const dia = format(d, "EEEE", { locale: es })
+  const resto = format(d, "dd MMM", { locale: es }).toUpperCase()
+  return `${dia.charAt(0).toUpperCase()}${dia.slice(1)}, ${resto}`
+}
+
 interface Campeonato {
    id?: number | null
    nombre?: string
@@ -275,9 +283,9 @@ function DesignacionesPageContent() {
        const fechaObj = new Date(fecha)
        const lunes = startOfWeek(fechaObj, { weekStartsOn: 1 })
        const domingo = endOfWeek(fechaObj, { weekStartsOn: 1 })
-       const lunesStr = format(lunes, "dd", { locale: es })
-       const domingoStr = format(domingo, "dd MMM", { locale: es })
-       return `${lunesStr} al ${domingoStr}`.toUpperCase()
+        const lunesStr = format(lunes, "EEE dd", { locale: es })
+        const domingoStr = format(domingo, "EEE dd MMM", { locale: es })
+        return `${lunesStr} al ${domingoStr}`.toUpperCase()
      } catch {
        return "Fecha inválida"
      }
@@ -574,7 +582,7 @@ function DesignacionesPageContent() {
                                     <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
                                       <div className="text-slate-900 font-bold text-xs">
                                         {fila.fecha
-                                          ? format(new Date(fila.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                          ? formatoFechaConDia(fila.fecha)
                                           : "-"}
                                       </div>
                                     </TableCell>
@@ -672,7 +680,7 @@ function DesignacionesPageContent() {
                                         <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
                                           <div className="text-slate-900 font-bold text-xs">
                                             {designacion.fecha
-                                              ? format(new Date(designacion.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                              ? formatoFechaConDia(designacion.fecha)
                                               : "-"}
                                           </div>
                                         </TableCell>
@@ -1054,7 +1062,7 @@ function DesignacionesPageContent() {
              Administra árbitros y asignaciones de partidos • {stats.total} designaciones
           </p>
           <p className="text-xs text-slate-500 mt-1">
-             Semana del {format(startOfWeek(new Date(), { weekStartsOn: 1 }), "dd MMM", { locale: es })} al {format(endOfWeek(new Date(), { weekStartsOn: 1 }), "dd MMM yyyy", { locale: es })}
+             Semana del {format(startOfWeek(new Date(), { weekStartsOn: 1 }), "EEE dd MMM", { locale: es })} al {format(endOfWeek(new Date(), { weekStartsOn: 1 }), "EEE dd MMM yyyy", { locale: es })}
           </p>
           </div>
            <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
