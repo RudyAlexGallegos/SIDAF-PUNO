@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { getStoredUser } from "@/services/api"
 import { useAutoLogout } from "@/hooks/useAutoLogout"
+import { DesempenioArbitralModal } from "@/components/desempenio-arbitral/DesempenioArbitralModal"
 
 /* =======================
    NAV LINK
@@ -794,31 +795,10 @@ export default function DashboardLayout({
             )}
 
             {/* MODAL DESEMPEÑO ARBITRAL */}
-            {modalAbiertoDesempenio && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-                        <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 p-6 text-white">
-                            <div className="flex items-center gap-3">
-                                <Activity className="w-8 h-8" />
-                                <h2 className="text-2xl font-bold">Desempeño Arbitral</h2>
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-sky-900 text-base leading-relaxed">
-                                La función desempeño arbitral se implementará proximamente. Consistirá en implementar a todos los árbitros relojes inteligentes que midan el desplazamiento y velocidad alcanzada en cada partido designado. Además se evaluará la cantidad de amonestaciones y expulsiones que cuenta en cada partido.
-                            </p>
-                        </div>
-                        <div className="bg-emerald-50 px-6 py-4 flex justify-end gap-3">
-                            <button
-                                onClick={() => setModalAbiertoDesempenio(false)}
-                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
-                            >
-                                Entendido
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DesempenioArbitralModal
+                open={modalAbiertoDesempenio}
+                onClose={() => setModalAbiertoDesempenio(false)}
+            />
         </div>
     )
 }
