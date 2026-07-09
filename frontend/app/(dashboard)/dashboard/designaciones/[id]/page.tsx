@@ -165,7 +165,8 @@ export default function DesignacionDetallePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
+      <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <section className="border-b pb-3 md:pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -406,5 +407,6 @@ export default function DesignacionDetallePage() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    </>
   )
 }
