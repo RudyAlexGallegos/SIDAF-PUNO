@@ -20,10 +20,12 @@ import {
   ClipboardList,
   Shield,
   UserCheck,
+  AlertCircle,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato } from "@/services/api"
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
+import { DatePicker, TimePicker } from "./components/DateTimePickers"
 
 interface Partido {
   id: string
@@ -137,6 +139,7 @@ export default function NuevaDesignacionPage() {
    // Fecha y hora para designación general (CAMPEONATO FUNDAMENTAL u OFICIAL)
    const [fechaGeneral, setFechaGeneral] = useState<string>("")
    const [horaGeneral, setHoraGeneral] = useState<string>("")
+   const [intentadoContinuar, setIntentadoContinuar] = useState(false)
 
    // Modo de designación: manual, semiautomatica, automatica
    const [modoDesignacion, setModoDesignacion] = useState<"manual" | "semiautomatica" | "automatica">("manual")
@@ -2202,26 +2205,37 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
+              <label htmlFor="fechaGeneral" className="block text-sm font-semibold text-slate-700 mb-2">
                 📅 Fecha de la designación
               </label>
-              <input
-                type="date"
+              <DatePicker
+                id="fechaGeneral"
                 value={fechaGeneral}
-                onChange={(e) => setFechaGeneral(e.target.value)}
-                className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+                onChange={setFechaGeneral}
+                invalid={intentadoContinuar && !fechaGeneral}
+                minDate={new Date()}
               />
+              {intentadoContinuar && !fechaGeneral && (
+                <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> Selecciona la fecha de la designación
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
+              <label htmlFor="horaGeneral" className="block text-sm font-semibold text-slate-700 mb-2">
                 🕒 Hora de la designación
               </label>
-              <input
-                type="time"
+              <TimePicker
+                id="horaGeneral"
                 value={horaGeneral}
-                onChange={(e) => setHoraGeneral(e.target.value)}
-                className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+                onChange={setHoraGeneral}
+                invalid={intentadoContinuar && !horaGeneral}
               />
+              {intentadoContinuar && !horaGeneral && (
+                <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> Selecciona la hora de la designación
+                </p>
+              )}
             </div>
           </div>
 
@@ -2339,8 +2353,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
              </Button>
              <Button
                type="button"
-               onClick={() => {
-                 if (arbitrosSeleccionados.length < 1) {
+                onClick={() => {
+                  setIntentadoContinuar(true)
+                  if (arbitrosSeleccionados.length < 1) {
                    toast({
                      title: "Validación",
                      description: "Selecciona al menos 1 árbitro",
