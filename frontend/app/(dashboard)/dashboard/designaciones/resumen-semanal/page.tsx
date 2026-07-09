@@ -99,6 +99,15 @@ export default function ResumenSemanalDesignacionesPage() {
     arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : "-"
   const getArbCategoria = (arb: Arbitro | undefined) => arb?.categoria || ""
 
+  const formatoFechaConDia = (f: string | null | undefined) =>
+    f ? format(new Date(f), "EEE dd/MM/yyyy", { locale: es }) : "-"
+
+  const celdaArbitro = (arb: Arbitro | undefined) => {
+    const nombre = getArbNombre(arb)
+    const cat = getArbCategoria(arb)
+    return cat ? `${nombre}\n${cat}` : nombre
+  }
+
   const resolverCampeonato = (d: Designacion) => {
     const id = d.idCampeonato != null ? Number(d.idCampeonato) : null
     const camp = id != null ? championshipsById.get(id) : undefined
@@ -245,7 +254,7 @@ export default function ResumenSemanalDesignacionesPage() {
       doc.text(`Comisión Departamental de Árbitros · Puno`, 105, yPosition, { align: "center" })
       yPosition += 6
       doc.text(
-        `Semana: ${rangoSemana} · Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`,
+        `Semana: ${rangoSemana} · Generado: ${format(new Date(), "EEE dd/MM/yyyy HH:mm", { locale: es })}`,
         105,
         yPosition,
         { align: "center" },
@@ -269,18 +278,14 @@ export default function ResumenSemanalDesignacionesPage() {
             const arbCuarto = arbitros.find((a) => a.id?.toString() === d.cuartoArbitro?.toString())
             return [
               (idx + 1).toString(),
-              d.fecha ? format(new Date(d.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+              formatoFechaConDia(d.fecha),
               d.hora || "-",
               `${d.nombreEquipoLocal || "-"} vs ${d.nombreEquipoVisitante || "-"}`,
               d.estadio || "-",
-              getArbNombre(arbPrincipal),
-              getArbCategoria(arbPrincipal),
-              getArbNombre(arbAsist1),
-              getArbCategoria(arbAsist1),
-              getArbNombre(arbAsist2),
-              getArbCategoria(arbAsist2),
-              getArbNombre(arbCuarto),
-              getArbCategoria(arbCuarto),
+              celdaArbitro(arbPrincipal),
+              celdaArbitro(arbAsist1),
+              celdaArbitro(arbAsist2),
+              celdaArbitro(arbCuarto),
               d.estado || "-",
             ]
           })
@@ -294,28 +299,29 @@ export default function ResumenSemanalDesignacionesPage() {
                 "PARTIDO",
                 "ESTADIO",
                 "PRINCIPAL",
-                "CAT.",
                 "ASIS. 1",
-                "CAT.",
                 "ASIS. 2",
-                "CAT.",
                 "4TO",
-                "CAT.",
                 "ESTADO",
               ],
             ],
             body: tableDataA,
             startY: yPosition,
             margin: { left: 10, right: 10 },
-            styles: { fontSize: 8, cellPadding: 3, halign: "center" },
+            styles: { fontSize: 9, cellPadding: 3, halign: "center", valign: "middle", minCellHeight: 9 },
             headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
             alternateRowStyles: { fillColor: [245, 247, 250] },
             columnStyles: {
-              3: { cellWidth: 38 },
-              5: { cellWidth: 26 },
-              7: { cellWidth: 26 },
-              9: { cellWidth: 26 },
-              11: { cellWidth: 26 },
+              0: { cellWidth: 9 },
+              1: { cellWidth: 28 },
+              2: { cellWidth: 14 },
+              3: { cellWidth: 45 },
+              4: { cellWidth: 28 },
+              5: { cellWidth: 33 },
+              6: { cellWidth: 33 },
+              7: { cellWidth: 33 },
+              8: { cellWidth: 33 },
+              9: { cellWidth: 21 },
             },
           })
 
@@ -337,7 +343,7 @@ export default function ResumenSemanalDesignacionesPage() {
             return [
               (idx + 1).toString(),
               f.nombreCampeonato,
-              f.fecha ? format(new Date(f.fecha), "dd/MM/yyyy", { locale: es }) : "-",
+              formatoFechaConDia(f.fecha),
               f.hora || "-",
               "Designación General",
               f.estadio,
@@ -351,11 +357,12 @@ export default function ResumenSemanalDesignacionesPage() {
             body: tableDataB,
             startY: yPosition,
             margin: { left: 10, right: 10 },
-            styles: { fontSize: 8, cellPadding: 3, halign: "center", valign: "middle" },
+            styles: { fontSize: 9, cellPadding: 3, halign: "center", valign: "middle", minCellHeight: 9 },
             headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: "bold" },
             alternateRowStyles: { fillColor: [245, 247, 250] },
             columnStyles: {
               1: { cellWidth: 38, halign: "left" },
+              2: { cellWidth: 26 },
               5: { cellWidth: 30 },
               6: { cellWidth: 55, halign: "left" },
             },
@@ -531,7 +538,7 @@ export default function ResumenSemanalDesignacionesPage() {
                               <TableCell className="text-sm font-semibold px-3 whitespace-nowrap">
                                 <div className="text-slate-900 font-bold text-xs">
                                   {d.fecha
-                                    ? format(new Date(d.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                    ? format(new Date(d.fecha), "EEE dd MMM", { locale: es }).toUpperCase()
                                     : "-"}
                                 </div>
                               </TableCell>
@@ -668,7 +675,7 @@ export default function ResumenSemanalDesignacionesPage() {
                             <TableCell className="text-sm font-semibold px-3 whitespace-nowrap align-top">
                               <div className="text-slate-900 font-bold text-xs">
                                 {f.fecha
-                                  ? format(new Date(f.fecha), "dd MMM", { locale: es }).toUpperCase()
+                                  ? format(new Date(f.fecha), "EEE dd MMM", { locale: es }).toUpperCase()
                                   : "-"}
                               </div>
                             </TableCell>
