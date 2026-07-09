@@ -276,34 +276,6 @@ export default function DashboardPage() {
                                 count={stats.championshipsActivos}
                                 countLabel="activos"
                             />
-                            <ModuleCard
-                                title="Partidos"
-                                description="Motor de campeonato y estados."
-                                icon={ClipboardList}
-                                href="/dashboard/campeonatos/partidos"
-                                color="violet"
-                            />
-                            <ModuleCard
-                                title="Etapas"
-                                description="Configuración de fases."
-                                icon={Target}
-                                href="/dashboard/campeonatos/etapas"
-                                color="rose"
-                            />
-                            <ModuleCard
-                                title="Evaluaciones"
-                                description="Calificación de árbitros."
-                                icon={FileText}
-                                href="/dashboard/campeonatos/evaluaciones"
-                                color="orange"
-                            />
-                            <ModuleCard
-                                title="IA Dataset"
-                                description="Generar datasets para LSTM."
-                                icon={Server}
-                                href="/dashboard/campeonatos/ia/dataset"
-                                color="slate"
-                            />
                         </div>
                     </section>
 
