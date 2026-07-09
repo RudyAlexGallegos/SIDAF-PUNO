@@ -1239,3 +1239,326 @@ export async function getAuditoria(page: number = 0, size: number = 50): Promise
         return null;
     }
 }
+
+// ============================================================
+// CAMPEONATO MOTOR - PARTIDOS, ETAPAS, ESTADOS
+// ============================================================
+
+export interface Partido {
+    id?: number;
+    campeonatoId: number;
+    etapaId?: number;
+    equipoLocalId?: number;
+    equipoVisitanteId?: number;
+    fecha: string;
+    hora?: string;
+    estadio?: string;
+    golesLocal?: number;
+    golesVisitante?: number;
+    estado?: string;
+    observaciones?: string;
+}
+
+export interface EtapaCampeonato {
+    id?: number;
+    campeonatoId: number;
+    nombre: string;
+    orden: number;
+    tipoFormato: string;
+    activa: boolean;
+    fechaInicio?: string;
+    fechaFin?: string;
+}
+
+export interface Evaluacion {
+    id?: number;
+    designacionId: number;
+    arbitroId: number;
+    campeonatoId: number;
+    etapa?: string;
+    puntajeTecnico?: number;
+    puntajeFisico?: number;
+    puntajeTactico?: number;
+    puntajeDisciplina?: number;
+    puntajeGestion?: number;
+    puntajeTotal?: number;
+    comentarios?: string;
+    evaluadoPor?: number;
+}
+
+export interface ObservacionPartido {
+    id?: number;
+    partidoId: number;
+    designacionId?: number;
+    usuarioId?: number;
+    descripcion: string;
+    tipoObservacion?: string;
+}
+
+export interface EventoCampeonato {
+    id?: number;
+    entidadTipo: string;
+    entidadId: number;
+    evento: string;
+    estadoAnterior?: string;
+    estadoNuevo?: string;
+    usuarioId?: number;
+    fechaEvento?: string;
+    metadata?: string;
+}
+
+export async function getPartidos(): Promise<Partido[]> {
+    try {
+        const response = await fetch(buildUrl("/partidos"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getPartidos:", error);
+        return [];
+    }
+}
+
+export async function getPartidosByCampeonato(campeonatoId: number): Promise<Partido[]> {
+    try {
+        const response = await fetch(buildUrl(`/partidos/campeonato/${campeonatoId}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getPartidosByCampeonato:", error);
+        return [];
+    }
+}
+
+export async function createPartido(data: Partido): Promise<Partido> {
+    const response = await fetch(buildUrl("/partidos"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Error al crear partido");
+    return await response.json();
+}
+
+export async function updatePartido(id: number, data: Partido): Promise<Partido> {
+    const response = await fetch(buildUrl(`/partidos/${id}`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Error al actualizar partido");
+    return await response.json();
+}
+
+export async function deletePartido(id: number): Promise<boolean> {
+    try {
+        const response = await fetch(buildUrl(`/partidos/${id}`), { method: "DELETE" });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
+export async function cambiarEstadoPartido(id: number, estado: string, usuarioId?: number): Promise<Partido> {
+    const response = await fetch(buildUrl(`/campeonato-motor/partidos/${id}/estado`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado, usuarioId }),
+    });
+    if (!response.ok) throw new Error("Error al cambiar estado del partido");
+    return await response.json();
+}
+
+export async function generarFixture(body: {
+    campeonatoId: number;
+    equiposIds: number[];
+    etapaId?: number;
+    tipoFormato: string;
+}): Promise<Partido[]> {
+    const response = await fetch(buildUrl("/campeonato-motor/fixture/generar"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error("Error al generar fixture");
+    return await response.json();
+}
+
+export async function getFormatosFixture(): Promise<string[]> {
+    try {
+        const response = await fetch(buildUrl("/campeonato-motor/fixture/formatos"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getFormatosFixture:", error);
+        return [];
+    }
+}
+
+export async function getEtapasByCampeonato(campeonatoId: number): Promise<EtapaCampeonato[]> {
+    try {
+        const response = await fetch(buildUrl(`/etapas/campeonato/${campeonatoId}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getEtapasByCampeonato:", error);
+        return [];
+    }
+}
+
+export async function createEtapa(data: EtapaCampeonato): Promise<EtapaCampeonato> {
+    const response = await fetch(buildUrl("/etapas"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Error al crear etapa");
+    return await response.json();
+}
+
+export async function getEvaluaciones(): Promise<Evaluacion[]> {
+    try {
+        const response = await fetch(buildUrl("/evaluaciones"));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getEvaluaciones:", error);
+        return [];
+    }
+}
+
+export async function getEvaluacionesByCampeonato(campeonatoId: number): Promise<Evaluacion[]> {
+    try {
+        const response = await fetch(buildUrl(`/evaluaciones/campeonato/${campeonatoId}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getEvaluacionesByCampeonato:", error);
+        return [];
+    }
+}
+
+export async function createEvaluacion(data: Evaluacion): Promise<Evaluacion> {
+    const response = await fetch(buildUrl("/evaluaciones"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Error al crear evaluación");
+    return await response.json();
+}
+
+export async function getEventos(entidadTipo?: string, entidadId?: number): Promise<EventoCampeonato[]> {
+    try {
+        let url = buildUrl("/eventos");
+        if (entidadTipo && entidadId) {
+            url = buildUrl(`/eventos/entidad/${encodeURIComponent(entidadTipo)}/${entidadId}`);
+        }
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getEventos:", error);
+        return [];
+    }
+}
+
+export async function getSnapshotsArbitro(arbitroId: number): Promise<ArbitroSnapshot[]> {
+    try {
+        const response = await fetch(buildUrl(`/snapshots/arbitro/${arbitroId}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getSnapshotsArbitro:", error);
+        return [];
+    }
+}
+
+export async function getSnapshotsCampeonato(campeonatoId: number): Promise<CampeonatoSnapshot[]> {
+    try {
+        const response = await fetch(buildUrl(`/snapshots/campeonato/${campeonatoId}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getSnapshotsCampeonato:", error);
+        return [];
+    }
+}
+
+export interface ArbitroSnapshot {
+    id?: number;
+    arbitroId: number;
+    nombre: string;
+    apellido?: string;
+    dni?: string;
+    categoria: string;
+    estado?: string;
+    experiencia?: number;
+    fechaSnapshot?: string;
+}
+
+export interface CampeonatoSnapshot {
+    id?: number;
+    campeonatoId: number;
+    nombre: string;
+    categoria?: string;
+    estado: string;
+    fechaSnapshot?: string;
+}
+
+// ============================================================
+// IA - DATASETS Y PREDICCIONES
+// ============================================================
+
+export interface DatasetConfig {
+    id?: number;
+    nombre: string;
+    descripcion?: string;
+    formatoSalida: string;
+    campeonatoId?: number;
+    fechaDesde?: string;
+    fechaHasta?: string;
+    incluirArbitros?: boolean;
+    incluirEquipos?: boolean;
+    incluirPartidos?: boolean;
+    incluirEvaluaciones?: boolean;
+    incluirDesignaciones?: boolean;
+    incluirAsistencias?: boolean;
+    activo?: boolean;
+}
+
+export interface ModelVersion {
+    id?: number;
+    nombre: string;
+    version: string;
+    descripcion?: string;
+    tipoModelo: string;
+    fechaEntrenamiento?: string;
+    metricas?: string;
+    rutaArchivo?: string;
+    activo?: boolean;
+}
+
+export interface Prediccion {
+    id?: number;
+    modelVersionId: number;
+    partidoId?: number;
+    campeonatoId: number;
+    etapa?: string;
+    arbitroId?: number;
+    prediccion?: string;
+    confianza?: number;
+    metadatos?: string;
+    fechaPrediccion?: string;
+}
+
+export async function generarDatasetCsv(campeonatoId: number): Promise<string> {
+    const response = await fetch(buildUrl(`/ia/dataset/csv/${campeonatoId}`));
+    if (!response.ok) throw new Error("Error al generar dataset CSV");
+    return await response.text();
+}
+
+export async function generarDatasetJson(campeonatoId: number): Promise<string> {
+    const response = await fetch(buildUrl(`/ia/dataset/json/${campeonatoId}`));
+    if (!response.ok) throw new Error("Error al generar dataset JSON");
+    return await response.text();
+}

@@ -1,8 +1,9 @@
 -- 044_create_auditoria_permisos.sql
 -- Tabla de auditoría de cambios en permisos y roles
+-- Compatible con PostgreSQL
 
 CREATE TABLE IF NOT EXISTS auditoria_permisos (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     tipo_cambio VARCHAR(50) NOT NULL COMMENT 'Tipo: ASIGNACIÓN, REVOCACIÓN, CAMBIO_ESTADO, CAMBIO_ROL, SOLICITUD_APROBADA, SOLICITUD_RECHAZADA',
     usuario_id BIGINT NOT NULL COMMENT 'ID del usuario que se modifica',
     usuario_afectado_id BIGINT NOT NULL COMMENT 'ID del usuario afectado (puede ser igual a usuario_id)',
@@ -13,14 +14,15 @@ CREATE TABLE IF NOT EXISTS auditoria_permisos (
     fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     descripcion TEXT COMMENT 'Descripción del cambio',
     razon VARCHAR(255) COMMENT 'Razón del cambio',
-    
+
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
     FOREIGN KEY (usuario_afectado_id) REFERENCES usuarios(id) ON DELETE SET NULL,
     FOREIGN KEY (permiso_id) REFERENCES permisos(id) ON DELETE SET NULL,
-    FOREIGN KEY (realizado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_usuario_afectado_id (usuario_afectado_id),
-    INDEX idx_fecha_cambio (fecha_cambio),
-    INDEX idx_tipo_cambio (tipo_cambio),
-    INDEX idx_realizado_por (realizado_por)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    FOREIGN KEY (realizado_por) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_auditoria_permisos_usuario_id ON auditoria_permisos(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_auditoria_permisos_usuario_afectado_id ON auditoria_permisos(usuario_afectado_id);
+CREATE INDEX IF NOT EXISTS idx_auditoria_permisos_fecha_cambio ON auditoria_permisos(fecha_cambio);
+CREATE INDEX IF NOT EXISTS idx_auditoria_permisos_tipo_cambio ON auditoria_permisos(tipo_cambio);
+CREATE INDEX IF NOT EXISTS idx_auditoria_permisos_realizado_por ON auditoria_permisos(realizado_por);

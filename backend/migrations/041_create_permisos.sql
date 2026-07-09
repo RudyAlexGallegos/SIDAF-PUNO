@@ -1,8 +1,9 @@
 -- 041_create_permisos.sql
 -- Tabla de permisos granulares del sistema
+-- Compatible con PostgreSQL
 
 CREATE TABLE IF NOT EXISTS permisos (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     codigo VARCHAR(100) UNIQUE NOT NULL COMMENT 'Código único: arbitros_ver, arbitros_crear, etc.',
     nombre VARCHAR(255) NOT NULL COMMENT 'Nombre descriptivo del permiso',
     descripcion TEXT COMMENT 'Descripción detallada',
@@ -10,13 +11,12 @@ CREATE TABLE IF NOT EXISTS permisos (
     accion VARCHAR(50) NOT NULL COMMENT 'Acción: VER, CREAR, EDITAR, ELIMINAR, EXPORTAR, REGISTRAR',
     estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO' COMMENT 'Estado: ACTIVO, INACTIVO',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_modulo (modulo),
-    INDEX idx_accion (accion),
-    INDEX idx_estado (estado),
-    UNIQUE KEY unique_modulo_accion (codigo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_permisos_modulo ON permisos(modulo);
+CREATE INDEX IF NOT EXISTS idx_permisos_accion ON permisos(accion);
+CREATE INDEX IF NOT EXISTS idx_permisos_estado ON permisos(estado);
 
 -- Insertar permisos base
 INSERT INTO permisos (codigo, nombre, descripcion, modulo, accion, estado) VALUES
@@ -68,4 +68,4 @@ INSERT INTO permisos (codigo, nombre, descripcion, modulo, accion, estado) VALUE
 -- MÓDULO ROLES Y PERMISOS (ADMIN ONLY)
 ('permisos_gestionar', 'Gestionar Permisos', 'Permiso para asignar/revocar permisos a usuarios', 'permisos', 'EDITAR', 'ACTIVO'),
 ('auditoria_ver_completa', 'Ver Auditoría Completa', 'Permiso para ver auditoría de todo el sistema', 'auditoria', 'VER', 'ACTIVO')
-ON DUPLICATE KEY UPDATE estado='ACTIVO';
+ON CONFLICT (codigo) DO UPDATE SET estado='ACTIVO';
