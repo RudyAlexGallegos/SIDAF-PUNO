@@ -102,11 +102,7 @@ export default function ResumenSemanalDesignacionesPage() {
   const formatoFechaConDia = (f: string | null | undefined) =>
     f ? format(new Date(f), "EEE dd/MM/yyyy", { locale: es }) : "-"
 
-  const celdaArbitro = (arb: Arbitro | undefined) => {
-    const nombre = getArbNombre(arb)
-    const cat = getArbCategoria(arb)
-    return cat ? `${nombre}\n${cat}` : nombre
-  }
+  const celdaArbitro = (arb: Arbitro | undefined) => getArbNombre(arb)
 
   const resolverCampeonato = (d: Designacion) => {
     const id = d.idCampeonato != null ? Number(d.idCampeonato) : null
@@ -329,17 +325,23 @@ export default function ResumenSemanalDesignacionesPage() {
           yPosition = (doc as any).lastAutoTable.finalY + 10
         }
 
-        // Escenario B: Fundamental / Oficial (consolidado)
-        if (filasGenerales.length > 0) {
+        // Escenario B: Fundamental / Oficial (consolidado) -> dos sub-secciones
+        const filasOficiales = filasGenerales.filter(
+          (f) => (f.categoria || "").toUpperCase() === "CAMPEONATO OFICIAL",
+        )
+        const filasFundamentales = filasGenerales.filter(
+          (f) => (f.categoria || "").toUpperCase() === "CAMPEONATO FUNDAMENTAL",
+        )
+
+        const renderSeccionGeneral = (titulo: string, filas: typeof filasGenerales) => {
+          if (filas.length === 0) return
           doc.setFont("helvetica", "bold")
           doc.setFontSize(12)
-          doc.text("CAMPEONATOS FUNDAMENTALES Y OFICIALES (DESIGNACIÓN GENERAL)", 15, yPosition)
+          doc.text(titulo, 15, yPosition)
           yPosition += 4
 
-          const tableDataB = filasGenerales.map((f, idx) => {
-            const arbitrosTexto = f.arbitros
-              .map((a) => (a.categoria ? `${a.nombre} (${a.categoria})` : a.nombre))
-              .join("\n")
+          const tableData = filas.map((f, idx) => {
+            const arbitrosTexto = f.arbitros.map((a) => a.nombre).join("\n")
             return [
               (idx + 1).toString(),
               f.nombreCampeonato,
@@ -354,7 +356,7 @@ export default function ResumenSemanalDesignacionesPage() {
 
           autoTable(doc, {
             head: [["N°", "CAMPEONATO", "FECHA", "HORA", "TIPO", "UBICACIÓN", "ÁRBITROS", "ESTADO"]],
-            body: tableDataB,
+            body: tableData,
             startY: yPosition,
             margin: { left: 10, right: 10 },
             styles: { fontSize: 9, cellPadding: 3, halign: "center", valign: "middle", minCellHeight: 9 },
@@ -367,7 +369,13 @@ export default function ResumenSemanalDesignacionesPage() {
               6: { cellWidth: 55, halign: "left" },
             },
           })
+
+          // @ts-ignore
+          yPosition = (doc as any).lastAutoTable.finalY + 10
         }
+
+        renderSeccionGeneral("CAMPEONATOS OFICIALES (DESIGNACIÓN GENERAL)", filasOficiales)
+        renderSeccionGeneral("CAMPEONATOS FUNDAMENTALES (DESIGNACIÓN GENERAL)", filasFundamentales)
       }
 
       doc.save(`resumen-semanal-${format(new Date(), "yyyy-MM-dd-HHmm")}.pdf`)
