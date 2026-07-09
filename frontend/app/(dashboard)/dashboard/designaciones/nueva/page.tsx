@@ -615,80 +615,124 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           </CardContent>
         </Card>
 
-        {/* Grid de campeonatos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {campeonatos.map((camp) => {
-            const esCopaPeruProtegida = camp.nombre === "COPA PERÚ 2026"
-
-            return (
-              <Card
-                key={camp.id}
-                className={`h-full cursor-pointer border-2 transition-all duration-200 hover:shadow-md ${
-                  esCopaPeruProtegida ? "border-red-200 hover:border-red-300" : "border-gray-200 hover:border-blue-300"
-                }`}
-                onClick={() => {
-                  setCampeonatoSeleccionado(camp)
-                  setEtapaSeleccionada(null)
-                  setProvinciaSeleccionada(null)
-                  setDistritoSeleccionado(null)
-                  setPartidos([])
-                  setArbitrosSeleccionados([])
-                  if (camp.nombre === "COPA PERÚ 2026") {
-                    setCurrentStep("etapa")
-                  } else if (camp.categoria === "CAMPEONATO FUNDAMENTAL" || camp.categoria === "CAMPEONATO OFICIAL") {
-                    setCurrentStep("designacionGeneral")
-                  } else {
-                    setCurrentStep("provincia")
-                  }
-                }}
-              >
-                <CardContent className="p-4 md:p-6 h-full flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between mb-4">
-                      <Trophy className="w-6 h-6 md:w-8 md:h-8 text-amber-600" />
-                      {esCopaPeruProtegida && (
-                        <div title="Campeonato protegido">
-                          <Lock className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
-                        </div>
-                      )}
-                      {camp.categoria === "CAMPEONATO FUNDAMENTAL" && (
-                        <Badge className="bg-purple-600 text-white text-xs">SIN REQUISITOS</Badge>
-                      )}
-                    </div>
-
-                    <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">
-                      {camp.nombre}
-                    </h3>
-
-                    <div className="space-y-2 text-sm text-slate-600">
-                      {camp.categoria && (
-                        <p className="flex items-center gap-2">
-                          <Badge className="bg-blue-600 text-white">{camp.categoria}</Badge>
-                        </p>
-                      )}
-                      {camp.numeroEquipos && (
-                        <p className="flex items-center gap-2">
-                          <Users className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
-                          {camp.numeroEquipos} equipos
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <Badge className={`${
-                      camp.estado === "ACTIVO"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-600 text-slate-200"
-                    }`}>
-                      {camp.estado || "Sin estado"}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Grid de campeonatos agrupados */}
+        {(() => {
+          const grupos = useMemo(() => {
+            const copaPeru = campeonatos.filter((c) => c.nombre === "COPA PERÚ 2026")
+            const fundamentales = campeonatos.filter((c) => c.categoria === "CAMPEONATO FUNDAMENTAL")
+            const oficiales = campeonatos.filter((c) => c.categoria === "CAMPEONATO OFICIAL")
+            const otros = campeonatos.filter(
+              (c) => c.nombre !== "COPA PERÚ 2026" && c.categoria !== "CAMPEONATO FUNDAMENTAL" && c.categoria !== "CAMPEONATO OFICIAL",
             )
-          })}
-        </div>
+            return [
+              { titulo: "COPA PERÚ 2026", icono: Lock, color: "red", campeonatos: copaPeru },
+              { titulo: "Campeonatos Fundamentales", icono: Shield, color: "purple", campeonatos: fundamentales },
+              { titulo: "Campeonatos Oficiales", icono: ClipboardList, color: "blue", campeonatos: oficiales },
+              ...(otros.length > 0 ? [{ titulo: "Otros Campeonatos", icono: Trophy, color: "slate", campeonatos: otros }] : []),
+            ].filter((g) => g.campeonatos.length > 0)
+          }, [campeonatos])
+
+          const colorClasses: Record<string, { bg: string; text: string; border: string; badge: string }> = {
+            red: { bg: "bg-red-50", text: "text-red-800", border: "border-red-200", badge: "bg-red-600" },
+            purple: { bg: "bg-purple-50", text: "text-purple-800", border: "border-purple-200", badge: "bg-purple-600" },
+            blue: { bg: "bg-blue-50", text: "text-blue-800", border: "border-blue-200", badge: "bg-blue-600" },
+            slate: { bg: "bg-slate-50", text: "text-slate-800", border: "border-slate-200", badge: "bg-slate-600" },
+          }
+
+          return (
+            <div className="space-y-6 md:space-y-8">
+              {grupos.map((grupo) => {
+                const colors = colorClasses[grupo.color]
+                return (
+                  <div key={grupo.titulo}>
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${colors.bg} ${colors.border} mb-4`}>
+                      <grupo.icono className={`w-5 h-5 ${colors.text}`} />
+                      <h3 className={`text-sm font-bold uppercase tracking-wide ${colors.text}`}>
+                        {grupo.titulo}
+                      </h3>
+                      <Badge className={`${colors.badge} text-white text-xs ml-auto`}>
+                        {grupo.campeonatos.length}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                      {grupo.campeonatos.map((camp) => {
+                        const esCopaPeruProtegida = camp.nombre === "COPA PERÚ 2026"
+
+                        return (
+                          <Card
+                            key={camp.id}
+                            className={`h-full cursor-pointer border-2 transition-all duration-200 hover:shadow-md ${
+                              esCopaPeruProtegida ? "border-red-200 hover:border-red-300" : "border-gray-200 hover:border-blue-300"
+                            }`}
+                            onClick={() => {
+                              setCampeonatoSeleccionado(camp)
+                              setEtapaSeleccionada(null)
+                              setProvinciaSeleccionada(null)
+                              setDistritoSeleccionado(null)
+                              setPartidos([])
+                              setArbitrosSeleccionados([])
+                              if (camp.nombre === "COPA PERÚ 2026") {
+                                setCurrentStep("etapa")
+                              } else if (camp.categoria === "CAMPEONATO FUNDAMENTAL" || camp.categoria === "CAMPEONATO OFICIAL") {
+                                setCurrentStep("designacionGeneral")
+                              } else {
+                                setCurrentStep("provincia")
+                              }
+                            }}
+                          >
+                            <CardContent className="p-4 md:p-6 h-full flex flex-col justify-between">
+                              <div>
+                                <div className="flex items-start justify-between mb-4">
+                                  <Trophy className="w-6 h-6 md:w-8 md:h-8 text-amber-600" />
+                                  {esCopaPeruProtegida && (
+                                    <div title="Campeonato protegido">
+                                      <Lock className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
+                                    </div>
+                                  )}
+                                  {camp.categoria === "CAMPEONATO FUNDAMENTAL" && (
+                                    <Badge className="bg-purple-600 text-white text-xs">SIN REQUISITOS</Badge>
+                                  )}
+                                </div>
+
+                                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">
+                                  {camp.nombre}
+                                </h3>
+
+                                <div className="space-y-2 text-sm text-slate-600">
+                                  {camp.categoria && (
+                                    <p className="flex items-center gap-2">
+                                      <Badge className="bg-blue-600 text-white">{camp.categoria}</Badge>
+                                    </p>
+                                  )}
+                                  {camp.numeroEquipos && (
+                                    <p className="flex items-center gap-2">
+                                      <Users className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
+                                      {camp.numeroEquipos} equipos
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <Badge className={`${
+                                  camp.estado === "ACTIVO"
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-slate-600 text-slate-200"
+                                }`}>
+                                  {camp.estado || "Sin estado"}
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
     )
   }
