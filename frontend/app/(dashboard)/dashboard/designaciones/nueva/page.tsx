@@ -1076,7 +1076,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
         return unicas.length === 1 ? unicas[0] : null
       })()
 
-      if (equiposParticipantes.length > 0) {
+      // 🔒 La vista de SOLO LECTURA aparece únicamente cuando los campeones YA fueron
+      // finalizados/guardados en backend (al volver a una provincia ya completada).
+      // Durante la selección en curso siempre se muestran los selectores para poder
+      // elegir campeón y subcampeón en CADA distrito de la provincia.
+      if (provincialCampeonesFinalizados && equiposParticipantes.length > 0) {
         return (
           <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
             {/* Header */}
