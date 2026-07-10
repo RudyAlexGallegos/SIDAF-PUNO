@@ -131,7 +131,7 @@ export default function NuevaDesignacionPage() {
     const unicos = Array.from(
       new Set(
         equiposReales
-          .filter((eq) => eq.provincia === provinciaSeleccionada && eq.distrito)
+          .filter((eq) => eq.distrito && resolverProvincia(eq.distrito, eq.provincia) === provinciaSeleccionada)
           .map((eq) => eq.distrito as string)
       )
     )
@@ -327,8 +327,9 @@ const validarProvinciasCompletas = (): boolean => {
 
       // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
       // EXCEPTUANDO los distritos marcados como "no participantes"
-      if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
-        // Fuente de verdad: distritos reales de los equipos (campo distrito del equipo)
+      if (etapaSeleccionada === "Etapa Provincial") {
+        // 🔒 Se valida SOLO la provincia seleccionada (el flujo es provincia por provincia).
+        // Fuente de verdad: distritos reales de los equipos de esta provincia (campo distrito).
         const distritos = distritosProvincialesEquipos.length > 0
           ? distritosProvincialesEquipos
           : distritosDeProvinciaSeleccionada.length > 0
@@ -1039,8 +1040,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
     }
 
     const esEtapaProvincial = etapaSeleccionada === "Etapa Provincial"
+    // 🔒 Fuente de verdad: provincia resuelta desde el DISTRITO del equipo (no el campo provincia,
+    // poco confiable por la confusión Puno Región/Provincia/Distrito).
     const equiposFiltrados = equiposReales.filter(
-      (eq) => eq.provincia === provinciaSeleccionada
+      (eq) => resolverProvincia(eq.distrito, eq.provincia) === provinciaSeleccionada
     )
 
     // 🔒 Fuente de verdad: distritos reales de los equipos (campo distrito del equipo)
