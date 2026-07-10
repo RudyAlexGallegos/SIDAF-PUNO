@@ -28,6 +28,17 @@ import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos,
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 import { DatePicker, TimePicker } from "./components/DateTimePickers"
 
+// 🔒 Resuelve la provincia real de un equipo a partir de su distrito (fuente de verdad:
+// distrito capturado al crear el equipo). Evita la confusión "Puno" (Región / Provincia / Distrito).
+// Si el distrito no está en el mapeo, hace fallback al campo provincia del equipo.
+const resolverProvincia = (distrito?: string | null, provinciaFallback?: string | null): string | null => {
+  if (distrito) {
+    const provincia = PROVINCIAS_PUNO.find((p) => p.distritos.some((d) => d.nombre === distrito))
+    if (provincia) return provincia.nombre
+  }
+  return provinciaFallback || null
+}
+
 interface Partido {
   id: string
   equipoLocal: Equipo
@@ -1030,16 +1041,24 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           participantes.push({ ...c.subcampeon, tipo: "Subcampeón" })
         }
         return participantes
-      }).filter(Boolean)
-      
-      // Mostrar lista si hay equipos participantes (guardados en backend o seleccionados localmente)
+       }).filter(Boolean)
+       
+      // Provincia real de los equipos participantes (resuelta desde el distrito capturado al crear el equipo)
+      const provinciaRealParticipantes = (() => {
+        const provs = equiposParticipantes
+          .map((e: any) => resolverProvincia(e.distrito, e.provincia))
+          .filter(Boolean) as string[]
+        const unicas = Array.from(new Set(provs))
+        return unicas.length === 1 ? unicas[0] : null
+      })()
+
       if (equiposParticipantes.length > 0) {
         return (
           <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
             {/* Header */}
             <section className="border-b pb-3 md:pb-4">
               <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-                {campeonatoSeleccionado?.nombre} · {provinciaSeleccionada}
+                 {campeonatoSeleccionado?.nombre} · {provinciaRealParticipantes ?? provinciaSeleccionada}
               </p>
               <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
                 Equipos Participantes
@@ -1062,10 +1081,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-bold text-slate-900">{equipo.nombre}</h3>
-                        <p className="text-sm text-gray-600">
-                          Distrito: {equipo.distrito || "Sin registrar"}{equipo.provincia ? ` · Provincia: ${equipo.provincia}` : ""}
-                        </p>
+                         <h3 className="text-lg font-bold text-slate-900">{equipo.nombre}</h3>
+                         <p className="text-sm text-gray-600">
+                           Distrito: {equipo.distrito || "Sin registrar"}{resolverProvincia(equipo.distrito, equipo.provincia) ? ` · Provincia: ${resolverProvincia(equipo.distrito, equipo.provincia)}` : ""}
+                         </p>
                       </div>
 <Badge className="bg-green-600 text-white">
                         {equipo.tipo}
