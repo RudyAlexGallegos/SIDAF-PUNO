@@ -177,6 +177,9 @@ export default function NuevaDesignacionPage() {
   // 🔒 Control: ¿Ya se guardaron los campeones provinciales en backend?
   const [provincialCampeonesFinalizados, setProvincialCampeonesFinalizados] = useState(false)
 
+  // ✏️ Control: modo edición manual de campeones provinciales (para corregir después de completar)
+  const [editandoProvincial, setEditandoProvincial] = useState(false)
+
   // Distritos que no participan (se retiran)
   const [distritosNoParticipantes, setDistritosNoParticipantes] = useState<string[]>([])
 
@@ -524,6 +527,11 @@ const calcularEtapasDesbloqueadas = () => {
         }
       }
     }, [currentStep, campeonatoSeleccionado, fechaGeneral, horaGeneral])
+
+   // ✏️ Reset del modo edición al cambiar de provincia o etapa
+   useEffect(() => {
+     setEditandoProvincial(false)
+   }, [provinciaSeleccionada, etapaSeleccionada])
 
    // 🔒 Cargar resultados de etapa distrital para detectar equipos participantes
    useEffect(() => {
@@ -1076,11 +1084,12 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
         return unicas.length === 1 ? unicas[0] : null
       })()
 
-      // 🔒 La vista de SOLO LECTURA aparece únicamente cuando los campeones YA fueron
-      // finalizados/guardados en backend (al volver a una provincia ya completada).
-      // Durante la selección en curso siempre se muestran los selectores para poder
-      // elegir campeón y subcampeón en CADA distrito de la provincia.
-      if (provincialCampeonesFinalizados && equiposParticipantes.length > 0) {
+      // 🔒 La vista de SOLO LECTURA ("Equipos Participantes") aparece automáticamente en cuanto
+      // TODOS los distritos de la provincia tienen campeón seleccionado (validarProvinciasCompletas),
+      // o cuando ya fueron finalizados/guardados en backend. Así el usuario no vuelve a seleccionar
+      // los campeones cada vez. El modo edición (editandoProvincial) fuerza mostrar los selectores.
+      const provincialCompleto = validarProvinciasCompletas()
+      if (!editandoProvincial && (provincialCampeonesFinalizados || provincialCompleto) && equiposParticipantes.length > 0) {
         return (
           <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
             {/* Header */}
@@ -1124,13 +1133,23 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </div>
 
             {/* Botón de avance */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setCurrentStep("provincia")}
                 className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
               >
                 ← Atrás
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditandoProvincial(true)
+                  setProvincialCampeonesFinalizados(false)
+                }}
+                className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                ✏️ Editar campeones
               </Button>
               <Button
                 onClick={async () => {
@@ -1345,7 +1364,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             })}
 
             {/* BOTÓN DE AVANCE */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setCurrentStep("provincia")}
@@ -1353,6 +1372,15 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               >
                 ← Atrás
               </Button>
+              {editandoProvincial && validarProvinciasCompletas() && (
+                <Button
+                  variant="outline"
+                  onClick={() => setEditandoProvincial(false)}
+                  className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                >
+                  👀 Ver equipos participantes
+                </Button>
+              )}
               <Button
                 onClick={async () => {
                   // Guardar campeones provinciales antes de continuar
