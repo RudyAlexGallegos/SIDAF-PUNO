@@ -455,31 +455,50 @@ const calcularEtapasDesbloqueadas = () => {
             return
           }
 
-          const resultados = await getCopaPeruResultados(campeonatoSeleccionado.id as number, 'PROVINCIAL')
+          // Sin provincia seleccionada aún: no evaluamos finalización ni cargamos campeones
+          if (!provinciaSeleccionada) return
+
+          const resultados = await getCopaPeruResultados(
+            campeonatoSeleccionado.id as number,
+            'PROVINCIAL',
+            provinciaSeleccionada ?? undefined
+          )
+
+          // Filtrar por la provincia seleccionada (defensa si el backend no acota por provincia)
+          const resultadosProvincia = resultados.filter((r: any) => {
+            const eq = r.equipo || {}
+            return (
+              eq.provincia === provinciaSeleccionada ||
+              resolverProvincia(eq.distrito, eq.provincia) === provinciaSeleccionada
+            )
+          })
+
           const mapping: Record<string, DistritoCampeones> = {}
-          resultados.forEach((r: any) => {
+          resultadosProvincia.forEach((r: any) => {
             const equipo = r.equipo || {}
             // En etapa provincial, los equipos están agrupados por distrito
             const distrito = equipo.distrito || 'Sin Distrito'
             if (!mapping[distrito]) mapping[distrito] = { campeon: null, subcampeon: null }
-const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
+            const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equipo.provincia, distrito: equipo.distrito }
             if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             if (r.posicion === 2) mapping[distrito].subcampeon = equipoObj
           })
-          // Solo actualizar si hay datos del backend, sino preservar selecciones del usuario
-          if (resultados.length > 0) {
+          // Solo actualizar si hay datos de ESTA provincia, sino preservar selecciones del usuario
+          if (resultadosProvincia.length > 0) {
             setProvinciaCampeones(mapping)
           }
 
-          // Verificar si todos los distritos tienen campeón asignado
+          // Verificar si todos los distritos de ESTA provincia tienen campeón asignado
             const distritos = distritosProvincialesEquipos.length > 0
               ? distritosProvincialesEquipos
               : distritosDeProvinciaSeleccionada.length > 0
                 ? distritosDeProvinciaSeleccionada
                 : getDistritosByProvincia("Puno").map(d => d.nombre)
             const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeon)
-            if (todosTienenCampeon && resultados.length > 0) {
+            if (todosTienenCampeon && resultadosProvincia.length > 0) {
               setProvincialCampeonesFinalizados(true)
+            } else {
+              setProvincialCampeonesFinalizados(false)
             }
 } catch (e) {
             console.warn('No se pudo cargar campeones provinciales desde backend', e)
@@ -488,7 +507,7 @@ const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equ
       }
 
       loadProvincial()
-    }, [campeonatoSeleccionado, esCopaPeruActual, distritosProvincialesEquipos])
+    }, [campeonatoSeleccionado, esCopaPeruActual, distritosProvincialesEquipos, provinciaSeleccionada])
 
    // 🔒 Autocompletar fecha y hora de la designación general desde datos del campeonato
     useEffect(() => {
@@ -1031,8 +1050,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
-      // Si ya hay campeones guardados, mostrar lista de equipos participantes
-      const equiposParticipantes = Object.entries(provinciaCampeones || {}).flatMap(([distrito, c]: [string, any]) => {
+      // Si ya hay campeones guardados, mostrar lista de equipos participantes (solo de ESTA provincia)
+      const equiposParticipantes = Object.entries(provinciaCampeones || {})
+        .filter(([distrito]) => distritosAMostrar.includes(distrito))
+        .flatMap(([distrito, c]: [string, any]) => {
         const participantes: any[] = []
         if (c?.campeon) {
           participantes.push({ ...c.campeon, tipo: "Campeón" })

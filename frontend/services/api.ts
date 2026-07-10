@@ -685,11 +685,12 @@ export interface CopaPeruResultadoDTO {
     posicion: number; // 1 = campeón, 2 = subcampeón
 }
 
-export async function getCopaPeruResultados(campeonatoId: number, etapa: string): Promise<any[]> {
+export async function getCopaPeruResultados(campeonatoId: number, etapa: string, provincia?: string): Promise<any[]> {
     try {
         const params = new URLSearchParams();
         params.append('campeonatoId', String(campeonatoId));
         params.append('etapa', etapa);
+        if (provincia) params.append('provincia', provincia);
         const response = await fetch(buildUrl(`/copa-peru/resultados?${params.toString()}`));
         if (!response.ok) throw new Error('Error HTTP');
         return await response.json();
