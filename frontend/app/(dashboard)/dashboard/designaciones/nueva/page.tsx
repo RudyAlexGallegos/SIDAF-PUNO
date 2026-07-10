@@ -114,6 +114,19 @@ export default function NuevaDesignacionPage() {
     return getDistritosByProvincia(provinciaSeleccionada).map(d => d.nombre)
   }, [provinciaSeleccionada])
 
+  // 🔒 Distritos derivados de los equipos reales (fuente de verdad: campo distrito del equipo)
+  const distritosProvincialesEquipos = useMemo(() => {
+    if (campeonatoSeleccionado?.nombre !== "COPA PERÚ 2026" || !provinciaSeleccionada) return []
+    const unicos = Array.from(
+      new Set(
+        equiposReales
+          .filter((eq) => eq.provincia === provinciaSeleccionada && eq.distrito)
+          .map((eq) => eq.distrito as string)
+      )
+    )
+    return unicos
+  }, [campeonatoSeleccionado, provinciaSeleccionada, equiposReales])
+
   const gruposCampeonatos = useMemo(() => {
     const copaPeru = campeonatos.filter((c) => c.nombre === "COPA PERÚ 2026")
     const fundamentales = campeonatos.filter((c) => c.categoria === "CAMPEONATO FUNDAMENTAL")
@@ -268,9 +281,12 @@ export default function NuevaDesignacionPage() {
   const validarDistritosCompletos = (): boolean => {
     if (!esCopaPeruActual || etapaSeleccionada !== "Etapa Distrital") return true
 
-    const distritos = distritosDeProvinciaSeleccionada.length > 0
-      ? distritosDeProvinciaSeleccionada
-      : getDistritosByProvincia("Puno").map(d => d.nombre)
+    // Fuente de verdad: distritos reales de los equipos (campo distrito del equipo)
+    const distritos = distritosProvincialesEquipos.length > 0
+      ? distritosProvincialesEquipos
+      : distritosDeProvinciaSeleccionada.length > 0
+        ? distritosDeProvinciaSeleccionada
+        : getDistritosByProvincia("Puno").map(d => d.nombre)
 
     // Todos los distritos deben tener al menos un campeón
     return distritos.every((distrito) => {
@@ -282,9 +298,12 @@ export default function NuevaDesignacionPage() {
   const obtenerDistritosPendientes = (): string[] => {
     if (!esCopaPeruActual) return []
 
-    const distritos = distritosDeProvinciaSeleccionada.length > 0
-      ? distritosDeProvinciaSeleccionada
-      : getDistritosByProvincia("Puno").map(d => d.nombre)
+    // Fuente de verdad: distritos reales de los equipos (campo distrito del equipo)
+    const distritos = distritosProvincialesEquipos.length > 0
+      ? distritosProvincialesEquipos
+      : distritosDeProvinciaSeleccionada.length > 0
+        ? distritosDeProvinciaSeleccionada
+        : getDistritosByProvincia("Puno").map(d => d.nombre)
 
     return distritos.filter((distrito) => {
       const campeones = distritoCampeones[distrito]
@@ -298,9 +317,12 @@ const validarProvinciasCompletas = (): boolean => {
       // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
       // EXCEPTUANDO los distritos marcados como "no participantes"
       if (etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
-        const distritos = distritosDeProvinciaSeleccionada.length > 0
-          ? distritosDeProvinciaSeleccionada
-          : getDistritosByProvincia("Puno").map(d => d.nombre)
+        // Fuente de verdad: distritos reales de los equipos (campo distrito del equipo)
+        const distritos = distritosProvincialesEquipos.length > 0
+          ? distritosProvincialesEquipos
+          : distritosDeProvinciaSeleccionada.length > 0
+            ? distritosDeProvinciaSeleccionada
+            : getDistritosByProvincia("Puno").map(d => d.nombre)
         return distritos.every((distrito) => {
           // Si el distrito está marcado como no participante, no requiere campeón
           if (distritosNoParticipantes.includes(distrito)) return true
@@ -410,7 +432,7 @@ const calcularEtapasDesbloqueadas = () => {
 // Recalcular desbloqueos cuando cambia el estado
    useEffect(() => {
      calcularEtapasDesbloqueadas()
-   }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado, provincialCampeonesFinalizados])
+   }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado, provincialCampeonesFinalizados, distritosProvincialesEquipos, provinciaSeleccionada])
 
 // 🔒 Cargar resultados de etapa provincial guardados desde backend
     useEffect(() => {
@@ -439,9 +461,11 @@ const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equ
           }
 
           // Verificar si todos los distritos tienen campeón asignado
-            const distritos = distritosDeProvinciaSeleccionada.length > 0
-              ? distritosDeProvinciaSeleccionada
-              : getDistritosByProvincia("Puno").map(d => d.nombre)
+            const distritos = distritosProvincialesEquipos.length > 0
+              ? distritosProvincialesEquipos
+              : distritosDeProvinciaSeleccionada.length > 0
+                ? distritosDeProvinciaSeleccionada
+                : getDistritosByProvincia("Puno").map(d => d.nombre)
             const todosTienenCampeon = distritos.every((distrito) => mapping[distrito]?.campeon)
             if (todosTienenCampeon && resultados.length > 0) {
               setProvincialCampeonesFinalizados(true)
@@ -453,7 +477,7 @@ const equipoObj: Equipo = { id: equipo.id, nombre: equipo.nombre, provincia: equ
       }
 
       loadProvincial()
-    }, [campeonatoSeleccionado, esCopaPeruActual, distritosDeProvinciaSeleccionada])
+    }, [campeonatoSeleccionado, esCopaPeruActual, distritosProvincialesEquipos])
 
    // 🔒 Autocompletar fecha y hora de la designación general desde datos del campeonato
     useEffect(() => {
@@ -989,6 +1013,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
       (eq) => eq.provincia === provinciaSeleccionada
     )
 
+    // 🔒 Fuente de verdad: distritos reales de los equipos (campo distrito del equipo)
+    const distritosAMostrar = distritosProvincialesEquipos.length > 0
+      ? distritosProvincialesEquipos
+      : distritosDeProvinciaSeleccionada
+
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
       // Si ya hay campeones guardados, mostrar lista de equipos participantes
@@ -1035,7 +1064,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">{equipo.nombre}</h3>
                         <p className="text-sm text-gray-600">
-                          {equipo.distrito && `Distrito: ${equipo.distrito}`}
+                          Distrito: {equipo.distrito || "Sin registrar"}{equipo.provincia ? ` · Provincia: ${equipo.provincia}` : ""}
                         </p>
                       </div>
 <Badge className="bg-green-600 text-white">
@@ -1125,15 +1154,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
           {/* CARD POR DISTRITO */}
           <div className="space-y-4">
-{distritosDeProvinciaSeleccionada.map((distrito, idx) => {
-                // Para etapa provincial, filtrar equipos por distrito específico
-                // Si no hay equipos por distrito, usar equipos de la provincia como fallback
-                const equiposDelDistritoFiltrados = equiposReales.filter(
-                  (eq) => eq.distrito === distrito
-                )
-                const equiposDelDistrito = equiposDelDistritoFiltrados.length > 0 
-                  ? equiposDelDistritoFiltrados 
-                  : equiposFiltrados
+{distritosAMostrar.map((distrito, idx) => {
+                // 🔒 Fuente de verdad: el campo distrito del equipo (sin fallback a toda la provincia)
+                const equiposDelDistrito = equiposFiltrados.filter((eq) => eq.distrito === distrito)
                 const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
                const tieneCompletado = !!campeones?.campeon
                const noParticipa = distritosNoParticipantes.includes(distrito)
@@ -1178,7 +1201,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     </div>
 
                     {/* GRID DE SELECTORES - OCULTOS SI NO PARTICIPA */}
-                    {!noParticipa && (
+                    {!noParticipa && (equiposDelDistrito.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 {/* CAMPEÓN (OBLIGATORIO) */}
                           <div>
@@ -1217,7 +1240,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                .filter(eq => eq.id != null)
                                .map((eq) => (
                                  <option key={eq.id} value={String(eq.id)}>
-                                   {eq.nombre}
+                                    {eq.nombre}{eq.distrito ? ` · ${eq.distrito}` : ""}
                                  </option>
                                ))}
                            </select>
@@ -1260,14 +1283,16 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                .filter(eq => eq.id != null && eq.id !== campeones?.campeon?.id)
                                .map((eq) => (
                                  <option key={eq.id} value={String(eq.id)}>
-                                   {eq.nombre}
+                                    {eq.nombre}{eq.distrito ? ` · ${eq.distrito}` : ""}
                                  </option>
                                ))}
                            </select>
-                         </div>
-                      </div>
-                    )}
-                  </CardContent>
+                          </div>
+                       </div>
+                     ) : (
+                       <p className="text-sm text-slate-500 italic">No hay equipos registrados en este distrito.</p>
+                     ))}
+                   </CardContent>
                 </Card>
               )
             })}
@@ -1361,9 +1386,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           </Button>
         </div>
 
-        {/* Grid de distritos */}
+        {/* Grid de distritos (fuente de verdad: campo distrito del equipo) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {distritosDeProvinciaSeleccionada.map((distrito) => (
+          {distritosAMostrar.map((distrito) => {
+            const cantidadEquipos = equiposFiltrados.filter((eq) => eq.distrito === distrito).length
+            return (
             <Card
               key={distrito}
               className="h-24 cursor-pointer border-2 border-gray-200 bg-card transition-all duration-200 hover:shadow-md hover:border-blue-300 flex items-center justify-center"
@@ -1376,9 +1403,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                 <h3 className="text-lg font-bold text-slate-900">
                   {distrito}
                 </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {cantidadEquipos} equipo(s)
+                </p>
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       </div>
     )
@@ -1470,6 +1501,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           }`}
                         >
                           {eq.nombre.split(" ").slice(0, 2).join(" ")}
+                          <span className="text-[10px] block text-slate-400 truncate">{eq.distrito || "Sin distrito"}</span>
                           {estaRepetido && <span className="text-xs block">Asignado</span>}
                         </button>
                       )
@@ -1501,6 +1533,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           }`}
                         >
                           {eq.nombre.split(" ").slice(0, 2).join(" ")}
+                          <span className="text-[10px] block text-slate-400 truncate">{eq.distrito || "Sin distrito"}</span>
                           {estaRepetido && <span className="text-xs block">Asignado</span>}
                         </button>
                       )
@@ -1623,6 +1656,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           <div className="text-center flex-1">
                             <p className="text-xs font-semibold text-slate-500 mb-1">LOCAL</p>
                             <p className="text-slate-900 font-semibold">{partido.equipoLocal.nombre}</p>
+                            <p className="text-[10px] text-slate-400">{partido.equipoLocal.distrito || "Sin distrito"}</p>
                           </div>
                           <div className="px-3">
                             <span className="text-slate-400 font-bold text-lg">VS</span>
@@ -1630,6 +1664,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           <div className="text-center flex-1">
                             <p className="text-xs font-semibold text-slate-500 mb-1">VISITA</p>
                             <p className="text-slate-900 font-semibold">{partido.equipoVisitante.nombre}</p>
+                            <p className="text-[10px] text-slate-400">{partido.equipoVisitante.distrito || "Sin distrito"}</p>
                           </div>
                         </div>
                       </div>
@@ -1836,10 +1871,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                 {as.nombre} {as.apellido}
                               </option>
                             ))}
-                          </select>
-                        </div>
+                            </select>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500 italic">No hay equipos registrados en este distrito.</p>
+                        )}
                       </div>
-                    </CardContent>
+                    )}
+                  </CardContent>
                   </Card>
                 ))}
 
