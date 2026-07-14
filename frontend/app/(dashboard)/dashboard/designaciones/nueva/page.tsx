@@ -24,9 +24,12 @@ import {
   Clock,
   Search,
   X,
+  Info,
+  RotateCcw,
+  Save,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato } from "@/services/api"
+import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso } from "@/services/api"
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 import { DatePicker, TimePicker } from "./components/DateTimePickers"
 
@@ -218,9 +221,93 @@ export default function NuevaDesignacionPage() {
       "Etapa Departamental": { completada: false, desbloqueada: false },
       "Etapa Nacional": { completada: false, desbloqueada: false },
     },
-  })
+   })
 
-// Árbitros asignados (para validar duplicados)
+  // Sincronización y persistencia del progreso COPA PERÚ (localStorage + backend)
+  const getProgresoStorageKey = () => `copa-peru-progreso-${campeonatoSeleccionado?.id ?? "none"}`
+
+  const cargarProgresoStorage = () => {
+    if (typeof window === "undefined" || !campeonatoSeleccionado?.id) return null
+    try {
+      const raw = localStorage.getItem(getProgresoStorageKey())
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }
+
+  const guardarProgresoStorage = (data: any) => {
+    if (typeof window === "undefined" || !campeonatoSeleccionado?.id) return
+    try {
+      localStorage.setItem(getProgresoStorageKey(), JSON.stringify(data))
+    } catch {
+      // sin permisos de almacenamiento
+    }
+  }
+
+  const syncProgresoBackend = async () => {
+    if (!campeonatoSeleccionado?.id || !esCopaPeruActual) return
+    try {
+      const payload: any[] = []
+      Object.entries(etapasState.etapas).forEach(([etapa, estado]) => {
+        payload.push({
+          campeonatoId: campeonatoSeleccionado.id,
+          etapa,
+          provincia: provinciaSeleccionada ?? undefined,
+          distrito: distritoSeleccionado ?? undefined,
+          completada: estado.completada,
+          desbloqueada: estado.desbloqueada,
+        })
+      })
+      if (provinciaSeleccionada && esCopaPeruActual && etapaSeleccionada === "Etapa Provincial") {
+        Object.entries(provinciaCampeones).forEach(([distrito, campeones]) => {
+          payload.push({
+            campeonatoId: campeonatoSeleccionado.id,
+            etapa: "PROVINCIAL",
+            provincia: provinciaSeleccionada,
+            distrito,
+            completada: !!campeones?.campeon,
+            desbloqueada: true,
+            campeonId: campeones?.campeon?.id,
+            subcampeonId: campeones?.subcampeon?.id,
+          })
+        })
+      }
+      await saveCopaPeruProgresoBatch(payload)
+    } catch (e) {
+      console.warn("No se pudo sincronizar progreso con backend", e)
+    }
+  }
+
+  // Restaurar progreso guardado al cambiar de campeonato o provincia
+  useEffect(() => {
+    if (!campeonatoSeleccionado?.id || !esCopaPeruActual) return
+    const saved = cargarProgresoStorage()
+    if (saved?.etapas) {
+      setEtapasState({ etapas: saved.etapas })
+    }
+    if (saved?.provinciaCampeones && provinciaSeleccionada) {
+      setProvinciaCampeones(saved.provinciaCampeones)
+    }
+    if (saved?.distritoCampeones && provinciaSeleccionada) {
+      setDistritoCampeones(saved.distritoCampeones)
+    }
+  }, [campeonatoSeleccionado?.id, provinciaSeleccionada])
+
+  // Guardar en localStorage y backend cuando cambia el estado de etapas o campeones
+  useEffect(() => {
+    if (!esCopaPeruActual || !campeonatoSeleccionado?.id) return
+    guardarProgresoStorage({
+      etapas: etapasState.etapas,
+      provinciaCampeones,
+      distritoCampeones,
+      provinciaSeleccionada,
+      distritoSeleccionado,
+    })
+    syncProgresoBackend()
+  }, [etapasState, provinciaCampeones, distritoCampeones, provinciaSeleccionada, distritoSeleccionado, campeonatoSeleccionado?.id, esCopaPeruActual])
+
+ // Árbitros asignados (para validar duplicados)
   const [arbitrosAsignados, setArbitrosAsignados] = useState<Record<string, Arbitro[]>>({})
 
   // Árbitros seleccionados (para CAMPEONATO FUNDAMENTAL)
@@ -642,8 +729,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             {activeSteps.map((step, idx) => {
               const isActive = idx === currentStepIndex
               const isCompleted = idx < currentStepIndex
+              const isBlocked = esCopaPeruActual && !isCompleted && !isActive && idx > 0 && !etapasState.etapas[activeSteps[idx - 1].key === "distrito" ? "Etapa Distrital" : activeSteps[idx - 1].key === "provincia" ? "Etapa Provincial" : ""]?.desbloqueada
+              const blockedReason = isBlocked ? (step.key === "distrito" ? "Completa la clasificación provincial primero" : step.key === "partidos" && etapaSeleccionada === "Etapa Provincial" ? "Selecciona los campeones de todos los distritos" : step.key === "designar" && etapaSeleccionada === "Etapa Departamental" ? "Guarda los resultados provinciales para continuar" : "Completa la etapa anterior") : null
+
               return (
-                <div key={step.key} className="flex flex-col items-center flex-1">
+                <div key={step.key} className="flex flex-col items-center flex-1" title={blockedReason || ""}>
                   <div className="text-xs font-medium text-slate-500 mb-1 hidden sm:block">{step.shortLabel}</div>
                   <div
                     className={`h-2.5 w-2.5 rounded-full transition-all ${
@@ -651,9 +741,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                         ? "bg-blue-600 scale-125 shadow-md"
                         : isCompleted
                           ? "bg-emerald-500"
-                          : "bg-gray-300"
+                          : isBlocked
+                            ? "bg-red-500"
+                            : "bg-gray-300"
                     }`}
                   />
+                  {isBlocked && <Lock className="w-3 h-3 text-red-500 mt-1" />}
+                  {isCompleted && <CheckCircle2 className="w-3 h-3 text-emerald-500 mt-1" />}
                 </div>
               )
             })}
@@ -999,13 +1093,51 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           <p className="text-slate-500 mt-2 text-xs md:text-sm">{getStepDescription()}</p>
         </section>
 
-        {/* Botón de retroceso */}
-        <div className="flex justify-start">
-          <Button variant="outline" size="sm" onClick={() => setCurrentStep(getBackStep())} className="border-gray-200">
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Cambiar Etapa
-          </Button>
-        </div>
+          {/* Botón de retroceso */}
+          <div className="flex justify-start">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("campeonato")} className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Cambiar Campeonato
+            </Button>
+          </div>
+
+          {esCopaPeruActual && (
+            <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-900">
+                    <p className="font-semibold mb-1">Progreso de etapas · COPA PERÚ 2026</p>
+                    <div className="flex flex-wrap gap-2">
+                      {ETAPAS.map((etapa) => {
+                        const estado = etapasState.etapas[etapa]
+                        return (
+                          <span
+                            key={etapa}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${
+                              estado.desbloqueada
+                                ? estado.completada
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                  : "bg-amber-100 text-amber-800 border-amber-300"
+                                : "bg-red-100 text-red-800 border-red-300"
+                            }`}
+                          >
+                            {estado.completada ? "✅" : estado.desbloqueada ? "🔄" : "🔒"}
+                            {etapa.replace("Etapa ", "")}
+                          </span>
+                        )
+                      })}
+                    </div>
+                    {!validarDistritosCompletos() && (
+                      <p className="text-xs text-red-700 mt-2">
+                        Distritos pendientes: <strong>{obtenerDistritosPendientes().join(", ")}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
         <Card className="bg-cyan-50 border-cyan-200">
           <CardContent className="p-4">

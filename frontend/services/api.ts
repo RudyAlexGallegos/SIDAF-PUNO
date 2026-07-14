@@ -714,6 +714,61 @@ export async function saveCopaPeruResultadosBatch(resultados: CopaPeruResultadoD
     return await response.json();
 }
 
+export interface CopaPeruProgreso {
+    id?: number;
+    etapa: string;
+    provincia?: string;
+    distrito?: string;
+    completada: boolean;
+    desbloqueada: boolean;
+    campeonId?: number;
+    subcampeonId?: number;
+}
+
+export async function getCopaPeruProgreso(campeonatoId: number, etapa?: string, provincia?: string, distrito?: string): Promise<CopaPeruProgreso[]> {
+    try {
+        const params = new URLSearchParams();
+        params.append('campeonatoId', String(campeonatoId));
+        if (etapa) params.append('etapa', etapa);
+        if (provincia) params.append('provincia', provincia);
+        if (distrito) params.append('distrito', distrito);
+        const response = await fetch(buildUrl(`/copa-peru/progreso?${params.toString()}`));
+        if (!response.ok) throw new Error('Error HTTP');
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Error getCopaPeruProgreso:', error);
+        return [];
+    }
+}
+
+export async function saveCopaPeruProgresoBatch(progreso: CopaPeruProgreso[]): Promise<any[]> {
+    const response = await fetch(buildUrl('/copa-peru/progreso/batch'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(progreso),
+    });
+
+    if (!response.ok) {
+        throw new Error('Error al guardar progreso de Copa Perú');
+    }
+
+    return await response.json();
+}
+
+export async function deleteCopaPeruProgreso(campeonatoId: number, etapa?: string, provincia?: string): Promise<void> {
+    const params = new URLSearchParams();
+    params.append('campeonatoId', String(campeonatoId));
+    if (etapa) params.append('etapa', etapa);
+    if (provincia) params.append('provincia', provincia);
+    const response = await fetch(buildUrl(`/copa-peru/progreso?${params.toString()}`), {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) {
+        throw new Error('Error al eliminar progreso de Copa Perú');
+    }
+}
+
 // ============================================================
 // ASISTENCIA
 // ============================================================
