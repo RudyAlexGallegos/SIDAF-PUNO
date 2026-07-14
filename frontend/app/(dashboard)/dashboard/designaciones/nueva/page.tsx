@@ -53,6 +53,9 @@ interface Partido {
   asistente2?: Arbitro | null
   cuartoArbitro?: Arbitro | null
   asesor?: Asesor | null
+  estadio?: string
+  fecha?: string
+  hora?: string
 }
 
 interface DistritoCampeones {
@@ -800,7 +803,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
       case "designar":
         return {
           title: "Asigna los árbitros",
-          body: "Cada partido requiere 4 árbitros: Principal, Asistente 1, Asistente 2 y Cuarto. También puedes asignar un Asesor. Los árbitros no pueden repetirse entre partidos.",
+          body: "Cada partido requiere al menos Principal, Asistente 1 y Asistente 2. El Cuarto Árbitro y el Asesor son opcionales. Los árbitros no pueden repetirse entre partidos.",
           icon: <ClipboardList className="w-4 h-4 text-blue-600" />,
         }
       case "campeonato":
@@ -1975,10 +1978,16 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           return
                         }
 
+                        const ahora = new Date()
+                        const fechaHoy = ahora.toISOString().split('T')[0]
+                        const horaHoy = ahora.toTimeString().substring(0, 5)
                         const nuevoPartido: Partido = {
                           id: `partido-${Date.now()}`,
                           equipoLocal,
                           equipoVisitante,
+                          estadio: equipoLocal.estadio || "",
+                          fecha: fechaHoy,
+                          hora: horaHoy,
                         }
 
                         setPartidos([...partidos, nuevoPartido])
@@ -2136,22 +2145,73 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               <div className="lg:col-span-3 space-y-6">
                 {partidos.map((partido, idx) => (
                   <Card key={partido.id} className="border-2 border-gray-200 bg-card">
-                    {/* Header del partido */}
-                    <CardHeader className="bg-blue-600/10">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-slate-900 flex items-center gap-2">
-                          <Badge className="bg-purple-600 text-white">Partido {idx + 1}</Badge>
-                        </CardTitle>
-                        <div className="text-right">
-                          <p className="font-semibold text-slate-900">{partido.equipoLocal.nombre}</p>
-                          <p className="text-xs text-slate-500 my-1">vs</p>
-                          <p className="font-semibold text-slate-900">{partido.equipoVisitante.nombre}</p>
-                        </div>
-                      </div>
-                    </CardHeader>
+                     {/* Header del partido */}
+                     <CardHeader className="bg-blue-600/10">
+                       <div className="flex items-center justify-between">
+                         <CardTitle className="text-slate-900 flex items-center gap-2">
+                           <Badge className="bg-purple-600 text-white">Partido {idx + 1}</Badge>
+                         </CardTitle>
+                         <div className="text-right">
+                           <p className="font-semibold text-slate-900">{partido.equipoLocal.nombre}</p>
+                           <p className="text-xs text-slate-500">{partido.equipoLocal.distrito || "Sin distrito"}</p>
+                           <p className="text-xs text-slate-400 my-1">vs</p>
+                           <p className="font-semibold text-slate-900">{partido.equipoVisitante.nombre}</p>
+                           <p className="text-xs text-slate-500">{partido.equipoVisitante.distrito || "Sin distrito"}</p>
+                         </div>
+                       </div>
+                     </CardHeader>
 
-                    <CardContent className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                     <CardContent className="p-6 space-y-4">
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             🏟️ Estadio (Local)
+                           </label>
+                           <input
+                             type="text"
+                             value={partido.estadio || partido.equipoLocal.estadio || ""}
+                             onChange={(e) => {
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].estadio = e.target.value
+                               setPartidos(updatedPartidos)
+                             }}
+                             placeholder="Estadio del partido"
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             📅 Fecha
+                           </label>
+                           <input
+                             type="date"
+                             value={partido.fecha || ""}
+                             onChange={(e) => {
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].fecha = e.target.value
+                               setPartidos(updatedPartidos)
+                             }}
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             🕐 Hora
+                           </label>
+                           <input
+                             type="time"
+                             value={partido.hora || ""}
+                             onChange={(e) => {
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].hora = e.target.value
+                               setPartidos(updatedPartidos)
+                             }}
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                           />
+                         </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         {/* Árbitro Principal */}
                         <div>
                           <label className="block text-sm font-semibold text-slate-600 mb-2">
@@ -2224,35 +2284,35 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           </select>
                         </div>
 
-                        {/* Cuarto Árbitro */}
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-600 mb-2">
-                            🔄 Cuarto
-                          </label>
-                          <select
-                            value={partido.cuartoArbitro?.id || ""}
-                            onChange={(e) => {
-                              const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
-                              const updatedPartidos = [...partidos]
-                              updatedPartidos[idx].cuartoArbitro = arb || null
-                              setPartidos(updatedPartidos)
-                            }}
-                            className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                          >
-                            <option value="">Seleccionar</option>
-                            {arbitros.map((arb) => (
-                              <option key={arb.id} value={arb.id}>
-                                {arb.nombre} {arb.apellido}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                         {/* Cuarto Árbitro */}
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             🔄 Cuarto <span className="text-slate-400 font-normal">(Opcional)</span>
+                           </label>
+                           <select
+                             value={partido.cuartoArbitro?.id || ""}
+                             onChange={(e) => {
+                               const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].cuartoArbitro = arb || null
+                               setPartidos(updatedPartidos)
+                             }}
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                           >
+                             <option value="">Seleccionar</option>
+                             {arbitros.map((arb) => (
+                               <option key={arb.id} value={arb.id}>
+                                 {arb.nombre} {arb.apellido}
+                               </option>
+                             ))}
+                           </select>
+                         </div>
 
-                        {/* Asesor */}
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-600 mb-2">
-                            📋 Asesor
-                          </label>
+                         {/* Asesor */}
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             📋 Asesor <span className="text-slate-400 font-normal">(Opcional)</span>
+                           </label>
                           <select
                             value={partido.asesor?.id || ""}
                             onChange={(e) => {
@@ -2288,7 +2348,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       etapaSeleccionada === "Etapa Departamental") && (
                       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                         <p className="text-amber-800 text-sm">
-                          ✅ Todos los partidos deben tener los 4 árbitros asignados. Los árbitros no pueden repetirse en diferentes partidos.
+                          ✅ Cada partido debe tener al menos Principal, Asistente 1 y Asistente 2. El Cuarto Árbitro y el Asesor son opcionales. Los árbitros no pueden repetirse entre partidos.
                         </p>
                       </div>
                     )}
@@ -2304,19 +2364,18 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     <Button
                       className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={async () => {
-                        // Validar que todos los partidos tengan los 4 árbitros
+                        // Validar que todos los partidos tengan los 3 árbitros obligatorios
                         const partidosSinArbitros = partidos.filter(
                           (p) =>
                             !p.arbitroPrincipal ||
                             !p.asistente1 ||
-                            !p.asistente2 ||
-                            !p.cuartoArbitro
+                            !p.asistente2
                         )
 
                         if (partidosSinArbitros.length > 0) {
                           toast({
                             title: "Designación incompleta",
-                            description: `${partidosSinArbitros.length} partido(s) sin árbitros completos`,
+                            description: `${partidosSinArbitros.length} partido(s) sin árbitros obligatorios (Principal, Asistente 1, Asistente 2)`,
                             variant: "destructive",
                           })
                           return
@@ -2506,6 +2565,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                 const horaHoy = ahora.toTimeString().substring(0, 5)
 
                 for (const partido of partidos) {
+                  const fechaPartido = partido.fecha || fechaHoy
+                  const horaPartido = partido.hora || horaHoy
                   await createDesignacion({
                     idCampeonato: campeonatoSeleccionado?.id,
                     nombreCampeonato: campeonatoSeleccionado?.nombre?.toUpperCase(),
@@ -2513,9 +2574,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     nombreEquipoLocal: partido.equipoLocal?.nombre,
                     idEquipoVisitante: partido.equipoVisitante?.id,
                     nombreEquipoVisitante: partido.equipoVisitante?.nombre,
-                    fecha: `${fechaHoy}T${horaHoy}:00`,
-                    hora: horaHoy,
-                    estadio: (partido.equipoLocal?.estadio || partido.equipoVisitante?.estadio || "") ?? null,
+                    fecha: `${fechaPartido}T${horaPartido}:00`,
+                    hora: horaPartido,
+                    estadio: (partido.estadio || partido.equipoLocal?.estadio || partido.equipoVisitante?.estadio || "") ?? null,
                     arbitroPrincipal: partido.arbitroPrincipal?.id ? String(partido.arbitroPrincipal.id) : null,
                     arbitroAsistente1: partido.asistente1?.id ? String(partido.asistente1.id) : null,
                     arbitroAsistente2: partido.asistente2?.id ? String(partido.asistente2.id) : null,
