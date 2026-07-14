@@ -28,6 +28,7 @@ import {
   Info,
   RotateCcw,
   Save,
+  Trophy,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso } from "@/services/api"
@@ -1097,12 +1098,51 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           {ETAPAS.map((etapa) => {
             const estadoEtapa = esCopaPeruActual ? etapasState.etapas[etapa] : { desbloqueada: true, completada: false }
             const estaDesbloqueada = estadoEtapa?.desbloqueada ?? true
+            const estaCompletada = estadoEtapa?.completada ?? false
+
+            const etapaConfig = {
+              "Etapa Distrital": {
+                icon: MapPin,
+                color: "orange",
+                bgGradient: "from-orange-50 to-amber-50",
+                borderColor: estaCompletada ? "border-emerald-300" : estaDesbloqueada ? "border-orange-200 hover:border-orange-300" : "border-gray-200",
+                iconBg: estaCompletada ? "bg-emerald-100 text-emerald-600" : estaDesbloqueada ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-400",
+                titleColor: estaDesbloqueada ? "text-slate-900" : "text-slate-500",
+              },
+              "Etapa Provincial": {
+                icon: Trophy,
+                color: "amber",
+                bgGradient: "from-amber-50 to-yellow-50",
+                borderColor: estaCompletada ? "border-emerald-300" : estaDesbloqueada ? "border-amber-200 hover:border-amber-300" : "border-gray-200",
+                iconBg: estaCompletada ? "bg-emerald-100 text-emerald-600" : estaDesbloqueada ? "bg-amber-100 text-amber-600" : "bg-gray-100 text-gray-400",
+                titleColor: estaDesbloqueada ? "text-slate-900" : "text-slate-500",
+              },
+              "Etapa Departamental": {
+                icon: Shield,
+                color: "purple",
+                bgGradient: "from-purple-50 to-violet-50",
+                borderColor: estaCompletada ? "border-emerald-300" : estaDesbloqueada ? "border-purple-200 hover:border-purple-300" : "border-gray-200",
+                iconBg: estaCompletada ? "bg-emerald-100 text-emerald-600" : estaDesbloqueada ? "bg-purple-100 text-purple-600" : "bg-gray-100 text-gray-400",
+                titleColor: estaDesbloqueada ? "text-slate-900" : "text-slate-500",
+              },
+              "Etapa Nacional": {
+                icon: Shield,
+                color: "emerald",
+                bgGradient: "from-emerald-50 to-teal-50",
+                borderColor: estaCompletada ? "border-emerald-300" : estaDesbloqueada ? "border-emerald-200 hover:border-emerald-300" : "border-gray-200",
+                iconBg: estaCompletada ? "bg-emerald-100 text-emerald-600" : estaDesbloqueada ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-400",
+                titleColor: estaDesbloqueada ? "text-slate-900" : "text-slate-500",
+              },
+            }
+
+            const config = etapaConfig[etapa as keyof typeof etapaConfig] || etapaConfig["Etapa Distrital"]
+            const IconComponent = config.icon
 
             return (
               <Card
                 key={etapa}
-                className={`h-32 cursor-pointer transition-all duration-200 hover:shadow-md ${
-                  estaDesbloqueada ? "border-blue-200 hover:border-blue-300" : "border-red-200 opacity-50"
+                className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-2 ${config.bgGradient} ${config.borderColor} ${
+                  estaDesbloqueada ? "hover:scale-[1.02]" : "opacity-60 cursor-not-allowed"
                 }`}
                 onClick={() => {
                   if (estaDesbloqueada) {
@@ -1119,27 +1159,52 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     setCurrentStep("provincia")
                   } else if (esCopaPeruActual) {
                     toast({
-                      title: "Etapa Bloqueada",
-                      description: `Debes completar etapas anteriores para acceder a "${etapa}"`,
+                      title: "🔒 Etapa Bloqueada",
+                      description: `Debes completar etapas anteriores para acceder a "${etapa.replace("Etapa ", "")}"`,
                       variant: "destructive",
                     })
                   }
                 }}
               >
-                <CardContent className="text-center p-4 md:p-6 h-full flex flex-col justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <h3 className={`text-lg md:text-2xl font-bold ${
-                      estaDesbloqueada ? "text-slate-900" : "text-slate-500"
-                    }`}>
-                      {etapa}
-                    </h3>
-                    {!estaDesbloqueada && esCopaPeruActual && (
-                      <p className="text-xs text-red-600 font-medium">Bloqueada</p>
-                    )}
-                    {estadoEtapa?.completada && esCopaPeruActual && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-1" />
+                <CardContent className="p-6 h-full flex flex-col items-center justify-center gap-3">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${config.iconBg} transition-all duration-300 ${
+                    estaDesbloqueada ? "shadow-md" : ""
+                  }`}>
+                    {estaCompletada ? (
+                      <CheckCircle2 className="w-7 h-7" />
+                    ) : estaDesbloqueada ? (
+                      <IconComponent className="w-7 h-7" />
+                    ) : (
+                      <Lock className="w-6 h-6" />
                     )}
                   </div>
+                  <div className="text-center">
+                    <h3 className={`text-base md:text-lg font-bold ${config.titleColor} transition-colors`}>
+                      {etapa.replace("Etapa ", "")}
+                    </h3>
+                    {!estaDesbloqueada && esCopaPeruActual && (
+                      <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1 justify-center">
+                        <Lock className="w-3 h-3" />
+                        Bloqueada
+                      </p>
+                    )}
+                    {estaCompletada && esCopaPeruActual && (
+                      <p className="text-xs text-emerald-700 font-medium mt-1 flex items-center gap-1 justify-center">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Completada
+                      </p>
+                    )}
+                    {estaDesbloqueada && !estaCompletada && esCopaPeruActual && (
+                      <p className="text-xs text-slate-500 font-medium mt-1">
+                        Disponible
+                      </p>
+                    )}
+                  </div>
+                  {estaDesbloqueada && !estaCompletada && (
+                    <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )
