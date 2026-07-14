@@ -746,20 +746,91 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                             : "bg-gray-300"
                     }`}
                   />
-                  {isBlocked && <Lock className="w-3 h-3 text-red-500 mt-1" />}
-                  {isCompleted && <CheckCircle2 className="w-3 h-3 text-emerald-500 mt-1" />}
-                </div>
-              )
-            })}
+                   {isBlocked && <Lock className="w-3 h-3 text-red-500 mt-1" />}
+                   {isCompleted && <CheckCircle2 className="w-3 h-3 text-emerald-500 mt-1" />}
+                 </div>
+               )
+             })}
+           </div>
+           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+             <div
+               className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-500 ease-out"
+               style={{ width: `${progressPercentage}%` }}
+             />
+           </div>
+         </div>
+       </div>
+     )
+   }
+
+   const getCoachTip = (): { title: string; body: string; icon: React.ReactNode } | null => {
+     if (!esCopaPeruActual) return null
+     switch (currentStep) {
+       case "etapa":
+         return {
+           title: "Etapas del campeonato",
+           body: "Cada etapa debe completarse en orden. Cuando todos los distritos tengan campeón, la etapa Distrital se marcará como completada y podrás continuar a Provincial.",
+           icon: <Info className="w-4 h-4 text-blue-600" />,
+         }
+       case "provincia":
+         return {
+           title: "Selecciona la provincia",
+           body: "Elige la provincia donde se jugarán los partidos. Esta selección define qué distritos y equipos estarán disponibles en los siguientes pasos.",
+           icon: <MapPin className="w-4 h-4 text-cyan-600" />,
+         }
+       case "distrito":
+         if (etapaSeleccionada === "Etapa Provincial") {
+           return {
+             title: "Clasificación Provincial",
+             body: "Selecciona el campeón y subcampeón de cada distrito. Solo el campeón clasifica a la siguiente etapa. Puedes marcar distritos como 'No Participa' si no tienen equipos.",
+             icon: <Trophy className="w-4 h-4 text-amber-600" />,
+           }
+         }
+         return {
+           title: "Selecciona el distrito",
+           body: "Elige el distrito donde se jugará el partido. Los equipos disponibles se filtrarán automáticamente.",
+           icon: <MapPin className="w-4 h-4 text-cyan-600" />,
+         }
+       case "partidos":
+         return {
+           title: "Crea los partidos",
+           body: "Selecciona un equipo local y uno visitante para cada partido. Los equipos ya asignados aparecen deshabilitados para evitar duplicados.",
+           icon: <Users className="w-4 h-4 text-purple-600" />,
+         }
+      case "designar":
+        return {
+          title: "Asigna los árbitros",
+          body: "Cada partido requiere 4 árbitros: Principal, Asistente 1, Asistente 2 y Cuarto. También puedes asignar un Asesor. Los árbitros no pueden repetirse entre partidos.",
+          icon: <ClipboardList className="w-4 h-4 text-blue-600" />,
+        }
+      case "campeonato":
+        return {
+          title: "Selecciona el campeonato",
+          body: "Elige el campeonato al que deseas asignar árbitros. COPA PERÚ 2026 es un campeonato protegido que requiere completar etapas en orden.",
+          icon: <Trophy className="w-4 h-4 text-amber-600" />,
+        }
+      default:
+        return null
+    }
+  }
+
+  const renderCoach = () => {
+    const tip = getCoachTip()
+    if (!tip) return null
+    return (
+      <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              {tip.icon}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-blue-900">{tip.title}</p>
+              <p className="text-xs text-blue-800 mt-0.5">{tip.body}</p>
+            </div>
           </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-500 ease-out"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -792,6 +863,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
           </Link>
         </div>
+
+        {renderCoach()}
 
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-4">
@@ -1101,6 +1174,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
           </div>
 
+          {renderCoach()}
+
           {esCopaPeruActual && (
             <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
               <CardContent className="p-4">
@@ -1249,6 +1324,16 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               </Button>
             </div>
 
+            {renderCoach()}
+
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <p className="text-sm text-green-800">
+                  ✅ Todos los distritos tienen campeón seleccionado. Estos son los equipos que clasifican a la siguiente etapa.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Lista de equipos participantes */}
             <div className="space-y-4">
               {equiposParticipantes.map((equipo: any, idx: number) => (
@@ -1370,6 +1455,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               Cambiar Provincia
             </Button>
           </div>
+
+          {renderCoach()}
 
           {/* 🔎 BÚSQUEDA Y FILTRO */}
           <div className="relative">
@@ -1770,6 +1857,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           </Button>
         </div>
 
+        {renderCoach()}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* SELECTOR DE EQUIPOS */}
           <div className="lg:col-span-3">
@@ -2011,6 +2100,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             Volver a Partidos
           </Button>
         </div>
+
+        {renderCoach()}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
               {/* PANEL LATERAL: ÁRBITROS */}
