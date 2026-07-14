@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Loader,
   MapPin,
+  Calendar,
   Users,
   Plus,
   Trash2,
@@ -2539,16 +2540,35 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               )
             }
 
+            const estadioPartido = partido.estadio || partido.equipoLocal?.estadio || partido.equipoVisitante?.estadio || "Por definir"
+            const fechaPartido = partido.fecha || ""
+            const horaPartido = partido.hora || ""
+
             return (
-              <Card key={partido.id} className="border-2 border-gray-200 bg-card">
-                <CardHeader className="bg-slate-50 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
+              <Card key={partido.id} className="border-2 border-gray-200 bg-card overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <CardTitle className="text-slate-900 flex items-center gap-2">
                       <Badge className="bg-slate-600 text-white">Partido {idx + 1}</Badge>
                     </CardTitle>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {provinciaSeleccionada}
-                    </span>
+                    <div className="flex items-center gap-3 text-xs text-slate-600">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-cyan-600" />
+                        {estadioPartido}
+                      </span>
+                      {fechaPartido && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                          {fechaPartido}
+                        </span>
+                      )}
+                      {horaPartido && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                          {horaPartido}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 md:p-6">
@@ -2556,11 +2576,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     <div className="flex-1 text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
                       <p className="text-xs font-bold text-purple-700 mb-1">LOCAL</p>
                       <p className="text-sm font-bold text-slate-900">{partido.equipoLocal.nombre}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{partido.equipoLocal.distrito || ""}</p>
                     </div>
                     <div className="text-slate-400 font-bold text-lg">VS</div>
                     <div className="flex-1 text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
                       <p className="text-xs font-bold text-orange-700 mb-1">VISITA</p>
                       <p className="text-sm font-bold text-slate-900">{partido.equipoVisitante.nombre}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{partido.equipoVisitante.distrito || ""}</p>
                     </div>
                   </div>
 
