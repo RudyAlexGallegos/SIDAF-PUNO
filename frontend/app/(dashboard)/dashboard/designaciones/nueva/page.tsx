@@ -1338,24 +1338,64 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Card>
 
             {/* Lista de equipos participantes */}
-            <div className="space-y-4">
-              {equiposParticipantes.map((equipo: any, idx: number) => (
-                <Card key={`${equipo.nombre}-${idx}`} className="border-2 border-green-300 bg-gradient-to-r from-green-50 to-emerald-50">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                         <h3 className="text-lg font-bold text-slate-900">{equipo.nombre}</h3>
-                         <p className="text-sm text-gray-600">
-                           Distrito: {equipo.distrito || "Sin registrar"}{resolverProvincia(equipo.distrito, equipo.provincia) ? ` · Provincia: ${resolverProvincia(equipo.distrito, equipo.provincia)}` : ""}
-                         </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {equiposParticipantes.map((equipo: any, idx: number) => {
+                const esCampeon = equipo.tipo === "Campeón"
+                return (
+                  <Card
+                    key={`${equipo.nombre}-${idx}`}
+                    className={`border-2 transition-all duration-200 hover:shadow-lg ${
+                      esCampeon
+                        ? "border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50"
+                        : "border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50"
+                    }`}
+                  >
+                    <CardContent className="p-4 md:p-5">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          esCampeon
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-slate-200 text-slate-600"
+                        }`}>
+                          {esCampeon ? (
+                            <Trophy className="w-5 h-5" />
+                          ) : (
+                            <Shield className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-sm font-bold text-slate-900 truncate">
+                              {equipo.nombre}
+                            </h3>
+                            <Badge
+                              className={`text-[10px] font-semibold border ${
+                                esCampeon
+                                  ? "bg-amber-100 text-amber-800 border-amber-200"
+                                  : "bg-slate-100 text-slate-700 border-slate-200"
+                              }`}
+                            >
+                              {esCampeon ? "🥇 Campeón" : "🥈 Subcampeón"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {equipo.distrito || "Sin distrito"}
+                            </span>
+                            {resolverProvincia(equipo.distrito, equipo.provincia) && (
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {resolverProvincia(equipo.distrito, equipo.provincia)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-<Badge className="bg-green-600 text-white">
-                        {equipo.tipo}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
 
             {/* Botón de avance */}
