@@ -130,9 +130,11 @@ function DesignacionesPageContent() {
   const [searchTerm, setSearchTerm] = useState("")
   const [championshipFilter, setChampionshipFilter] = useState("todos")
   const [statusFilter, setStatusFilter] = useState("todos")
+  const [etapaFilter, setEtapaFilter] = useState("todas")
   const [expandedProvincias, setExpandedProvincias] = useState<Set<string>>(new Set())
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
    // Fetch designaciones
    const cacheDesignaciones = useCache(
@@ -375,13 +377,26 @@ function DesignacionesPageContent() {
        return campeonatoCategoriaMap.get(nombre) === "CAMPEONATO FUNDAMENTAL" || campeonatoCategoriaMap.get(nombre) === "CAMPEONATO OFICIAL"
      }
 
-     useEffect(() => {
-      const camps = Object.keys(designacionesAgrupadas)
-      const primer = primerCampeonatoVisible || camps[0]
-      if (primer && expandedProvincias.size === 0) {
-        setExpandedProvincias(new Set([primer]))
+    // Escuchar actualizaciones de designaciones desde otras partes de la app
+    useEffect(() => {
+      const handler = () => {
+        setRefreshKey((prev) => prev + 1)
+        toast({
+          title: "Lista actualizada",
+          description: "Se han sincronizado las designaciones",
+        })
       }
-    }, [designacionesAgrupadas, primerCampeonatoVisible])
+      window.addEventListener("designaciones-updated", handler)
+      return () => window.removeEventListener("designaciones-updated", handler)
+    }, [toast])
+
+      useEffect(() => {
+       const camps = Object.keys(designacionesAgrupadas)
+       const primer = primerCampeonatoVisible || camps[0]
+       if (primer && expandedProvincias.size === 0) {
+         setExpandedProvincias(new Set([primer]))
+       }
+     }, [designacionesAgrupadas, primerCampeonatoVisible])
 
   const toggleCampeonato = (campeonato: string) => {
       const newSet = new Set(expandedProvincias)
@@ -398,6 +413,7 @@ function DesignacionesPageContent() {
 
     const renderCampeonatoCard = (campeonato: string) => {
       const esFund = esCampeonatoFundamental(campeonato)
+      const esCopaPeru = campeonato === "COPA PERÚ 2026"
       const semanas = Object.entries(designacionesAgrupadas[campeonato] || {}).sort(
         ([, a], [, b]) => b.length - a.length,
       )
@@ -409,21 +425,40 @@ function DesignacionesPageContent() {
       return (
         <Card
           key={campeonato}
-          className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+          className={`overflow-hidden border shadow-sm transition-all duration-200 ${
+            esCopaPeru
+              ? "border-red-200 hover:shadow-lg bg-gradient-to-br from-red-50/50 to-white"
+              : "border-gray-200 hover:shadow-md"
+          }`}
         >
           <button
             onClick={() => toggleCampeonato(campeonato)}
-            className="w-full bg-white hover:bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
+            className="w-full bg-white/80 hover:bg-white border-b border-gray-100 p-4 flex items-center justify-between transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Trophy className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+              <div className={`h-10 w-10 md:h-11 md:w-11 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                esCopaPeru
+                  ? "bg-red-100 text-red-600"
+                  : "bg-blue-100 text-blue-600"
+              }`}>
+                {esCopaPeru ? (
+                  <Trophy className="h-4 md:h-5 w-4 md:w-5" />
+                ) : (
+                  <ClipboardList className="h-4 md:h-5 w-4 md:w-5" />
+                )}
               </div>
               <div className="text-left">
                 <span className="font-bold text-lg text-slate-900">{campeonato}</span>
-                <span className="ml-2 text-sm text-slate-600 font-medium">
-                  {totalDesignaciones} designaciones
-                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-sm text-slate-600 font-medium">
+                    {totalDesignaciones} {totalDesignaciones === 1 ? "designación" : "designaciones"}
+                  </span>
+                  {esCopaPeru && totalDesignaciones > 0 && (
+                    <Badge className="text-[10px] bg-red-100 text-red-800 border-red-200">
+                      Copa Perú
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             {expandedProvincias.has(campeonato) ? (
@@ -438,12 +473,24 @@ function DesignacionesPageContent() {
               {semanas.map(([semana, designacionesSemana]) => (
                 <div
                   key={semana}
-                  className="rounded-xl border border-gray-200 bg-white mx-3 md:mx-4 mb-3 md:mb-4 overflow-hidden"
+                  className={`rounded-xl border overflow-hidden mx-3 md:mx-4 mb-3 md:mb-4 ${
+                    esCopaPeru
+                      ? "border-red-200 bg-white shadow-sm"
+                      : "border-gray-200 bg-white"
+                  }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 bg-slate-50/60 px-4 py-3">
+                  <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 ${
+                    esCopaPeru
+                      ? "bg-gradient-to-r from-red-50 to-white border-b border-red-100"
+                      : "border-b border-gray-100 bg-slate-50/60"
+                  }`}>
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                        <Calendar className="h-4 md:h-5 w-4 md:w-5 text-emerald-600" />
+                      <div className={`h-9 w-9 md:h-10 md:w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        esCopaPeru
+                          ? "bg-red-100 text-red-600"
+                          : "bg-emerald-100 text-emerald-600"
+                      }`}>
+                        <Calendar className="h-4 md:h-5 w-4 md:w-5" />
                       </div>
                       <div>
                         <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
@@ -452,6 +499,11 @@ function DesignacionesPageContent() {
                         <p className="text-xs md:text-sm text-slate-600 font-medium">
                           {designacionesSemana.length}{" "}
                           {designacionesSemana.length === 1 ? "designación" : "designaciones"}
+                          {esCopaPeru && (
+                            <span className="ml-2 text-red-600 font-semibold">
+                              · Copa Perú 2026
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -460,7 +512,9 @@ function DesignacionesPageContent() {
                         size="sm"
                         variant="outline"
                         onClick={() => exportarPDFSemanal(semana, designacionesSemana)}
-                        className="h-8 text-xs border-gray-200 hover:border-emerald-400 hover:text-emerald-700"
+                        className={`h-8 text-xs border-gray-200 hover:border-emerald-400 hover:text-emerald-700 ${
+                          esCopaPeru ? "hover:border-red-400 hover:text-red-700" : ""
+                        }`}
                       >
                         <Printer className="w-3.5 h-3.5 mr-1.5" />
                         Imprimir semana
@@ -470,7 +524,7 @@ function DesignacionesPageContent() {
 
                   <div className="overflow-x-auto">
                     <Table className="text-sm">
-                      <TableHeader className="bg-gray-50 border-b border-gray-200">
+                      <TableHeader className={`border-b border-gray-200 ${esCopaPeru ? "bg-red-50/50" : "bg-gray-50"}`}>
                         <TableRow>
                           <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
                             Fecha
@@ -484,6 +538,11 @@ function DesignacionesPageContent() {
                           <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
                             Estadio
                           </TableHead>
+                          {esCopaPeru && (
+                            <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
+                              Etapa
+                            </TableHead>
+                          )}
                           {!esFund && (
                             <TableHead className="h-10 text-xs font-bold text-slate-600 uppercase tracking-wide px-3">
                               Principal
@@ -704,10 +763,27 @@ function DesignacionesPageContent() {
                                             </div>
                                           </div>
                                         </TableCell>
-                                        <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
-                                          {designacion.estadio || "-"}
-                                        </TableCell>
-                                        <TableCell className="text-xs px-3">
+                                         <TableCell className="text-xs text-slate-600 px-3 font-medium truncate max-w-[140px]">
+                                           {designacion.estadio || "-"}
+                                         </TableCell>
+                                         {esCopaPeru && (
+                                           <TableCell className="text-xs px-3">
+                                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                               designacion.etapa === "DISTRITAL"
+                                                 ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                 : designacion.etapa === "PROVINCIAL"
+                                                   ? "bg-amber-100 text-amber-800 border-amber-200"
+                                                   : designacion.etapa === "DEPARTAMENTAL"
+                                                     ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                     : designacion.etapa === "NACIONAL"
+                                                       ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                                       : "bg-gray-100 text-gray-800 border-gray-200"
+                                             }`}>
+                                               {designacion.etapa || "-"}
+                                             </span>
+                                           </TableCell>
+                                         )}
+                                         <TableCell className="text-xs px-3">
                                           <div className="space-y-0.5">
                                             <div className="font-semibold text-slate-900 text-xs leading-tight">
                                               {getArbNombre(arbPrincipal)}

@@ -2658,6 +2658,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   description: `Se crearon ${partidos.length} designaciones exitosamente`,
                 })
 
+                // Notificar a otras partes de la app para actualizar la lista
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("designaciones-updated"))
+                }
+
                 setCurrentStep("confirmacion")
               } catch (error) {
                 console.error("Error guardando designaciones:", error)
