@@ -576,7 +576,9 @@ export async function createDesignacion(data: Designacion): Promise<Designacion>
     });
 
     if (!response.ok) {
-        throw new Error("Error al crear designación");
+        // 409: el árbitro ya está designado en esa fecha (conflicto de disponibilidad)
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Error al crear designación");
     }
 
     return await response.json();

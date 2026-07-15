@@ -1,5 +1,6 @@
 package com.sidaf.backend.init;
 
+import com.sidaf.backend.service.DisponibilidadService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,9 +20,12 @@ import org.springframework.stereotype.Component;
 public class DisponibilidadConstraintInitializer implements CommandLineRunner {
 
     private final JdbcTemplate jdbcTemplate;
+    private final DisponibilidadService disponibilidadService;
 
-    public DisponibilidadConstraintInitializer(JdbcTemplate jdbcTemplate) {
+    public DisponibilidadConstraintInitializer(JdbcTemplate jdbcTemplate,
+                                                DisponibilidadService disponibilidadService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.disponibilidadService = disponibilidadService;
     }
 
     @Override
@@ -66,6 +70,18 @@ public class DisponibilidadConstraintInitializer implements CommandLineRunner {
                     "Abortando arranque para evitar doble-reserva. Detalle: " + e.getMessage());
             throw new IllegalStateException(
                     "No se pudo garantizar ux_arbitro_disp_bloqueo_dia (consistencia de disponibilidad)", e);
+        }
+
+        // 3. Backfill: generar bloqueos para designaciones activas ya existentes
+        //    (creadas antes de este módulo) para que también respeten la regla.
+        try {
+            int generados = disponibilidadService.backfillBloqueosDesignacionesActivas();
+            if (generados > 0) {
+                System.out.println("🔄 Backfill de disponibilidad: " + generados +
+                        " bloqueos generados desde designaciones activas existentes.");
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Backfill de disponibilidad falló (no crítico): " + e.getMessage());
         }
     }
 }

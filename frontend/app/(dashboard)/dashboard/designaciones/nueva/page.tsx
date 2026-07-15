@@ -2767,8 +2767,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               } catch (error) {
                 console.error("Error guardando designaciones:", error)
                 toast({
-                  title: "❌ Error",
-                  description: "No se pudieron guardar las designaciones",
+                  title: "❌ No se pudieron guardar",
+                  description: error instanceof Error ? error.message : "No se pudieron guardar las designaciones",
                   variant: "destructive",
                 })
               } finally {
@@ -3247,16 +3247,16 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                  })
 
                  setCurrentStep("confirmacion")
-               } catch (error) {
-                 console.error("Error guardando:", error)
-                 toast({
-                   title: "❌ Error",
-                   description: "No se pudieron guardar las designaciones",
-                   variant: "destructive",
-                 })
-               } finally {
-                 setIsSaving(false)
-               }
+                } catch (error) {
+                  console.error("Error guardando:", error)
+                  toast({
+                    title: "❌ No se pudieron guardar",
+                    description: error instanceof Error ? error.message : "No se pudieron guardar las designaciones",
+                    variant: "destructive",
+                  })
+                } finally {
+                  setIsSaving(false)
+                }
              }}
              disabled={isSaving}
              className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"

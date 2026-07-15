@@ -60,10 +60,15 @@ public class DesignacionService {
     }
 
     private void sincronizarDisponibilidad(Designacion guardada) {
-        if (guardada.getEstado() == EstadoDesignacion.CONFIRMADA) {
+        EstadoDesignacion estado = guardada.getEstado();
+        // Una designación ACTIVA (programada o confirmada) ocupa al árbitro ese día.
+        // En este sistema la designación operativa nace como PROGRAMADA (no hay un
+        // paso separado de "publicar"), por lo que el bloqueo debe aplicarse ya al crearla.
+        if (estado == EstadoDesignacion.PROGRAMADA
+                || estado == EstadoDesignacion.CONFIRMADA
+                || estado == EstadoDesignacion.COMPLETADA) {
             disponibilidadService.bloquearPorDesignacion(guardada);
-        } else if (guardada.getEstado() == EstadoDesignacion.CANCELADA
-                || guardada.getEstado() == EstadoDesignacion.PROGRAMADA) {
+        } else if (estado == EstadoDesignacion.CANCELADA) {
             disponibilidadService.liberarPorDesignacion(guardada.getId());
         }
     }

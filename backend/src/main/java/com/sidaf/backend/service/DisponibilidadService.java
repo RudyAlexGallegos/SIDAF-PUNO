@@ -6,8 +6,10 @@ import com.sidaf.backend.model.ArbitroDisponibilidad;
 import com.sidaf.backend.model.ArbitroDisponibilidad.EstadoBloqueo;
 import com.sidaf.backend.model.ArbitroDisponibilidad.TipoIndisponibilidad;
 import com.sidaf.backend.model.Designacion;
+import com.sidaf.backend.model.Designacion.EstadoDesignacion;
 import com.sidaf.backend.repository.ArbitroDisponibilidadRepository;
 import com.sidaf.backend.repository.ArbitroRepository;
+import com.sidaf.backend.repository.DesignacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +42,9 @@ public class DisponibilidadService {
 
     @Autowired
     private ArbitroRepository arbitroRepository;
+
+    @Autowired
+    private DesignacionRepository designacionRepository;
 
     // ---------------------------------------------------------------
     // Utilidades
@@ -235,7 +241,7 @@ public class DisponibilidadService {
                     .map(DisponibilidadArbitroDTO::getArbitroNombre)
                     .collect(Collectors.joining(", "));
             throw new ConflictoDisponibilidadException(
-                    "No se puede confirmar: los siguientes árbitros ya están asignados en esa fecha: "
+                    "No se puede guardar la designación: los siguientes árbitros ya están asignados en esa fecha: "
                             + nombresConflicto, conflictos);
         }
 
@@ -266,7 +272,7 @@ public class DisponibilidadService {
                 // Salvaguarda ante condición de carrera: el índice único parcial rechazó el insert
                 DisponibilidadArbitroDTO c = consultarArbitro(arbitroId, d.getFecha());
                 throw new ConflictoDisponibilidadException(
-                        "Conflicto de disponibilidad detectado al confirmar (" + nombres.get(arbitroId) + ")",
+                        "Conflicto de disponibilidad detectado al guardar (" + nombres.get(arbitroId) + ")",
                         List.of(c));
             }
         }
@@ -287,6 +293,84 @@ public class DisponibilidadService {
         if (!bloqueos.isEmpty()) {
             disponibilidadRepository.deleteAll(bloqueos);
         }
+    }
+
+    /**
+     * Backfill tolerante: genera los bloqueos de disponibilidad para las designaciones
+     * ACTIVAS ya existentes en la base de datos (creadas antes de que existiera este
+     * módulo). Se ejecuta al arrancar. Es idempotente y NO lanza excepción frente a
+     * duplicados preexistentes: el árbitro ya ocupado mantiene el bloqueo de la
+     * designación más antigua y las designaciones posteriores en conflicto simplemente
+     * no generan su bloqueo (quedan marcadas como duplicadas en origen).
+     */
+    @Transactional
+    public int backfillBloqueosDesignacionesActivas() {
+        List<Designacion> todas = designacionRepository.findAll();
+        List<Designacion> activas = todas.stream()
+                .filter(d -> d.getEstado() == EstadoDesignacion.PROGRAMADA
+                        || d.getEstado() == EstadoDesignacion.CONFIRMADA
+                        || d.getEstado() == EstadoDesignacion.COMPLETADA)
+                .sorted(Comparator.comparing(Designacion::getId))
+                .collect(Collectors.toList());
+
+        int generados = 0;
+        for (Designacion d : activas) {
+            if (d.getFecha() == null) continue;
+            LocalDate fecha = normalizarFecha(d.getFecha());
+
+            Map<Long, List<String>> rolesPorArbitro = new LinkedHashMap<>();
+            addRol(rolesPorArbitro, "PRINCIPAL", d.getArbitroPrincipal());
+            addRol(rolesPorArbitro, "ASISTENTE_1", d.getArbitroAsistente1());
+            addRol(rolesPorArbitro, "ASISTENTE_2", d.getArbitroAsistente2());
+            addRol(rolesPorArbitro, "CUARTO", d.getCuartoArbitro());
+            addRol(rolesPorArbitro, "ASESOR", d.getAsesor());
+            if (rolesPorArbitro.isEmpty()) continue;
+
+            List<Long> arbitroIds = new ArrayList<>(rolesPorArbitro.keySet());
+
+            Map<Long, String> nombres = new LinkedHashMap<>();
+            arbitroRepository.findAllById(arbitroIds).forEach(a ->
+                    nombres.put(a.getId(), ((a.getNombre() != null ? a.getNombre() : "")
+                            + (a.getApellido() != null ? " " + a.getApellido() : "")).trim()));
+            for (Long id : arbitroIds) {
+                nombres.putIfAbsent(id, "Árbitro #" + id);
+            }
+
+            // Bloqueos ya existentes para esta fecha (propios de esta designación u otras)
+            List<ArbitroDisponibilidad> existentes = disponibilidadRepository
+                    .findActivosByFechaAndArbitros(fecha, EstadoBloqueo.BLOQUEADO, arbitroIds);
+
+            for (Long arbitroId : arbitroIds) {
+                boolean yaBloqueado = existentes.stream().anyMatch(e -> e.getArbitroId().equals(arbitroId));
+                if (yaBloqueado) continue; // ya ocupado por otra designación (conflicto preexistente) -> no duplicar
+
+                String rol = String.join(" / ", rolesPorArbitro.get(arbitroId));
+                String equipoTrabajo = nombres.entrySet().stream()
+                        .filter(n -> !n.getKey().equals(arbitroId))
+                        .map(Map.Entry::getValue)
+                        .collect(Collectors.joining(", "));
+
+                ArbitroDisponibilidad bloqueo = new ArbitroDisponibilidad();
+                bloqueo.setArbitroId(arbitroId);
+                bloqueo.setArbitroNombre(nombres.get(arbitroId));
+                bloqueo.setFecha(fecha);
+                bloqueo.setHora(d.getHora());
+                bloqueo.setTipo(TipoIndisponibilidad.DESIGNACION);
+                bloqueo.setEstado(EstadoBloqueo.BLOQUEADO);
+                bloqueo.setDesignacionId(d.getId());
+                bloqueo.setCampeonatoId(d.getIdCampeonato());
+                bloqueo.setCampeonatoNombre(d.getNombreCampeonato());
+                bloqueo.setRol(rol);
+                bloqueo.setEquipoTrabajo(equipoTrabajo.isBlank() ? null : equipoTrabajo);
+                try {
+                    disponibilidadRepository.save(bloqueo);
+                    generados++;
+                } catch (DataIntegrityViolationException ex) {
+                    // Condición de carrera: otro hilo/arranque ya creó el bloqueo. Se ignora.
+                }
+            }
+        }
+        return generados;
     }
 
     // ---------------------------------------------------------------
