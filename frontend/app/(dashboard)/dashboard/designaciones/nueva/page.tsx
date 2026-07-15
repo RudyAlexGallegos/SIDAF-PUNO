@@ -28,7 +28,6 @@ import {
   Info,
   RotateCcw,
   Save,
-  Trophy,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso, getDisponibilidadPorFecha, type DisponibilidadArbitro } from "@/services/api"
