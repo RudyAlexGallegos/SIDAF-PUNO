@@ -2258,25 +2258,133 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               <div className="lg:col-span-1">
                 <Card className="border-2 border-gray-200 bg-card sticky top-24">
                   <CardHeader>
-                    <CardTitle className="text-slate-900 text-lg">
+                    <CardTitle className="text-slate-900 text-lg flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-blue-600" />
                       Árbitros Disponibles
                     </CardTitle>
+                    <CardDescription className="text-xs text-slate-500">
+                      Agrupados por rol · los ocupados aparecen bloqueados
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-{arbitros.map((arb) => (
-                        <div
-                          key={arb.id}
-                          className="p-2 bg-white rounded border border-gray-200 hover:border-blue-600/50 transition-all cursor-pointer"
-                        >
-                          <p className="font-semibold text-slate-900 text-sm">
-                            {arb.nombre} {arb.apellido}
-                          </p>
-                          <Badge className="text-xs mt-1 bg-blue-600 text-white">
-                            {arb.categoria}
-                          </Badge>
+                    <div className="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
+                      {/* 👉 ÁRBITROS PRINCIPALES */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <Badge className="bg-blue-600 text-white text-[11px]">PRINCIPALES</Badge>
+                          <span className="text-[11px] text-slate-400">
+                            {arbitros.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length} Nacional
+                            {arbitros.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length > 0 &&
+                              ` · ${arbitros.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length} otras`}
+                          </span>
                         </div>
-                      ))}
+                        <div className="space-y-2">
+                          {arbitros
+                            .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
+                            .map((arb) => {
+                              const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                              const noDisponible = infoDisp?.disponible === false
+                              return (
+                                <div
+                                  key={arb.id}
+                                  title={noDisponible ? (infoDisp?.motivo || "Ya está asignado en esa fecha") : "Disponible"}
+                                  className={`p-2.5 rounded-lg border transition-all ${
+                                    noDisponible
+                                      ? "border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed"
+                                      : "border-gray-200 bg-white hover:border-blue-600/60 cursor-default"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="font-semibold text-slate-900 text-sm leading-tight">
+                                      {arb.nombre} {arb.apellido}
+                                    </p>
+                                    {noDisponible
+                                      ? <Lock className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                                      : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                                  </div>
+                                  <div className="mt-1 flex items-center gap-1.5">
+                                    <Badge className="bg-blue-600 text-white text-[10px]">{arb.categoria}</Badge>
+                                    <span className={`text-[10px] font-medium ${noDisponible ? "text-red-600" : "text-emerald-600"}`}>
+                                      {noDisponible ? "No disponible" : "Disponible"}
+                                    </span>
+                                  </div>
+                                  {noDisponible && (
+                                    <p className="text-[10px] text-slate-600 mt-1 leading-tight">
+                                      {infoDisp?.motivo}
+                                      {infoDisp?.equipoTrabajo ? ` · Con: ${infoDisp.equipoTrabajo}` : ""}
+                                    </p>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          {arbitros.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length === 0 && (
+                            <p className="text-[11px] text-slate-400 px-1">Sin árbitros nacionales</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 👉 ÁRBITROS ASISTENTES */}
+                      <div className="pt-1 border-t border-gray-100">
+                        <div className="flex items-center gap-2 mb-2 mt-3 px-1">
+                          <Badge className="bg-emerald-600 text-white text-[11px]">ASISTENTES</Badge>
+                          <span className="text-[11px] text-slate-400">
+                            {arbitros.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length} registrados
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {arbitros
+                            .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                            .map((arb) => {
+                              const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                              const noDisponible = infoDisp?.disponible === false
+                              return (
+                                <div
+                                  key={arb.id}
+                                  title={noDisponible ? (infoDisp?.motivo || "Ya está asignado en esa fecha") : "Disponible"}
+                                  className={`p-2.5 rounded-lg border transition-all ${
+                                    noDisponible
+                                      ? "border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed"
+                                      : "border-gray-200 bg-white hover:border-emerald-600/60 cursor-default"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="font-semibold text-slate-900 text-sm leading-tight">
+                                      {arb.nombre} {arb.apellido}
+                                    </p>
+                                    {noDisponible
+                                      ? <Lock className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                                      : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                                  </div>
+                                  <div className="mt-1 flex items-center gap-1.5">
+                                    <Badge className="bg-emerald-600 text-white text-[10px]">{arb.categoria}</Badge>
+                                    <span className={`text-[10px] font-medium ${noDisponible ? "text-red-600" : "text-emerald-600"}`}>
+                                      {noDisponible ? "No disponible" : "Disponible"}
+                                    </span>
+                                  </div>
+                                  {noDisponible && (
+                                    <p className="text-[10px] text-slate-600 mt-1 leading-tight">
+                                      {infoDisp?.motivo}
+                                      {infoDisp?.equipoTrabajo ? ` · Con: ${infoDisp.equipoTrabajo}` : ""}
+                                    </p>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          {arbitros.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length === 0 && (
+                            <p className="text-[11px] text-slate-400 px-1">Sin árbitros asistentes</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Leyenda */}
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-[10px] text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Disponible
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Lock className="w-3.5 h-3.5 text-red-500" /> No disponible
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -3073,7 +3181,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
            {/* Árbitros seleccionados */}
            <Card className="border-2 border-gray-200 bg-card">
              <CardHeader>
-               <CardTitle className="text-slate-900">
+               <CardTitle className="text-slate-900 flex items-center gap-2">
+                 <UserCheck className="w-5 h-5 text-blue-600" />
                  Árbitros Seleccionados ({arbitrosSeleccionados.length})
                </CardTitle>
              </CardHeader>
@@ -3084,20 +3193,31 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                  </p>
                ) : (
                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                   {arbitrosSeleccionados.map((arb) => (
-                     <div key={arb.id} className="p-3 bg-blue-600/10 rounded-lg flex items-center justify-between">
-                       <div>
-                         <p className="font-semibold text-slate-900">{arb.nombre} {arb.apellido}</p>
-                         <Badge className="bg-blue-600 text-white text-xs">{arb.categoria}</Badge>
-                       </div>
-                       <button
-                         onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
-                         className="text-red-600 hover:text-red-700"
+                   {arbitrosSeleccionados.map((arb) => {
+                     const esPrincipal = (arb.categoria || "").toUpperCase() === "NACIONAL"
+                     return (
+                       <div
+                         key={arb.id}
+                         className={`p-3 rounded-lg flex items-center justify-between border-2 ${
+                           esPrincipal ? "border-blue-200 bg-blue-600/10" : "border-emerald-200 bg-emerald-600/10"
+                         }`}
                        >
-                         <Trash2 className="w-4 h-4" />
-                       </button>
-                     </div>
-                   ))}
+                         <div>
+                           <p className="font-semibold text-slate-900">{arb.nombre} {arb.apellido}</p>
+                           <Badge className={`text-xs ${esPrincipal ? "bg-blue-600 text-white" : "bg-emerald-600 text-white"}`}>
+                             {arb.categoria}
+                           </Badge>
+                         </div>
+                         <button
+                           onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
+                           className="text-red-600 hover:text-red-700"
+                           aria-label={`Quitar a ${arb.nombre} ${arb.apellido}`}
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </button>
+                       </div>
+                     )
+                   })}
                  </div>
                )}
              </CardContent>
@@ -3186,28 +3306,73 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
            </CardContent>
          </Card>
 
-         <div className="space-y-4">
-           {arbitrosSeleccionados.map((arb) => (
-             <Card key={arb.id} className="border-2 border-gray-200 bg-card">
-               <CardContent className="p-4 flex items-center justify-between">
-                 <div>
-                   <p className="text-xs font-bold text-slate-500 uppercase mb-1">Árbitro</p>
-                   <p className="text-base font-bold text-slate-900">{arb.nombre} {arb.apellido}</p>
-                   <div className="flex items-center gap-2 mt-2">
-                     <Badge className="bg-blue-600 text-white">{arb.categoria}</Badge>
-                     <Badge className="bg-emerald-600 text-white">PROGRAMADA</Badge>
-                   </div>
-                 </div>
-                 <div className="text-right">
-                   <p className="text-xs text-slate-500">Campeonato</p>
-                   <p className="text-sm font-semibold text-slate-900">{campeonatoSeleccionado?.nombre}</p>
-                   <p className="text-xs text-slate-600 mt-1">📅 {fechaGeneral}</p>
-                   <p className="text-xs text-slate-600">🕒 {horaGeneral}</p>
-                 </div>
-               </CardContent>
-             </Card>
-           ))}
-         </div>
+          <div className="space-y-5">
+            {/* Principales */}
+            {arbitrosSeleccionados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Shield className="w-4 h-4" /> Árbitros Principales
+                </p>
+                <div className="space-y-2">
+                  {arbitrosSeleccionados
+                    .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
+                    .map((arb) => (
+                      <Card key={arb.id} className="border-2 border-blue-200 bg-blue-50/50 bg-card">
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase mb-1">Principal</p>
+                            <p className="text-base font-bold text-slate-900">{arb.nombre} {arb.apellido}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge className="bg-blue-600 text-white">{arb.categoria}</Badge>
+                              <Badge className="bg-emerald-600 text-white">PROGRAMADA</Badge>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">Campeonato</p>
+                            <p className="text-sm font-semibold text-slate-900">{campeonatoSeleccionado?.nombre}</p>
+                            <p className="text-xs text-slate-600 mt-1">📅 {fechaGeneral}</p>
+                            <p className="text-xs text-slate-600">🕒 {horaGeneral}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Asistentes */}
+            {arbitrosSeleccionados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <UserCheck className="w-4 h-4" /> Árbitros Asistentes
+                </p>
+                <div className="space-y-2">
+                  {arbitrosSeleccionados
+                    .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                    .map((arb) => (
+                      <Card key={arb.id} className="border-2 border-emerald-200 bg-emerald-50/50 bg-card">
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase mb-1">Asistente</p>
+                            <p className="text-base font-bold text-slate-900">{arb.nombre} {arb.apellido}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge className="bg-emerald-600 text-white">{arb.categoria}</Badge>
+                              <Badge className="bg-emerald-600 text-white">PROGRAMADA</Badge>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">Campeonato</p>
+                            <p className="text-sm font-semibold text-slate-900">{campeonatoSeleccionado?.nombre}</p>
+                            <p className="text-xs text-slate-600 mt-1">📅 {fechaGeneral}</p>
+                            <p className="text-xs text-slate-600">🕒 {horaGeneral}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
 
          <div className="flex gap-3 pt-4">
            <Button
