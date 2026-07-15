@@ -2324,74 +2324,78 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       ))}
                     </div>
 
-                    <div className="space-y-4 max-h-[26rem] overflow-y-auto pr-1">
-                      {/* 👉 ÁRBITROS PRINCIPALES */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 px-1">
-                          <Badge className="bg-blue-600 text-white text-[11px]">PRINCIPALES</Badge>
-                          <span className="text-[11px] text-slate-400">
-                            {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length} nacionales
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {arbitrosDisponiblesFiltrados
-                            .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
-                            .map((arb) => {
-                              const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
-                              const noDisponible = infoDisp?.disponible === false
-                              return (
-                                <ArbitroDisponibleCard
-                                  key={arb.id}
-                                  arb={arb}
-                                  seleccionado={false}
-                                  noDisponible={noDisponible}
-                                  motivo={infoDisp?.motivo}
-                                  equipoTrabajo={infoDisp?.equipoTrabajo}
-                                  hora={infoDisp?.hora}
-                                  rolColor="blue"
-                                  onToggle={() => {}}
-                                />
-                              )
-                            })}
-                          {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length === 0 && (
-                            <p className="text-[11px] text-slate-400 px-1">Sin árbitros nacionales</p>
-                          )}
-                        </div>
+                    <div className="space-y-3 max-h-[26rem] overflow-y-auto pr-1">
+                      {/* 👉 ZONA ÁRBITRO PRINCIPAL */}
+                      <ZonaRol
+                        color="blue"
+                        icono={<Shield className="w-4 h-4" />}
+                        titulo="Árbitro Principal"
+                        subtitulo="Rol jerárquico · 1 por designación"
+                      >
+                        {arbitrosDisponiblesFiltrados
+                          .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
+                          .map((arb) => {
+                            const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                            const noDisponible = infoDisp?.disponible === false
+                            return (
+                              <ArbitroDisponibleCard
+                                key={arb.id}
+                                arb={arb}
+                                seleccionado={false}
+                                noDisponible={noDisponible}
+                                motivo={infoDisp?.motivo}
+                                equipoTrabajo={infoDisp?.equipoTrabajo}
+                                hora={infoDisp?.hora}
+                                rolColor="blue"
+                                rolLabel="Principal"
+                                destacado
+                                onToggle={() => {}}
+                              />
+                            )
+                          })}
+                        {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length === 0 && (
+                          <p className="text-[11px] text-slate-400 px-1">Sin árbitros nacionales</p>
+                        )}
+                      </ZonaRol>
+
+                      {/* Divisor jerárquico */}
+                      <div className="flex items-center gap-2 px-1 py-1">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Rol de apoyo</span>
+                        <div className="flex-1 h-px bg-gray-200" />
                       </div>
 
-                      {/* 👉 ÁRBITROS ASISTENTES */}
-                      <div className="pt-1 border-t border-gray-100">
-                        <div className="flex items-center gap-2 mb-2 mt-3 px-1">
-                          <Badge className="bg-emerald-600 text-white text-[11px]">ASISTENTES</Badge>
-                          <span className="text-[11px] text-slate-400">
-                            {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length} registrados
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {arbitrosDisponiblesFiltrados
-                            .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
-                            .map((arb) => {
-                              const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
-                              const noDisponible = infoDisp?.disponible === false
-                              return (
-                                <ArbitroDisponibleCard
-                                  key={arb.id}
-                                  arb={arb}
-                                  seleccionado={false}
-                                  noDisponible={noDisponible}
-                                  motivo={infoDisp?.motivo}
-                                  equipoTrabajo={infoDisp?.equipoTrabajo}
-                                  hora={infoDisp?.hora}
-                                  rolColor="emerald"
-                                  onToggle={() => {}}
-                                />
-                              )
-                            })}
-                          {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length === 0 && (
-                            <p className="text-[11px] text-slate-400 px-1">Sin árbitros asistentes</p>
-                          )}
-                        </div>
-                      </div>
+                      {/* 👉 ZONA ÁRBITROS ASISTENTES */}
+                      <ZonaRol
+                        color="emerald"
+                        icono={<Users className="w-4 h-4" />}
+                        titulo="Árbitros Asistentes"
+                        subtitulo="Rol de apoyo · pueden ser varios"
+                      >
+                        {arbitrosDisponiblesFiltrados
+                          .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                          .map((arb) => {
+                            const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                            const noDisponible = infoDisp?.disponible === false
+                            return (
+                              <ArbitroDisponibleCard
+                                key={arb.id}
+                                arb={arb}
+                                seleccionado={false}
+                                noDisponible={noDisponible}
+                                motivo={infoDisp?.motivo}
+                                equipoTrabajo={infoDisp?.equipoTrabajo}
+                                hora={infoDisp?.hora}
+                                rolColor="emerald"
+                                rolLabel="Asistente"
+                                onToggle={() => {}}
+                              />
+                            )
+                          })}
+                        {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length === 0 && (
+                          <p className="text-[11px] text-slate-400 px-1">Sin árbitros asistentes</p>
+                        )}
+                      </ZonaRol>
                     </div>
 
                     {/* Leyenda */}
@@ -3161,88 +3165,92 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       ))}
                     </div>
 
-                    <div className="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
-                      {/* 👉 PRINCIPALES (categoría NACIONAL) */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 px-1">
-                          <Badge className="bg-blue-600 text-white text-[11px]">PRINCIPALES</Badge>
-                          <span className="text-[11px] text-slate-400">
-                            {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length} nacionales
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {arbitrosDisponiblesFiltrados
-                            .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
-                            .map((arb) => {
-                              const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
-                              const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
-                              const noDisponible = infoDisp?.disponible === false
-                              return (
-                                <ArbitroDisponibleCard
-                                  key={arb.id}
-                                  arb={arb}
-                                  seleccionado={estaSeleccionado}
-                                  noDisponible={noDisponible}
-                                  motivo={infoDisp?.motivo}
-                                  equipoTrabajo={infoDisp?.equipoTrabajo}
-                                  hora={infoDisp?.hora}
-                                  rolColor="blue"
-                                  onToggle={() => {
-                                    if (estaSeleccionado) {
-                                      setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
-                                    } else {
-                                      setArbitrosSeleccionados(prev => [...prev, arb])
-                                    }
-                                  }}
-                                />
-                              )
-                            })}
-                          {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length === 0 && (
-                            <p className="text-[11px] text-slate-400 px-1">Sin árbitros nacionales</p>
-                          )}
-                        </div>
+                    <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-1">
+                      {/* 👉 ZONA ÁRBITRO PRINCIPAL */}
+                      <ZonaRol
+                        color="blue"
+                        icono={<Shield className="w-4 h-4" />}
+                        titulo="Árbitro Principal"
+                        subtitulo="Rol jerárquico · 1 por designación"
+                      >
+                        {arbitrosDisponiblesFiltrados
+                          .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
+                          .map((arb) => {
+                            const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
+                            const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                            const noDisponible = infoDisp?.disponible === false
+                            return (
+                              <ArbitroDisponibleCard
+                                key={arb.id}
+                                arb={arb}
+                                seleccionado={estaSeleccionado}
+                                noDisponible={noDisponible}
+                                motivo={infoDisp?.motivo}
+                                equipoTrabajo={infoDisp?.equipoTrabajo}
+                                hora={infoDisp?.hora}
+                                rolColor="blue"
+                                rolLabel="Principal"
+                                destacado
+                                onToggle={() => {
+                                  if (estaSeleccionado) {
+                                    setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
+                                  } else {
+                                    setArbitrosSeleccionados(prev => [...prev, arb])
+                                  }
+                                }}
+                              />
+                            )
+                          })}
+                        {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length === 0 && (
+                          <p className="text-[11px] text-slate-400 px-1">Sin árbitros nacionales</p>
+                        )}
+                      </ZonaRol>
+
+                      {/* Divisor jerárquico */}
+                      <div className="flex items-center gap-2 px-1 py-1">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Rol de apoyo</span>
+                        <div className="flex-1 h-px bg-gray-200" />
                       </div>
 
-                      {/* 👉 ASISTENTES (resto de categorías) */}
-                      <div className="pt-1 border-t border-gray-100">
-                        <div className="flex items-center gap-2 mb-2 mt-3 px-1">
-                          <Badge className="bg-emerald-600 text-white text-[11px]">ASISTENTES</Badge>
-                          <span className="text-[11px] text-slate-400">
-                            {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length} registrados
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {arbitrosDisponiblesFiltrados
-                            .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
-                            .map((arb) => {
-                              const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
-                              const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
-                              const noDisponible = infoDisp?.disponible === false
-                              return (
-                                <ArbitroDisponibleCard
-                                  key={arb.id}
-                                  arb={arb}
-                                  seleccionado={estaSeleccionado}
-                                  noDisponible={noDisponible}
-                                  motivo={infoDisp?.motivo}
-                                  equipoTrabajo={infoDisp?.equipoTrabajo}
-                                  hora={infoDisp?.hora}
-                                  rolColor="emerald"
-                                  onToggle={() => {
-                                    if (estaSeleccionado) {
-                                      setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
-                                    } else {
-                                      setArbitrosSeleccionados(prev => [...prev, arb])
-                                    }
-                                  }}
-                                />
-                              )
-                            })}
-                          {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length === 0 && (
-                            <p className="text-[11px] text-slate-400 px-1">Sin árbitros asistentes</p>
-                          )}
-                        </div>
-                      </div>
+                      {/* 👉 ZONA ÁRBITROS ASISTENTES */}
+                      <ZonaRol
+                        color="emerald"
+                        icono={<Users className="w-4 h-4" />}
+                        titulo="Árbitros Asistentes"
+                        subtitulo="Rol de apoyo · pueden ser varios"
+                      >
+                        {arbitrosDisponiblesFiltrados
+                          .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                          .map((arb) => {
+                            const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
+                            const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                            const noDisponible = infoDisp?.disponible === false
+                            return (
+                              <ArbitroDisponibleCard
+                                key={arb.id}
+                                arb={arb}
+                                seleccionado={estaSeleccionado}
+                                noDisponible={noDisponible}
+                                motivo={infoDisp?.motivo}
+                                equipoTrabajo={infoDisp?.equipoTrabajo}
+                                hora={infoDisp?.hora}
+                                rolColor="emerald"
+                                rolLabel="Asistente"
+                                onToggle={() => {
+                                  if (estaSeleccionado) {
+                                    setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
+                                  } else {
+                                    setArbitrosSeleccionados(prev => [...prev, arb])
+                                  }
+                                }}
+                              />
+                            )
+                          })}
+                        {arbitrosDisponiblesFiltrados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length === 0 && (
+                          <p className="text-[11px] text-slate-400 px-1">Sin árbitros asistentes</p>
+                        )}
+                      </ZonaRol>
 
                       {/* Leyenda */}
                       <div className="flex items-center gap-4 pt-2 border-t border-gray-100 text-[10px] text-slate-500">
@@ -3261,48 +3269,85 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
            {/* Árbitros seleccionados */}
            <Card className="border-2 border-gray-200 bg-card">
-             <CardHeader>
-               <CardTitle className="text-slate-900 flex items-center gap-2">
-                 <UserCheck className="w-5 h-5 text-blue-600" />
-                 Árbitros Seleccionados ({arbitrosSeleccionados.length})
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-               {arbitrosSeleccionados.length === 0 ? (
-                 <p className="text-slate-500 text-center py-8">
-                   Selecciona al menos 1 árbitro
-                 </p>
-               ) : (
-                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                   {arbitrosSeleccionados.map((arb) => {
-                     const esPrincipal = (arb.categoria || "").toUpperCase() === "NACIONAL"
-                     return (
-                       <div
-                         key={arb.id}
-                         className={`p-3 rounded-lg flex items-center justify-between border-2 ${
-                           esPrincipal ? "border-blue-200 bg-blue-600/10" : "border-emerald-200 bg-emerald-600/10"
-                         }`}
-                       >
-                         <div>
-                           <p className="font-semibold text-slate-900">{arb.nombre} {arb.apellido}</p>
-                           <Badge className={`text-xs ${esPrincipal ? "bg-blue-600 text-white" : "bg-emerald-600 text-white"}`}>
-                             {arb.categoria}
-                           </Badge>
-                         </div>
-                         <button
-                           onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
-                           className="text-red-600 hover:text-red-700"
-                           aria-label={`Quitar a ${arb.nombre} ${arb.apellido}`}
-                         >
-                           <Trash2 className="w-4 h-4" />
-                         </button>
-                       </div>
-                     )
-                   })}
-                 </div>
-               )}
-             </CardContent>
-           </Card>
+              <CardHeader>
+                <CardTitle className="text-slate-900 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-blue-600" />
+                  Resumen por Puesto
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  {arbitrosSeleccionados.length === 0
+                    ? "Selecciona al menos 1 árbitro"
+                    : `${arbitrosSeleccionados.length} árbitro(s) asignado(s)`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {arbitrosSeleccionados.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">
+                    Selecciona árbitros en el panel izquierdo
+                  </p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+                    {/* Principales */}
+                    <div>
+                      <p className="text-[11px] font-bold text-blue-700 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5" /> Principal
+                      </p>
+                      <div className="space-y-1.5">
+                        {arbitrosSeleccionados
+                          .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
+                          .map((arb) => (
+                            <div key={arb.id} className="p-2.5 rounded-lg flex items-center justify-between border-2 border-blue-200 bg-blue-50">
+                              <div>
+                                <p className="font-semibold text-slate-900 text-sm">{arb.nombre} {arb.apellido}</p>
+                                <Badge className="text-[10px] bg-blue-600 text-white mt-0.5">{arb.categoria}</Badge>
+                              </div>
+                              <button
+                                onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
+                                className="text-red-600 hover:text-red-700"
+                                aria-label={`Quitar a ${arb.nombre} ${arb.apellido}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        {arbitrosSeleccionados.filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL").length === 0 && (
+                          <p className="text-[11px] text-slate-400">Sin principal asignado</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Asistentes */}
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" /> Asistentes
+                      </p>
+                      <div className="space-y-1.5">
+                        {arbitrosSeleccionados
+                          .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                          .map((arb) => (
+                            <div key={arb.id} className="p-2.5 rounded-lg flex items-center justify-between border-2 border-emerald-200 bg-emerald-50">
+                              <div>
+                                <p className="font-semibold text-slate-900 text-sm">{arb.nombre} {arb.apellido}</p>
+                                <Badge className="text-[10px] bg-emerald-600 text-white mt-0.5">{arb.categoria}</Badge>
+                              </div>
+                              <button
+                                onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
+                                className="text-red-600 hover:text-red-700"
+                                aria-label={`Quitar a ${arb.nombre} ${arb.apellido}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        {arbitrosSeleccionados.filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL").length === 0 && (
+                          <p className="text-[11px] text-slate-400">Sin asistentes asignados</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
          </div>
 
          {/* Botón de confirmar */}
@@ -3518,11 +3563,43 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 }
 
   // ============================================================
+  // Zona de rol: sección con identidad propia (fondo tenue +
+  // encabezado con ícono) que separa visualmente al Árbitro
+  // Principal de los Asistentes.
+  // ============================================================
+  type ZonaRolProps = {
+    icono: React.ReactNode
+    titulo: string
+    subtitulo?: string
+    color: "blue" | "emerald"
+    children: React.ReactNode
+  }
+
+  const ZonaRol = ({ icono, titulo, subtitulo, color, children }: ZonaRolProps) => {
+    const estilo =
+      color === "blue"
+        ? "bg-blue-50/60 border-blue-100"
+        : "bg-emerald-50/60 border-emerald-100"
+    const tituloColor = color === "blue" ? "text-blue-800" : "text-emerald-800"
+    return (
+      <section className={`rounded-xl border p-3 ${estilo}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={tituloColor}>{icono}</span>
+          <h4 className={`text-sm font-bold uppercase tracking-wide ${tituloColor}`}>{titulo}</h4>
+        </div>
+        {subtitulo && <p className="text-[10px] text-slate-500 mb-2">{subtitulo}</p>}
+        <div className="space-y-2">{children}</div>
+      </section>
+    )
+  }
+
+  // ============================================================
   // Componente reutilizable: tarjeta de árbitro (propuesta UX alt.)
   //  - Resumen de estado en 1 línea + detalle colapsable (hover)
   //  - Micro-feedback inline (shake) al intentar elegir un ocupado
+  //  - Pill de rol explícita + énfasis para el principal
   // ============================================================
-  type ArbitroDisponibleCardProps = {
+   type ArbitroDisponibleCardProps = {
     arb: Arbitro
     seleccionado: boolean
     noDisponible: boolean
@@ -3530,6 +3607,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
     equipoTrabajo?: string
     hora?: string
     rolColor: "blue" | "emerald"
+    rolLabel?: string
+    destacado?: boolean
     onToggle: () => void
   }
 
@@ -3557,6 +3636,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
     equipoTrabajo,
     hora,
     rolColor,
+    rolLabel,
+    destacado = false,
     onToggle,
   }: ArbitroDisponibleCardProps) => {
     const [mostrarDetalle, setMostrarDetalle] = useState(false)
@@ -3568,12 +3649,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             hover: "hover:border-blue-600/60",
             ring: "border-blue-600 bg-blue-600 text-white",
             dot: "bg-blue-500",
+            pill: "bg-blue-50 text-blue-700 border-blue-200",
           }
         : {
             badge: "bg-emerald-600 text-white",
             hover: "hover:border-emerald-600/60",
             ring: "border-emerald-600 bg-emerald-600 text-white",
             dot: "bg-emerald-500",
+            pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
           }
 
     const handleClick = () => {
@@ -3596,6 +3679,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
         aria-pressed={seleccionado}
         aria-disabled={noDisponible}
         className={`group p-2.5 rounded-lg border-2 transition-all ${
+          destacado ? "border-2 " : "border "
+        }${
           noDisponible
             ? "border-gray-200 bg-gray-100 opacity-70 cursor-not-allowed"
             : seleccionado
@@ -3606,7 +3691,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
         <div className="flex items-center gap-2.5">
           {/* Avatar con iniciales */}
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+            className={`${destacado ? "w-10 h-10 text-[13px]" : "w-8 h-8 text-[11px]"} rounded-full flex items-center justify-center font-bold shrink-0 ${
               seleccionado && !noDisponible
                 ? "bg-white/25 text-white"
                 : noDisponible
@@ -3618,8 +3703,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           </div>
 
           <div className="min-w-0 flex-1">
+            {rolLabel && (
+              <span className={`inline-block mb-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${colorClases.pill}`}>
+                {rolLabel}
+              </span>
+            )}
             <div className="flex items-center justify-between gap-2">
-              <p className={`font-semibold text-sm leading-tight truncate ${textoClaro}`}>
+              <p className={`font-semibold ${destacado ? "text-[15px]" : "text-sm"} leading-tight truncate ${textoClaro}`}>
                 {arb.nombre} {arb.apellido}
               </p>
               {noDisponible ? (
