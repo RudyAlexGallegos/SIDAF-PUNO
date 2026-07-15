@@ -651,7 +651,11 @@ export async function publicarDesignaciones(ids: number[]): Promise<Designacion[
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
     });
-    if (!response.ok) throw new Error("Error al publicar designaciones");
+    if (!response.ok) {
+        // 409: conflicto de disponibilidad (árbitro ya ocupado en esa fecha)
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Error al publicar designaciones");
+    }
     return await response.json();
 }
 
@@ -671,6 +675,83 @@ export async function getDesignacionesByCampeonato(campeonatoId: number): Promis
     } catch (error) {
         console.error(`❌ Error getDesignacionesByCampeonato:`, error);
         return [];
+    }
+}
+
+// ============================================================
+// DISPONIBILIDAD DE ÁRBITROS (bloqueo centralizado)
+// ============================================================
+
+export interface DisponibilidadArbitro {
+    arbitroId: number;
+    arbitroNombre?: string;
+    fecha?: string;
+    disponible: boolean;
+    tipo?: string | null;
+    motivo?: string | null;
+    designacionId?: number | null;
+    campeonatoId?: number | null;
+    campeonatoNombre?: string | null;
+    hora?: string | null;
+    rol?: string | null;
+    equipoTrabajo?: string | null;
+}
+
+/** Estado de disponibilidad de todos los árbitros en una fecha (yyyy-MM-dd). */
+export async function getDisponibilidadPorFecha(fecha: string): Promise<DisponibilidadArbitro[]> {
+    try {
+        const dia = fecha?.length >= 10 ? fecha.substring(0, 10) : fecha;
+        const response = await fetch(buildUrl(`/disponibilidad/fecha/${encodeURIComponent(dia)}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getDisponibilidadPorFecha:", error);
+        return [];
+    }
+}
+
+/** Estado de disponibilidad de un árbitro concreto en una fecha, con motivo detallado. */
+export async function getDisponibilidadArbitro(arbitroId: number, fecha: string): Promise<DisponibilidadArbitro | null> {
+    try {
+        const dia = fecha?.length >= 10 ? fecha.substring(0, 10) : fecha;
+        const response = await fetch(buildUrl(`/disponibilidad/arbitro/${arbitroId}/fecha/${encodeURIComponent(dia)}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getDisponibilidadArbitro:", error);
+        return null;
+    }
+}
+
+/** Registrar indisponibilidad manual (PERMISO, LESION, VIAJE, EXAMEN, OTRO). */
+export async function registrarIndisponibilidadManual(payload: {
+    arbitroId: number;
+    fecha: string;
+    tipo: string;
+    motivo?: string;
+}): Promise<any> {
+    const response = await fetch(buildUrl("/disponibilidad/manual"), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Error al registrar indisponibilidad");
+    }
+    return await response.json();
+}
+
+/** Eliminar/liberar un bloqueo de disponibilidad. */
+export async function eliminarBloqueoDisponibilidad(id: number): Promise<boolean> {
+    try {
+        const response = await fetch(buildUrl(`/disponibilidad/${id}`), {
+            method: "DELETE",
+            headers: getAuthHeaders(),
+        });
+        return response.ok;
+    } catch {
+        return false;
     }
 }
 

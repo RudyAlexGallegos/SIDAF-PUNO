@@ -101,7 +101,8 @@ public class DesignacionController {
     // POST create designacion
     @PostMapping
     public Designacion createDesignacion(@RequestBody Designacion designacion) {
-        return designacionRepository.save(designacion);
+        // Guardado + bloqueo de disponibilidad de forma atómica (transaccional)
+        return designacionService.crearConSincronizacion(designacion);
     }
     
     // PUT update designacion
@@ -132,7 +133,9 @@ public class DesignacionController {
             updatedDesignacion.setRegion(designacionDetails.getRegion());
             updatedDesignacion.setProvincia(designacionDetails.getProvincia());
             updatedDesignacion.setDistrito(designacionDetails.getDistrito());
-            return ResponseEntity.ok(designacionRepository.save(updatedDesignacion));
+            // Guardado + sincronización de disponibilidad de forma atómica (transaccional)
+            Designacion guardada = designacionService.guardarConSincronizacion(updatedDesignacion);
+            return ResponseEntity.ok(guardada);
         }
         return ResponseEntity.notFound().build();
     }
@@ -140,11 +143,10 @@ public class DesignacionController {
     // DELETE designacion
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDesignacion(@PathVariable Long id) {
-        if (designacionRepository.existsById(id)) {
-            designacionRepository.deleteById(id);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+        // Liberar disponibilidad y eliminar de forma atómica (transaccional)
+        return designacionService.eliminarConLiberacion(id)
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
     }
     
     // GET designaciones por campeonato y fecha

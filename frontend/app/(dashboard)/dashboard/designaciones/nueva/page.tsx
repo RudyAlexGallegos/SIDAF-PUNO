@@ -31,7 +31,7 @@ import {
   Trophy,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso } from "@/services/api"
+import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso, getDisponibilidadPorFecha, type DisponibilidadArbitro } from "@/services/api"
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 import { DatePicker, TimePicker } from "./components/DateTimePickers"
 
@@ -207,6 +207,10 @@ export default function NuevaDesignacionPage() {
    // Modo de designación: manual, semiautomatica, automatica
    const [modoDesignacion, setModoDesignacion] = useState<"manual" | "semiautomatica" | "automatica">("manual")
 
+   // 🔒 Disponibilidad centralizada de árbitros para la fecha seleccionada
+   const [disponibilidadMap, setDisponibilidadMap] = useState<Record<number, DisponibilidadArbitro>>({})
+   const [cargandoDisponibilidad, setCargandoDisponibilidad] = useState(false)
+
     // Designaciones anteriores y fechas del campeonato
     const [designacionesAnteriores, setDesignacionesAnteriores] = useState<Designacion[]>([])
     const [loadingAnteriores, setLoadingAnteriores] = useState(false)
@@ -317,6 +321,38 @@ export default function NuevaDesignacionPage() {
 
   // Árbitros seleccionados (para CAMPEONATO FUNDAMENTAL)
   const [arbitrosSeleccionados, setArbitrosSeleccionados] = useState<Arbitro[]>([])
+
+  // 🔒 Cargar disponibilidad centralizada cuando cambia la fecha de la designación general.
+  // Regla: un árbitro designado (CONFIRMADA) en cualquier campeonato queda "No disponible"
+  // ese día para nuevas designaciones. Aquí reflejamos ese bloqueo en tiempo real.
+  useEffect(() => {
+    let cancelado = false
+    async function cargarDisponibilidad() {
+      const dia = fechaGeneral ? fechaGeneral.substring(0, 10) : ""
+      if (!dia) {
+        setDisponibilidadMap({})
+        return
+      }
+      try {
+        setCargandoDisponibilidad(true)
+        const data = await getDisponibilidadPorFecha(dia)
+        if (cancelado) return
+        const map: Record<number, DisponibilidadArbitro> = {}
+        data.forEach((d) => { if (typeof d.arbitroId === "number") map[d.arbitroId] = d })
+        setDisponibilidadMap(map)
+        // Depurar selección: quitar árbitros que ya no están disponibles en la nueva fecha
+        setArbitrosSeleccionados((prev) =>
+          prev.filter((a) => a.id == null || map[a.id]?.disponible !== false)
+        )
+      } catch (error) {
+        console.error("Error cargando disponibilidad:", error)
+      } finally {
+        if (!cancelado) setCargandoDisponibilidad(false)
+      }
+    }
+    cargarDisponibilidad()
+    return () => { cancelado = true }
+  }, [fechaGeneral])
 
   // Detectar si es CAMPEONATO FUNDAMENTAL u OFICIAL
   const esCampeonatoFundamental = campeonatoSeleccionado?.categoria === "CAMPEONATO FUNDAMENTAL" || campeonatoSeleccionado?.categoria === "CAMPEONATO OFICIAL"
@@ -2960,6 +2996,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                 <CardTitle className="text-slate-900">
                   Árbitros Disponibles
                 </CardTitle>
+                {fechaGeneral && (
+                  <CardDescription className="text-xs">
+                    {cargandoDisponibilidad
+                      ? "Verificando disponibilidad…"
+                      : `Disponibilidad al ${fechaGeneral.substring(0, 10)} · los árbitros ocupados aparecen bloqueados`}
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent>
                 {!arbitros || arbitros.length === 0 ? (
@@ -2968,33 +3011,56 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {arbitros.map((arb) => {
                       const estaSeleccionado = arbitrosSeleccionados.some((a) => a.id === arb.id)
+                      const infoDisp = arb.id != null ? disponibilidadMap[arb.id] : undefined
+                      const noDisponible = infoDisp?.disponible === false
                       return (
                         <div
                           key={arb.id}
                           onClick={() => {
+                            if (noDisponible) {
+                              toast({
+                                title: "Árbitro no disponible",
+                                description: infoDisp?.motivo || "Ya está asignado en esa fecha",
+                                variant: "destructive",
+                              })
+                              return
+                            }
                             if (estaSeleccionado) {
                               setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))
                             } else {
                               setArbitrosSeleccionados(prev => [...prev, arb])
                             }
                           }}
-                          className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                            estaSeleccionado
-                              ? "border-blue-600 bg-blue-600 text-white"
-                              : "border-gray-200 bg-white hover:border-blue-600/50"
+                          className={`p-3 rounded-lg border-2 transition-all ${
+                            noDisponible
+                              ? "border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed"
+                              : estaSeleccionado
+                                ? "border-blue-600 bg-blue-600 text-white cursor-pointer"
+                                : "border-gray-200 bg-white hover:border-blue-600/50 cursor-pointer"
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <div>
+                            <div className="min-w-0">
                               <p className="font-semibold text-sm">{arb.nombre} {arb.apellido}</p>
                               <Badge className={`${
-                                estaSeleccionado ? "bg-white/20 text-white" : "bg-blue-600 text-white"
+                                estaSeleccionado && !noDisponible ? "bg-white/20 text-white" : "bg-blue-600 text-white"
                               } text-xs mt-1`}>
                                 {arb.categoria}
                               </Badge>
+                              {noDisponible && (
+                                <div className="mt-1.5">
+                                  <Badge className="bg-red-600 text-white text-[10px] flex items-center gap-1 w-fit">
+                                    <Lock className="w-3 h-3" /> No disponible
+                                  </Badge>
+                                  <p className="text-[11px] text-slate-600 mt-1 leading-tight">
+                                    {infoDisp?.motivo}
+                                    {infoDisp?.equipoTrabajo ? ` · Con: ${infoDisp.equipoTrabajo}` : ""}
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                            {estaSeleccionado && (
-                              <CheckCircle2 className="w-5 h-5 text-white" />
+                            {estaSeleccionado && !noDisponible && (
+                              <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
                             )}
                           </div>
                         </div>

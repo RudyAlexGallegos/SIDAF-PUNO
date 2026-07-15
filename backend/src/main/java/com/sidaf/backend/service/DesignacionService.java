@@ -5,6 +5,7 @@ import com.sidaf.backend.model.Designacion.EstadoDesignacion;
 import com.sidaf.backend.repository.DesignacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +20,53 @@ public class DesignacionService {
     @Autowired
     private DesignacionRepository designacionRepository;
 
+    @Autowired
+    private DisponibilidadService disponibilidadService;
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    /**
+     * Crea una designación y, si nace CONFIRMADA, bloquea la disponibilidad de
+     * sus árbitros en la MISMA transacción (atómico: si hay conflicto, revierte
+     * también el guardado de la designación).
+     */
+    @Transactional
+    public Designacion crearConSincronizacion(Designacion designacion) {
+        Designacion guardada = designacionRepository.save(designacion);
+        sincronizarDisponibilidad(guardada);
+        return guardada;
+    }
+
+    /**
+     * Guarda cambios de una designación y sincroniza disponibilidad atómicamente.
+     */
+    @Transactional
+    public Designacion guardarConSincronizacion(Designacion designacion) {
+        Designacion guardada = designacionRepository.save(designacion);
+        sincronizarDisponibilidad(guardada);
+        return guardada;
+    }
+
+    /**
+     * Elimina una designación liberando sus bloqueos en la misma transacción.
+     * @return true si existía y se eliminó.
+     */
+    @Transactional
+    public boolean eliminarConLiberacion(Long id) {
+        if (!designacionRepository.existsById(id)) return false;
+        disponibilidadService.liberarPorDesignacion(id);
+        designacionRepository.deleteById(id);
+        return true;
+    }
+
+    private void sincronizarDisponibilidad(Designacion guardada) {
+        if (guardada.getEstado() == EstadoDesignacion.CONFIRMADA) {
+            disponibilidadService.bloquearPorDesignacion(guardada);
+        } else if (guardada.getEstado() == EstadoDesignacion.CANCELADA
+                || guardada.getEstado() == EstadoDesignacion.PROGRAMADA) {
+            disponibilidadService.liberarPorDesignacion(guardada.getId());
+        }
+    }
 
     public List<Designacion> obtenerDesignacionesPorCampeonatoYFecha(Long idCampeonato, String fecha) {
         return designacionRepository.findByIdCampeonato(idCampeonato).stream()
@@ -68,13 +115,22 @@ public class DesignacionService {
         return conflictos;
     }
 
+    /**
+     * Publica (confirma) designaciones. Al pasar a CONFIRMADA se bloquea la
+     * disponibilidad de todos los árbitros involucrados para esa fecha (regla 1).
+     * La operación es transaccional y atómica: si algún árbitro ya está ocupado,
+     * se lanza ConflictoDisponibilidadException y NO se confirma nada del lote.
+     */
+    @Transactional
     public List<Designacion> publicarDesignaciones(List<Long> ids) {
         List<Designacion> actualizadas = new ArrayList<>();
         for (Long id : ids) {
             designacionRepository.findById(id).ifPresent(d -> {
                 d.setEstado(EstadoDesignacion.CONFIRMADA);
-                designacionRepository.save(d);
-                actualizadas.add(d);
+                Designacion guardada = designacionRepository.save(d);
+                // Bloqueo centralizado de disponibilidad (verificación en tiempo real)
+                disponibilidadService.bloquearPorDesignacion(guardada);
+                actualizadas.add(guardada);
             });
         }
         return actualizadas;
