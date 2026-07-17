@@ -2507,9 +2507,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                          </div>
                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                          {/* Árbitro Principal */}
-                         <div>
+                         <div className="min-w-0">
                            <label className="block text-sm font-semibold text-slate-600 mb-2">
                              🛡️ Principal <span className="text-red-500">*</span>
                            </label>
@@ -2529,9 +2529,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                .map((arb) => {
                                  const usado = arbitroUsadoEn(idx, arb.id)
                                  const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                 const sufijo = ocupado ? " · No disponible" : usado ? " · Ya asignado" : ""
                                  return (
-                                   <option key={arb.id} value={arb.id} disabled={usado}>
-                                     {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                   <option key={arb.id} value={arb.id} disabled={usado} title={`${arb.categoria}${sufijo}`}>
+                                     {arb.nombre} {arb.apellido}{sufijo}
                                    </option>
                                  )
                                })}
@@ -2539,7 +2540,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                          </div>
 
                          {/* Asistente 1 */}
-                         <div>
+                         <div className="min-w-0">
                            <label className="block text-sm font-semibold text-slate-600 mb-2">
                              👤 Asistente 1 <span className="text-red-500">*</span>
                            </label>
@@ -2559,9 +2560,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                .map((arb) => {
                                  const usado = arbitroUsadoEn(idx, arb.id)
                                  const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                 const sufijo = ocupado ? " · No disponible" : usado ? " · Ya asignado" : ""
                                  return (
-                                   <option key={arb.id} value={arb.id} disabled={usado}>
-                                     {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                   <option key={arb.id} value={arb.id} disabled={usado} title={`${arb.categoria}${sufijo}`}>
+                                     {arb.nombre} {arb.apellido}{sufijo}
                                    </option>
                                  )
                                })}
@@ -2569,7 +2571,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                          </div>
 
                          {/* Asistente 2 */}
-                         <div>
+                         <div className="min-w-0">
                            <label className="block text-sm font-semibold text-slate-600 mb-2">
                              👤 Asistente 2 <span className="text-red-500">*</span>
                            </label>
@@ -2589,9 +2591,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                                .map((arb) => {
                                  const usado = arbitroUsadoEn(idx, arb.id)
                                  const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                 const sufijo = ocupado ? " · No disponible" : usado ? " · Ya asignado" : ""
                                  return (
-                                   <option key={arb.id} value={arb.id} disabled={usado}>
-                                     {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                   <option key={arb.id} value={arb.id} disabled={usado} title={`${arb.categoria}${sufijo}`}>
+                                     {arb.nombre} {arb.apellido}{sufijo}
                                    </option>
                                  )
                                })}
@@ -2599,7 +2602,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                          </div>
 
                           {/* Cuarto Árbitro */}
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-sm font-semibold text-slate-600 mb-2">
                               🔄 Cuarto <span className="text-slate-400 font-normal">(Opcional)</span>
                             </label>
@@ -2617,9 +2620,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                               {arbitros.map((arb) => {
                                 const usado = arbitroUsadoEn(idx, arb.id)
                                 const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                const sufijo = ocupado ? " · No disponible" : usado ? " · Ya asignado" : ""
                                 return (
-                                  <option key={arb.id} value={arb.id} disabled={usado}>
-                                    {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                  <option key={arb.id} value={arb.id} disabled={usado} title={`${arb.categoria}${sufijo}`}>
+                                    {arb.nombre} {arb.apellido}{sufijo}
                                   </option>
                                 )
                               })}
@@ -2627,7 +2631,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           </div>
 
                          {/* Asesor */}
-                         <div>
+                         <div className="min-w-0">
                            <label className="block text-sm font-semibold text-slate-600 mb-2">
                              📋 Asesor <span className="text-slate-400 font-normal">(Opcional)</span>
                            </label>
@@ -3364,14 +3368,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                         {arbitrosSeleccionados
                           .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
                           .map((arb) => (
-                            <div key={arb.id} className="p-2.5 rounded-lg flex items-center justify-between border-2 border-blue-200 bg-blue-50">
-                              <div>
-                                <p className="font-semibold text-slate-900 text-sm">{arb.nombre} {arb.apellido}</p>
+                            <div key={arb.id} className="p-2.5 rounded-lg flex items-center justify-between gap-2 border-2 border-blue-200 bg-blue-50">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm break-words">{arb.nombre} {arb.apellido}</p>
                                 <Badge className="text-[10px] bg-blue-600 text-white mt-0.5">{arb.categoria}</Badge>
                               </div>
                               <button
                                 onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-600 hover:text-red-700 shrink-0"
                                 aria-label={`Quitar a ${arb.nombre} ${arb.apellido}`}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -3393,14 +3397,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                         {arbitrosSeleccionados
                           .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
                           .map((arb) => (
-                            <div key={arb.id} className="p-2.5 rounded-lg flex items-center justify-between border-2 border-emerald-200 bg-emerald-50">
-                              <div>
-                                <p className="font-semibold text-slate-900 text-sm">{arb.nombre} {arb.apellido}</p>
+                            <div key={arb.id} className="p-2.5 rounded-lg flex items-center justify-between gap-2 border-2 border-emerald-200 bg-emerald-50">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm break-words">{arb.nombre} {arb.apellido}</p>
                                 <Badge className="text-[10px] bg-emerald-600 text-white mt-0.5">{arb.categoria}</Badge>
                               </div>
                               <button
                                 onClick={() => setArbitrosSeleccionados(prev => prev.filter((a) => a.id !== arb.id))}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-600 hover:text-red-700 shrink-0"
                                 aria-label={`Quitar a ${arb.nombre} ${arb.apellido}`}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -3776,17 +3780,19 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                 {rolLabel}
               </span>
             )}
-            <div className="flex items-center justify-between gap-2">
-              <p className={`font-semibold ${destacado ? "text-[15px]" : "text-sm"} leading-tight truncate ${textoClaro}`}>
+            <div className="flex items-start justify-between gap-2">
+              <p className={`font-semibold ${destacado ? "text-[15px]" : "text-sm"} leading-tight break-words ${textoClaro}`}>
                 {arb.nombre} {arb.apellido}
               </p>
-              {noDisponible ? (
-                <Lock className="w-3.5 h-3.5 text-red-500 shrink-0" />
-              ) : seleccionado ? (
-                <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-              ) : (
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              )}
+              <span className="shrink-0 pt-0.5">
+                {noDisponible ? (
+                  <Lock className="w-3.5 h-3.5 text-red-500" />
+                ) : seleccionado ? (
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
+              </span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
               <Badge className={`${seleccionado && !noDisponible ? "bg-white/20 text-white" : colorClases.badge} text-[10px]`}>
