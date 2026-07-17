@@ -349,6 +349,23 @@ export default function NuevaDesignacionPage() {
     return lista
   }, [arbitros, busquedaArbitro, filtroArbitro, disponibilidadMap])
 
+  // 🚫 Devuelve true si el árbitro ya está asignado en OTRO rol del mismo
+  // partido o en CUALQUIER otro partido. Se usa para deshabilitar la opción
+  // en los <select> y prevenir duplicados antes de validar (principio de restricción).
+  const arbitroUsadoEn = (partidoIdx: number, arbId: number): boolean => {
+    if (arbId == null) return false
+    return partidos.some((p, i) => {
+      if (i === partidoIdx) {
+        // Mismo partido: conflicto solo si está en otro rol distinto al actual
+        const roles = [p.arbitroPrincipal?.id, p.asistente1?.id, p.asistente2?.id, p.cuartoArbitro?.id]
+        return roles.filter((id) => id != null && id !== arbId).includes(arbId)
+      }
+      // Otros partidos: conflicto si aparece en cualquier rol
+      const roles = [p.arbitroPrincipal?.id, p.asistente1?.id, p.asistente2?.id, p.cuartoArbitro?.id]
+      return roles.includes(arbId)
+    })
+  }
+
   // 🔒 Cargar disponibilidad centralizada cuando cambia la fecha de la designación general.
   // Regla: un árbitro designado (CONFIRMADA) en cualquier campeonato queda "No disponible"
   // ese día para nuevas designaciones. Aquí reflejamos ese bloqueo en tiempo real.
@@ -2417,11 +2434,20 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   <Card key={partido.id} className="border-2 border-gray-200 bg-card">
                      {/* Header del partido */}
                      <CardHeader className="bg-blue-600/10">
-                       <div className="flex items-center justify-between">
-                         <CardTitle className="text-slate-900 flex items-center gap-2">
-                           <Badge className="bg-purple-600 text-white">Partido {idx + 1}</Badge>
-                         </CardTitle>
-                         <div className="text-right">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-slate-900 flex items-center gap-2">
+                            <Badge className="bg-purple-600 text-white">Partido {idx + 1}</Badge>
+                            {partido.arbitroPrincipal && partido.asistente1 && partido.asistente2 ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Completo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                Falta asignar roles
+                              </span>
+                            )}
+                          </CardTitle>
+                          <div className="text-right">
                            <p className="font-semibold text-slate-900">{partido.equipoLocal.nombre}</p>
                            <p className="text-xs text-slate-500">{partido.equipoLocal.distrito || "Sin distrito"}</p>
                            <p className="text-xs text-slate-400 my-1">vs</p>
@@ -2481,102 +2507,124 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                          </div>
                        </div>
 
-                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        {/* Árbitro Principal */}
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-600 mb-2">
-                            🛡️ Principal
-                          </label>
-                          <select
-                            value={partido.arbitroPrincipal?.id || ""}
-                            onChange={(e) => {
-                              const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
-                              const updatedPartidos = [...partidos]
-                              updatedPartidos[idx].arbitroPrincipal = arb || null
-                              setPartidos(updatedPartidos)
-                            }}
-                            className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                          >
-                            <option value="">Seleccionar</option>
-                            {arbitros.map((arb) => (
-                              <option key={arb.id} value={arb.id}>
-                                {arb.nombre} {arb.apellido}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Asistente 1 */}
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-600 mb-2">
-                            👤 Asistente 1
-                          </label>
-                          <select
-                            value={partido.asistente1?.id || ""}
-                            onChange={(e) => {
-                              const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
-                              const updatedPartidos = [...partidos]
-                              updatedPartidos[idx].asistente1 = arb || null
-                              setPartidos(updatedPartidos)
-                            }}
-                            className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          >
-                            <option value="">Seleccionar</option>
-                            {arbitros.map((arb) => (
-                              <option key={arb.id} value={arb.id}>
-                                {arb.nombre} {arb.apellido}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Asistente 2 */}
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-600 mb-2">
-                            👤 Asistente 2
-                          </label>
-                          <select
-                            value={partido.asistente2?.id || ""}
-                            onChange={(e) => {
-                              const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
-                              const updatedPartidos = [...partidos]
-                              updatedPartidos[idx].asistente2 = arb || null
-                              setPartidos(updatedPartidos)
-                            }}
-                            className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-                          >
-                            <option value="">Seleccionar</option>
-                            {arbitros.map((arb) => (
-                              <option key={arb.id} value={arb.id}>
-                                {arb.nombre} {arb.apellido}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                         {/* Cuarto Árbitro */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                         {/* Árbitro Principal */}
                          <div>
                            <label className="block text-sm font-semibold text-slate-600 mb-2">
-                             🔄 Cuarto <span className="text-slate-400 font-normal">(Opcional)</span>
+                             🛡️ Principal <span className="text-red-500">*</span>
                            </label>
                            <select
-                             value={partido.cuartoArbitro?.id || ""}
+                             value={partido.arbitroPrincipal?.id || ""}
                              onChange={(e) => {
                                const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
                                const updatedPartidos = [...partidos]
-                               updatedPartidos[idx].cuartoArbitro = arb || null
+                               updatedPartidos[idx].arbitroPrincipal = arb || null
                                setPartidos(updatedPartidos)
                              }}
-                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                            >
                              <option value="">Seleccionar</option>
-                             {arbitros.map((arb) => (
-                               <option key={arb.id} value={arb.id}>
-                                 {arb.nombre} {arb.apellido}
-                               </option>
-                             ))}
+                             {arbitros
+                               .filter((a) => (a.categoria || "").toUpperCase() === "NACIONAL")
+                               .map((arb) => {
+                                 const usado = arbitroUsadoEn(idx, arb.id)
+                                 const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                 return (
+                                   <option key={arb.id} value={arb.id} disabled={usado}>
+                                     {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                   </option>
+                                 )
+                               })}
                            </select>
                          </div>
+
+                         {/* Asistente 1 */}
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             👤 Asistente 1 <span className="text-red-500">*</span>
+                           </label>
+                           <select
+                             value={partido.asistente1?.id || ""}
+                             onChange={(e) => {
+                               const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].asistente1 = arb || null
+                               setPartidos(updatedPartidos)
+                             }}
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                           >
+                             <option value="">Seleccionar</option>
+                             {arbitros
+                               .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                               .map((arb) => {
+                                 const usado = arbitroUsadoEn(idx, arb.id)
+                                 const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                 return (
+                                   <option key={arb.id} value={arb.id} disabled={usado}>
+                                     {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                   </option>
+                                 )
+                               })}
+                           </select>
+                         </div>
+
+                         {/* Asistente 2 */}
+                         <div>
+                           <label className="block text-sm font-semibold text-slate-600 mb-2">
+                             👤 Asistente 2 <span className="text-red-500">*</span>
+                           </label>
+                           <select
+                             value={partido.asistente2?.id || ""}
+                             onChange={(e) => {
+                               const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].asistente2 = arb || null
+                               setPartidos(updatedPartidos)
+                             }}
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                           >
+                             <option value="">Seleccionar</option>
+                             {arbitros
+                               .filter((a) => (a.categoria || "").toUpperCase() !== "NACIONAL")
+                               .map((arb) => {
+                                 const usado = arbitroUsadoEn(idx, arb.id)
+                                 const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                 return (
+                                   <option key={arb.id} value={arb.id} disabled={usado}>
+                                     {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                   </option>
+                                 )
+                               })}
+                           </select>
+                         </div>
+
+                          {/* Cuarto Árbitro */}
+                          <div>
+                            <label className="block text-sm font-semibold text-slate-600 mb-2">
+                              🔄 Cuarto <span className="text-slate-400 font-normal">(Opcional)</span>
+                            </label>
+                            <select
+                              value={partido.cuartoArbitro?.id || ""}
+                              onChange={(e) => {
+                                const arb = arbitros.find((a) => a.id === parseInt(e.target.value))
+                                const updatedPartidos = [...partidos]
+                                updatedPartidos[idx].cuartoArbitro = arb || null
+                                setPartidos(updatedPartidos)
+                              }}
+                              className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            >
+                              <option value="">Seleccionar</option>
+                              {arbitros.map((arb) => {
+                                const usado = arbitroUsadoEn(idx, arb.id)
+                                const ocupado = arb.id != null && disponibilidadMap[arb.id]?.disponible === false
+                                return (
+                                  <option key={arb.id} value={arb.id} disabled={usado}>
+                                    {arb.nombre} {arb.apellido} · {arb.categoria}{ocupado ? " · No disp." : ""}{usado ? " · Usado" : ""}
+                                  </option>
+                                )
+                              })}
+                            </select>
+                          </div>
 
                          {/* Asesor */}
                          <div>
@@ -2618,7 +2666,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       etapaSeleccionada === "Etapa Departamental") && (
                       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                         <p className="text-amber-800 text-sm">
-                          ✅ Cada partido debe tener al menos Principal, Asistente 1 y Asistente 2. El Cuarto Árbitro y el Asesor son opcionales. Los árbitros no pueden repetirse entre partidos.
+                          ✅ Cada partido debe tener al menos Principal, Asistente 1 y Asistente 2. El Cuarto Árbitro y el Asesor son opcionales. Un mismo árbitro no puede repetirse en otro puesto ni en otro partido.
                         </p>
                       </div>
                     )}
@@ -2643,9 +2691,19 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                         )
 
                         if (partidosSinArbitros.length > 0) {
+                          const faltan = partidosSinArbitros
+                            .map((p, i) => {
+                              const rolesFaltantes = [
+                                !p.arbitroPrincipal && "Principal",
+                                !p.asistente1 && "Asistente 1",
+                                !p.asistente2 && "Asistente 2",
+                              ].filter(Boolean) as string[]
+                              return `Partido ${partidos.indexOf(p) + 1}: falta ${rolesFaltantes.join(", ")}`
+                            })
+                            .join(" · ")
                           toast({
                             title: "Designación incompleta",
-                            description: `${partidosSinArbitros.length} partido(s) sin árbitros obligatorios (Principal, Asistente 1, Asistente 2)`,
+                            description: faltan,
                             variant: "destructive",
                           })
                           return
@@ -2663,9 +2721,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                           const duplicadosEnPartido = arbitrosEnPartido.length !== new Set(arbitrosEnPartido).size
 
                           if (duplicadosEnPartido) {
+                            // Identifica el árbitro repetido en este partido
+                            const conteo = new Map<number, number>()
+                            arbitrosEnPartido.forEach((id) => conteo.set(id, (conteo.get(id) || 0) + 1))
+                            const idRepetido = Array.from(conteo.entries()).find(([, c]) => c > 1)?.[0]
+                            const nombre = idRepetido != null ? arbitros.find((a) => a.id === idRepetido)?.nombre : null
                             toast({
-                              title: "Árbitros duplicados",
-                              description: `Partido ${pIdx + 1}: Un árbitro no puede tener múltiples roles`,
+                              title: "Árbitro en varios puestos",
+                              description: `Partido ${pIdx + 1}: ${nombre || "Un árbitro"} ya tiene asignado otro puesto en este partido. Elígelo en un solo rol.`,
                               variant: "destructive",
                             })
                             return
@@ -2691,13 +2754,18 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
                           const arbitrosDuplicadosGlobales = Array.from(arbitrosGlobales.entries())
                             .filter(([_, count]) => count > 1)
-                            .map(([id, _]) => arbitros.find((a) => a.id === id)?.nombre)
-                            .filter(Boolean)
+                            .map(([id, _]) => {
+                              const nombre = arbitros.find((a) => a.id === id)?.nombre || "Árbitro"
+                              const partidoDonde = partidos.findIndex((p) =>
+                                [p.arbitroPrincipal?.id, p.asistente1?.id, p.asistente2?.id, p.cuartoArbitro?.id].includes(id)
+                              ) + 1
+                              return `${nombre} (ya en Partido ${partidoDonde})`
+                            })
 
                           if (arbitrosDuplicadosGlobales.length > 0) {
                             toast({
-                              title: "Árbitros asignados en múltiples partidos",
-                              description: `${arbitrosDuplicadosGlobales.join(", ")} ya están asignados en otro partido`,
+                              title: "Árbitro en varios partidos",
+                              description: `${arbitrosDuplicadosGlobales.join(" · ")}. Un árbitro no puede arbitrar más de un partido.`,
                               variant: "destructive",
                             })
                             return
