@@ -467,8 +467,10 @@ export default function HistorialAsistenciaPage() {
 
   const filtered = asistencias
     .filter(a => {
-      if (!esDiaObligatorio(a.fecha)) return false
-      if (filtroActividad !== "todos" && a.actividad !== filtroActividad) return false
+      const actividad = a.actividad
+      const esExtraordinaria = actividad === 'reunion_extraordinaria'
+      if (!esExtraordinaria && !esDiaObligatorio(a.fecha)) return false
+      if (filtroActividad !== "todos" && actividad !== filtroActividad) return false
       if (filtroMes !== "todos" && !a.fecha?.startsWith(filtroMes)) return false
       if (filtroArbitro !== "todos" && a.idArbitro !== Number(filtroArbitro)) return false
       return true
