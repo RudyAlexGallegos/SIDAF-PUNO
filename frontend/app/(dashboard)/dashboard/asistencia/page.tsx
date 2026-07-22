@@ -22,7 +22,7 @@ export default function AsistenciaPage() {
   const { registro, iniciarRegistro, marcarAsistencia, finalizarRegistro, cancelarRegistro, existeRegistroHoy, registroExistenteInfo } = useRegistroAsistencia()
 
   const [search, setSearch] = React.useState("")
-  const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria" | "actividad_suspendida">("analisis_partido")
+  const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
   const [responsable, setResponsable] = React.useState("")
   const [openFinalize, setOpenFinalize] = React.useState(false)
   const [openDiscard, setOpenDiscard] = React.useState(false)
@@ -31,18 +31,18 @@ export default function AsistenciaPage() {
   const [subtipoExtraordinaria, setSubtipoExtraordinaria] = React.useState<string>("")
   const [descripcionExtraordinaria, setDescripcionExtraordinaria] = React.useState<string>("")
 
-  const getActividadesPermitidas = (fechaString: string): Array<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria" | "actividad_suspendida"> => {
+  const getActividadesPermitidas = (fechaString: string): Array<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria"> => {
     const fecha = parseISO(fechaString)
     const diaSemana = fecha.getDay()
     switch (diaSemana) {
-      case 1: return ["analisis_partido", "actividad_suspendida"]
-      case 2: return ["preparacion_fisica", "actividad_suspendida"]
-      case 3: return ["reunion_extraordinaria", "actividad_suspendida"]
-      case 4: return ["preparacion_fisica", "actividad_suspendida"]
-      case 5: return ["reunion_ordinaria", "actividad_suspendida"]
-      case 6: return ["preparacion_fisica", "actividad_suspendida"]
-      case 0: return ["reunion_extraordinaria", "actividad_suspendida"]
-      default: return ["reunion_extraordinaria", "actividad_suspendida"]
+      case 1: return ["analisis_partido"]
+      case 2: return ["preparacion_fisica"]
+      case 3: return ["reunion_extraordinaria"]
+      case 4: return ["preparacion_fisica"]
+      case 5: return ["reunion_ordinaria"]
+      case 6: return ["preparacion_fisica"]
+      case 0: return ["reunion_extraordinaria"]
+      default: return ["reunion_extraordinaria"]
     }
   }
 
@@ -54,7 +54,6 @@ export default function AsistenciaPage() {
       case "preparacion_fisica": return "Preparación física"
       case "reunion_ordinaria": return "Reunión ordinaria"
       case "reunion_extraordinaria": return "Reunión extraordinaria"
-      case "actividad_suspendida": return "Actividad suspendida"
       default: return value.replace(/_/g, " ")
     }
   }
@@ -227,17 +226,17 @@ export default function AsistenciaPage() {
 
               <div className="mb-6">
                 <Label className="text-sm font-medium text-sky-900 mb-3 block">Selecciona la actividad</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {(['analisis_partido', 'preparacion_fisica', 'reunion_ordinaria', 'reunion_extraordinaria', 'actividad_suspendida'] as const).map((act) => (
-                    <button key={act} onClick={() => actividadesPermitidas.includes(act) && setActividad(act)} disabled={!actividadesPermitidas.includes(act)} className={`relative p-4 rounded-lg border-2 transition-all text-left ${
-                      actividad === act ? 'border-sky-500 bg-sky-50' : actividadesPermitidas.includes(act) ? 'border-sky-200 bg-white hover:border-sky-300' : 'border-sky-100 bg-sky-50/50 opacity-50 cursor-not-allowed'
-                    }`}>
-                      <div className="font-semibold text-sky-900">{getLabelActividad(act)}</div>
-                      <div className="text-xs text-sky-600 mt-1">{act === 'analisis_partido' ? 'Lunes' : act === 'preparacion_fisica' ? 'Martes, Jueves, Sábado' : act === 'reunion_ordinaria' ? 'Viernes' : act === 'reunion_extraordinaria' ? 'Miércoles, Domingo' : 'Disponible para cualquier día'}</div>
-                      {actividad === act && <Check className="w-5 h-5 text-sky-500 absolute right-4 top-4" />}
-                    </button>
-                  ))}
-                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   {(['analisis_partido', 'preparacion_fisica', 'reunion_ordinaria', 'reunion_extraordinaria'] as const).map((act) => (
+                     <button key={act} onClick={() => actividadesPermitidas.includes(act) && setActividad(act)} disabled={!actividadesPermitidas.includes(act)} className={`relative p-4 rounded-lg border-2 transition-all text-left ${
+                       actividad === act ? 'border-sky-500 bg-sky-50' : actividadesPermitidas.includes(act) ? 'border-sky-200 bg-white hover:border-sky-300' : 'border-sky-100 bg-sky-50/50 opacity-50 cursor-not-allowed'
+                     }`}>
+                       <div className="font-semibold text-sky-900">{getLabelActividad(act)}</div>
+                       <div className="text-xs text-sky-600 mt-1">{act === 'analisis_partido' ? 'Lunes' : act === 'preparacion_fisica' ? 'Martes, Jueves, Sábado' : act === 'reunion_ordinaria' ? 'Viernes' : 'Miércoles, Domingo'}</div>
+                       {actividad === act && <Check className="w-5 h-5 text-sky-500 absolute right-4 top-4" />}
+                     </button>
+                   ))}
+                 </div>
               </div>
               {actividad === 'reunion_extraordinaria' && (
                 <div className="mb-6">
