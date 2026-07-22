@@ -104,42 +104,7 @@ export default function HistorialAsistenciaPage() {
           getAsistencias(),
           getArbitros()
         ])
-        console.log('DEBUG - Asistencias cargadas del backend:', asistenciasData?.length)
-        console.log('DEBUG - Primera asistencia:', JSON.stringify(asistenciasData?.[0], null, 2))
-        console.log('DEBUG - Arbitros cargados:', arbitrosData?.length)
-        console.log('DEBUG - Primer arbitro:', JSON.stringify(arbitrosData?.[0], null, 2))
-        console.log('>>>>>> ARBITROS IDs:', arbitrosData?.map((a: any) => a.id) || 'none')
-        
-        // Verificar si hay datos guardados localmente que no estén en el backend
-        try {
-          const lastRegistro = localStorage.getItem("sidaf_registro_last")
-          if (lastRegistro) {
-            const reg = JSON.parse(lastRegistro)
-            const fechaReg = reg.fecha
-            console.log("📝 Registro local encontrado para fecha:", fechaReg)
-            
-            // Ver si este registro ya existe en asistenciasData
-            const yaExiste = asistenciasData?.some((a: any) => 
-              a.fecha?.startsWith(fechaReg) 
-            )
-            if (!yaExiste && reg.arbitros && reg.arbitros.length > 0) {
-              console.log("⚠️ Registro local no está en backend, añadiendo a la lista")
-              asistenciasData?.push({
-                id: `local-${Date.now()}`,
-                fecha: reg.fecha + "T00:00:00",
-                horaEntrada: reg.horaInicio,
-                horaSalida: reg.horaFin,
-                actividad: reg.tipoActividad,
-                evento: reg.descripcion,
-                estado: reg.estado || "completado",
-                observaciones: JSON.stringify(reg.arbitros)
-              })
-            }
-          }
-        } catch (e) {
-          console.warn("Error verificando datos locales:", e)
-        }
-        
+
         setAsistencias(asistenciasData)
         setArbitros(arbitrosData)
       } catch (error) {
@@ -149,6 +114,23 @@ export default function HistorialAsistenciaPage() {
       }
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    const onFocus = () => {
+      setLoading(true)
+      Promise.all([getAsistencias(), getArbitros()]).then(([asistenciasData, arbitrosData]) => {
+        setAsistencias(asistenciasData)
+        setArbitros(arbitrosData)
+      }).catch((error) => {
+        console.error("Error recargando datos al cambiar de pestaña:", error)
+      }).finally(() => {
+        setLoading(false)
+      })
+    }
+
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
   }, [])
 
   const parsearRegistros = (asistencia: Asistencia): RegistroArbitro[] => {
