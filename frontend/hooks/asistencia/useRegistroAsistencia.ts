@@ -161,11 +161,14 @@ export function useRegistroAsistencia() {
 
         // Enviar al backend - actualizar si existe, crear si no
         try {
+            let result: any = null
             if (idRegistroExistente) {
-                const result = await updateAsistencia(idRegistroExistente, asistenciaData)
+                console.log("🔄 Actualizando registro existente ID:", idRegistroExistente)
+                result = await updateAsistencia(idRegistroExistente, asistenciaData)
                 console.log("✅ Asistencia actualizada en backend:", result)
             } else {
-                const result = await createAsistencia(asistenciaData)
+                console.log("🆕 Creando nuevo registro en backend")
+                result = await createAsistencia(asistenciaData)
                 console.log("✅ Nueva asistencia guardada en backend:", result)
             }
         } catch (e) {

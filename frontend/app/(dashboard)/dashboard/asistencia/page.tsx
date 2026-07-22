@@ -290,11 +290,23 @@ export default function AsistenciaPage() {
           {/* Botones */}
           <div className="flex gap-3">
             {existeRegistroHoy ? (
-              <Button onClick={() => { const ahora = new Date().toISOString(); setFechaHoraInicio(ahora); iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); toast({ title: 'Registro cargado' }) }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
+              <Button onClick={() => { 
+                console.log("🖱️ Click en Editar Registro. existeRegistroHoy:", existeRegistroHoy, "registroExistenteInfo:", registroExistenteInfo); 
+                const ahora = new Date().toISOString(); 
+                setFechaHoraInicio(ahora); 
+                iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); 
+                toast({ title: 'Registro cargado' }) 
+              }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
                 Editar Registro
               </Button>
             ) : (
-              <Button onClick={() => { const ahora = new Date().toISOString(); setFechaHoraInicio(ahora); iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); toast({ title: 'Registro iniciado' }) }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
+              <Button onClick={() => { 
+                console.log("🖱️ Click en Iniciar Nuevo Registro. existeRegistroHoy:", existeRegistroHoy, "registroActual:", _registros); 
+                const ahora = new Date().toISOString(); 
+                setFechaHoraInicio(ahora); 
+                iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); 
+                toast({ title: 'Registro iniciado' }) 
+              }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
                 Iniciar Nuevo Registro
               </Button>
             )}
@@ -309,6 +321,7 @@ export default function AsistenciaPage() {
   }
 
   function handleFinalizar() {
+    console.log("🛑 Finalizando registro. Total arbitros:", arbitros?.length || 0, "Registro actual:", registro)
     finalizarRegistro(arbitros)
     setOpenFinalize(false)
     toast({ title: 'Registro finalizado', description: `${arbitros?.length || 0} árbitros registrados` })
