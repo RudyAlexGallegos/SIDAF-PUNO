@@ -75,7 +75,49 @@ export function useRegistroAsistencia() {
         }
     }
 
-    function iniciarRegistro(tipo: TipoActividad, responsable?: string, fechaCustom?: string, descripcion = "") {
+    async function actualizarRegistroInicial(tipo: TipoActividad, responsable?: string, fechaCustom?: string, descripcion = "") {
+        if (!idRegistroExistente) return
+        const now = new Date()
+        const fecha = fechaCustom || now.toISOString().split("T")[0]
+        const horaInicio = fechaCustom 
+            ? new Date(fechaCustom + "T" + now.toTimeString().slice(0, 8)).toISOString()
+            : now.toISOString()
+        const updatedRegistro: RegistroAsistencia = {
+            id: idRegistroExistente.toString(),
+            fecha: fecha,
+            horaInicio: horaInicio,
+            horaFin: "",
+            tipoActividad: tipo,
+            descripcion: descripcion || "",
+            ubicacion: "",
+            responsable: responsable || "",
+            arbitros: [],
+            createdAt: now.toISOString(),
+        }
+        setRegistro(updatedRegistro)
+        persist(updatedRegistro)
+
+        const asistenciaData = {
+            fecha: updatedRegistro.fecha,
+            horaEntrada: updatedRegistro.horaInicio,
+            horaSalida: "",
+            actividad: updatedRegistro.tipoActividad,
+            evento: updatedRegistro.descripcion,
+            estado: "pendiente",
+            responsable: updatedRegistro.responsable || 'Sistema',
+            observaciones: JSON.stringify(updatedRegistro.arbitros)
+        }
+
+        try {
+            console.log("📤 Actualizando registro inicial en backend ID:", idRegistroExistente, asistenciaData)
+            const result = await updateAsistencia(idRegistroExistente, asistenciaData)
+            console.log("✅ Registro inicial actualizado en backend:", result)
+        } catch (e) {
+            console.error("❌ Error al actualizar registro inicial en backend:", e)
+        }
+    }
+
+    async function iniciarRegistro(tipo: TipoActividad, responsable?: string, fechaCustom?: string, descripcion = "") {
         const now = new Date()
         const fecha = fechaCustom || now.toISOString().split("T")[0]
         const horaInicio = fechaCustom 
@@ -95,6 +137,29 @@ export function useRegistroAsistencia() {
         }
         setRegistro(newRegistro)
         persist(newRegistro)
+
+        const asistenciaData = {
+            fecha: newRegistro.fecha,
+            horaEntrada: newRegistro.horaInicio,
+            horaSalida: "",
+            actividad: newRegistro.tipoActividad,
+            evento: newRegistro.descripcion,
+            estado: "pendiente",
+            responsable: newRegistro.responsable || 'Sistema',
+            observaciones: JSON.stringify(newRegistro.arbitros)
+        }
+
+        try {
+            console.log("📤 Guardando registro inicial en backend:", asistenciaData)
+            const result = await createAsistencia(asistenciaData)
+            console.log("✅ Registro inicial guardado en backend. ID:", result.id)
+            const backendId = result.id
+            const updatedLocal = { ...newRegistro, id: `backend-${backendId}` }
+            setRegistro(updatedLocal)
+            persist(updatedLocal)
+        } catch (e) {
+            console.error("❌ Error al guardar registro inicial en backend:", e)
+        }
     }
 
     function marcarAsistencia(arbitroId: string, estado: EstadoAsistencia, observaciones = "") {
@@ -199,6 +264,7 @@ export function useRegistroAsistencia() {
     return { 
         registro, 
         iniciarRegistro, 
+        actualizarRegistroInicial,
         marcarAsistencia, 
         actualizarDescripcion,
         finalizarRegistro, 

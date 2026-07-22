@@ -19,7 +19,7 @@ import Link from "next/link"
 
 export default function AsistenciaPage() {
   const { arbitros, loading } = useArbitros()
-  const { registro, iniciarRegistro, marcarAsistencia, finalizarRegistro, cancelarRegistro, existeRegistroHoy, registroExistenteInfo } = useRegistroAsistencia()
+  const { registro, iniciarRegistro, actualizarRegistroInicial, marcarAsistencia, finalizarRegistro, cancelarRegistro, existeRegistroHoy, registroExistenteInfo } = useRegistroAsistencia()
 
   const [search, setSearch] = React.useState("")
   const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
@@ -294,7 +294,7 @@ export default function AsistenciaPage() {
                 console.log("🖱️ Click en Editar Registro. existeRegistroHoy:", existeRegistroHoy, "registroExistenteInfo:", registroExistenteInfo); 
                 const ahora = new Date().toISOString(); 
                 setFechaHoraInicio(ahora); 
-                iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); 
+                actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, registroDescripcion); 
                 toast({ title: 'Registro cargado' }) 
               }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
                 Editar Registro
