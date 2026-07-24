@@ -47,6 +47,10 @@ public class AsistenciaController {
         if (asistencia.getCreatedAt() == null) {
             asistencia.setCreatedAt(LocalDateTime.now());
         }
+        if (asistencia.getEstado() != null && asistencia.getEstado().equalsIgnoreCase("justificacion")) {
+            asistencia.setEstado("justificado");
+        }
+        asistenciaService.procesarAsistencia(asistencia);
         Asistencia guardado = asistenciaRepository.save(asistencia);
         return ResponseEntity.created(URI.create("/api/asistencias/" + guardado.getId())).body(guardado);
     }
@@ -62,6 +66,9 @@ public class AsistenciaController {
         e.setHoraSalida(datos.getHoraSalida());
         e.setActividad(datos.getActividad());
         e.setEvento(datos.getEvento());
+        if (datos.getEstado() != null && datos.getEstado().equalsIgnoreCase("justificacion")) {
+            datos.setEstado("justificado");
+        }
         e.setEstado(datos.getEstado());
         e.setObservaciones(datos.getObservaciones());
         e.setLatitude(datos.getLatitude());
@@ -77,6 +84,7 @@ public class AsistenciaController {
         e.setHoraProgramada(datos.getHoraProgramada());
         e.setDiaSemana(datos.getDiaSemana());
 
+        asistenciaService.procesarAsistencia(e);
         Asistencia actualizado = asistenciaRepository.save(e);
         return ResponseEntity.ok(actualizado);
     }

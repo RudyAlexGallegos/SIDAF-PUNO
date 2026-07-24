@@ -98,54 +98,67 @@ export default function HistorialAsistenciaPage() {
   const [previewTipo, setPreviewTipo] = useState<"pdf" | "excel">("pdf")
 
   useEffect(() => {
+    let mounted = true
     async function load() {
       try {
         const [asistenciasData, arbitrosData] = await Promise.all([
           getAsistencias(),
           getArbitros()
         ])
-
+        if (!mounted) return
         setAsistencias(asistenciasData)
         setArbitros(arbitrosData)
       } catch (error) {
         console.error("Error cargando datos:", error)
       } finally {
-        setLoading(false)
+        if (mounted) setLoading(false)
       }
     }
     load()
-  }, [])
 
-  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (!mounted) return
+      Promise.all([getAsistencias(), getArbitros()]).then(([asistenciasData, arbitrosData]) => {
+        if (!mounted) return
+        setAsistencias(asistenciasData)
+        setArbitros(arbitrosData)
+      }).catch((error) => {
+        console.error("Error recargando datos:", error)
+      })
+    }, 3000)
+
     const onFocus = () => {
+      if (!mounted) return
       setLoading(true)
       Promise.all([getAsistencias(), getArbitros()]).then(([asistenciasData, arbitrosData]) => {
+        if (!mounted) return
         setAsistencias(asistenciasData)
         setArbitros(arbitrosData)
       }).catch((error) => {
         console.error("Error recargando datos al cambiar de pestaña:", error)
       }).finally(() => {
-        setLoading(false)
+        if (mounted) setLoading(false)
       })
     }
 
     window.addEventListener("focus", onFocus)
-    return () => window.removeEventListener("focus", onFocus)
+    return () => {
+      mounted = false
+      window.clearInterval(interval)
+      window.removeEventListener("focus", onFocus)
+    }
   }, [])
 
   const parsearRegistros = (asistencia: Asistencia): RegistroArbitro[] => {
     try {
       if (asistencia.observaciones) {
-        console.log('DEBUG parsearRegistros - observaciones:', asistencia.observaciones?.substring(0, 200))
         const parsed = JSON.parse(asistencia.observaciones)
-        console.log('DEBUG parsearRegistros - parsed:', parsed)
         
         // Validar que sea un array
         if (Array.isArray(parsed)) {
           return parsed
         } else if (typeof parsed === 'object' && parsed !== null) {
           // Si es un objeto, convertirlo a array con ese objeto
-          console.warn('DEBUG parsearRegistros - observaciones es un objeto, convirtiéndolo a array')
           return [parsed]
         }
       }
@@ -175,8 +188,6 @@ export default function HistorialAsistenciaPage() {
       return `${arb.nombres || ""} ${arb.apellidoPaterno || ""}`.trim() || `Árbitro ${id}`
     }
     
-    // Debug logging
-    console.log(`DEBUG getNombreArbitro - No encontrado para id: ${id}, árbitros disponibles:`, arbitros.map(a => ({ id: a.id, nombre: a.nombre })))
     return `Árbitro ${id}`
   }
 
@@ -506,6 +517,11 @@ export default function HistorialAsistenciaPage() {
     const fechasConRegistro = new Set([...new Set(asistencias.map(a => a.fecha?.split('T')[0]))].filter(Boolean))
     return todosLosDias
       .filter(dia => diasObligatorios.includes(dia.getDay()))
+      .filter(dia => {
+        if (filtroMes === "todos") return true
+        const mesDia = format(dia, "yyyy-MM")
+        return mesDia === filtroMes
+      })
       .map(dia => {
         const fechaStr = format(dia, 'yyyy-MM-dd')
         const tieneRegistro = fechasConRegistro.has(fechaStr)

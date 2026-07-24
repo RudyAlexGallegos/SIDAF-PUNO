@@ -63,6 +63,12 @@ public class AsistenciaService {
         }
     }
 
+    private String normalizarEstado(String estado) {
+        if (estado == null) return null;
+        if (estado.equalsIgnoreCase("justificacion")) return "justificado";
+        return estado.toLowerCase();
+    }
+
     public Map<String, Object> getEstadisticasPorDia(LocalDate inicio, LocalDate fin) {
         List<Asistencia> lista = asistenciaRepository.findByFechaBetween(inicio, fin);
         Map<Integer, EstadisticaDia> stats = new HashMap<>();
@@ -72,13 +78,13 @@ public class AsistenciaService {
             if (a.getFecha() == null) continue;
             int ds = a.getFecha().getDayOfWeek().getValue();
             EstadisticaDia s = stats.get(ds);
-            String e = a.getEstado();
+            String e = normalizarEstado(a.getEstado());
             if (e != null) {
-                switch (e.toLowerCase()) {
+                switch (e) {
                     case "presente": s.presentes++; break;
                     case "ausente": s.ausentes++; break;
                     case "tardanza": s.tardanzas++; break;
-                    case "justificacion": s.justificaciones++; break;
+                    case "justificado": s.justificaciones++; break;
                 }
                 s.total++;
             }
@@ -120,10 +126,10 @@ public class AsistenciaService {
             }
         }
         
-        long p = oblig.stream().filter(a -> "presente".equalsIgnoreCase(a.getEstado())).count();
-        long aus = oblig.stream().filter(x -> "ausente".equalsIgnoreCase(x.getEstado())).count();
-        long t = oblig.stream().filter(x -> "tardanza".equalsIgnoreCase(x.getEstado())).count();
-        long j = oblig.stream().filter(x -> "justificacion".equalsIgnoreCase(x.getEstado())).count();
+        long p = oblig.stream().filter(a -> "presente".equalsIgnoreCase(normalizarEstado(a.getEstado()))).count();
+        long aus = oblig.stream().filter(x -> "ausente".equalsIgnoreCase(normalizarEstado(x.getEstado()))).count();
+        long t = oblig.stream().filter(x -> "tardanza".equalsIgnoreCase(normalizarEstado(x.getEstado()))).count();
+        long j = oblig.stream().filter(x -> "justificado".equalsIgnoreCase(normalizarEstado(x.getEstado()))).count();
         
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("periodo", Map.of("inicio", inicio.toString(), "fin", fin.toString()));

@@ -59,7 +59,6 @@ const getEstadoLabel = (estado?: string): string => {
     tardanza: "Tardanza",
     justificado: "Justificado",
     licencia: "Licencia",
-    justificacion: "Justificado",
   }
   return labels[estado || ""] || estado || "-"
 }
@@ -632,7 +631,7 @@ export function generateReporteConsolidadoPDF(
   const presentes = asistencia.filter((a) => a.estado === "presente").length
   const ausentes = asistencia.filter((a) => a.estado === "ausente").length
   const tardanzas = asistencia.filter((a) => a.estado === "tardanza").length
-  const justificados = asistencia.filter((a) => a.estado === "justificado" || a.estado === "justificacion").length
+  const justificados = asistencia.filter((a) => a.estado === "justificado").length
   const porcentaje = totalRegistros > 0 ? Math.round((presentes / totalRegistros) * 100) : 0
 
   // Header

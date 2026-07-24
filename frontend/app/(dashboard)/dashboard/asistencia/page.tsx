@@ -144,7 +144,7 @@ export default function AsistenciaPage() {
   const _registros = registro?.arbitros ?? []
   const totalArbitros = arbitros?.length ?? 0
   const asistentesCount = _registros.filter(r => r.estado === 'presente' || r.estado === 'tardanza').length
-  const excusadosCount = _registros.filter(r => r.estado === 'justificacion' || r.estado === 'justificado' || r.estado === 'licencia').length
+  const excusadosCount = _registros.filter(r => r.estado === 'justificado' || r.estado === 'licencia').length
   const faltasCount = Math.max(0, totalArbitros - asistentesCount - excusadosCount)
   const marcadosCount = Object.keys(estadosMap).length
 

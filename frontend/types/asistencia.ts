@@ -10,7 +10,8 @@ export type EstadoAsistencia =
     | "justificado"
     | "licencia"
     | "tardanza"
-    | "justificacion"
+
+export const ESTADOS_ASISTENCIA = ["presente", "ausente", "justificado", "licencia", "tardanza"] as const
 
 // Tipo de día para asistencia
 export type TipoDia = "OBLIGATORIO" | "OPCIONAL" | "DESCANSO"

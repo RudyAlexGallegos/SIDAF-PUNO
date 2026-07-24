@@ -12,7 +12,6 @@ function getEstadoLabel(estado: EstadoAsistencia) {
         case 'ausente': return 'Falta'
         case 'justificado': return 'Justificado'
         case 'licencia': return 'Licencia'
-        case 'justificacion': return 'Justificación'
         default: return 'Sin registrar'
     }
 }
