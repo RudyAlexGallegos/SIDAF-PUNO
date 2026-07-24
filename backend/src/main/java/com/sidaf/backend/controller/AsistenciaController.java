@@ -51,6 +51,35 @@ public class AsistenciaController {
             asistencia.setEstado("justificado");
         }
         asistenciaService.procesarAsistencia(asistencia);
+
+        Optional<Asistencia> existente = asistenciaRepository.findTopByFechaAndResponsableAndActividadOrderByIdDesc(
+            asistencia.getFecha(),
+            asistencia.getResponsable() != null ? asistencia.getResponsable() : "",
+            asistencia.getActividad() != null ? asistencia.getActividad() : ""
+        );
+
+        if (existente.isPresent()) {
+            Asistencia e = existente.get();
+            e.setHoraEntrada(asistencia.getHoraEntrada());
+            e.setHoraSalida(asistencia.getHoraSalida());
+            e.setEvento(asistencia.getEvento());
+            e.setEstado(asistencia.getEstado());
+            e.setObservaciones(asistencia.getObservaciones());
+            e.setLatitude(asistencia.getLatitude());
+            e.setLongitude(asistencia.getLongitude());
+            e.setResponsableId(asistencia.getResponsableId());
+            e.setResponsable(asistencia.getResponsable());
+            e.setTipoDia(asistencia.getTipoDia());
+            e.setTieneRetraso(asistencia.getTieneRetraso());
+            e.setMinutosRetraso(asistencia.getMinutosRetraso());
+            e.setFechaLimiteRegistro(asistencia.getFechaLimiteRegistro());
+            e.setHoraProgramada(asistencia.getHoraProgramada());
+            e.setDiaSemana(asistencia.getDiaSemana());
+            asistenciaService.procesarAsistencia(e);
+            Asistencia actualizado = asistenciaRepository.save(e);
+            return ResponseEntity.ok(actualizado);
+        }
+
         Asistencia guardado = asistenciaRepository.save(asistencia);
         return ResponseEntity.created(URI.create("/api/asistencias/" + guardado.getId())).body(guardado);
     }
