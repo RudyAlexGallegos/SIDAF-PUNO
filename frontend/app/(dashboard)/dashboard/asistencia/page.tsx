@@ -19,7 +19,7 @@ import Link from "next/link"
 
 export default function AsistenciaPage() {
   const { arbitros, loading } = useArbitros()
-  const { registro, iniciarRegistro, actualizarRegistroInicial, marcarAsistencia, finalizarRegistro, cancelarRegistro, existeRegistroHoy, registroExistenteInfo } = useRegistroAsistencia()
+  const { registro, iniciarRegistro, actualizarRegistroInicial, marcarAsistencia, finalizarRegistro, cancelarRegistro, existeRegistroHoy, registroExistenteInfo, notificacion, setNotificacion } = useRegistroAsistencia()
 
   const [search, setSearch] = React.useState("")
   const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
@@ -96,6 +96,13 @@ export default function AsistenciaPage() {
   }
 
   const diaObligatorio = esDiaObligatorioHoy(fechaSeleccionada)
+
+  React.useEffect(() => {
+    if (notificacion) {
+      toast({ title: 'Atención', description: notificacion, variant: 'destructive' })
+      setNotificacion(null)
+    }
+  }, [notificacion, setNotificacion])
 
   React.useEffect(() => {
     const usuario = getStoredUser()
@@ -291,9 +298,9 @@ export default function AsistenciaPage() {
           <div className="flex gap-3">
             {existeRegistroHoy ? (
               <Button onClick={() => { 
-                console.log("🖱️ Click en Editar Registro. existeRegistroHoy:", existeRegistroHoy, "registroExistenteInfo:", registroExistenteInfo); 
                 const ahora = new Date().toISOString(); 
                 setFechaHoraInicio(ahora); 
+                setNotificacion(null);
                 actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, registroDescripcion); 
                 toast({ title: 'Registro cargado' }) 
               }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
@@ -301,9 +308,9 @@ export default function AsistenciaPage() {
               </Button>
             ) : (
               <Button onClick={() => { 
-                console.log("🖱️ Click en Iniciar Nuevo Registro. existeRegistroHoy:", existeRegistroHoy, "registroActual:", _registros); 
                 const ahora = new Date().toISOString(); 
                 setFechaHoraInicio(ahora); 
+                setNotificacion(null);
                 iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); 
                 toast({ title: 'Registro iniciado' }) 
               }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">

@@ -15,6 +15,7 @@ export function useRegistroAsistencia() {
     const [idRegistroExistente, setIdRegistroExistente] = useState<number | null>(null)
     const [registroExistenteInfo, setRegistroExistenteInfo] = useState<any>(null)
     const [inicializando, setInicializando] = useState(false)
+    const [notificacion, setNotificacion] = useState<string | null>(null)
 
     // Cargar información del día actual
     useEffect(() => {
@@ -127,6 +128,7 @@ export function useRegistroAsistencia() {
                 return actividadOk && estadoOk
             })
             if (pendiente?.id) {
+                setNotificacion(`Ya existe un registro pendiente para el ${fecha}. Se reutilizará ese registro.`)
                 setIdRegistroExistente(pendiente.id)
                 setExisteRegistroHoy(true)
                 const local: RegistroAsistencia = {
@@ -284,6 +286,8 @@ export function useRegistroAsistencia() {
         getNombreDiaActual,
         existeRegistroHoy,
         idRegistroExistente,
-        registroExistenteInfo
+        registroExistenteInfo,
+        notificacion,
+        setNotificacion
     }
 }
