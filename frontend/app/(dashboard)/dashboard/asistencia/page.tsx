@@ -4,6 +4,7 @@ import React from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useArbitros } from "@/hooks/asistencia/useArbitros"
 import { useRegistroAsistencia, type DuplicadoInfo } from "@/hooks/asistencia/useRegistroAsistencia"
+import ListaArbitros from "@/components/asistencia/ListaArbitros"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -16,6 +17,8 @@ import { Check, BarChart3, Calendar, AlertCircle, Clock, ArrowLeft, RefreshCw, F
 import { toast } from "@/hooks/use-toast"
 import { getStoredUser } from "@/services/api"
 import Link from "next/link"
+
+const { useArbitros } = await import("@/hooks/asistencia/useArbitros")
 
 const DIAS_OBLIGATORIOS = [1, 2, 4, 5, 6]
 
@@ -84,6 +87,18 @@ export default function AsistenciaPage() {
     const [datosReporte, setDatosReporte] = React.useState<any>(null)
     const [loadingReporte, setLoadingReporte] = React.useState(false)
     const [filtroEstadoReporte, setFiltroEstadoReporte] = React.useState<string>("todos")
+    const [openFinalize, setOpenFinalize] = React.useState(false)
+    const [openDiscard, setOpenDiscard] = React.useState(false)
+
+    const estadosMap = React.useMemo(() => {
+        const map: Record<string, any> = {}
+        if (registro?.arbitros) {
+            for (const a of registro.arbitros) {
+                map[a.arbitroId] = a.estado
+            }
+        }
+        return map
+    }, [registro])
 
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -605,35 +620,107 @@ export default function AsistenciaPage() {
                 </Card>
 
                 {/* Sección de asistencia en curso */}
-                {registro && (
+                {(registro || (existeRegistroHoy && idRegistroExistente)) && (
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-sky-900">Registro en curso</h2>
-                            <span className="text-sm text-sky-500">
-                                {fechaSeleccionada
-                                    ? format(parseISO(fechaSeleccionada), "dd 'de' MMMM 'de' yyyy", { locale: es })
-                                    : ""}
-                            </span>
+                            <div>
+                                <h2 className="text-2xl font-bold text-sky-900">Registro en curso</h2>
+                                <p className="text-sky-600 mt-1">{getLabelActividad(actividad)} — {fechaSeleccionada ? format(parseISO(fechaSeleccionada), "dd 'de' MMMM 'de' yyyy", { locale: es }) : ""}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-sky-600">Responsable</p>
+                                <p className="font-semibold text-sky-900">{responsable || "—"}</p>
+                            </div>
                         </div>
 
-                        <Card className="mb-6 bg-sky-50 border-sky-200 shadow-sm">
+                        <Card className="bg-sky-50 border-sky-200 shadow-sm">
                             <CardContent className="pt-4 pb-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-semibold text-sky-900">Progreso del registro</p>
-                                        <p className="text-sm text-sky-700">Actividad: {getLabelActividad(actividad)}</p>
+                                        <p className="text-sm font-semibold text-sky-900">Progreso</p>
+                                        <p className="text-sm text-sky-700">Marca la asistencia de los árbitros</p>
                                     </div>
-                                    <div className="text-sm font-medium text-sky-700">
-                                        Responsable: {responsable || "—"}
+                                    <div className="flex gap-2">
+                                        <Button
+                                            onClick={() => setOpenDiscard(true)}
+                                            variant="outline"
+                                            className="border-red-200 text-red-600 hover:bg-red-50"
+                                        >
+                                            Descartar
+                                        </Button>
+                                        <Button
+                                            onClick={() => setOpenFinalize(true)}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        >
+                                            Finalizar
+                                        </Button>
                                     </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Buscador y lista de árbitros */}
+                        <Card className="bg-white border-sky-200 shadow-sm">
+                            <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
+                            <CardContent className="pt-4 pb-4">
+                                <div className="flex flex-col md:flex-row gap-4">
+                                    <div className="flex-1">
+                                        <Input
+                                            placeholder="Buscar árbitro por nombre o DNI"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-white border-sky-200 shadow-sm">
+                            <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
+                            <CardContent className="pt-4 pb-4">
+                                <div className="divide-y divide-sky-100">
+                                    <ListaArbitros
+                                        arbitros={arbitros}
+                                        onChange={marcarAsistencia}
+                                        estadosMap={estadosMap}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 )}
 
-                {/* Botón de listado de árbitros (visible solo si hay un registro en curso o para iniciar uno nuevo) */}
-                {!registro && !existeRegistroHoy && (
+                {/* Dialogo de confirmación para finalizar */}
+                <Dialog open={openFinalize} onOpenChange={setOpenFinalize}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirmar finalización</DialogTitle>
+                            <DialogDescription>Se registrará la hora de cierre del control de asistencia.</DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" className="border-sky-200 text-sky-600 hover:bg-sky-50" onClick={() => setOpenFinalize(false)}>Cancelar</Button>
+                            <Button onClick={() => { finalizarRegistro(arbitros); setOpenFinalize(false); toast({ title: "Registro finalizado" }) }} className="bg-emerald-600 hover:bg-emerald-700 text-white">Confirmar</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialogo de confirmación para descartar */}
+                <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Descartar registro</DialogTitle>
+                            <DialogDescription>Se perderán los cambios actuales del registro en curso.</DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" className="border-sky-200 text-sky-600 hover:bg-sky-50" onClick={() => setOpenDiscard(false)}>Cancelar</Button>
+                            <Button onClick={() => { cancelarRegistro(); setOpenDiscard(false); toast({ title: "Registro descartado" }) }} className="bg-red-600 hover:bg-red-700 text-white">Confirmar</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Estado vacío cuando no hay registro en curso */}
+                {!registro && !(existeRegistroHoy && idRegistroExistente) && (
                     <Card className="bg-white border-sky-200 shadow-sm">
                         <CardContent className="pt-6 pb-6">
                             <div className="text-center py-8">
