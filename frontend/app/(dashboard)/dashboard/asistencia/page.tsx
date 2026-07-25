@@ -18,8 +18,6 @@ import { toast } from "@/hooks/use-toast"
 import { getStoredUser } from "@/services/api"
 import Link from "next/link"
 
-const { useArbitros } = await import("@/hooks/asistencia/useArbitros")
-
 const DIAS_OBLIGATORIOS = [1, 2, 4, 5, 6]
 
 const ACTIVIDADES: Array<{
