@@ -1,6 +1,7 @@
--- Migración 052: Quitar constraint UNIQUE para permitir múltiples registros por fecha
+-- Migración 052: Restaurar constraint UNIQUE para evitar duplicados de asistencia
 -- Sistema SIDAF-PUNO
 -- Compatible con PostgreSQL
 
 ALTER TABLE asistencia
-    DROP CONSTRAINT IF EXISTS uq_asistencia_fecha_responsable_actividad;
+    ADD CONSTRAINT uq_asistencia_fecha_responsable_actividad
+    UNIQUE (fecha, responsable, actividad);
