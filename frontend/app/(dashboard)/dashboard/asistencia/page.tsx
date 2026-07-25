@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Check, BarChart3, Calendar, AlertCircle, Clock, ArrowLeft, RefreshCw, FileText, UserCheck } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getStoredUser } from "@/services/api"
+import { getStoredUser, getReporteConsolidado } from "@/services/api"
 import Link from "next/link"
 
 const DIAS_OBLIGATORIOS = [1, 2, 4, 5, 6]
@@ -86,6 +86,8 @@ export default function AsistenciaPage() {
     const [datosReporte, setDatosReporte] = React.useState<any>(null)
     const [loadingReporte, setLoadingReporte] = React.useState(false)
     const [filtroEstadoReporte, setFiltroEstadoReporte] = React.useState<string>("todos")
+    const [mostrarBoleta, setMostrarBoleta] = React.useState(false)
+    const [boletaInfo, setBoletaInfo] = React.useState<{ total: number; asistentes: number; ausentes: number; tardanzas: number; justificados: number } | null>(null)
 
     const estadosMap = React.useMemo(() => {
         const map: Record<string, any> = {}
@@ -170,11 +172,8 @@ export default function AsistenciaPage() {
         if (!fechaInicioReporte || !fechaFinReporte) return
         setLoadingReporte(true)
         try {
-            const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
-            const params = new URLSearchParams({ fechaInicio: fechaInicioReporte, fechaFin: fechaFinReporte })
-            const res = await fetch(`${API_BASE_URL}/asistencias/reporte/semanal?${params.toString()}`)
-            if (res.ok) {
-                const data = await res.json()
+            const data = await getReporteConsolidado(fechaInicioReporte, fechaFinReporte)
+            if (data) {
                 setDatosReporte(data)
             } else {
                 toast({ title: "Error", description: "No se pudieron cargar los reportes.", variant: "destructive" })
@@ -641,19 +640,37 @@ export default function AsistenciaPage() {
                                         <p className="text-sm font-semibold text-sky-900">Progreso</p>
                                         <p className="text-sm text-sky-700">Marca la asistencia de los árbitros</p>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 mt-4 pt-4 border-t border-sky-200">
                                         <Button
-                                            onClick={() => setOpenDiscard(true)}
+                                            onClick={() => {
+                                                cancelarRegistro()
+                                                setExisteRegistroHoy(false)
+                                                setIdRegistroExistente(null)
+                                                setMostrarDialogo(false)
+                                            }}
                                             variant="outline"
-                                            className="border-red-200 text-red-600 hover:bg-red-50"
+                                            className="border-red-200 text-red-600 hover:bg-red-50 flex-1"
                                         >
-                                            Descartar
+                                            Descartar Registro
                                         </Button>
                                         <Button
-                                            onClick={() => setOpenFinalize(true)}
-                                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                            onClick={() => {
+                                                const total = arbitros.length
+                                                const asistentes = registro?.arbitros.filter(a => a.estado === 'presente' || a.estado === 'tardanza').length ?? 0
+                                                const ausentes = registro?.arbitros.filter(a => a.estado === 'ausente').length ?? 0
+                                                const justificados = registro?.arbitros.filter(a => a.estado === 'justificado').length ?? 0
+                                                const tardanzas = registro?.arbitros.filter(a => a.estado === 'tardanza').length ?? 0
+                                                finalizarRegistro(arbitros)
+                                                cancelarRegistro()
+                                                setExisteRegistroHoy(false)
+                                                setIdRegistroExistente(null)
+                                                setMostrarDialogo(false)
+                                                setBoletaInfo({ total, asistentes, ausentes, tardanzas, justificados })
+                                                setMostrarBoleta(true)
+                                            }}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
                                         >
-                                            Finalizar
+                                            Finalizar Registro
                                         </Button>
                                     </div>
                                 </div>
@@ -749,7 +766,20 @@ export default function AsistenciaPage() {
                                     Descartar Registro
                                 </Button>
 <Button
-                                    onClick={() => { finalizarRegistro(arbitros); cancelarRegistro(); setExisteRegistroHoy(false); setIdRegistroExistente(null); toast({ title: "Registro finalizado" }) }}
+                                    onClick={() => {
+                                        const total = arbitros.length
+                                        const asistentes = registro?.arbitros.filter(a => a.estado === 'presente' || a.estado === 'tardanza').length ?? 0
+                                        const ausentes = registro?.arbitros.filter(a => a.estado === 'ausente').length ?? 0
+                                        const justificados = registro?.arbitros.filter(a => a.estado === 'justificado').length ?? 0
+                                        const tardanzas = registro?.arbitros.filter(a => a.estado === 'tardanza').length ?? 0
+                                        finalizarRegistro(arbitros)
+                                        cancelarRegistro()
+                                        setExisteRegistroHoy(false)
+                                        setIdRegistroExistente(null)
+                                        setMostrarDialogo(false)
+                                        setBoletaInfo({ total, asistentes, ausentes, tardanzas, justificados })
+                                        setMostrarBoleta(true)
+                                    }}
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
                                 >
                                     Finalizar Registro
@@ -774,6 +804,58 @@ export default function AsistenciaPage() {
                         </CardContent>
                     </Card>
                 )}
+                {/* Boleta informativa al finalizar */}
+                <Dialog open={mostrarBoleta} onOpenChange={setMostrarBoleta}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-lg text-sky-900 flex items-center gap-2">
+                                <FileText className="w-5 h-5" />
+                                Boleta de Asistencia
+                            </DialogTitle>
+                            <DialogDescription>
+                                Resumen del registro finalizado el {fechaSeleccionada ? format(parseISO(fechaSeleccionada), "d 'de' MMMM 'de' yyyy", { locale: es }) : ""}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            {boletaInfo && (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 bg-sky-50 rounded-lg border border-sky-200 text-center">
+                                        <p className="text-2xl font-bold text-sky-900">{boletaInfo.total}</p>
+                                        <p className="text-xs text-sky-600">Total Árbitros</p>
+                                    </div>
+                                    <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-center">
+                                        <p className="text-2xl font-bold text-emerald-700">{boletaInfo.asistentes}</p>
+                                        <p className="text-xs text-emerald-600">Asistentes</p>
+                                    </div>
+                                    <div className="p-3 bg-red-50 rounded-lg border border-red-200 text-center">
+                                        <p className="text-2xl font-bold text-red-700">{boletaInfo.ausentes}</p>
+                                        <p className="text-xs text-red-600">Ausentes</p>
+                                    </div>
+                                    <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 text-center">
+                                        <p className="text-2xl font-bold text-yellow-700">{boletaInfo.tardanzas}</p>
+                                        <p className="text-xs text-yellow-600">Tardanzas</p>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                                <p className="text-sm text-sky-800">
+                                    {(boletaInfo?.asistentes ?? 0) + (boletaInfo?.justificados ?? 0) > 0
+                                        ? `Porcentaje de asistencia: ${boletaInfo ? Math.round(((boletaInfo.asistentes + boletaInfo.justificados) / boletaInfo.total) * 100) : 0}%`
+                                        : "Sin registros de asistencia"}
+                                </p>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                onClick={() => setMostrarBoleta(false)}
+                                className="bg-sky-600 hover:bg-sky-700 text-white w-full"
+                            >
+                                Cerrar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )

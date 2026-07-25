@@ -159,7 +159,7 @@ export function useRegistroAsistencia() {
             const existentes = await getAsistenciasByFecha(fecha)
             const pendiente = existentes.find(a => {
                 const actividadOk = a.actividad === tipo
-                const estadoOk = !a.estado || a.estado === "pendiente"
+                const estadoOk = !a.estado || a.estado === "pendiente" || a.estado === "completado"
                 return actividadOk && estadoOk
             })
             if (pendiente?.id) {
