@@ -474,17 +474,24 @@ public class AsistenciaController {
                 actividad != null ? actividad : ""
             );
             Map<String, Object> respuesta = new LinkedHashMap<>();
-            respuesta.put("existe", existente.isPresent());
             if (existente.isPresent()) {
                 Asistencia e = existente.get();
-                respuesta.put("id", e.getId());
-                respuesta.put("responsable", e.getResponsable());
-                respuesta.put("fecha", e.getFecha().toString());
-                respuesta.put("actividad", e.getActividad());
-                respuesta.put("estado", e.getEstado());
-                respuesta.put("horaEntrada", e.getHoraEntrada() != null ? e.getHoraEntrada().toString() : "");
-                respuesta.put("mensaje", "YA_EXISTE_REGISTRO");
+                String estado = e.getEstado();
+                if (estado == null || estado.equals("pendiente")) {
+                    respuesta.put("existe", true);
+                    respuesta.put("id", e.getId());
+                    respuesta.put("responsable", e.getResponsable());
+                    respuesta.put("fecha", e.getFecha().toString());
+                    respuesta.put("actividad", e.getActividad());
+                    respuesta.put("estado", estado);
+                    respuesta.put("horaEntrada", e.getHoraEntrada() != null ? e.getHoraEntrada().toString() : "");
+                    respuesta.put("mensaje", "YA_EXISTE_REGISTRO");
+                } else {
+                    respuesta.put("existe", false);
+                    respuesta.put("mensaje", "SIN_DUPLICADO");
+                }
             } else {
+                respuesta.put("existe", false);
                 respuesta.put("mensaje", "SIN_DUPLICADO");
             }
             return ResponseEntity.ok(respuesta);
