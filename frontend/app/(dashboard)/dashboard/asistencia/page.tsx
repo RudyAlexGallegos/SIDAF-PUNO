@@ -170,14 +170,18 @@ export default function AsistenciaPage() {
         if (!fechaInicioReporte || !fechaFinReporte) return
         setLoadingReporte(true)
         try {
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
             const params = new URLSearchParams({ fechaInicio: fechaInicioReporte, fechaFin: fechaFinReporte })
-            const res = await fetch(`/api/asistencias/reporte/semanal?${params.toString()}`)
+            const res = await fetch(`${API_BASE_URL}/asistencias/reporte/semanal?${params.toString()}`)
             if (res.ok) {
                 const data = await res.json()
                 setDatosReporte(data)
+            } else {
+                toast({ title: "Error", description: "No se pudieron cargar los reportes.", variant: "destructive" })
             }
         } catch (e) {
             console.error("Error cargando reportes:", e)
+            toast({ title: "Error", description: "Error al conectar con el servidor de reportes.", variant: "destructive" })
         } finally {
             setLoadingReporte(false)
         }
@@ -744,8 +748,8 @@ export default function AsistenciaPage() {
                                 >
                                     Descartar Registro
                                 </Button>
-                                <Button
-                                    onClick={() => { finalizarRegistro(arbitros); toast({ title: "Registro finalizado" }); }}
+<Button
+                                    onClick={() => { finalizarRegistro(arbitros); cancelarRegistro(); setExisteRegistroHoy(false); setIdRegistroExistente(null); toast({ title: "Registro finalizado" }) }}
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
                                 >
                                     Finalizar Registro
