@@ -937,6 +937,34 @@ export async function getAsistenciasByFecha(fecha: string): Promise<Asistencia[]
     }
 }
 
+export interface VerificarDuplicadoResult {
+    existe: boolean;
+    id?: number;
+    responsable?: string;
+    fecha?: string;
+    actividad?: string;
+    estado?: string;
+    horaEntrada?: string;
+    mensaje: string;
+    error?: string;
+}
+
+export async function verificarDuplicadoAsistencia(
+    fecha: string,
+    responsable: string,
+    actividad: string
+): Promise<VerificarDuplicadoResult> {
+    try {
+        const params = new URLSearchParams({ fecha, responsable, actividad });
+        const response = await fetch(buildUrl(`/asistencias/verificar-duplicado?${params.toString()}`));
+        if (!response.ok) throw new Error("Error HTTP");
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error verificando duplicado:", error);
+        return { existe: false, mensaje: "ERROR_VERIFICACION" };
+    }
+}
+
 export async function getEstadisticasAsistencia(): Promise<any> {
     try {
         const response = await fetch(buildUrl("/asistencias/estadisticas"));

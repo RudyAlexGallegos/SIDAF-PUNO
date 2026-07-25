@@ -3,472 +3,651 @@
 import React from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useArbitros } from "@/hooks/asistencia/useArbitros"
-import { useRegistroAsistencia } from "@/hooks/asistencia/useRegistroAsistencia"
-import ListaArbitros from "@/components/asistencia/ListaArbitros"
+import { useRegistroAsistencia, type DuplicadoInfo } from "@/hooks/asistencia/useRegistroAsistencia"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog"
-import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Check, BarChart3, Calendar, AlertCircle, Clock, ArrowLeft } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Check, BarChart3, Calendar, AlertCircle, Clock, ArrowLeft, RefreshCw, FileText, UserCheck } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getStoredUser } from "@/services/api"
 import Link from "next/link"
 
-export default function AsistenciaPage() {
-  const { arbitros, loading } = useArbitros()
-  const { registro, iniciarRegistro, actualizarRegistroInicial, marcarAsistencia, finalizarRegistro, cancelarRegistro, existeRegistroHoy, registroExistenteInfo, notificacion, setNotificacion } = useRegistroAsistencia()
+const DIAS_OBLIGATORIOS = [1, 2, 4, 5, 6]
 
-  const [search, setSearch] = React.useState("")
-  const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
-  const [responsable, setResponsable] = React.useState("")
-  const [openFinalize, setOpenFinalize] = React.useState(false)
-  const [openDiscard, setOpenDiscard] = React.useState(false)
-  const [fechaHoraInicio, setFechaHoraInicio] = React.useState<string>("")
-  const [fechaSeleccionada, setFechaSeleccionada] = React.useState<string>(format(new Date(), "yyyy-MM-dd"))
-  const [subtipoExtraordinaria, setSubtipoExtraordinaria] = React.useState<string>("")
-  const [descripcionExtraordinaria, setDescripcionExtraordinaria] = React.useState<string>("")
+const ACTIVIDADES: Array<{
+    value: "analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria"
+    label: string
+    dias: string
+    diasNumeros: number[]
+}> = [
+    { value: "analisis_partido", label: "Análisis de partido", dias: "Lunes", diasNumeros: [1] },
+    { value: "preparacion_fisica", label: "Preparación física", dias: "Martes, Jueves, Sábado", diasNumeros: [2, 4, 6] },
+    { value: "reunion_ordinaria", label: "Reunión ordinaria", dias: "Viernes", diasNumeros: [5] },
+    { value: "reunion_extraordinaria", label: "Reunión extraordinaria", dias: "Miércoles, Domingo", diasNumeros: [3, 0] },
+]
 
-  const getActividadesPermitidas = (fechaString: string): Array<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria"> => {
+function esDiaObligatorio(fecha: Date): boolean {
+    return DIAS_OBLIGATORIOS.includes(fecha.getDay())
+}
+
+function getActividadesPermitidas(fechaString: string): string[] {
     const fecha = parseISO(fechaString)
     const diaSemana = fecha.getDay()
-    switch (diaSemana) {
-      case 1: return ["analisis_partido"]
-      case 2: return ["preparacion_fisica"]
-      case 3: return ["reunion_extraordinaria"]
-      case 4: return ["preparacion_fisica"]
-      case 5: return ["reunion_ordinaria"]
-      case 6: return ["preparacion_fisica"]
-      case 0: return ["reunion_extraordinaria"]
-      default: return ["reunion_extraordinaria"]
-    }
-  }
+    return ACTIVIDADES.filter(a => a.diasNumeros.includes(diaSemana)).map(a => a.value)
+}
 
-  const actividadesPermitidas = getActividadesPermitidas(fechaSeleccionada)
-
-  const getLabelActividad = (value: string) => {
+function getLabelActividad(value: string): string {
     switch (value) {
-      case "analisis_partido": return "Análisis de partido"
-      case "preparacion_fisica": return "Preparación física"
-      case "reunion_ordinaria": return "Reunión ordinaria"
-      case "reunion_extraordinaria": return "Reunión extraordinaria"
-      default: return value.replace(/_/g, " ")
+        case "analisis_partido": return "Análisis de partido"
+        case "preparacion_fisica": return "Preparación física"
+        case "reunion_ordinaria": return "Reunión ordinaria"
+        case "reunion_extraordinaria": return "Reunión extraordinaria"
+        default: return value.replace(/_/g, " ")
     }
-  }
+}
 
-  React.useEffect(() => {
-    if (!actividadesPermitidas.includes(actividad as any)) {
-      setActividad(actividadesPermitidas[0])
-    }
-  }, [actividad, actividadesPermitidas])
+export default function AsistenciaPage() {
+    const { arbitros, loading } = useArbitros()
+    const {
+        registro,
+        iniciarRegistro,
+        actualizarRegistroInicial,
+        marcarAsistencia,
+        finalizarRegistro,
+        cancelarRegistro,
+        existeRegistroHoy,
+        idRegistroExistente,
+        registroExistenteInfo,
+        notificacion,
+        setNotificacion,
+        duplicadoInfo,
+        setDuplicadoInfo,
+        verificarDuplicado,
+    } = useRegistroAsistencia()
 
-  React.useEffect(() => {
-    if (actividad !== 'reunion_extraordinaria') {
-      setSubtipoExtraordinaria("")
-      setDescripcionExtraordinaria("")
-    }
-  }, [actividad])
+    const [search, setSearch] = React.useState("")
+    const [actividad, setActividad] = React.useState<"analisis_partido" | "preparacion_fisica" | "reunion_ordinaria" | "reunion_extraordinaria">("analisis_partido")
+    const [responsable, setResponsable] = React.useState("")
+    const [fechaSeleccionada, setFechaSeleccionada] = React.useState<string>(format(new Date(), "yyyy-MM-dd"))
+    const [subtipoExtraordinaria, setSubtipoExtraordinaria] = React.useState<string>("")
+    const [descripcionExtraordinaria, setDescripcionExtraordinaria] = React.useState<string>("")
+    const [mostrarDialogo, setMostrarDialogo] = React.useState(true)
+    const [dialogoCargando, setDialogoCargando] = React.useState(false)
+    const [fechaInicioReporte, setFechaInicioReporte] = React.useState<string>(format(new Date(Date.now() - 30 * 86400000), "yyyy-MM-dd"))
+    const [fechaFinReporte, setFechaFinReporte] = React.useState<string>(format(new Date(), "yyyy-MM-dd"))
+    const [mostrarReportes, setMostrarReportes] = React.useState(false)
+    const [datosReporte, setDatosReporte] = React.useState<any>(null)
+    const [loadingReporte, setLoadingReporte] = React.useState(false)
+    const [filtroEstadoReporte, setFiltroEstadoReporte] = React.useState<string>("todos")
 
-  React.useEffect(() => {
-    if (actividad === 'reunion_extraordinaria') {
-      if (subtipoExtraordinaria === 'Reunión de supervisión') {
-        setDescripcionExtraordinaria('Reunión de supervisión')
-      } else if (subtipoExtraordinaria === 'Reunión de planificación') {
-        setDescripcionExtraordinaria('Reunión de planificación')
-      } else if (subtipoExtraordinaria === 'Reunión de capacitación') {
-        setDescripcionExtraordinaria('Reunión de capacitación')
-      } else if (subtipoExtraordinaria === 'Otro (especificar)' && descripcionExtraordinaria === '') {
-        setDescripcionExtraordinaria('')
-      }
-    }
-  }, [actividad, subtipoExtraordinaria])
+    const searchParams = useSearchParams()
+    const router = useRouter()
 
-  const searchParams = useSearchParams()
-  const router = useRouter()
+    const actividadesPermitidas = React.useMemo(() => getActividadesPermitidas(fechaSeleccionada), [fechaSeleccionada])
 
-  const esDiaObligatorioHoy = (fechaString?: string) => {
-    const fecha = fechaString ? parseISO(fechaString) : new Date()
-    const diaSemana = fecha.getDay()
-    const diasObligatorios = [1, 2, 4, 5, 6]
-    return diasObligatorios.includes(diaSemana)
-  }
+    React.useEffect(() => {
+        if (!actividadesPermitidas.includes(actividad)) {
+            setActividad(actividadesPermitidas[0] as any)
+        }
+    }, [actividad, actividadesPermitidas])
 
-  const diaObligatorio = esDiaObligatorioHoy(fechaSeleccionada)
+    React.useEffect(() => {
+        if (actividad !== "reunion_extraordinaria") {
+            setSubtipoExtraordinaria("")
+            setDescripcionExtraordinaria("")
+        }
+    }, [actividad])
 
-  React.useEffect(() => {
-    if (notificacion) {
-      toast({ title: 'Atención', description: notificacion, variant: 'destructive' })
-      setNotificacion(null)
-    }
-  }, [notificacion, setNotificacion])
+    React.useEffect(() => {
+        const usuario = getStoredUser()
+        if (usuario) {
+            const nombreCompleto = `${usuario.nombre || ""} ${usuario.apellido || ""}`.trim()
+            if (nombreCompleto) {
+                setResponsable(nombreCompleto)
+            }
+        }
+    }, [])
 
-  React.useEffect(() => {
-    const usuario = getStoredUser()
-    if (usuario) {
-      const nombreCompleto = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim()
-      if (nombreCompleto) {
-        setResponsable(nombreCompleto)
-      }
-    }
-  }, [])
+    React.useEffect(() => {
+        if (searchParams?.get("new") === "1") {
+            cancelarRegistro()
+            router.replace("/dashboard/asistencia")
+        }
+    }, [searchParams, cancelarRegistro, router])
 
-  React.useEffect(() => {
-    try {
-      if (searchParams?.get('new') === '1') {
+    React.useEffect(() => {
+        if (notificacion) {
+            toast({ title: "Atención", description: notificacion, variant: "destructive" })
+            setNotificacion(null)
+        }
+    }, [notificacion, setNotificacion])
+
+    const verificarDuplicadoFecha = React.useCallback(async () => {
+        if (!responsable || !fechaSeleccionada) return
+        setDialogoCargando(true)
+        try {
+            const resultado = await verificarDuplicado(fechaSeleccionada, responsable, actividad)
+            if (resultado.existe && resultado.id) {
+                setIdRegistroExistente(resultado.id)
+                setExisteRegistroHoy(true)
+                setNotificacion(`Ya existe un registro de asistencia para el ${fechaSeleccionada}, creado por ${resultado.responsable || "otro usuario"}. Solo se puede editar ese registro.`)
+            } else {
+                setExisteRegistroHoy(false)
+                setIdRegistroExistente(null)
+            }
+        } catch (e) {
+            console.error("Error verificando duplicado:", e)
+        } finally {
+            setDialogoCargando(false)
+        }
+    }, [fechaSeleccionada, responsable, actividad, verificarDuplicado])
+
+    const handleFechaChange = (value: string) => {
+        setFechaSeleccionada(value)
+        setExisteRegistroHoy(false)
+        setIdRegistroExistente(null)
         cancelarRegistro()
-        router.replace('/dashboard/asistencia')
-      }
-    } catch (e) {
-      // ignore
     }
-  }, [searchParams, cancelarRegistro, router])
 
-  const filtered = React.useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return arbitros
-    return arbitros.filter((a) => {
-      const nombreCompleto = `${a.nombre || ''} ${a.apellido || ''}`.trim().toLowerCase()
-      const idStr = String(a.id || '')
-      const dniStr = String(a.dni || '')
-      return nombreCompleto.includes(q) || idStr.includes(q) || dniStr.includes(q)
-    })
-  }, [arbitros, search])
-
-  const registroDescripcion = actividad === 'reunion_extraordinaria' ? descripcionExtraordinaria : ''
-
-  const estadosMap = React.useMemo(() => {
-    const map: Record<string, any> = {}
-    if (registro?.arbitros) {
-      for (const a of registro.arbitros) {
-        map[a.arbitroId] = a.estado
-      }
+    const cargarReportes = async () => {
+        if (!fechaInicioReporte || !fechaFinReporte) return
+        setLoadingReporte(true)
+        try {
+            const params = new URLSearchParams({ fechaInicio: fechaInicioReporte, fechaFin: fechaFinReporte })
+            const res = await fetch(`/api/asistencias/reporte/semanal?${params.toString()}`)
+            if (res.ok) {
+                const data = await res.json()
+                setDatosReporte(data)
+            }
+        } catch (e) {
+            console.error("Error cargando reportes:", e)
+        } finally {
+            setLoadingReporte(false)
+        }
     }
-    return map
-  }, [registro])
 
-  const _registros = registro?.arbitros ?? []
-  const totalArbitros = arbitros?.length ?? 0
-  const asistentesCount = _registros.filter(r => r.estado === 'presente' || r.estado === 'tardanza').length
-  const excusadosCount = _registros.filter(r => r.estado === 'justificado' || r.estado === 'licencia').length
-  const faltasCount = Math.max(0, totalArbitros - asistentesCount - excusadosCount)
-  const marcadosCount = Object.keys(estadosMap).length
+    const filtrarReportes = (datos: any, estado: string) => {
+        if (!datos || !datos.asistencias) return datos
+        if (estado === "todos") return datos
+        return {
+            ...datos,
+            asistencias: datos.asistencias.filter((a: any) => a.estado === estado)
+        }
+    }
 
-  if (loading) {
-    return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-sky-200 border-t-sky-600 mx-auto"></div>
-          <p className="mt-4 text-sky-600">Cargando asistencia...</p>
-        </div>
-      </div>
-    )
-  }
+    const asistenciasFiltradas = datosReporte?.asistencias || []
 
-  if (!registro) {
-    return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white">
-        <div className="container mx-auto w-full max-w-4xl px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 mb-4">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Volver</span>
-            </Link>
-            <h1 className="text-3xl font-bold text-sky-900 mb-2">Control de Asistencia</h1>
-            <p className="text-sky-600">Comisión Departamental de Árbitros - Puno</p>
-          </div>
-
-          {/* Día obligatorio */}
-          <Card className={`mb-6 border-l-4 ${diaObligatorio ? 'border-l-emerald-500 bg-emerald-50' : 'border-l-sky-500 bg-sky-50'}`}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                {diaObligatorio ? <Calendar className="w-5 h-5 text-emerald-600" /> : <Clock className="w-5 h-5 text-sky-600" />}
-                <div className="flex-1">
-                  <p className={`font-semibold ${diaObligatorio ? 'text-emerald-900' : 'text-sky-900'}`}>
-                    {diaObligatorio ? `Hoy es ${format(new Date(), 'EEEE', { locale: es })} - Día obligatorio` : `Hoy es ${format(new Date(), 'EEEE', { locale: es })} - Día no obligatorio`}
-                  </p>
-                  <p className="text-sm text-sky-600 mt-1">
-                    Días obligatorios: Lunes, Martes, Jueves, Viernes y Sábado
-                  </p>
+    if (loading) {
+        return (
+            <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-sky-200 border-t-sky-600 mx-auto"></div>
+                    <p className="mt-4 text-sky-600">Cargando control de asistencia...</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notificación de registro existente */}
-          {existeRegistroHoy && registroExistenteInfo && (
-            <Card className="mb-6 border-l-4 border-l-sky-500 bg-sky-50">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-sky-600 mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-sky-900">Ya existe un registro de asistencia para hoy</p>
-                    <p className="text-sm text-sky-700 mt-2">
-                      <span className="font-medium">Responsable:</span> {registroExistenteInfo.responsable}
-                    </p>
-                    <p className="text-sm text-sky-700">
-                      <span className="font-medium">Actividad:</span> {registroExistenteInfo.actividad?.replace('_', ' ') || 'No especificada'}
-                    </p>
-                    {registroExistenteInfo.createdAt && (
-                      <p className="text-sm text-sky-700">
-                        <span className="font-medium">Creado:</span> {new Date(registroExistenteInfo.createdAt).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Main card */}
-          <Card className="mb-6 bg-white border-sky-200 shadow-sm">
-            <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
-            <CardContent className="pt-6 pb-6">
-              <div className="mb-4">
-                <Label className="text-sm font-medium text-sky-900 mb-2 block">Fecha</Label>
-                <Input type="date" value={fechaSeleccionada} onChange={(e) => setFechaSeleccionada(e.target.value)} className="border-sky-200 focus:border-sky-500 focus:ring-sky-500" />
-              </div>
-
-              <div className="mb-6">
-                <Label className="text-sm font-medium text-sky-900 mb-3 block">Selecciona la actividad</Label>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                   {(['analisis_partido', 'preparacion_fisica', 'reunion_ordinaria', 'reunion_extraordinaria'] as const).map((act) => (
-                     <button key={act} onClick={() => actividadesPermitidas.includes(act) && setActividad(act)} disabled={!actividadesPermitidas.includes(act)} className={`relative p-4 rounded-lg border-2 transition-all text-left ${
-                       actividad === act ? 'border-sky-500 bg-sky-50' : actividadesPermitidas.includes(act) ? 'border-sky-200 bg-white hover:border-sky-300' : 'border-sky-100 bg-sky-50/50 opacity-50 cursor-not-allowed'
-                     }`}>
-                       <div className="font-semibold text-sky-900">{getLabelActividad(act)}</div>
-                       <div className="text-xs text-sky-600 mt-1">{act === 'analisis_partido' ? 'Lunes' : act === 'preparacion_fisica' ? 'Martes, Jueves, Sábado' : act === 'reunion_ordinaria' ? 'Viernes' : 'Miércoles, Domingo'}</div>
-                       {actividad === act && <Check className="w-5 h-5 text-sky-500 absolute right-4 top-4" />}
-                     </button>
-                   ))}
-                 </div>
-              </div>
-              {actividad === 'reunion_extraordinaria' && (
-                <div className="mb-6">
-                  <Label className="text-sm font-medium text-sky-900 mb-3 block">Tipo de reunión extraordinaria</Label>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {[
-                      'Reunión de supervisión',
-                      'Reunión de planificación',
-                      'Reunión de capacitación',
-                      'Otro (especificar)',
-                    ].map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => {
-                          setSubtipoExtraordinaria(option)
-                          if (option !== 'Otro (especificar)') {
-                            setDescripcionExtraordinaria(option)
-                          } else {
-                            setDescripcionExtraordinaria("")
-                          }
-                        }}
-                        className={`p-4 rounded-lg border-2 text-left transition-all ${
-                          subtipoExtraordinaria === option ? 'border-sky-500 bg-sky-50' : 'border-sky-200 bg-white hover:border-sky-300'
-                        }`}
-                      >
-                        <div className="font-semibold text-sky-900">{option}</div>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-3">
-                    <Label className="text-sm font-medium text-sky-900 mb-2 block">Descripción adicional</Label>
-                    <Input
-                      value={descripcionExtraordinaria}
-                      onChange={(e) => setDescripcionExtraordinaria(e.target.value)}
-                      placeholder="Describe el tipo de actividad o detalle adicional"
-                      className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
-                    />
-                    <p className="text-xs text-sky-500 mt-2">Selecciona el tipo de reunión extraordinaria y agrega un detalle específico si corresponde.</p>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-sm font-medium text-sky-900 mb-2 block">Responsable</Label>
-                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} placeholder="Nombre del responsable" className="border-sky-200 focus:border-sky-500 focus:ring-sky-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Botones */}
-          <div className="flex gap-3">
-            {existeRegistroHoy ? (
-              <Button onClick={() => { 
-                const ahora = new Date().toISOString(); 
-                setFechaHoraInicio(ahora); 
-                setNotificacion(null);
-                actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, registroDescripcion); 
-                toast({ title: 'Registro cargado' }) 
-              }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
-                Editar Registro
-              </Button>
-            ) : (
-              <Button onClick={() => { 
-                const ahora = new Date().toISOString(); 
-                setFechaHoraInicio(ahora); 
-                setNotificacion(null);
-                iniciarRegistro(actividad, responsable, fechaSeleccionada, registroDescripcion); 
-                toast({ title: 'Registro iniciado' }) 
-              }} className="flex-1 bg-sky-600 hover:bg-sky-700 text-white">
-                Iniciar Nuevo Registro
-              </Button>
-            )}
-            <Button onClick={() => router.push("/dashboard/asistencia/historial")} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Reportes
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  function handleFinalizar() {
-    console.log("🛑 Finalizando registro. Total arbitros:", arbitros?.length || 0, "Registro actual:", registro)
-    finalizarRegistro(arbitros)
-    setOpenFinalize(false)
-    toast({ title: 'Registro finalizado', description: `${arbitros?.length || 0} árbitros registrados` })
-  }
-
-  return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white pb-24">
-      <div className="container mx-auto w-full max-w-6xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-sky-900">Registro en curso</h1>
-            <p className="text-sky-600 mt-1">Marca la asistencia de los árbitros</p>
-          </div>
-          <div className="hidden md:flex items-center gap-2">
-            <span className="text-sm text-sky-600">Total: <span className="font-bold text-sky-900">{arbitros?.length ?? 0}</span></span>
-          </div>
-        </div>
-
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-white border-sky-200 shadow-sm">
-            <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
-            <CardContent className="pt-4">
-              <div className="text-xs text-sky-600 font-medium">Actividad</div>
-              <div className="text-lg font-bold text-sky-900 mt-1">{actividad.replace('_', ' ')}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white border-sky-200 shadow-sm">
-            <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
-            <CardContent className="pt-4">
-              <div className="text-xs text-emerald-600 font-medium">Asistentes</div>
-              <div className="text-lg font-bold text-emerald-900 mt-1">{asistentesCount}/{totalArbitros}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white border-sky-200 shadow-sm">
-            <div className="h-1 bg-gradient-to-r from-red-500 to-red-400"></div>
-            <CardContent className="pt-4">
-              <div className="text-xs text-red-600 font-medium">Faltas</div>
-              <div className="text-lg font-bold text-red-900 mt-1">{faltasCount}/{totalArbitros}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mb-6 bg-sky-50 border-sky-200 shadow-sm">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold text-sky-900">Progreso del registro</p>
-                <p className="text-sm text-sky-700">{marcadosCount} de {totalArbitros} árbitros marcados hasta el momento.</p>
-              </div>
-              <div className="text-sm font-medium text-sky-700">
-                {marcadosCount === totalArbitros ? 'Listo para finalizar' : 'Completa los estados restantes'}
-              </div>
             </div>
-          </CardContent>
-        </Card>
+        )
+    }
 
-        {/* Search y botones */}
-        <Card className="mb-6 bg-white border-sky-200 shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
-          <CardContent className="pt-6 pb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <Input placeholder="Buscar árbitro por nombre o DNI" value={search} onChange={(e) => setSearch(e.target.value)} className="border-sky-200 focus:border-sky-500 focus:ring-sky-500" />
-              </div>
-              <div className="flex gap-2">
-                <Dialog open={openFinalize} onOpenChange={setOpenFinalize}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">Finalizar</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Confirmar finalización</DialogTitle>
-                      <DialogDescription>Se registrará la hora de cierre del control de asistencia.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <span className="font-medium text-sky-900">Actividad:</span>
-                        <span className="text-sky-700 ml-2">{actividad.replace('_', ' ')}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-sky-900">Responsable:</span>
-                        <span className="text-sky-700 ml-2">{responsable || '—'}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-sky-200">
-                        <div className="text-center">
-                          <div className="text-xs text-sky-600">Total</div>
-                          <div className="font-bold text-sky-900">{totalArbitros}</div>
+    return (
+        <div className="w-full min-h-screen bg-gradient-to-br from-sky-50 to-white">
+            <div className="container mx-auto w-full max-w-6xl px-4 py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <Link href="/dashboard" className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 mb-4">
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="text-sm font-medium">Volver</span>
+                    </Link>
+                    <h1 className="text-3xl font-bold text-sky-900 mb-2">Control de Asistencia</h1>
+                    <p className="text-sky-600">Comisión Departamental de Árbitros - Puno</p>
+                </div>
+
+                {/* Diálogo informativo obligatorio */}
+                <Dialog open={mostrarDialogo} onOpenChange={setMostrarDialogo}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-lg text-sky-900">
+                                Control de Asistencia - Comisión Departamental de Árbitros - Puno
+                            </DialogTitle>
+                            <DialogDescription className="text-sm text-sky-600">
+                                Hoy es {format(new Date(), "EEEE", { locale: es })} - {esDiaObligatorio(new Date()) ? "Día obligatorio" : "Día no obligatorio"}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-3 py-4">
+                            <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                <Calendar className="w-5 h-5 text-sky-600 flex-shrink-0" />
+                                <div>
+                                    <p className="text-sm font-medium text-sky-900">Días obligatorios</p>
+                                    <p className="text-sm text-sky-600">Lunes, Martes, Jueves, Viernes y Sábado</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                                <div>
+                                    <p className="text-sm font-medium text-emerald-900">Estado del día</p>
+                                    <p className="text-sm text-emerald-700">
+                                        {esDiaObligatorio(new Date()) ? "Puedes registrar asistencia hoy" : "Hoy no es día de actividad obligatoria"}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-xs text-emerald-600">Asistentes</div>
-                          <div className="font-bold text-emerald-900">{asistentesCount}</div>
+                        <DialogFooter>
+                            <Button onClick={() => setMostrarDialogo(false)} className="bg-sky-600 hover:bg-sky-700 text-white w-full">
+                                Continuar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Notificación de duplicado */}
+                {existeRegistroHoy && registroExistenteInfo && (
+                    <Card className="mb-6 border-l-4 border-l-red-500 bg-red-50">
+                        <CardContent className="pt-6">
+                            <div className="flex items-start gap-4">
+                                <AlertCircle className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
+                                <div className="flex-1">
+                                    <p className="font-semibold text-red-900">
+                                        Ya existe un registro de asistencia para el {fechaSeleccionada}
+                                    </p>
+                                    <p className="text-sm text-red-700 mt-2">
+                                        <span className="font-medium">Responsable:</span> {registroExistenteInfo.responsable}
+                                    </p>
+                                    <p className="text-sm text-red-700">
+                                        <span className="font-medium">Actividad:</span> {registroExistenteInfo.actividad?.replace(/_/g, " ") || "No especificada"}
+                                    </p>
+                                    {registroExistenteInfo.createdAt && (
+                                        <p className="text-sm text-red-700">
+                                            <span className="font-medium">Creado:</span>{" "}
+                                            {new Date(registroExistenteInfo.createdAt).toLocaleString("es-PE", {
+                                                dateStyle: "short",
+                                                timeStyle: "short",
+                                            })}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button
+                                    onClick={() => {
+                                        setActividad((registroExistenteInfo.actividad as any) || "analisis_partido")
+                                        setResponsable(registroExistenteInfo.responsable || "")
+                                    }}
+                                    className="bg-red-600 hover:bg-red-700 text-white flex-shrink-0"
+                                >
+                                    Editar Registro
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Diálogo de notificación de duplicado al cambiar fecha */}
+                <Dialog open={!!duplicadoInfo} onOpenChange={() => setDuplicadoInfo(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-red-700">
+                                <AlertCircle className="w-5 h-5" />
+                                Registro Duplicado Detectado
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <p className="text-sky-800">{duplicadoInfo?.mensaje}</p>
                         </div>
-                        <div className="text-center">
-                          <div className="text-xs text-red-600">Faltas</div>
-                          <div className="font-bold text-red-900">{faltasCount}</div>
+                        <DialogFooter>
+                            <Button
+                                onClick={() => {
+                                    if (duplicadoInfo?.id) {
+                                        setIdRegistroExistente(duplicadoInfo.id)
+                                        setExisteRegistroHoy(true)
+                                        setActividad((duplicadoInfo.actividad as any) || "analisis_partido")
+                                        setResponsable(duplicadoInfo.responsable || "")
+                                    }
+                                    setDuplicadoInfo(null)
+                                }}
+                                className="bg-sky-600 hover:bg-sky-700 text-white"
+                            >
+                                Editar Registro Existente
+                            </Button>
+                            <Button variant="outline" onClick={() => setDuplicadoInfo(null)} className="border-sky-200 text-sky-600 hover:bg-sky-50">
+                                Crear Nuevo Registro
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Formulario de registro */}
+                <Card className="mb-6 bg-white border-sky-200 shadow-sm">
+                    <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
+                    <CardHeader>
+                        <CardTitle className="text-sky-900">Nuevo Registro</CardTitle>
+                        <CardDescription>Completa los datos para registrar la asistencia</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {/* Selector de fecha */}
+                        <div>
+                            <Label className="text-sm font-medium text-sky-900 mb-2 block">Fecha</Label>
+                            <Input
+                                type="date"
+                                value={fechaSeleccionada}
+                                onChange={(e) => handleFechaChange(e.target.value)}
+                                className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                            />
                         </div>
-                      </div>
+
+                        {/* Info del día seleccionado */}
+                        <div className={`p-3 rounded-lg border ${esDiaObligatorio(parseISO(fechaSeleccionada)) ? "bg-emerald-50 border-emerald-200" : "bg-sky-50 border-sky-200"}`}>
+                            <p className={`text-sm font-medium ${esDiaObligatorio(parseISO(fechaSeleccionada)) ? "text-emerald-900" : "text-sky-900"}`}>
+                                {format(parseISO(fechaSeleccionada), "EEEE", { locale: es })} -{" "}
+                                {esDiaObligatorio(parseISO(fechaSeleccionada)) ? "Día obligatorio" : "Día no obligatorio"}
+                            </p>
+                        </div>
+
+                        {/* Selector de actividad */}
+                        <div>
+                            <Label className="text-sm font-medium text-sky-900 mb-3 block">Selecciona la actividad</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {ACTIVIDADES.map((act) => (
+                                    <button
+                                        key={act.value}
+                                        onClick={() => {
+                                            if (actividadesPermitidas.includes(act.value)) {
+                                                setActividad(act.value as any)
+                                                verificarDuplicadoFecha()
+                                            }
+                                        }}
+                                        disabled={!actividadesPermitidas.includes(act.value)}
+                                        className={`relative p-4 rounded-lg border-2 transition-all text-left ${
+                                            actividad === act.value
+                                                ? "border-sky-500 bg-sky-50"
+                                                : actividadesPermitidas.includes(act.value)
+                                                    ? "border-sky-200 bg-white hover:border-sky-300"
+                                                    : "border-sky-100 bg-sky-50/50 opacity-50 cursor-not-allowed"
+                                        }`}
+                                    >
+                                        <div className="font-semibold text-sky-900">{act.label}</div>
+                                        <div className="text-xs text-sky-600 mt-1">{act.dias}</div>
+                                        {actividad === act.value && <Check className="w-5 h-5 text-sky-500 absolute right-4 top-4" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Subtipo reunión extraordinaria */}
+                        {actividad === "reunion_extraordinaria" && (
+                            <div>
+                                <Label className="text-sm font-medium text-sky-900 mb-3 block">Tipo de reunión extraordinaria</Label>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    {[
+                                        "Reunión de supervisión",
+                                        "Reunión de planificación",
+                                        "Reunión de capacitación",
+                                        "Otro (especificar)",
+                                    ].map((option) => (
+                                        <button
+                                            key={option}
+                                            type="button"
+                                            onClick={() => {
+                                                setSubtipoExtraordinaria(option)
+                                                if (option !== "Otro (especificar)") {
+                                                    setDescripcionExtraordinaria(option)
+                                                } else {
+                                                    setDescripcionExtraordinaria("")
+                                                }
+                                            }}
+                                            className={`p-4 rounded-lg border-2 text-left transition-all ${
+                                                subtipoExtraordinaria === option
+                                                    ? "border-sky-500 bg-sky-50"
+                                                    : "border-sky-200 bg-white hover:border-sky-300"
+                                            }`}
+                                        >
+                                            <div className="font-semibold text-sky-900">{option}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                                {subtipoExtraordinaria === "Otro (especificar)" && (
+                                    <div className="mt-3">
+                                        <Label className="text-sm font-medium text-sky-900 mb-2 block">Descripción adicional</Label>
+                                        <Input
+                                            value={descripcionExtraordinaria}
+                                            onChange={(e) => setDescripcionExtraordinaria(e.target.value)}
+                                            placeholder="Describe el tipo de actividad o detalle adicional"
+                                            className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Responsable */}
+                        <div>
+                            <Label className="text-sm font-medium text-sky-900 mb-2 block">Responsable</Label>
+                            <Input
+                                value={responsable}
+                                onChange={(e) => setResponsable(e.target.value)}
+                                placeholder="Nombre del responsable"
+                                className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                            />
+                        </div>
+
+                        {/* Botón de acción */}
+                        <Button
+                            onClick={() => {
+                                if (!responsable.trim()) {
+                                    toast({ title: "Campo requerido", description: "Debe indicar el responsable.", variant: "destructive" })
+                                    return
+                                }
+                                const ahora = new Date().toISOString()
+                                if (existeRegistroHoy && idRegistroExistente) {
+                                    actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
+                                    toast({ title: "Registro actualizado" })
+                                } else {
+                                    iniciarRegistro(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
+                                    toast({ title: "Registro iniciado" })
+                                }
+                            }}
+                            className="w-full bg-sky-600 hover:bg-sky-700 text-white py-6 text-lg font-semibold"
+                        >
+                            {existeRegistroHoy ? "Editar Registro Existente" : "Iniciar Nuevo Registro"}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {/* Sección de Reportes */}
+                <Card className="mb-6 bg-white border-sky-200 shadow-sm">
+                    <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
+                    <CardHeader>
+                        <CardTitle className="text-sky-900 flex items-center gap-2">
+                            <FileText className="w-5 h-5" />
+                            Reportes de Asistencia
+                        </CardTitle>
+                        <CardDescription>Consulta y filtra los reportes de asistencia por período</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1">
+                                <Label className="text-sm font-medium text-sky-900 mb-1 block">Fecha inicio</Label>
+                                <Input
+                                    type="date"
+                                    value={fechaInicioReporte}
+                                    onChange={(e) => setFechaInicioReporte(e.target.value)}
+                                    className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <Label className="text-sm font-medium text-sky-900 mb-1 block">Fecha fin</Label>
+                                <Input
+                                    type="date"
+                                    value={fechaFinReporte}
+                                    onChange={(e) => setFechaFinReporte(e.target.value)}
+                                    className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <Label className="text-sm font-medium text-sky-900 mb-1 block">Estado</Label>
+                                <Select value={filtroEstadoReporte} onValueChange={setFiltroEstadoReporte}>
+                                    <SelectTrigger className="border-sky-200 focus:border-sky-500 focus:ring-sky-500">
+                                        <SelectValue placeholder="Todos los estados" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="todos">Todos</SelectItem>
+                                        <SelectItem value="presente">Presente</SelectItem>
+                                        <SelectItem value="ausente">Ausente</SelectItem>
+                                        <SelectItem value="tardanza">Tardanza</SelectItem>
+                                        <SelectItem value="justificado">Justificado</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={cargarReportes}
+                            disabled={loadingReporte || !fechaInicioReporte || !fechaFinReporte}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            {loadingReporte ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Cargando...
+                                </>
+                            ) : (
+                                <>
+                                    <BarChart3 className="w-4 h-4 mr-2" />
+                                    Generar Reporte
+                                </>
+                            )}
+                        </Button>
+
+                        {/* Resultados del reporte */}
+                        {datosReporte && (
+                            <div className="mt-6 space-y-4">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-xs text-blue-600 font-medium">Total Registros</p>
+                                        <p className="text-2xl font-bold text-blue-700">{datosReporte.resumen?.totalRegistros || datosReporte.asistencias?.length || 0}</p>
+                                    </div>
+                                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                        <p className="text-xs text-green-600 font-medium">Presentes</p>
+                                        <p className="text-2xl font-bold text-green-700">{datosReporte.resumen?.presentes || 0}</p>
+                                    </div>
+                                    <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <p className="text-xs text-red-600 font-medium">Ausentes</p>
+                                        <p className="text-2xl font-bold text-red-700">{datosReporte.resumen?.ausentes || 0}</p>
+                                    </div>
+                                    <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                        <p className="text-xs text-yellow-600 font-medium">Tardanzas</p>
+                                        <p className="text-2xl font-bold text-yellow-700">{datosReporte.resumen?.tardanzas || 0}</p>
+                                    </div>
+                                </div>
+
+                                {/* Tabla detallada */}
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-sky-200">
+                                                <th className="text-left p-2 font-medium text-sky-900">Responsable</th>
+                                                <th className="text-left p-2 font-medium text-sky-900">Fecha</th>
+                                                <th className="text-left p-2 font-medium text-sky-900">Actividad</th>
+                                                <th className="text-left p-2 font-medium text-sky-900">Estado</th>
+                                                <th className="text-left p-2 font-medium text-sky-900">Hora Entrada</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(filtroEstadoReporte === "todos"
+                                                ? datosReporte.asistencias || []
+                                                : (datosReporte.asistencias || []).filter((a: any) => a.estado === filtroEstadoReporte)
+                                            ).map((item: any, idx: number) => (
+                                                <tr key={idx} className="border-b border-sky-100 hover:bg-sky-50">
+                                                    <td className="p-2 text-sky-800">{item.responsable || "—"}</td>
+                                                    <td className="p-2 text-sky-800">
+                                                        {item.fecha
+                                                            ? format(parseISO(item.fecha), "dd/MM/yyyy", { locale: es })
+                                                            : "—"}
+                                                    </td>
+                                                    <td className="p-2 text-sky-800">{(item.actividad || item.tipoActividad || "—").replace(/_/g, " ")}</td>
+                                                    <td className="p-2">
+                                                        <span
+                                                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                item.estado === "presente"
+                                                                    ? "bg-green-100 text-green-800"
+                                                                    : item.estado === "ausente"
+                                                                        ? "bg-red-100 text-red-800"
+                                                                        : item.estado === "tardanza"
+                                                                            ? "bg-yellow-100 text-yellow-800"
+                                                                            : item.estado === "justificado"
+                                                                                ? "bg-blue-100 text-blue-800"
+                                                                                : "bg-gray-100 text-gray-800"
+                                                            }`}
+                                                        >
+                                                            {item.estado || "—"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-2 text-sky-800">
+                                                        {item.horaEntrada
+                                                            ? format(parseISO(item.horaEntrada), "HH:mm", { locale: es })
+                                                            : "—"}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {!datosReporte && (
+                            <div className="text-center py-8 text-sky-500">
+                                <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">Selecciona un período y genera un reporte para ver los datos</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Sección de asistencia en curso */}
+                {registro && (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-sky-900">Registro en curso</h2>
+                            <span className="text-sm text-sky-500">
+                                {fechaSeleccionada
+                                    ? format(parseISO(fechaSeleccionada), "dd 'de' MMMM 'de' yyyy", { locale: es })
+                                    : ""}
+                            </span>
+                        </div>
+
+                        <Card className="mb-6 bg-sky-50 border-sky-200 shadow-sm">
+                            <CardContent className="pt-4 pb-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div>
+                                        <p className="text-sm font-semibold text-sky-900">Progreso del registro</p>
+                                        <p className="text-sm text-sky-700">Actividad: {getLabelActividad(actividad)}</p>
+                                    </div>
+                                    <div className="text-sm font-medium text-sky-700">
+                                        Responsable: {responsable || "—"}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline" className="border-sky-200 text-sky-600 hover:bg-sky-50">Cancelar</Button>
-                      </DialogClose>
-                      <Button onClick={handleFinalizar} className="bg-emerald-600 hover:bg-emerald-700 text-white">Confirmar</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">Descartar</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Descartar registro</DialogTitle>
-                      <DialogDescription>Se perderán los cambios actuales del registro en curso.</DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline" className="border-sky-200 text-sky-600 hover:bg-sky-50">Cancelar</Button>
-                      </DialogClose>
-                      <Button onClick={() => { cancelarRegistro(); setOpenDiscard(false); toast({ title: 'Registro descartado' }) }} className="bg-red-600 hover:bg-red-700 text-white">Confirmar</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                )}
 
-        {/* Lista de árbitros */}
-        <Card className="bg-white border-sky-200 shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-sky-500 to-sky-400"></div>
-          <CardContent className="pt-6 pb-6">
-            <div className="divide-y divide-sky-100">
-              <ListaArbitros arbitros={filtered} onChange={marcarAsistencia} estadosMap={estadosMap} />
+                {/* Botón de listado de árbitros (visible solo si hay un registro en curso o para iniciar uno nuevo) */}
+                {!registro && !existeRegistroHoy && (
+                    <Card className="bg-white border-sky-200 shadow-sm">
+                        <CardContent className="pt-6 pb-6">
+                            <div className="text-center py-8">
+                                <UserCheck className="w-12 h-12 text-sky-300 mx-auto mb-4" />
+                                <p className="text-sky-600 font-medium">
+                                    {existeRegistroHoy
+                                        ? "Ya existe un registro para esta fecha. Edítalo desde el bloque de arriba."
+                                        : "Selecciona una fecha y actividad para iniciar el registro de asistencia."}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
+        </div>
+    )
 }

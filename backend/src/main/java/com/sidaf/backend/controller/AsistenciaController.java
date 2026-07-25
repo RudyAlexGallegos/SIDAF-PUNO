@@ -457,6 +457,45 @@ public class AsistenciaController {
         }
     }
 
+    /**
+     * GET /api/asistencias/verificar-duplicado?fecha=2025-01-15&responsable=Juan&actividad=preparacion_fisica
+     * Verifica si ya existe un registro de asistencia para la fecha, responsable y actividad indicados.
+     */
+    @GetMapping("/verificar-duplicado")
+    public ResponseEntity<Map<String, Object>> verificarDuplicado(
+            @RequestParam String fecha,
+            @RequestParam String responsable,
+            @RequestParam String actividad) {
+        try {
+            LocalDate fechaParse = LocalDate.parse(fecha);
+            Optional<Asistencia> existente = asistenciaRepository.findTopByFechaAndResponsableAndActividadOrderByIdDesc(
+                fechaParse,
+                responsable != null ? responsable : "",
+                actividad != null ? actividad : ""
+            );
+            Map<String, Object> respuesta = new LinkedHashMap<>();
+            respuesta.put("existe", existente.isPresent());
+            if (existente.isPresent()) {
+                Asistencia e = existente.get();
+                respuesta.put("id", e.getId());
+                respuesta.put("responsable", e.getResponsable());
+                respuesta.put("fecha", e.getFecha().toString());
+                respuesta.put("actividad", e.getActividad());
+                respuesta.put("estado", e.getEstado());
+                respuesta.put("horaEntrada", e.getHoraEntrada() != null ? e.getHoraEntrada().toString() : "");
+                respuesta.put("mensaje", "YA_EXISTE_REGISTRO");
+            } else {
+                respuesta.put("mensaje", "SIN_DUPLICADO");
+            }
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("existe", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
     // ========== ENDPOINTS DE REPORTES AVANZADOS ==========
 
     /**

@@ -1,11 +1,22 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createAsistencia, getDiaActual, getAsistenciasByFecha, updateAsistencia, type DiaInfo } from "@/services/api"
+import { createAsistencia, getDiaActual, getAsistenciasByFecha, updateAsistencia, verificarDuplicadoAsistencia, type DiaInfo } from "@/services/api"
 import { RegistroAsistencia, AsistenciaArbitro, TipoActividad, EstadoAsistencia, Arbitro } from "@/types/asistencia"
 import { esDiaObligatorio, getTipoDia, getNombreDia, getInfoDiaActual } from "@/lib/horarios-asistencia"
 
 const STORAGE_KEY = "sidaf_registro_temp"
+
+export interface DuplicadoInfo {
+    existe: boolean
+    id?: number
+    responsable?: string
+    fecha?: string
+    actividad?: string
+    estado?: string
+    horaEntrada?: string
+    mensaje: string
+}
 
 export function useRegistroAsistencia() {
     const [registro, setRegistro] = useState<RegistroAsistencia | null>(null)
@@ -16,8 +27,8 @@ export function useRegistroAsistencia() {
     const [registroExistenteInfo, setRegistroExistenteInfo] = useState<any>(null)
     const [inicializando, setInicializando] = useState(false)
     const [notificacion, setNotificacion] = useState<string | null>(null)
+    const [duplicadoInfo, setDuplicadoInfo] = useState<DuplicadoInfo | null>(null)
 
-    // Cargar información del día actual
     useEffect(() => {
         async function loadDiaInfo() {
             try {
@@ -31,7 +42,6 @@ export function useRegistroAsistencia() {
         loadDiaInfo()
     }, [])
 
-    // Verificar si ya existe registro para el día de hoy
     useEffect(() => {
         async function verificarRegistroExistente() {
             const hoy = new Date().toISOString().split('T')[0]
@@ -73,6 +83,32 @@ export function useRegistroAsistencia() {
             else localStorage.removeItem(STORAGE_KEY)
         } catch (e) {
             console.warn("Error guardando registro en localStorage", e)
+        }
+    }
+
+    async function verificarDuplicado(fecha: string, responsable: string, actividad: TipoActividad): Promise<DuplicadoInfo> {
+        try {
+            const resultado = await verificarDuplicadoAsistencia(fecha, responsable, actividad)
+            if (resultado.existe) {
+                const info: DuplicadoInfo = {
+                    existe: true,
+                    id: resultado.id,
+                    responsable: resultado.responsable,
+                    fecha: resultado.fecha,
+                    actividad: resultado.actividad,
+                    estado: resultado.estado,
+                    horaEntrada: resultado.horaEntrada,
+                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${resultado.responsable || 'un usuario'}. Solo se puede editar ese registro.`
+                }
+                setDuplicadoInfo(info)
+                return info
+            } else {
+                setDuplicadoInfo(null)
+                return { existe: false, mensaje: "SIN_DUPLICADO" }
+            }
+        } catch (e) {
+            console.error("Error verificando duplicado:", e)
+            return { existe: false, mensaje: "ERROR_VERIFICACION" }
         }
     }
 
@@ -120,15 +156,14 @@ export function useRegistroAsistencia() {
             const now = new Date()
             const fecha = fechaCustom || now.toISOString().split("T")[0]
 
-            // Idempotencia: si ya existe un registro pendiente para esa fecha, no creamos otro
             const existentes = await getAsistenciasByFecha(fecha)
             const pendiente = existentes.find(a => {
-                const actividadOk = !a.actividad || a.actividad === tipo
+                const actividadOk = a.actividad === tipo
                 const estadoOk = !a.estado || a.estado === "pendiente"
                 return actividadOk && estadoOk
             })
             if (pendiente?.id) {
-                setNotificacion(`Ya existe un registro pendiente para el ${fecha}. Se reutilizará ese registro.`)
+                setNotificacion(`Ya existe un registro para el ${fecha}. Se redirigirá a la edición.`)
                 setIdRegistroExistente(pendiente.id)
                 setExisteRegistroHoy(true)
                 const local: RegistroAsistencia = {
@@ -285,9 +320,14 @@ export function useRegistroAsistencia() {
         getTipoDiaActual,
         getNombreDiaActual,
         existeRegistroHoy,
+        setExisteRegistroHoy,
         idRegistroExistente,
+        setIdRegistroExistente,
         registroExistenteInfo,
         notificacion,
-        setNotificacion
+        setNotificacion,
+        duplicadoInfo,
+        setDuplicadoInfo,
+        verificarDuplicado
     }
 }
