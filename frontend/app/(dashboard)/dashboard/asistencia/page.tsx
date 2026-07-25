@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Check, BarChart3, Calendar, AlertCircle, Clock, ArrowLeft, RefreshCw, FileText, UserCheck } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getStoredUser, getReporteConsolidado } from "@/services/api"
+import { getStoredUser } from "@/services/api"
 import Link from "next/link"
 
 const DIAS_OBLIGATORIOS = [1, 2, 4, 5, 6]
@@ -172,8 +172,11 @@ export default function AsistenciaPage() {
         if (!fechaInicioReporte || !fechaFinReporte) return
         setLoadingReporte(true)
         try {
-            const data = await getReporteConsolidado(fechaInicioReporte, fechaFinReporte)
-            if (data) {
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://sidaf-backend.onrender.com/api"
+            const params = new URLSearchParams({ fechaInicio: fechaInicioReporte, fechaFin: fechaFinReporte })
+            const res = await fetch(`${apiBaseUrl}/asistencias/reporte/semanal?${params.toString()}`)
+            if (res.ok) {
+                const data = await res.json()
                 setDatosReporte(data)
             } else {
                 toast({ title: "Error", description: "No se pudieron cargar los reportes.", variant: "destructive" })
