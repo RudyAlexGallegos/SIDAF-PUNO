@@ -7,6 +7,7 @@ import { useRegistroAsistencia, type DuplicadoInfo } from "@/hooks/asistencia/us
 import ListaArbitros from "@/components/asistencia/ListaArbitros"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
+import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -85,8 +86,6 @@ export default function AsistenciaPage() {
     const [datosReporte, setDatosReporte] = React.useState<any>(null)
     const [loadingReporte, setLoadingReporte] = React.useState(false)
     const [filtroEstadoReporte, setFiltroEstadoReporte] = React.useState<string>("todos")
-    const [openFinalize, setOpenFinalize] = React.useState(false)
-    const [openDiscard, setOpenDiscard] = React.useState(false)
 
     const estadosMap = React.useMemo(() => {
         const map: Record<string, any> = {}
@@ -689,31 +688,70 @@ export default function AsistenciaPage() {
                     </div>
                 )}
 
-                {/* Dialogo de confirmación para finalizar */}
-                <Dialog open={openFinalize} onOpenChange={setOpenFinalize}>
-                    <DialogContent>
+                {/* Diálogo de Registro en curso / Edición */}
+                <Dialog open={!!registro || (existeRegistroHoy && idRegistroExistente)} onOpenChange={(open) => { if (!open) { cancelarRegistro(); setExisteRegistroHoy(false); setIdRegistroExistente(null); } }}>
+                    <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Confirmar finalización</DialogTitle>
-                            <DialogDescription>Se registrará la hora de cierre del control de asistencia.</DialogDescription>
+                            <DialogTitle className="text-xl text-sky-900">
+                                {registro ? "Registro en curso" : "Editar Registro Existente"}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {getLabelActividad(actividad)} — {fechaSeleccionada ? format(parseISO(fechaSeleccionada), "d 'de' MMMM 'de' yyyy", { locale: es }) : ""}
+                            </DialogDescription>
                         </DialogHeader>
-                        <DialogFooter>
-                            <Button variant="outline" className="border-sky-200 text-sky-600 hover:bg-sky-50" onClick={() => setOpenFinalize(false)}>Cancelar</Button>
-                            <Button onClick={() => { finalizarRegistro(arbitros); setOpenFinalize(false); toast({ title: "Registro finalizado" }) }} className="bg-emerald-600 hover:bg-emerald-700 text-white">Confirmar</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                        <div className="space-y-4 py-4">
+                            {/* Info del responsable */}
+                            <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                <div>
+                                    <p className="text-xs text-sky-500 font-medium">Responsable</p>
+                                    <p className="text-sm font-semibold text-sky-900">{responsable || "—"}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-sky-500 font-medium">Estado</p>
+                                    <Badge className="bg-sky-100 text-sky-800 border-sky-300">En progreso</Badge>
+                                </div>
+                            </div>
 
-                {/* Dialogo de confirmación para descartar */}
-                <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Descartar registro</DialogTitle>
-                            <DialogDescription>Se perderán los cambios actuales del registro en curso.</DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                            <Button variant="outline" className="border-sky-200 text-sky-600 hover:bg-sky-50" onClick={() => setOpenDiscard(false)}>Cancelar</Button>
-                            <Button onClick={() => { cancelarRegistro(); setOpenDiscard(false); toast({ title: "Registro descartado" }) }} className="bg-red-600 hover:bg-red-700 text-white">Confirmar</Button>
-                        </DialogFooter>
+                            {/* Buscar árbitro */}
+                            <div className="flex-1">
+                                <Input
+                                    placeholder="Buscar árbitro por nombre o DNI"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                                />
+                            </div>
+
+                            {/* Lista de árbitros */}
+                            <Card className="border-sky-200">
+                                <CardContent className="pt-4 pb-4">
+                                    <div className="divide-y divide-sky-100 max-h-[50vh] overflow-y-auto">
+                                        <ListaArbitros
+                                            arbitros={arbitros}
+                                            onChange={marcarAsistencia}
+                                            estadosMap={estadosMap}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Botones */}
+                            <div className="flex gap-3 pt-2">
+                                <Button
+                                    onClick={() => { cancelarRegistro(); setExisteRegistroHoy(false); setIdRegistroExistente(null); }}
+                                    variant="outline"
+                                    className="border-red-200 text-red-600 hover:bg-red-50 flex-1"
+                                >
+                                    Descartar Registro
+                                </Button>
+                                <Button
+                                    onClick={() => { finalizarRegistro(arbitros); toast({ title: "Registro finalizado" }); }}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                                >
+                                    Finalizar Registro
+                                </Button>
+                            </div>
+                        </div>
                     </DialogContent>
                 </Dialog>
 
