@@ -72,6 +72,7 @@ export default function AsistenciaPage() {
         duplicadoInfo,
         setDuplicadoInfo,
         verificarDuplicado,
+        inicializando,
     } = useRegistroAsistencia()
 
     const [search, setSearch] = React.useState("")
@@ -189,6 +190,31 @@ export default function AsistenciaPage() {
         } finally {
             setLoadingReporte(false)
         }
+    }
+
+    const handleAccionRegistro = async () => {
+        if (!responsable.trim()) {
+            toast({ title: "Campo requerido", description: "Debe indicar el responsable.", variant: "destructive" })
+            return
+        }
+
+        if (existeRegistroHoy && idRegistroExistente) {
+            await actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
+            toast({ title: "Registro actualizado", description: "Se cargó el registro existente para edición." })
+            return
+        }
+
+        const resultado = await verificarDuplicado(fechaSeleccionada, responsable, actividad)
+        if (resultado.existe && resultado.id) {
+            setIdRegistroExistente(resultado.id)
+            setExisteRegistroHoy(true)
+            await actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
+            toast({ title: "Registro existente", description: resultado.mensaje })
+            return
+        }
+
+        await iniciarRegistro(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
+        toast({ title: "Registro iniciado" })
     }
 
     const filtrarReportes = (datos: any, estado: string) => {
@@ -453,21 +479,9 @@ export default function AsistenciaPage() {
 
                         {/* Botón de acción */}
                         <Button
-                            onClick={() => {
-                                if (!responsable.trim()) {
-                                    toast({ title: "Campo requerido", description: "Debe indicar el responsable.", variant: "destructive" })
-                                    return
-                                }
-                                const ahora = new Date().toISOString()
-                                if (existeRegistroHoy && idRegistroExistente) {
-                                    actualizarRegistroInicial(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
-                                    toast({ title: "Registro actualizado" })
-                                } else {
-                                    iniciarRegistro(actividad, responsable, fechaSeleccionada, descripcionExtraordinaria)
-                                    toast({ title: "Registro iniciado" })
-                                }
-                            }}
-                            className="w-full bg-sky-600 hover:bg-sky-700 text-white py-6 text-lg font-semibold"
+                            onClick={handleAccionRegistro}
+                            disabled={inicializando}
+                            className="w-full bg-sky-600 hover:bg-sky-700 text-white py-6 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {existeRegistroHoy ? "Editar Registro Existente" : "Iniciar Nuevo Registro"}
                         </Button>

@@ -370,6 +370,7 @@ export function useRegistroAsistencia() {
         setNotificacion,
         duplicadoInfo,
         setDuplicadoInfo,
-        verificarDuplicado
+        verificarDuplicado,
+        inicializando,
     }
 }
