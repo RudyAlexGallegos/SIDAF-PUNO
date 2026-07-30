@@ -1,0 +1,39 @@
+[    4364ms] [LOG] %c
+▲
+
+ _____ _              _                    _   _             __
+|_   _| |__   ___    / \   __ _  ___ _ __ | |_(_) ___       / /
+  | | | '_ \ / _ \  / _ \ / _` |/ _ \ '_ \| __| |/ __|     / /
+  | | | | | |  __/ / ___ \ (_| |  __/ | | | |_| | (__     /_/
+  |_| |_| |_|\___|/_/   \_\__, |\___|_| |_|\__|_|\___|    (_)
+                           |___/
+ ___        __               _                   _                 _
+|_ _|_ __  / _|_ __ __ _ ___| |_ _ __ _   _  ___| |_ _   _ _ __ ___
+ | || '_ \| |_| '__/ _` / __| __| '__| | | |/ __| __| | | | '__/ _ \
+ | || | | |  _| | | (_| \__ \ |_| |  | |_| | (__| |_| |_| | | |  __/
+|___|_| |_|_| |_|  \__,_|___/\__|_|   \__,_|\___|\__|\__,_|_|  \___|
+  
+
+Hello!
+
+- Open Source https://vercel.com/oss
+- Careers https://vercel.com/careers
+- Status https://vercel-status.com
+
+ font-family: "Geist Mono", monospace; white-space: pre; line-height: 1; @ https://vercel.com/_next/static/immutable/chunks/2elglqyak9u4_.js:78
+[    6486ms] [WARNING] Deprecated API for given entry type. @ https://vercel.com/_next/static/immutable/chunks/44dke8z57z-0r.js:18
+[    6523ms] [WARNING] [GSI_LOGGER]: Your client application uses one of the Google One Tap prompt UI status methods that may stop functioning when FedCM becomes mandatory. Refer to the migration guide to update your code accordingly and opt-in to FedCM to test your changes. Learn more: https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#display_moment and https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#skipped_moment @ https://vercel.com/_next/static/immutable/chunks/44dke8z57z-0r.js:16
+[    6531ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://vercel.com/api/jwt:0
+[    6544ms] [ERROR] Not signed in with the identity provider. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   11326ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/0l5lkhnj8gfzq.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   11326ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/05g4qqf76vq-o.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   11326ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/3flhcz7cw314y.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   20199ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/0l5lkhnj8gfzq.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   20199ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/05g4qqf76vq-o.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   20199ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/3flhcz7cw314y.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   36423ms] [ERROR] [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token. @ https://vercel.com/_next/static/immutable/chunks/15mrooty257gv.js:8
+[   36468ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://o205439.ingest.sentry.io/api/1323670/envelope/?sentry_key=d00780d432ac4ccf882f60dd02062e14&sentry_version=7&sentry_client=sentry.javascript.browser%2F7.111.0:0
+[   36469ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://o205439.ingest.sentry.io/api/1323670/envelope/?sentry_key=d00780d432ac4ccf882f60dd02062e14&sentry_version=7&sentry_client=sentry.javascript.browser%2F7.111.0:0
+[   39480ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/0l5lkhnj8gfzq.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   39480ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/05g4qqf76vq-o.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0
+[   39480ms] [WARNING] The resource https://vercel.com/_next/static/immutable/chunks/3flhcz7cw314y.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0:0

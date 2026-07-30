@@ -1,0 +1,76 @@
+- generic [active] [ref=f11e1]:
+  - generic [ref=f11e2]:
+    - complementary [ref=f11e3]:
+      - generic [ref=f11e4]:
+        - generic [ref=f11e5]:
+          - img "Logo" [ref=f11e6]
+          - generic [ref=f11e7]:
+            - heading "SIDAF PUNO" [level=1] [ref=f11e8]
+            - paragraph [ref=f11e9]: Comisión de Árbitros
+        - button [ref=f11e10] [cursor=pointer]
+      - navigation [ref=f11e12]:
+        - generic [ref=f11e13]:
+          - paragraph [ref=f11e14]: Principal
+          - generic [ref=f11e15]:
+            - link "Inicio" [ref=f11e16] [cursor=pointer]:
+              - /url: /dashboard
+            - link "Perfil" [ref=f11e21] [cursor=pointer]:
+              - /url: /dashboard/perfil
+        - generic [ref=f11e26]:
+          - paragraph [ref=f11e27]: Permisos
+          - generic [ref=f11e28]:
+            - link "Solicitar Permiso" [ref=f11e29] [cursor=pointer]:
+              - /url: /dashboard/solicitar-permiso
+            - link "Ver Solicitudes" [ref=f11e34] [cursor=pointer]:
+              - /url: /dashboard/solicitudes
+        - generic [ref=f11e39]:
+          - paragraph [ref=f11e40]: Administración
+          - generic [ref=f11e41]:
+            - link "Usuarios" [ref=f11e42] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+            - link "Árbitros" [ref=f11e56] [cursor=pointer]:
+              - /url: /dashboard/arbitros
+            - link "Asesores" [ref=f11e63] [cursor=pointer]:
+              - /url: /dashboard/asesores
+        - generic [ref=f11e67]:
+          - paragraph [ref=f11e68]: Auditoría
+          - link "Ver Auditoría" [ref=f11e70] [cursor=pointer]:
+            - /url: /dashboard/auditoria
+        - generic [ref=f11e75]:
+          - paragraph [ref=f11e76]: Evaluación y Desempeño
+          - generic [ref=f11e77]:
+            - button "Evaluaciones" [ref=f11e78] [cursor=pointer]
+            - button "Desempeño Arbitral" [ref=f11e83] [cursor=pointer]
+        - generic [ref=f11e87]:
+          - paragraph [ref=f11e88]: Asistencia
+          - generic [ref=f11e89]:
+            - link "Control Asistencia" [ref=f11e90] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+            - link "Historial Asistencia" [ref=f11e96] [cursor=pointer]:
+              - /url: /dashboard/asistencia/historial
+            - link "Ranking Semanal" [ref=f11e102] [cursor=pointer]:
+              - /url: /dashboard/asistencia/ranking-semanal
+        - generic [ref=f11e107]:
+          - paragraph [ref=f11e108]: Designaciones
+          - generic [ref=f11e109]:
+            - link "Designaciones" [ref=f11e110] [cursor=pointer]:
+              - /url: /dashboard/designaciones
+            - link "Resumen Semanal" [ref=f11e114] [cursor=pointer]:
+              - /url: /dashboard/designaciones/resumen-semanal
+        - generic [ref=f11e119]:
+          - paragraph [ref=f11e120]: Campeonato
+          - generic [ref=f11e121]:
+            - link "Campeonatos" [ref=f11e122] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+            - link "Equipos" [ref=f11e130] [cursor=pointer]:
+              - /url: /dashboard/campeonatos/equipos
+            - link "Reportes" [ref=f11e137] [cursor=pointer]:
+              - /url: /dashboard/reportes
+      - generic [ref=f11e143]:
+        - generic [ref=f11e147]:
+          - paragraph [ref=f11e148]: Administrador SIDAF Puno
+          - paragraph [ref=f11e149]: Administrador
+        - button "Cerrar sesión" [ref=f11e150] [cursor=pointer]
+    - main [ref=f11e154]:
+      - paragraph [ref=f11e158]: Cargando control de asistencia...
+  - alert [ref=f11e159]

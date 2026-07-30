@@ -1,0 +1,45 @@
+- generic [ref=f2e2]:
+  - complementary [ref=f2e3]:
+    - generic [ref=f2e4]:
+      - generic [ref=f2e5]:
+        - img "Logo" [ref=f2e6]
+        - generic [ref=f2e7]:
+          - heading "SIDAF PUNO" [level=1] [ref=f2e8]
+          - paragraph [ref=f2e9]: Comisión de Árbitros
+      - button [ref=f2e10] [cursor=pointer]
+    - navigation [ref=f2e12]:
+      - generic [ref=f2e13]:
+        - paragraph [ref=f2e14]: Principal
+        - generic [ref=f2e15]:
+          - link "Inicio" [ref=f2e16] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Perfil" [ref=f2e21] [cursor=pointer]:
+            - /url: /dashboard/perfil
+      - generic [ref=f2e26]:
+        - paragraph [ref=f2e27]: Gestión
+        - link "Árbitros" [ref=f2e29] [cursor=pointer]:
+          - /url: /dashboard/arbitros
+      - generic [ref=f2e36]:
+        - paragraph [ref=f2e37]: Asistencia
+        - generic [ref=f2e38]:
+          - link "Control Asistencia" [ref=f2e39] [cursor=pointer]:
+            - /url: /dashboard/asistencia
+          - link "Historial Asistencia" [ref=f2e45] [cursor=pointer]:
+            - /url: /dashboard/asistencia/historial
+          - link "Ranking Semanal" [ref=f2e51] [cursor=pointer]:
+            - /url: /dashboard/asistencia/ranking-semanal
+      - generic [ref=f2e56]:
+        - paragraph [ref=f2e57]: Designaciones
+        - link "Designaciones" [ref=f2e59] [cursor=pointer]:
+          - /url: /dashboard/designaciones
+      - generic [ref=f2e63]:
+        - paragraph [ref=f2e64]: Campeonato
+        - generic [ref=f2e65]:
+          - link "Campeonatos" [ref=f2e66] [cursor=pointer]:
+            - /url: /dashboard/campeonatos
+          - link "Equipos" [ref=f2e74] [cursor=pointer]:
+            - /url: /dashboard/campeonatos/equipos
+          - link "Reportes" [ref=f2e81] [cursor=pointer]:
+            - /url: /dashboard/reportes
+  - main [ref=f2e86]:
+    - paragraph [ref=f2e88]: Cargando asistencia...

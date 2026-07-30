@@ -1,0 +1,47 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e2]:
+    - complementary [ref=f5e3]:
+      - generic [ref=f5e4]:
+        - generic [ref=f5e5]:
+          - img "Logo" [ref=f5e6]
+          - generic [ref=f5e7]:
+            - heading "SIDAF PUNO" [level=1] [ref=f5e8]
+            - paragraph [ref=f5e9]: Comisión de Árbitros
+        - button [ref=f5e10] [cursor=pointer]
+      - navigation [ref=f5e12]:
+        - generic [ref=f5e13]:
+          - paragraph [ref=f5e14]: Principal
+          - generic [ref=f5e15]:
+            - link "Inicio" [ref=f5e16] [cursor=pointer]:
+              - /url: /dashboard
+            - link "Perfil" [ref=f5e21] [cursor=pointer]:
+              - /url: /dashboard/perfil
+        - generic [ref=f5e26]:
+          - paragraph [ref=f5e27]: Gestión
+          - link "Árbitros" [ref=f5e29] [cursor=pointer]:
+            - /url: /dashboard/arbitros
+        - generic [ref=f5e36]:
+          - paragraph [ref=f5e37]: Asistencia
+          - generic [ref=f5e38]:
+            - link "Control Asistencia" [ref=f5e39] [cursor=pointer]:
+              - /url: /dashboard/asistencia
+            - link "Historial Asistencia" [ref=f5e45] [cursor=pointer]:
+              - /url: /dashboard/asistencia/historial
+            - link "Ranking Semanal" [ref=f5e51] [cursor=pointer]:
+              - /url: /dashboard/asistencia/ranking-semanal
+        - generic [ref=f5e56]:
+          - paragraph [ref=f5e57]: Designaciones
+          - link "Designaciones" [ref=f5e59] [cursor=pointer]:
+            - /url: /dashboard/designaciones
+        - generic [ref=f5e63]:
+          - paragraph [ref=f5e64]: Campeonato
+          - generic [ref=f5e65]:
+            - link "Campeonatos" [ref=f5e66] [cursor=pointer]:
+              - /url: /dashboard/campeonatos
+            - link "Equipos" [ref=f5e74] [cursor=pointer]:
+              - /url: /dashboard/campeonatos/equipos
+            - link "Reportes" [ref=f5e81] [cursor=pointer]:
+              - /url: /dashboard/reportes
+    - main [ref=f5e86]:
+      - paragraph [ref=f5e90]: Cargando control de asistencia...
+  - alert [ref=f5e91]

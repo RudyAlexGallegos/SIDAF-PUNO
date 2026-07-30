@@ -1,0 +1,75 @@
+[   24279ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/dashboard/asistencia:0
+[   25220ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:29889
+[   25576ms] Error: Cannot find module './7138.js'
+Require stack:
+- D:\SIDAF-PUNO\frontend\.next\server\webpack-runtime.js
+- D:\SIDAF-PUNO\frontend\.next\server\app\login\page.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\require.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\load-components.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\build\utils.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\dev\hot-middleware.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\router-server.js
+- D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1420:15)
+    at <unknown> (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\require-hook.js:55:36)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1058:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1063:22)
+    at Module._load (node:internal/modules/cjs/loader:1226:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1503:12)
+    at mod.require (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (file://D:\SIDAF-PUNO\frontend\.next\server\webpack-runtime.js:198:28)
+    at <unknown> (file://D:\SIDAF-PUNO\frontend\.next\server\webpack-runtime.js:111:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (file://D:\SIDAF-PUNO\frontend\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (file://D:\SIDAF-PUNO\frontend\.next\server\webpack-runtime.js:162:22)
+    at <unknown> (file://D:\SIDAF-PUNO\frontend\.next\server\app\(dashboard)\dashboard\asistencia\page.js:4:1472)
+    at Object.<anonymous> (file://D:\SIDAF-PUNO\frontend\.next\server\app\(dashboard)\dashboard\asistencia\page.js:4:1545)
+    at Module._compile (node:internal/modules/cjs/loader:1760:14)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1480:32)
+    at Module._load (node:internal/modules/cjs/loader:1299:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1503:12)
+    at mod.require (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\require.js:109:84)
+    at <unknown> (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\load-components.js:98:84)
+    at async loadComponentsImpl (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\load-components.js:98:26)
+    at async DevServer.findPageComponentsImpl (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\next-server.js:709:36)
+    at async DevServer.findPageComponents (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderPageComponent (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\base-server.js:1894:24)
+    at async DevServer.renderToResponseImpl (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\base-server.js:1946:32)
+    at async DevServer.pipeImpl (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\base-server.js:921:25)
+    at async NextNodeServer.handleCatchallRenderRequest (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\base-server.js:817:17)
+    at async (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\dev\next-dev-server.js:339:20)
+    at async Span.traceAsyncFn (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\router-server.js:173:21)
+    at async handleRequest (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\router-server.js:350:24)
+    at async requestHandlerImpl (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\router-server.js:374:13)
+    at async Server.requestListener (file://D:\SIDAF-PUNO\frontend\node_modules\next\dist\server\lib\start-server.js:141:13)
+[   25593ms] [LOG] [HMR] connected @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:38
+[   59222ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   62571ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   65924ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   69277ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   72634ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   80001ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   87346ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   94695ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[  102059ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[  110470ms] [LOG] [HMR] connected @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:38
+[  110681ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/hot-reloader-client.js:221
+[  117060ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/hot-reloader-client.js:221
+[  269032ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom.development.js:38559
+[  274465ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:186
+[  275441ms] [LOG] [Fast Refresh] done in 977ms @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:43
+[  275892ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/login:0

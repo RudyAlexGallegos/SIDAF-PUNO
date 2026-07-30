@@ -1,0 +1,3 @@
+[   19269ms] [LOG] ✅ Árbitros obtenidos: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] @ https://sidaf-puno-neon.vercel.app/_next/static/chunks/5953-0498e5d7f4f83c90.js:0
+[  265015ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://sidaf-puno-neon.vercel.app/login:0
+[  901131ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://sidaf-backend.onrender.com/api/auth/login:0

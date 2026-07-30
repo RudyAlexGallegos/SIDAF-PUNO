@@ -1,0 +1,47 @@
+- generic [active] [ref=f1e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - generic [ref=f1e3]:
+    - banner [ref=f1e4]:
+      - link "Vercel logo":
+        - /url: /home
+        - button "Vercel Logo":
+          - img "Vercel Logo"
+      - navigation [ref=f1e5]:
+        - navigation [ref=f1e6]:
+          - link [ref=f1e7] [cursor=pointer]:
+            - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0
+            - paragraph [ref=f1e9]: Sign Up
+    - main [ref=f1e10]:
+      - generic [ref=f1e12]:
+        - heading "Log in to Vercel" [level=1] [ref=f1e15]
+        - generic [ref=f1e16]:
+          - generic [ref=f1e17]:
+            - textbox "Email Address" [ref=f1e19]
+            - button "Continue with Email" [ref=f1e20] [cursor=pointer]
+          - generic [ref=f1e23]:
+            - button "Continue with Google" [ref=f1e24] [cursor=pointer]:
+              - generic [ref=f1e29]:
+                - generic [ref=f1e30]: Continue with
+                - text: Google
+            - button "Continue with GitHub" [ref=f1e31] [cursor=pointer]:
+              - generic [ref=f1e35]:
+                - generic [ref=f1e36]: Continue with
+                - text: GitHub
+            - button "Continue with Apple" [ref=f1e37] [cursor=pointer]:
+              - generic [ref=f1e41]:
+                - generic [ref=f1e42]: Continue with
+                - text: Apple
+            - button "Continue with SAML SSO" [ref=f1e44] [cursor=pointer]
+            - button "Continue with Passkey" [ref=f1e49] [cursor=pointer]
+            - button "Show other options" [ref=f1e54] [cursor=pointer]
+        - paragraph [ref=f1e57]:
+          - text: Don't have an account?
+          - link "Sign Up" [ref=f1e58] [cursor=pointer]:
+            - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fsidaf-puno-qbyqz7d9w-alexs-projects-c7efaa03.vercel.app%252Fdashboard%252Fasistencia%26nonce%3Dd9f11115960fea201a95c716a2194a93c2a0cb91d02bb800d405d008ce0db8c0
+      - generic [ref=f1e61]:
+        - link "Terms" [ref=f1e62] [cursor=pointer]:
+          - /url: /legal/terms
+        - link "Privacy Policy" [ref=f1e63] [cursor=pointer]:
+          - /url: /legal/privacy-policy
+  - alert [ref=f1e64]

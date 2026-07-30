@@ -1,0 +1,4 @@
+[    3204ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://sidaf-backend.onrender.com/api/asistencias/dia-actual:0
+[   50121ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://sidaf-backend.onrender.com/api/asistencias/dia-actual:0
+[  100240ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://sidaf-backend.onrender.com/api/asistencias/dia-actual:0
+[  333850ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_RESET @ https://sidaf-backend.onrender.com/api/asistencias/dia-actual:0

@@ -1,0 +1,42 @@
+- generic [ref=f5e1]:
+  - alert [ref=f5e91]
+  - generic [ref=f5e95]:
+    - generic [ref=f5e97]:
+      - generic [ref=f5e107]:
+        - heading "SIDAF PUNO" [level=1] [ref=f5e108]
+        - paragraph [ref=f5e109]: Sistema Inteligente de Designación de Árbitros de Fútbol
+        - paragraph [ref=f5e110]: Comisión Departamental de Árbitros del Departamento de Puno
+      - generic [ref=f5e111]:
+        - generic [ref=f5e116]:
+          - heading "Gestión Eficiente" [level=3] [ref=f5e117]
+          - paragraph [ref=f5e118]: Designa árbitros automáticamente en segundos
+        - generic [ref=f5e126]:
+          - heading "Control de Permisos" [level=3] [ref=f5e127]
+          - paragraph [ref=f5e128]: Sistema jerárquico de roles y permisos
+        - generic [ref=f5e134]:
+          - heading "Seguridad Certificada" [level=3] [ref=f5e135]
+          - paragraph [ref=f5e136]: Autenticación segura y auditoría completa
+    - generic [ref=f5e138]:
+      - generic [ref=f5e141]:
+        - generic [ref=f5e142]: Ingresar al Sistema
+        - generic [ref=f5e143]: Acceso seguro para árbitros y directivos
+      - generic [ref=f5e144]:
+        - generic [ref=f5e145]:
+          - generic [ref=f5e146]:
+            - text: Número de DNI
+            - textbox "Número de DNI" [active] [ref=f5e151]:
+              - /placeholder: Ej. 12345678
+          - generic [ref=f5e152]:
+            - text: Contraseña
+            - generic [ref=f5e153]:
+              - textbox "Contraseña" [ref=f5e154]:
+                - /placeholder: Ingrese su contraseña
+              - button [ref=f5e155] [cursor=pointer]
+          - button [ref=f5e159] [cursor=pointer]
+          - generic [ref=f5e161]: o
+          - link [ref=f5e166] [cursor=pointer]:
+            - /url: /login/registro
+            - button "Crear una Nueva Cuenta" [ref=f5e167]
+        - generic [ref=f5e168]:
+          - generic [ref=f5e169]: Acceso restringido y protegido
+          - paragraph [ref=f5e174]: © 2026 Comisión Departamental de Árbitros - Puno

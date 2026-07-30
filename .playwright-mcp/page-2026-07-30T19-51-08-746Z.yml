@@ -1,0 +1,169 @@
+- generic:
+  - generic:
+    - complementary:
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=1]: SIDAF PUNO
+            - paragraph: Comisión de Árbitros
+        - button
+      - navigation:
+        - generic:
+          - paragraph: Principal
+          - generic:
+            - link:
+              - /url: /dashboard
+              - generic: Inicio
+            - link:
+              - /url: /dashboard/perfil
+              - generic: Perfil
+        - generic:
+          - paragraph: Permisos
+          - generic:
+            - link:
+              - /url: /dashboard/solicitar-permiso
+              - generic: Solicitar Permiso
+            - link:
+              - /url: /dashboard/solicitudes
+              - generic: Ver Solicitudes
+        - generic:
+          - paragraph: Administración
+          - generic:
+            - link:
+              - /url: /dashboard/usuarios
+              - generic: Usuarios
+            - link:
+              - /url: /dashboard/arbitros
+              - generic: Árbitros
+            - link:
+              - /url: /dashboard/asesores
+              - generic: Asesores
+        - generic:
+          - paragraph: Auditoría
+          - generic:
+            - link:
+              - /url: /dashboard/auditoria
+              - generic: Ver Auditoría
+        - generic:
+          - paragraph: Evaluación y Desempeño
+          - generic:
+            - button:
+              - generic: Evaluaciones
+            - button:
+              - generic: Desempeño Arbitral
+        - generic:
+          - paragraph: Asistencia
+          - generic:
+            - link:
+              - /url: /dashboard/asistencia
+              - generic: Control Asistencia
+            - link:
+              - /url: /dashboard/asistencia/historial
+              - generic: Historial Asistencia
+            - link:
+              - /url: /dashboard/asistencia/ranking-semanal
+              - generic: Ranking Semanal
+        - generic:
+          - paragraph: Designaciones
+          - generic:
+            - link:
+              - /url: /dashboard/designaciones
+              - generic: Designaciones
+            - link:
+              - /url: /dashboard/designaciones/resumen-semanal
+              - generic: Resumen Semanal
+        - generic:
+          - paragraph: Campeonato
+          - generic:
+            - link:
+              - /url: /dashboard/campeonatos
+              - generic: Campeonatos
+            - link:
+              - /url: /dashboard/campeonatos/equipos
+              - generic: Equipos
+            - link:
+              - /url: /dashboard/reportes
+              - generic: Reportes
+      - generic:
+        - generic:
+          - generic:
+            - paragraph: Administrador SIDAF Puno
+            - paragraph: Administrador
+          - button
+    - main:
+      - generic:
+        - generic:
+          - generic:
+            - link:
+              - /url: /dashboard
+              - generic: Volver
+            - heading [level=1]: Control de Asistencia
+            - paragraph: Comisión Departamental de Árbitros - Puno
+          - generic:
+            - generic:
+              - generic: Nuevo Registro
+              - generic: Completa los datos para registrar la asistencia
+            - generic:
+              - generic:
+                - generic: Fecha
+                - textbox: 2026-07-30
+              - generic:
+                - paragraph: jueves - Día obligatorio
+              - generic:
+                - generic: Selecciona la actividad
+                - generic:
+                  - button [disabled]:
+                    - generic: Análisis de partido
+                    - generic: Lunes
+                  - button:
+                    - generic: Preparación física
+                    - generic: Martes, Jueves, Sábado
+                  - button [disabled]:
+                    - generic: Reunión ordinaria
+                    - generic: Viernes
+                  - button [disabled]:
+                    - generic: Reunión extraordinaria
+                    - generic: Miércoles, Domingo
+              - generic:
+                - generic: Responsable
+                - textbox:
+                  - /placeholder: Nombre del responsable
+                  - text: Administrador SIDAF Puno
+              - button: Iniciar Nuevo Registro
+          - generic:
+            - generic:
+              - generic: Reportes de Asistencia
+              - generic: Consulta y filtra los reportes de asistencia por período
+            - generic:
+              - generic:
+                - generic:
+                  - generic: Fecha inicio
+                  - textbox: 2026-06-30
+                - generic:
+                  - generic: Fecha fin
+                  - textbox: 2026-07-30
+                - generic:
+                  - generic: Estado
+                  - combobox:
+                    - generic: Todos
+              - button: Generar Reporte
+              - generic:
+                - paragraph: Selecciona un período y genera un reporte para ver los datos
+          - generic:
+            - generic:
+              - generic:
+                - paragraph: Selecciona una fecha y actividad para iniciar el registro de asistencia.
+  - alert
+  - dialog [ref=f6e2]:
+    - generic [ref=f6e3]:
+      - heading "Control de Asistencia - Comisión Departamental de Árbitros - Puno" [level=2] [ref=f6e4]
+      - paragraph [ref=f6e5]: Hoy es jueves - Día obligatorio
+    - generic [ref=f6e6]:
+      - generic [ref=f6e10]:
+        - paragraph [ref=f6e11]: Días obligatorios
+        - paragraph [ref=f6e12]: Lunes, Martes, Jueves, Viernes y Sábado
+      - generic [ref=f6e17]:
+        - paragraph [ref=f6e18]: Estado del día
+        - paragraph [ref=f6e19]: Puedes registrar asistencia hoy
+    - button "Continuar" [active] [ref=f6e21] [cursor=pointer]
+    - button "Close" [ref=f6e22] [cursor=pointer]
