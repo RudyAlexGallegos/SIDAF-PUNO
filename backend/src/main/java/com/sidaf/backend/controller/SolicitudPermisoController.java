@@ -12,7 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/solicitudes")
-@CrossOrigin(origins = {"http://localhost:3000", "https://sidaf-puno-neon.vercel.app", "https://sidaf-puno.vercel.app"})
+@CrossOrigin(origins = "*")
 @Slf4j
 public class SolicitudPermisoController {
     
