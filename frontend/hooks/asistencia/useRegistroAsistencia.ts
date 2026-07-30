@@ -178,25 +178,25 @@ export function useRegistroAsistencia() {
             const fecha = fechaCustom || now.toISOString().split("T")[0]
 
             const existentes = await getAsistenciasByFecha(fecha)
-            const pendiente = existentes.find(a => {
+            const existente = existentes.find(a => {
                 const actividadOk = a.actividad === tipo
-                const estadoOk = !a.estado || a.estado === "pendiente"
-                return actividadOk && estadoOk
+                const responsableOk = !responsable || !a.responsable || a.responsable === responsable
+                return actividadOk && responsableOk
             })
-            if (pendiente?.id) {
-                setNotificacion(`Ya existe un registro para el ${fecha}. Se redirigirá a la edición.`)
-                setIdRegistroExistente(pendiente.id)
+            if (existente?.id) {
+                setNotificacion(`Ya existe un registro para el ${fecha}. Solo se puede editar ese registro.`)
+                setIdRegistroExistente(existente.id)
                 setExisteRegistroHoy(true)
 
-                let arbitrosPendientes: AsistenciaArbitro[] = []
+                let arbitrosExistentes: AsistenciaArbitro[] = []
                 try {
-                    const asistenciaPendiente = await getAsistenciaById(pendiente.id)
-                    if (asistenciaPendiente?.observaciones) {
-                        const obs = typeof asistenciaPendiente.observaciones === 'string'
-                            ? JSON.parse(asistenciaPendiente.observaciones)
-                            : asistenciaPendiente.observaciones
+                    const asistenciaCompleta = await getAsistenciaById(existente.id)
+                    if (asistenciaCompleta?.observaciones) {
+                        const obs = typeof asistenciaCompleta.observaciones === 'string'
+                            ? JSON.parse(asistenciaCompleta.observaciones)
+                            : asistenciaCompleta.observaciones
                         if (Array.isArray(obs)) {
-                            arbitrosPendientes = obs.map((item: any) => ({
+                            arbitrosExistentes = obs.map((item: any) => ({
                                 arbitroId: String(item.arbitroId ?? item.id ?? item.arbitro ?? ''),
                                 estado: item.estado || 'ausente',
                                 horaRegistro: item.horaRegistro || now.toISOString(),
@@ -205,20 +205,20 @@ export function useRegistroAsistencia() {
                         }
                     }
                 } catch (e) {
-                    console.warn("No se pudo cargar asistencia pendiente para edición:", e)
+                    console.warn("No se pudo cargar asistencia existente para edición:", e)
                 }
 
                 const local: RegistroAsistencia = {
-                    id: pendiente.id.toString(),
+                    id: existente.id.toString(),
                     fecha,
-                    horaInicio: pendiente.horaEntrada || now.toISOString(),
-                    horaFin: "",
+                    horaInicio: existente.horaEntrada || now.toISOString(),
+                    horaFin: existente.horaSalida || "",
                     tipoActividad: tipo,
-                    descripcion: pendiente.evento || descripcion || "",
+                    descripcion: existente.evento || descripcion || "",
                     ubicacion: "",
-                    responsable: pendiente.responsable || responsable || "",
-                    arbitros: arbitrosPendientes,
-                    createdAt: pendiente.createdAt || now.toISOString(),
+                    responsable: existente.responsable || responsable || "",
+                    arbitros: arbitrosExistentes,
+                    createdAt: existente.createdAt || now.toISOString(),
                 }
                 setRegistro(local)
                 persist(local)
