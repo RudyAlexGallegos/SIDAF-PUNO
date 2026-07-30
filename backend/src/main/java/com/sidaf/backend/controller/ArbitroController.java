@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/arbitros")
@@ -22,7 +23,7 @@ public class ArbitroController {
     @GetMapping
     @Cacheable(value = "arbitros", unless = "#result.size() == 0")
     public List<Arbitro> listar() {
-        return arbitroRepository.findAll();
+        return arbitroRepository.findAll(Sort.by(Sort.Direction.ASC, "orden"));
     }
 
     @GetMapping("/{id}")
@@ -38,6 +39,14 @@ public class ArbitroController {
         if (arbitro.getFechaRegistro() == null) {
             // fechaRegistro ya tiene valor por defecto en la entidad,
             // pero esto asegura en caso de que venga nulo.
+        }
+        if (arbitro.getOrden() == null) {
+            Integer maxOrden = arbitroRepository.findAll(Sort.by(Sort.Direction.DESC, "orden"))
+                .stream()
+                .findFirst()
+                .map(Arbitro::getOrden)
+                .orElse(0);
+            arbitro.setOrden(maxOrden + 1);
         }
         Arbitro guardado = arbitroRepository.save(arbitro);
         return ResponseEntity.created(URI.create("/api/arbitros/" + guardado.getId())).body(guardado);
@@ -63,6 +72,9 @@ public class ArbitroController {
         e.setDireccion(datos.getDireccion());
         e.setObservaciones(datos.getObservaciones());
         e.setEstado(datos.getEstado());
+        if (datos.getOrden() != null) {
+            e.setOrden(datos.getOrden());
+        }
 
         Arbitro actualizado = arbitroRepository.save(e);
         return ResponseEntity.ok(actualizado);

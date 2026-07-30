@@ -46,8 +46,8 @@ export default function RegistroCompactoArbitro({
         if (menuOpen) document.addEventListener('click', onDoc)
         return () => document.removeEventListener('click', onDoc)
     }, [menuOpen])
-    const displayName = `${(arbitro.apellidoPaterno || arbitro.apellido || "").split(" ")[0]} ${arbitro.nombres || arbitro.nombre || ""}`.trim()
-    const dni = (arbitro as any).dni || (arbitro as any).codigoCODAR || "—"
+    const displayName = `${(arbitro.apellido || "").split(" ")[0]} ${arbitro.nombre || ""}`.trim()
+    const dni = arbitro.dni || "—"
     const estadoLabel = getEstadoLabel(estado)
 
     const btn = (value: EstadoAsistencia, label: string, cls: string, Icon?: any) => (
@@ -73,7 +73,7 @@ export default function RegistroCompactoArbitro({
             <div className="p-3 hover:bg-slate-50 rounded-lg transition-shadow hover:shadow-sm">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-semibold text-sm shadow">{initials((arbitro.nombres || (arbitro as any).nombre), (arbitro.apellidoPaterno || (arbitro as any).apellido))}</div>
+                        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-semibold text-sm shadow">{initials(arbitro.nombre, arbitro.apellido)}</div>
                         <div>
                             <div className="flex items-center gap-2">
                                 <div className="font-medium text-sm">{displayName}</div>

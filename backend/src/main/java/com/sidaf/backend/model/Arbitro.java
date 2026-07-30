@@ -50,6 +50,8 @@ public class Arbitro {
 
     // cambiar a String para aceptar "Básico", "Intermedio", "Avanzado"
     private String nivelPreparacion;
+    
+    private Integer orden;
 
     @Column(columnDefinition = "text")
     private String observaciones;
