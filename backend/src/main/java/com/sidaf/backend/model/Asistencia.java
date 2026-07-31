@@ -44,6 +44,12 @@ public class Asistencia {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
     // ========== NUEVOS CAMPOS PARA MEJORA DE ASISTENCIA ==========
 
     /**

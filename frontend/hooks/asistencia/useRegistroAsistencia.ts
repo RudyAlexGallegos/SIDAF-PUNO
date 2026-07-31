@@ -79,7 +79,14 @@ export function useRegistroAsistencia() {
 
                     const now = new Date()
                     let arbitrosRegistro: AsistenciaArbitro[] = []
-                    if (detalle?.observaciones) {
+                    if (detalle?.detalles && Array.isArray(detalle.detalles)) {
+                        arbitrosRegistro = detalle.detalles.map((item: any) => ({
+                            arbitroId: String(item.arbitroId ?? ''),
+                            estado: item.estado || 'ausente',
+                            horaRegistro: item.horaRegistro || now.toISOString(),
+                            observaciones: item.observaciones || ''
+                        }))
+                    } else if (detalle?.observaciones) {
                         const obs = typeof detalle.observaciones === 'string'
                             ? JSON.parse(detalle.observaciones)
                             : detalle.observaciones
@@ -112,6 +119,8 @@ export function useRegistroAsistencia() {
                         id: detalle.id ?? primerRegistro.id,
                         responsable: detalle.responsable || primerRegistro.responsable || 'Sin responsable',
                         createdAt: detalle.createdAt || primerRegistro.createdAt,
+                        updatedAt: detalle.updatedAt,
+                        updatedBy: detalle.updatedBy,
                         actividad: detalle.actividad || primerRegistro.actividad,
                         horaEntrada: detalle.horaEntrada || primerRegistro.horaEntrada,
                         horaSalida: detalle.horaSalida || primerRegistro.horaSalida,
@@ -158,6 +167,8 @@ export function useRegistroAsistencia() {
                     console.warn("No se pudo cargar detalle del registro duplicado:", e)
                 }
 
+                const creadoPor = detalle.responsable || resultado.responsable || 'un usuario'
+                const horaActual = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
                 const info: DuplicadoInfo = {
                     existe: true,
                     id: detalle.id ?? resultado.id,
@@ -166,7 +177,7 @@ export function useRegistroAsistencia() {
                     actividad: detalle.actividad || resultado.actividad,
                     estado: detalle.estado || resultado.estado,
                     horaEntrada: detalle.horaEntrada || resultado.horaEntrada,
-                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${detalle.responsable || resultado.responsable || 'un usuario'}. Solo se puede editar ese registro.`
+                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${creadoPor} a las ${horaActual}. Solo se puede editar ese registro.`
                 }
                 setDuplicadoInfo(info)
 
@@ -215,7 +226,14 @@ export function useRegistroAsistencia() {
             }
 
             let arbitrosRegistro: AsistenciaArbitro[] = []
-            if (asistenciaCompleta?.observaciones) {
+            if (asistenciaCompleta?.detalles && Array.isArray(asistenciaCompleta.detalles)) {
+                arbitrosRegistro = asistenciaCompleta.detalles.map((item: any) => ({
+                    arbitroId: String(item.arbitroId ?? ''),
+                    estado: item.estado || 'ausente',
+                    horaRegistro: item.horaRegistro || now.toISOString(),
+                    observaciones: item.observaciones || ''
+                }))
+            } else if (asistenciaCompleta?.observaciones) {
                 const obs = typeof asistenciaCompleta.observaciones === 'string'
                     ? JSON.parse(asistenciaCompleta.observaciones)
                     : asistenciaCompleta.observaciones
@@ -248,6 +266,8 @@ export function useRegistroAsistencia() {
                 id: idRegistroExistente,
                 responsable: asistenciaCompleta?.responsable || responsable || updatedRegistro.responsable || 'Sin responsable',
                 createdAt: asistenciaCompleta?.createdAt || updatedRegistro.createdAt,
+                updatedAt: asistenciaCompleta?.updatedAt,
+                updatedBy: asistenciaCompleta?.updatedBy,
                 actividad: asistenciaCompleta?.actividad || tipo,
                 horaEntrada: asistenciaCompleta?.horaEntrada || updatedRegistro.horaInicio,
                 horaSalida: asistenciaCompleta?.horaSalida || "",
@@ -297,7 +317,14 @@ export function useRegistroAsistencia() {
                 setExisteRegistroHoy(true)
 
                 let arbitrosExistentes: AsistenciaArbitro[] = []
-                if (asistenciaCompleta?.observaciones) {
+                if (asistenciaCompleta?.detalles && Array.isArray(asistenciaCompleta.detalles)) {
+                    arbitrosExistentes = asistenciaCompleta.detalles.map((item: any) => ({
+                        arbitroId: String(item.arbitroId ?? ''),
+                        estado: item.estado || 'ausente',
+                        horaRegistro: item.horaRegistro || now.toISOString(),
+                        observaciones: item.observaciones || ''
+                    }))
+                } else if (asistenciaCompleta?.observaciones) {
                     const obs = typeof asistenciaCompleta.observaciones === 'string'
                         ? JSON.parse(asistenciaCompleta.observaciones)
                         : asistenciaCompleta.observaciones
@@ -315,6 +342,8 @@ export function useRegistroAsistencia() {
                     id: asistenciaCompleta?.id ?? existente.id,
                     responsable: asistenciaCompleta?.responsable || existente.responsable || responsable || 'Sin responsable',
                     createdAt: asistenciaCompleta?.createdAt || existente.createdAt || now.toISOString(),
+                    updatedAt: asistenciaCompleta?.updatedAt,
+                    updatedBy: asistenciaCompleta?.updatedBy,
                     actividad: asistenciaCompleta?.actividad || existente.actividad || tipo,
                     horaEntrada: asistenciaCompleta?.horaEntrada || existente.horaEntrada || now.toISOString(),
                     horaSalida: asistenciaCompleta?.horaSalida || existente.horaSalida || "",

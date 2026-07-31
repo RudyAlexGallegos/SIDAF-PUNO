@@ -2,7 +2,9 @@ package com.sidaf.backend.controller;
 
 import com.sidaf.backend.dto.ReporteConsolidadoDTO;
 import com.sidaf.backend.model.Asistencia;
+import com.sidaf.backend.model.AsistenciaDetalle;
 import com.sidaf.backend.repository.AsistenciaRepository;
+import com.sidaf.backend.repository.AsistenciaDetalleRepository;
 import com.sidaf.backend.service.AsistenciaService;
 import com.sidaf.backend.service.ReporteService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,15 +33,49 @@ public class AsistenciaController {
     @Autowired
     private ReporteService reporteService;
 
+    @Autowired
+    private com.sidaf.backend.repository.AsistenciaDetalleRepository asistenciaDetalleRepository;
+
     @GetMapping
     public List<Asistencia> listar() {
         return asistenciaRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Asistencia> obtener(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> obtener(@PathVariable Long id) {
         Optional<Asistencia> o = asistenciaRepository.findById(id);
-        return o.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        if (o.isEmpty()) return ResponseEntity.notFound().build();
+
+        Asistencia asistencia = o.get();
+        List<AsistenciaDetalle> detalles = asistenciaDetalleRepository.findByAsistenciaId(id);
+        List<Map<String, Object>> detallesMap = detalles.stream().map(d -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", d.getId());
+            m.put("asistenciaId", d.getAsistenciaId());
+            m.put("arbitroId", d.getArbitroId());
+            m.put("estado", d.getEstado());
+            m.put("horaRegistro", d.getHoraRegistro() != null ? d.getHoraRegistro().toString() : null);
+            m.put("observaciones", d.getObservaciones());
+            m.put("createdAt", d.getCreatedAt() != null ? d.getCreatedAt().toString() : null);
+            m.put("updatedAt", d.getUpdatedAt() != null ? d.getUpdatedAt().toString() : null);
+            return m;
+        }).collect(Collectors.toList());
+
+        Map<String, Object> respuesta = new LinkedHashMap<>();
+        respuesta.put("id", asistencia.getId());
+        respuesta.put("fecha", asistencia.getFecha() != null ? asistencia.getFecha().toString() : null);
+        respuesta.put("horaEntrada", asistencia.getHoraEntrada() != null ? asistencia.getHoraEntrada().toString() : null);
+        respuesta.put("horaSalida", asistencia.getHoraSalida() != null ? asistencia.getHoraSalida().toString() : null);
+        respuesta.put("actividad", asistencia.getActividad());
+        respuesta.put("evento", asistencia.getEvento());
+        respuesta.put("estado", asistencia.getEstado());
+        respuesta.put("observaciones", asistencia.getObservaciones());
+        respuesta.put("responsable", asistencia.getResponsable());
+        respuesta.put("createdAt", asistencia.getCreatedAt() != null ? asistencia.getCreatedAt().toString() : null);
+        respuesta.put("updatedAt", asistencia.getUpdatedAt() != null ? asistencia.getUpdatedAt().toString() : null);
+        respuesta.put("updatedBy", asistencia.getUpdatedBy());
+        respuesta.put("detalles", detallesMap);
+        return ResponseEntity.ok(respuesta);
     }
 
     @PostMapping
@@ -75,12 +111,16 @@ public class AsistenciaController {
             e.setFechaLimiteRegistro(asistencia.getFechaLimiteRegistro());
             e.setHoraProgramada(asistencia.getHoraProgramada());
             e.setDiaSemana(asistencia.getDiaSemana());
+            e.setUpdatedAt(LocalDateTime.now());
+            e.setUpdatedBy(asistencia.getResponsable());
             asistenciaService.procesarAsistencia(e);
             Asistencia actualizado = asistenciaRepository.save(e);
+            guardarDetalles(actualizado.getId(), asistencia.getObservaciones());
             return ResponseEntity.ok(actualizado);
         }
 
         Asistencia guardado = asistenciaRepository.save(asistencia);
+        guardarDetalles(guardado.getId(), guardado.getObservaciones());
         return ResponseEntity.created(URI.create("/api/asistencias/" + guardado.getId())).body(guardado);
     }
 
@@ -113,8 +153,12 @@ public class AsistenciaController {
         e.setHoraProgramada(datos.getHoraProgramada());
         e.setDiaSemana(datos.getDiaSemana());
 
+        e.setUpdatedAt(LocalDateTime.now());
+        e.setUpdatedBy(datos.getResponsable());
+
         asistenciaService.procesarAsistencia(e);
         Asistencia actualizado = asistenciaRepository.save(e);
+        guardarDetalles(actualizado.getId(), datos.getObservaciones());
         return ResponseEntity.ok(actualizado);
     }
 
@@ -441,6 +485,7 @@ public class AsistenciaController {
         public String estado;
         public String observaciones;
         public String responsable;
+        public List<Map<String, Object>> detalles;
 
         public static List<AsistenciaDTO> fromList(List<Asistencia> list) {
             return list.stream().map(a -> {
@@ -565,5 +610,51 @@ public class AsistenciaController {
         LocalDate domingo = lunes.plusDays(6);
         
         return reporteService.getRankingSemanal(lunes, domingo);
+    }
+
+    private void guardarDetalles(Long asistenciaId, String observaciones) {
+        if (asistenciaId == null || observaciones == null || observaciones.isBlank()) {
+            return;
+        }
+        List<com.sidaf.backend.model.AsistenciaDetalle> existentes = asistenciaDetalleRepository.findByAsistenciaId(asistenciaId);
+        Map<Long, com.sidaf.backend.model.AsistenciaDetalle> mapa = existentes.stream()
+                .collect(Collectors.toMap(com.sidaf.backend.model.AsistenciaDetalle::getArbitroId, d -> d));
+
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.List<Map<String, Object>> items = mapper.readValue(observaciones, java.util.List.class);
+            if (items == null) return;
+
+            LocalDateTime now = LocalDateTime.now();
+            for (Map<String, Object> item : items) {
+                Object arbitroIdObj = item.get("arbitroId");
+                if (arbitroIdObj == null) continue;
+                Long arbitroId = Long.parseLong(arbitroIdObj.toString());
+
+                com.sidaf.backend.model.AsistenciaDetalle detalle = mapa.get(arbitroId);
+                if (detalle == null) {
+                    detalle = new com.sidaf.backend.model.AsistenciaDetalle();
+                    detalle.setAsistenciaId(asistenciaId);
+                    detalle.setArbitroId(arbitroId);
+                    detalle.setCreatedAt(now);
+                }
+                detalle.setEstado(item.getOrDefault("estado", "ausente").toString());
+                Object hora = item.get("horaRegistro");
+                if (hora != null && !hora.toString().isBlank()) {
+                    try {
+                        detalle.setHoraRegistro(LocalDateTime.parse(hora.toString()));
+                    } catch (Exception ignored) {
+                        detalle.setHoraRegistro(now);
+                    }
+                } else {
+                    detalle.setHoraRegistro(now);
+                }
+                detalle.setObservaciones(item.getOrDefault("observaciones", "").toString());
+                detalle.setUpdatedAt(now);
+                asistenciaDetalleRepository.save(detalle);
+            }
+        } catch (Exception e) {
+            System.err.println("No se pudieron guardar los detalles de asistencia: " + e.getMessage());
+        }
     }
 }

@@ -778,6 +778,20 @@ export default function AsistenciaPage() {
                                     <span className="font-semibold">
                                         {toLocalDateTime(registroExistenteInfo?.createdAt || registroExistenteInfo?.horaEntrada || registro?.horaInicio, "HH:mm")}
                                     </span>
+                                    {registroExistenteInfo?.updatedBy && registroExistenteInfo?.updatedAt ? (
+                                        <>
+                                            {" "}y fue editado por última vez por{" "}
+                                            <span className="font-semibold">{registroExistenteInfo.updatedBy}</span>{" "}
+                                            el{" "}
+                                            <span className="font-semibold">
+                                                {toLocalDateTime(registroExistenteInfo.updatedAt, "dd/MM/yyyy")}
+                                            </span>
+                                            {" "}a las{" "}
+                                            <span className="font-semibold">
+                                                {toLocalDateTime(registroExistenteInfo.updatedAt, "HH:mm")}
+                                            </span>
+                                        </>
+                                    ) : null}
                                     . Desde aquí podés editar las marcas de asistencia de los árbitros.
                                 </p>
                             </div>
