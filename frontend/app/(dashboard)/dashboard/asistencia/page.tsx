@@ -757,10 +757,10 @@ export default function AsistenciaPage() {
                     <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-xl text-sky-900">
-                                {registro ? "Registro en curso" : "Editar Registro Existente"}
+                                {existeRegistroHoy && idRegistroExistente ? "Editar Registro Existente" : "Registro en curso"}
                             </DialogTitle>
                             <DialogDescription>
-                                {getLabelActividad(actividad)} — {fechaSeleccionada ? toLocalDateTime(fechaSeleccionada, "d 'de' MMMM 'de' yyyy") : ""}
+                                {getLabelActividad(registroExistenteInfo?.actividad || actividad)} — {toLocalDateTime(registroExistenteInfo?.fecha || fechaSeleccionada, "d 'de' MMMM 'de' yyyy")}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
