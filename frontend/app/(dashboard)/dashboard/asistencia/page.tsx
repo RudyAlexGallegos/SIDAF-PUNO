@@ -764,26 +764,32 @@ export default function AsistenciaPage() {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
-                                    <p className="text-xs text-sky-500 font-medium">Responsable</p>
-                                    <p className="text-sm font-semibold text-sky-900">
+                            <div className="p-4 bg-sky-50 rounded-lg border border-sky-200">
+                                <p className="text-sm text-sky-800">
+                                    Este registro fue creado por{" "}
+                                    <span className="font-semibold">
                                         {registroExistenteInfo?.responsable || registro?.responsable || responsable || "—"}
-                                    </p>
-                                </div>
-                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                    </span>{" "}
+                                    el{" "}
+                                    <span className="font-semibold">
+                                        {toLocalDateTime(registroExistenteInfo?.createdAt || registroExistenteInfo?.horaEntrada || registro?.horaInicio, "dd/MM/yyyy")}
+                                    </span>
+                                    {" "}a las{" "}
+                                    <span className="font-semibold">
+                                        {toLocalDateTime(registroExistenteInfo?.createdAt || registroExistenteInfo?.horaEntrada || registro?.horaInicio, "HH:mm")}
+                                    </span>
+                                    . Desde aquí podés editar las marcas de asistencia de los árbitros.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="p-3 bg-white rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Actividad</p>
                                     <p className="text-sm font-semibold text-sky-900">
                                         {getLabelActividad(registroExistenteInfo?.actividad || actividad) || "—"}
                                     </p>
                                 </div>
-                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
-                                    <p className="text-xs text-sky-500 font-medium">Fecha</p>
-                                    <p className="text-sm font-semibold text-sky-900">
-                                        {toLocalDateTime(registroExistenteInfo?.fecha || fechaSeleccionada, "dd/MM/yyyy")}
-                                    </p>
-                                </div>
-                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                <div className="p-3 bg-white rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Estado</p>
                                     <div className="flex items-center gap-2">
                                         <Badge className="bg-sky-100 text-sky-800 border-sky-300">
@@ -791,23 +797,11 @@ export default function AsistenciaPage() {
                                         </Badge>
                                     </div>
                                 </div>
-                            </div>
-
-                            {(registro?.horaInicio || registroExistenteInfo?.horaEntrada || registroExistenteInfo?.createdAt) && (
-                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
-                                    <p className="text-xs text-sky-500 font-medium">Registro iniciado</p>
-                                    <p className="text-sm font-semibold text-sky-900">
-                                        {toLocalDateTime(registro?.horaInicio || registroExistenteInfo?.horaEntrada || registroExistenteInfo?.createdAt, "dd/MM/yyyy HH:mm")}
-                                    </p>
-                                </div>
-                            )}
-
-                            {idRegistroExistente && (
-                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                <div className="p-3 bg-white rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">ID Registro</p>
                                     <p className="text-sm font-semibold text-sky-900">#{idRegistroExistente}</p>
                                 </div>
-                            )}
+                            </div>
 
                             {/* Buscar árbitro */}
                             <div className="flex-1">
