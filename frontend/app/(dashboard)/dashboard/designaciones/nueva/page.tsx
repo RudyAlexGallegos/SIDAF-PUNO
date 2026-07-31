@@ -2653,32 +2653,32 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                             </select>
                           </div>
 
-                         {/* Asesor */}
-                         <div className="min-w-0">
-                           <label className="block text-sm font-semibold text-slate-600 mb-2">
-                             📋 Asesor <span className="text-slate-400 font-normal">(Opcional)</span>
-                           </label>
-                          <select
-                            value={partido.asesor?.id || ""}
-                            onChange={(e) => {
-                              const as = asesores.find((a) => a.id === parseInt(e.target.value))
-                              const updatedPartidos = [...partidos]
-                              updatedPartidos[idx].asesor = as || null
-                              setPartidos(updatedPartidos)
-                            }}
-                            className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-                          >
-                            <option value="">Seleccionar</option>
-                            {asesores.map((as) => (
-                              <option key={as.id} value={as.id}>
-                                {as.nombre} {as.apellido}
-                              </option>
-                              ))}
-                               </select>
+                          {/* Asesor */}
+                          <div className="min-w-0">
+                            <label className="block text-sm font-semibold text-slate-600 mb-2">
+                              📋 Asesor <span className="text-slate-400 font-normal">(Opcional)</span>
+                            </label>
+                           <select
+                             value={partido.asesor?.id || ""}
+                             onChange={(e) => {
+                               const as = asesores.find((a) => a.id === parseInt(e.target.value))
+                               const updatedPartidos = [...partidos]
+                               updatedPartidos[idx].asesor = as || null
+                               setPartidos(updatedPartidos)
+                             }}
+                             className="w-full p-2 bg-white border border-gray-200 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                           >
+                             <option value="">Seleccionar</option>
+                             {asesores.map((as) => (
+                               <option key={as.id} value={as.id}>
+                                 {as.nombre} {as.apellido}
+                               </option>
+                             ))}
+                             </select>
                             </div>
-                          </div>
-                        </CardContent>
-                     </Card>
+                        </div>
+                    </CardContent>
+                    </Card>
                    ))}
 
 {/* Botones finales */}
