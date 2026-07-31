@@ -7,6 +7,30 @@ import { useRegistroAsistencia, type DuplicadoInfo } from "@/hooks/asistencia/us
 import ListaArbitros from "@/components/asistencia/ListaArbitros"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
+
+function toLocalDateTime(iso?: string, fmt = "dd/MM/yyyy HH:mm") {
+    if (!iso) return "—"
+    try {
+        const d = new Date(iso)
+        if (isNaN(d.getTime())) return "—"
+        const pad = (n: number) => String(n).padStart(2, '0')
+        if (fmt === "dd/MM/yyyy") {
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
+        }
+        if (fmt === "d 'de' MMMM 'de' yyyy") {
+            return format(d, fmt, { locale: es })
+        }
+        const hours = pad(d.getHours())
+        const minutes = pad(d.getMinutes())
+        const seconds = pad(d.getSeconds())
+        if (fmt.includes("ss")) {
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${hours}:${minutes}:${seconds}`
+        }
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${hours}:${minutes}`
+    } catch {
+        return "—"
+    }
+}
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -736,7 +760,7 @@ export default function AsistenciaPage() {
                                 {registro ? "Registro en curso" : "Editar Registro Existente"}
                             </DialogTitle>
                             <DialogDescription>
-                                {getLabelActividad(actividad)} — {fechaSeleccionada ? format(parseISO(fechaSeleccionada), "d 'de' MMMM 'de' yyyy", { locale: es }) : ""}
+                                {getLabelActividad(actividad)} — {fechaSeleccionada ? toLocalDateTime(fechaSeleccionada, "d 'de' MMMM 'de' yyyy") : ""}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
@@ -756,7 +780,7 @@ export default function AsistenciaPage() {
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Fecha</p>
                                     <p className="text-sm font-semibold text-sky-900">
-                                        {registroExistenteInfo?.fecha ? format(parseISO(registroExistenteInfo.fecha), "dd/MM/yyyy", { locale: es }) : fechaSeleccionada ? format(parseISO(fechaSeleccionada), "dd/MM/yyyy", { locale: es }) : "—"}
+                                        {toLocalDateTime(registroExistenteInfo?.fecha || fechaSeleccionada, "dd/MM/yyyy")}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
@@ -773,7 +797,7 @@ export default function AsistenciaPage() {
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Registro iniciado</p>
                                     <p className="text-sm font-semibold text-sky-900">
-                                        {format(parseISO(registro?.horaInicio || registroExistenteInfo?.horaEntrada || registroExistenteInfo?.createdAt || ""), "dd/MM/yyyy HH:mm", { locale: es })}
+                                        {toLocalDateTime(registro?.horaInicio || registroExistenteInfo?.horaEntrada || registroExistenteInfo?.createdAt, "dd/MM/yyyy HH:mm")}
                                     </p>
                                 </div>
                             )}
@@ -782,17 +806,6 @@ export default function AsistenciaPage() {
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">ID Registro</p>
                                     <p className="text-sm font-semibold text-sky-900">#{idRegistroExistente}</p>
-                                </div>
-                            )}
-
-                            {existeRegistroHoy && idRegistroExistente && (
-                                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                    <p className="text-xs text-amber-700 font-medium">Registro creado por:</p>
-                                    <p className="text-sm font-semibold text-amber-900">{registroExistenteInfo?.responsable || '—'}</p>
-                                    <p className="text-xs text-amber-700 font-medium mt-1">Fecha y hora de creación:</p>
-                                    <p className="text-sm font-semibold text-amber-900">
-                                        {registroExistenteInfo?.createdAt ? format(parseISO(registroExistenteInfo.createdAt), "dd/MM/yyyy HH:mm", { locale: es }) : '—'}
-                                    </p>
                                 </div>
                             )}
 

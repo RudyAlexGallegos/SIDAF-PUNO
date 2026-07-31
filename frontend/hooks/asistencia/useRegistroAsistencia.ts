@@ -7,7 +7,7 @@ import { esDiaObligatorio, getTipoDia, getNombreDia, getInfoDiaActual } from "@/
 
 const STORAGE_KEY = "sidaf_registro_temp"
 
-function fmtDateTime(iso?: string) {
+function toLocalDateTime(iso?: string) {
     if (!iso) return null
     try {
         const d = new Date(iso)
@@ -166,7 +166,7 @@ export function useRegistroAsistencia() {
                     actividad: detalle.actividad || resultado.actividad,
                     estado: detalle.estado || resultado.estado,
                     horaEntrada: detalle.horaEntrada || resultado.horaEntrada,
-                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${detalle.responsable || resultado.responsable || 'un usuario'} a las ${fmtDateTime(detalle.createdAt || detalle.horaEntrada || resultado.horaEntrada) || '—'}. Solo se puede editar ese registro.`
+                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${detalle.responsable || resultado.responsable || 'un usuario'}. Solo se puede editar ese registro.`
                 }
                 setDuplicadoInfo(info)
 
@@ -291,8 +291,8 @@ export function useRegistroAsistencia() {
                 }
 
                 const creadoPor = asistenciaCompleta?.responsable || existente.responsable || responsable || 'un usuario'
-                const horaCreacion = fmtDateTime(asistenciaCompleta?.createdAt || asistenciaCompleta?.horaEntrada || existente.createdAt || existente.horaEntrada)
-                setNotificacion(`Ya existe un registro para el ${fecha}, creado por ${creadoPor}${horaCreacion ? ' a las ' + horaCreacion : ''}. Solo se puede editar ese registro.`)
+                const horaActual = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+                setNotificacion(`Ya existe un registro para el ${fecha}, creado por ${creadoPor} a las ${horaActual}. Solo se puede editar ese registro.`)
                 setIdRegistroExistente(existente.id)
                 setExisteRegistroHoy(true)
 
