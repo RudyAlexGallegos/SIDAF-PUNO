@@ -526,29 +526,62 @@ export default function NuevaDesignacionPage() {
     })
   }
 
-const validarProvinciasCompletas = (): boolean => {
-      if (!esCopaPeruActual) return true
+  const validarProvinciasCompletas = (): boolean => {
+    if (!esCopaPeruActual) return true
 
-      // En Etapa Provincial: todos los distritos deben tener campeón (subcampeón es opcional)
-      // EXCEPTUANDO los distritos marcados como "no participantes"
-      if (etapaSeleccionada === "Etapa Provincial") {
-        // 🔒 Se valida SOLO la provincia seleccionada (el flujo es provincia por provincia).
-        // Fuente de verdad: distritos reales de los equipos de esta provincia (campo distrito).
-        const distritos = distritosProvincialesEquipos.length > 0
-          ? distritosProvincialesEquipos
-          : distritosDeProvinciaSeleccionada.length > 0
-            ? distritosDeProvinciaSeleccionada
-            : getDistritosByProvincia("Puno").map(d => d.nombre)
-        return distritos.every((distrito) => {
-          // Si el distrito está marcado como no participante, no requiere campeón
-          if (distritosNoParticipantes.includes(distrito)) return true
-          const campeones = provinciaCampeones[distrito]
-          return campeones?.campeon !== null && campeones?.campeon !== undefined
-        })
-      }
+    // En Etapa Provincial: TODOS los distritos de TODAS las provincias deben tener campeón
+    // (subcampeón es opcional)
+    // EXCEPTUANDO los distritos marcados como "no participantes"
+    if (etapaSeleccionada === "Etapa Provincial") {
+      const distritosPuno = PROVINCIAS_PUNO.flatMap((prov) =>
+        prov.distritos.map((d) => d.nombre)
+      )
 
-      return true
+      return distritosPuno.every((distrito) => {
+        // Si el distrito está marcado como no participante, no requiere campeón
+        if (distritosNoParticipantes.includes(distrito)) return true
+        const campeones = provinciaCampeones[distrito]
+        return campeones?.campeon !== null && campeones?.campeon !== undefined
+      })
     }
+
+    return true
+  }
+
+  const validarTodasProvinciasCompletas = (): boolean => {
+    if (!esCopaPeruActual) return true
+
+    // TODAS las provincias deben tener campeón y subcampeón definidos
+    const distritosPuno = PROVINCIAS_PUNO.flatMap((prov) =>
+      prov.distritos.map((d) => d.nombre)
+    )
+
+    return distritosPuno.every((distrito) => {
+      if (distritosNoParticipantes.includes(distrito)) return true
+      const campeones = provinciaCampeones[distrito]
+      return (
+        campeones?.campeon !== null &&
+        campeones?.campeon !== undefined &&
+        campeones?.subcampeon !== null &&
+        campeones?.subcampeon !== undefined
+      )
+    })
+  }
+
+  const validarTodosPartidosCompletos = (): boolean => {
+    if (!esCopaPeruActual || partidos.length === 0) return false
+
+    return partidos.every((partido) => {
+      return (
+        partido.equipoLocal &&
+        partido.equipoVisitante &&
+        partido.arbitroPrincipal &&
+        partido.asistente1 &&
+        partido.asistente2 &&
+        partido.cuartoArbitro
+      )
+    })
+  }
 
   // Toggle distrito como no participante
   const toggleDistritoParticipa = (distrito: string) => {
@@ -619,10 +652,14 @@ const calcularEtapasDesbloqueadas = () => {
        nuevasEtapas["Etapa Provincial"].desbloqueada = false
      }
 
-     // Departamental se desbloquea si los partidos están completos en Etapa Provincial
+     // Departamental se desbloquea SOLO cuando TODAS las provincias tienen
+     // campeón + subcampeón Y todos los partidos están completos
+     const todasProvinciasCompletas = validarTodasProvinciasCompletas()
+     const todosPartidosCompletos = validarTodosPartidosCompletos()
+
      if (
-       etapaSeleccionada === "Etapa Provincial" &&
-       validarPartidosCompletos()
+       todasProvinciasCompletas &&
+       todosPartidosCompletos
      ) {
        nuevasEtapas["Etapa Provincial"].completada = true
        nuevasEtapas["Etapa Departamental"].desbloqueada = true
@@ -1447,229 +1484,62 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
     // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
     if (esEtapaProvincial && esCopaPeruActual) {
-      // Si ya hay campeones guardados, mostrar lista de equipos participantes (solo de ESTA provincia)
-      const equiposParticipantes = Object.entries(provinciaCampeones || {})
-        .filter(([distrito]) => distritosAMostrar.includes(distrito))
-        .flatMap(([distrito, c]: [string, any]) => {
-        const participantes: any[] = []
-        if (c?.campeon) {
-          participantes.push({ ...c.campeon, tipo: "Campeón" })
-        }
-        if (c?.subcampeon) {
-          participantes.push({ ...c.subcampeon, tipo: "Subcampeón" })
-        }
-        return participantes
-       }).filter(Boolean)
-       
-      // Provincia real de los equipos participantes (resuelta desde el distrito capturado al crear el equipo)
-      const provinciaRealParticipantes = (() => {
-        const provs = equiposParticipantes
-          .map((e: any) => resolverProvincia(e.distrito, e.provincia))
-          .filter(Boolean) as string[]
-        const unicas = Array.from(new Set(provs))
-        return unicas.length === 1 ? unicas[0] : null
-      })()
-
-      // 🔒 La vista de SOLO LECTURA ("Equipos Participantes") aparece automáticamente en cuanto
-      // TODOS los distritos de la provincia tienen campeón seleccionado (validarProvinciasCompletas),
-      // o cuando ya fueron finalizados/guardados en backend. Así el usuario no vuelve a seleccionar
-      // los campeones cada vez. El modo edición (editandoProvincial) fuerza mostrar los selectores.
-      const provincialCompleto = validarProvinciasCompletas()
-      if (!editandoProvincial && (provincialCampeonesFinalizados || provincialCompleto) && equiposParticipantes.length > 0) {
-        return (
-          <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
-            {/* Header */}
-            <section className="border-b pb-3 md:pb-4">
-              <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-                 {campeonatoSeleccionado?.nombre} · {provinciaRealParticipantes ?? provinciaSeleccionada}
-              </p>
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
-                Equipos Participantes
-              </h1>
-              <p className="text-slate-500 mt-2 text-xs md:text-sm">Paso 4 de 7 • Campeones ya seleccionados</p>
-            </section>
-
-            {/* Botón de retroceso */}
-            <div className="flex justify-start">
-              <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Cambiar Provincia
-              </Button>
-            </div>
-
-            {renderCoach()}
-
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-4">
-                <p className="text-sm text-green-800">
-                  ✅ Todos los distritos tienen campeón seleccionado. Estos son los equipos que clasifican a la siguiente etapa.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Lista de equipos participantes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {equiposParticipantes.map((equipo: any, idx: number) => {
-                const esCampeon = equipo.tipo === "Campeón"
-                return (
-                  <Card
-                    key={`${equipo.nombre}-${idx}`}
-                    className={`border-2 transition-all duration-200 hover:shadow-lg ${
-                      esCampeon
-                        ? "border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50"
-                        : "border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50"
-                    }`}
-                  >
-                    <CardContent className="p-4 md:p-5">
-                      <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          esCampeon
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-slate-200 text-slate-600"
-                        }`}>
-                          {esCampeon ? (
-                            <Trophy className="w-5 h-5" />
-                          ) : (
-                            <Shield className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-sm font-bold text-slate-900 truncate">
-                              {equipo.nombre}
-                            </h3>
-                            <Badge
-                              className={`text-[10px] font-semibold border ${
-                                esCampeon
-                                  ? "bg-amber-100 text-amber-800 border-amber-200"
-                                  : "bg-slate-100 text-slate-700 border-slate-200"
-                              }`}
-                            >
-                              {esCampeon ? "🥇 Campeón" : "🥈 Subcampeón"}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {equipo.distrito || "Sin distrito"}
-                            </span>
-                            {resolverProvincia(equipo.distrito, equipo.provincia) && (
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                {resolverProvincia(equipo.distrito, equipo.provincia)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-
-            {/* Botón de avance */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep("provincia")}
-                className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
-              >
-                ← Atrás
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEditandoProvincial(true)
-                  setProvincialCampeonesFinalizados(false)
-                }}
-                className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
-              >
-                ✏️ Editar campeones
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (!provincialCampeonesFinalizados && campeonatoSeleccionado) {
-                    // Guardar en backend antes de continuar
-                    const resultados: any[] = []
-                    Object.entries(provinciaCampeones).forEach(([distrito, campeones]: [string, any]) => {
-                      if (campeones.campeon && campeones.campeon.id !== undefined) {
-                        resultados.push({
-                          campeonatoId: campeonatoSeleccionado.id,
-                          etapa: 'PROVINCIAL',
-                          equipoId: campeones.campeon.id,
-                          posicion: 1
-                        })
-                      }
-                      if (campeones.subcampeon && campeones.subcampeon.id !== undefined) {
-                        resultados.push({
-                          campeonatoId: campeonatoSeleccionado.id,
-                          etapa: 'PROVINCIAL',
-                          equipoId: campeones.subcampeon.id,
-                          posicion: 2
-                        })
-                      }
-                    })
-                    if (resultados.length > 0) {
-                      await saveCopaPeruResultadosBatch(resultados)
-                      setProvincialCampeonesFinalizados(true)
-                    }
-                  }
-                  setCurrentStep("partidos")
-                }}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                ✅ Continuar a Partidos →
-              </Button>
-            </div>
-          </div>
-        )
-      }
-
-      // 🔎 Distritos visibles según búsqueda (filtrando por nombre de distrito o de equipo)
-      const qProv = busquedaProvincial.trim().toLowerCase()
-      const distritosVisiblesProv = qProv
-        ? distritosAMostrar.filter((d) => {
-            if (d.toLowerCase().includes(qProv)) return true
-            return equiposFiltrados.some(
-              (eq) => eq.distrito === d && eq.nombre.toLowerCase().includes(qProv)
-            )
-          })
-        : distritosAMostrar
-
-      // 📊 Progreso por distrito (fuente: distritos reales de esta provincia)
-      const totalDistritos = distritosAMostrar.length
-      const distritosCompletados = distritosAMostrar.filter(
-        (d) => distritosNoParticipantes.includes(d) || provinciaCampeones[d]?.campeon
-      ).length
-      const porcentajeCompletado =
-        totalDistritos > 0 ? Math.round((distritosCompletados / totalDistritos) * 100) : 0
-      const primerPendiente = distritosAMostrar.find(
-        (d) => !distritosNoParticipantes.includes(d) && !provinciaCampeones[d]?.campeon
-      )
+      const todasProvincias = PROVINCIAS_PUNO
 
       return (
         <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Header */}
           <section className="border-b pb-3 md:pb-4">
             <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-              {campeonatoSeleccionado?.nombre} · {provinciaSeleccionada}
+              {campeonatoSeleccionado?.nombre} · Todas las Provincias
             </p>
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
               Clasificación Provincial
             </h1>
-            <p className="text-slate-500 mt-2 text-xs md:text-sm">Selecciona campeones y subcampeones • Paso 4 de 7</p>
+            <p className="text-slate-500 mt-2 text-xs md:text-sm">
+              Selecciona campeones y subcampeones de CADA provincia • Paso 4 de 7
+            </p>
           </section>
 
           {/* Botón de retroceso */}
           <div className="flex justify-start">
             <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
               <ChevronLeft className="w-4 h-4 mr-1" />
-              Cambiar Provincia
+              Cambiar Etapa
             </Button>
           </div>
 
           {renderCoach()}
+
+          {/* 📊 RESUMEN DE PROVINCIAS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {todasProvincias.map((prov) => {
+              const distritos = prov.distritos.map(d => d.nombre)
+              const distritosCompletados = distritos.filter(
+                (d) => distritosNoParticipantes.includes(d) || provinciaCampeones[d]?.campeon
+              ).length
+              const porcentaje = distritos.length > 0 ? Math.round((distritosCompletados / distritos.length) * 100) : 0
+              const completo = porcentaje === 100
+
+              return (
+                <Card key={prov.nombre} className={`border-2 ${completo ? "border-emerald-300 bg-emerald-50" : "border-gray-200 bg-card"}`}>
+                  <CardContent className="p-3">
+                    <h3 className="text-sm font-bold text-slate-900 mb-1">{prov.nombre}</h3>
+                    <p className="text-xs text-slate-500 mb-2">{distritos.length} distritos</p>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${completo ? "bg-emerald-500" : "bg-amber-500"}`}
+                        style={{ width: `${porcentaje}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-600 mt-1">
+                      {completo ? "✅ Completo" : `${distritosCompletados}/${distritos.length}`}
+                    </p>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
 
           {/* 🔎 BÚSQUEDA Y FILTRO */}
           <div className="relative">
@@ -1692,279 +1562,220 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             )}
           </div>
 
-          {/* 📊 BARRA DE PROGRESO POR DISTRITO */}
-          <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 animate-in fade-in duration-500">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-blue-900">
-                  Progreso de la provincia
-                </p>
-                <p className="text-sm font-bold text-blue-900">
-                  {distritosCompletados} / {totalDistritos} distritos
-                </p>
-              </div>
-              <div className="h-3 bg-white/70 rounded-full overflow-hidden shadow-inner">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-700 ease-out"
-                  style={{ width: `${porcentajeCompletado}%` }}
-                />
-              </div>
-              <p className="text-xs text-blue-700 mt-2">
-                {porcentajeCompletado === 100
-                  ? "✅ ¡Todos los distritos tienen campeón!"
-                  : `Falta elegir el campeón de ${totalDistritos - distritosCompletados} distrito(s).`}
+          {/* 🔍 MENSAJE DE VALIDACIÓN */}
+          {!validarTodasProvinciasCompletas() && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm">
+                ⚠️ Debes seleccionar <strong>campeón y subcampeón de TODOS los distritos de TODAS las provincias</strong> para habilitar Etapa Departamental.
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          )}
 
-          {/* CARD POR DISTRITO */}
-          <div className="space-y-4">
-{distritosVisiblesProv.map((distrito) => {
-                // 🔒 Fuente de verdad: el campo distrito del equipo (sin fallback a toda la provincia)
-                const equiposDelDistrito = equiposFiltrados.filter((eq) => eq.distrito === distrito)
-                const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
-               const tieneCompletado = !!campeones?.campeon
-               const noParticipa = distritosNoParticipantes.includes(distrito)
-               const esSiguiente = !noParticipa && !tieneCompletado && primerPendiente === distrito
+          {/* CARDS POR PROVINCIA */}
+          <div className="space-y-6">
+            {todasProvincias.map((prov) => {
+              const distritos = prov.distritos.map(d => d.nombre)
+              const qProv = busquedaProvincial.trim().toLowerCase()
+              const distritosVisibles = qProv
+                ? distritos.filter((d) => {
+                    if (d.toLowerCase().includes(qProv)) return true
+                    return false
+                  })
+                : distritos
 
-               // Equipos a mostrar según búsqueda (si busca, filtra por nombre de equipo)
-               const equiposAMostrar = qProv
-                 ? equiposDelDistrito.filter((eq) => eq.nombre.toLowerCase().includes(qProv) || distrito.toLowerCase().includes(qProv))
-                 : equiposDelDistrito
+              if (distritosVisibles.length === 0) return null
 
               return (
-                <Card
-                  key={distrito}
-                  id={`distrito-${distrito}`}
-                  className={`border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 ${
-                    noParticipa
-                      ? "border-slate-300 bg-slate-50"
-                      : esSiguiente
-                        ? "border-cyan-400 bg-cyan-50/40 ring-2 ring-cyan-200"
-                        : tieneCompletado
-                          ? "border-emerald-300 bg-emerald-50/30"
-                          : "border-gray-200 bg-card"
-                  }`}
-                >
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className={`text-lg font-bold ${
-                          noParticipa ? "text-slate-500 line-through" : "text-slate-900"
-                        }`}>{distrito}</h3>
-                        {noParticipa && (
-                          <Badge className="bg-slate-400 text-white text-xs">NO PARTICIPA</Badge>
-                        )}
-                        {tieneCompletado && !noParticipa && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 animate-in zoom-in duration-300" />
-                        )}
-                        {esSiguiente && (
-                          <Badge className="bg-cyan-500 text-white text-xs animate-pulse">👉 SIGUIENTE</Badge>
-                        )}
-                      </div>
-                      {/* Botón NO PARTICIPA */}
-                      <Button
-                        type="button"
-                        variant={noParticipa ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleDistritoParticipa(distrito)}
-                        className={`text-xs ${
-                          noParticipa
-                            ? "bg-slate-600 text-white hover:bg-slate-700"
-                            : "border-slate-300 text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        {noParticipa ? "✓ Participa" : "No Participa"}
-                      </Button>
-                    </div>
+                <Card key={prov.nombre} className="border-2 border-gray-200 bg-card">
+                  <CardHeader className="bg-slate-50">
+                    <CardTitle className="text-slate-900 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-blue-600" />
+                      Provincia de {prov.nombre}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 md:p-6 space-y-4">
+                    {distritosVisibles.map((distrito) => {
+                      const equiposDelDistrito = equiposReales.filter((eq) => eq.distrito === distrito)
+                      const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
+                      const tieneCompletado = !!campeones.campeon && !!campeones.subcampeon
+                      const noParticipa = distritosNoParticipantes.includes(distrito)
 
-                    {/* TARJETAS CLICABLES DE EQUIPOS - OCULTAS SI NO PARTICIPA */}
-                    {!noParticipa && (equiposAMostrar.length > 0 ? (
-                      <div className="space-y-4">
-                        {/* CAMPEÓN (OBLIGATORIO) */}
-                        <div>
-                          <p className="block text-sm font-semibold text-amber-700 mb-2">
-                            🥇 Equipo Campeón *{" "}
-                            {campeones.campeon && (
-                              <span className="text-emerald-600 font-bold">· {campeones.campeon.nombre}</span>
-                            )}
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {equiposAMostrar
-                              .filter(eq => eq.id != null)
-                              .map((eq) => {
-                                const activo = campeones.campeon?.id === eq.id
-                                return (
-                                  <button
-                                    key={eq.id}
-                                    type="button"
-                                    onClick={() => {
-                                      const eraActivo = campeones.campeon?.id === eq.id
-                                      setProvinciaCampeones(prev => ({
-                                        ...prev,
-                                        [distrito]: {
-                                          campeon: eraActivo ? null : eq,
-                                          subcampeon: prev[distrito]?.subcampeon ?? null,
-                                        },
-                                      }))
-                                      if (eraActivo) {
-                                        toast({ title: `Campeón de ${distrito} deseleccionado` })
-                                      } else {
-                                        toast({ title: `🥇 ${eq.nombre} · Campeón de ${distrito}`, description: "Selecciona el subcampeón (opcional)." })
-                                        const siguiente = distritosAMostrar.find(
-                                          (d) => d !== distrito && !distritosNoParticipantes.includes(d) && !provinciaCampeones[d]?.campeon
-                                        )
-                                        if (siguiente) {
-                                          setTimeout(() => {
-                                            document.getElementById(`distrito-${siguiente}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
-                                          }, 350)
-                                        }
-                                      }
-                                    }}
-                                    className={`p-3 rounded-lg border-2 transition-all text-left text-sm font-semibold active:scale-95 ${
-                                      activo
-                                        ? "border-amber-500 bg-amber-600 text-white shadow-md"
-                                        : "border-gray-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50"
-                                    }`}
-                                  >
-                                    {eq.nombre}
-                                    <span className="text-[10px] block text-slate-400 truncate">{eq.distrito || "Sin distrito"}</span>
-                                  </button>
-                                )
-                              })}
+                      return (
+                        <div
+                          key={distrito}
+                          id={`distrito-${distrito}`}
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            noParticipa
+                              ? "border-slate-300 bg-slate-50"
+                              : tieneCompletado
+                                ? "border-emerald-300 bg-emerald-50/30"
+                                : "border-gray-200 bg-white"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <h3 className={`text-base font-bold ${noParticipa ? "text-slate-500 line-through" : "text-slate-900"}`}>
+                                {distrito}
+                              </h3>
+                              {tieneCompletado && !noParticipa && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              variant={noParticipa ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleDistritoParticipa(distrito)}
+                              className={`text-xs ${noParticipa ? "bg-slate-600 text-white hover:bg-slate-700" : "border-slate-300 text-slate-600 hover:bg-slate-100"}`}
+                            >
+                              {noParticipa ? "✓ Participa" : "No Participa"}
+                            </Button>
                           </div>
-                        </div>
 
-                        {/* SUBCAMPEÓN (OPCIONAL) */}
-                        <div>
-                          <p className="block text-sm font-semibold text-blue-700 mb-2">
-                            🥈 Equipo Subcampeón (Opcional){" "}
-                            {campeones.subcampeon && (
-                              <span className="text-emerald-600 font-bold">· {campeones.subcampeon.nombre}</span>
-                            )}
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {equiposAMostrar
-                              .filter(eq => eq.id != null && eq.id !== campeones.campeon?.id)
-                              .map((eq) => {
-                                const activo = campeones.subcampeon?.id === eq.id
-                                return (
-                                  <button
-                                    key={eq.id}
-                                    type="button"
-                                    onClick={() => {
-                                      const eraActivo = campeones.subcampeon?.id === eq.id
-                                      setProvinciaCampeones(prev => ({
-                                        ...prev,
-                                        [distrito]: {
-                                          campeon: prev[distrito]?.campeon ?? null,
-                                          subcampeon: eraActivo ? null : eq,
-                                        },
-                                      }))
-                                      toast({
-                                        title: eraActivo
-                                          ? `Subcampeón de ${distrito} deseleccionado`
-                                          : `🥈 ${eq.nombre} · Subcampeón de ${distrito}`,
-                                      })
-                                    }}
-                                    className={`p-3 rounded-lg border-2 transition-all text-left text-sm font-semibold active:scale-95 ${
-                                      activo
-                                        ? "border-blue-500 bg-blue-600 text-white shadow-md"
-                                        : "border-gray-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50"
-                                    }`}
-                                  >
-                                    {eq.nombre}
-                                    <span className="text-[10px] block text-slate-400 truncate">{eq.distrito || "Sin distrito"}</span>
-                                  </button>
-                                )
-                              })}
-                          </div>
+                          {!noParticipa && equiposDelDistrito.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* CAMPEÓN (OBLIGATORIO) */}
+                              <div>
+                                <p className="block text-sm font-semibold text-amber-700 mb-2">
+                                  🥇 Campeón *
+                                  {campeones.campeon && (
+                                    <span className="text-emerald-600 font-bold ml-1">· {campeones.campeon.nombre}</span>
+                                  )}
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {equiposDelDistrito
+                                    .filter(eq => eq.id != null)
+                                    .map((eq) => {
+                                      const activo = campeones.campeon?.id === eq.id
+                                      return (
+                                        <button
+                                          key={eq.id}
+                                          type="button"
+                                          onClick={() => {
+                                            const eraActivo = campeones.campeon?.id === eq.id
+                                            setProvinciaCampeones(prev => ({
+                                              ...prev,
+                                              [distrito]: {
+                                                campeon: eraActivo ? null : eq,
+                                                subcampeon: prev[distrito]?.subcampeon ?? null,
+                                              },
+                                            }))
+                                          }}
+                                          className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
+                                            activo
+                                              ? "border-amber-500 bg-amber-600 text-white shadow-md"
+                                              : "border-gray-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50"
+                                          }`}
+                                        >
+                                          {eq.nombre}
+                                        </button>
+                                      )
+                                    })}
+                                </div>
+                              </div>
+
+                              {/* SUBCAMPEÓN (OPCIONAL) */}
+                              <div>
+                                <p className="block text-sm font-semibold text-blue-700 mb-2">
+                                  🥈 Subcampeón (Opcional)
+                                  {campeones.subcampeon && (
+                                    <span className="text-emerald-600 font-bold ml-1">· {campeones.subcampeon.nombre}</span>
+                                  )}
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {equiposDelDistrito
+                                    .filter(eq => eq.id != null && eq.id !== campeones.campeon?.id)
+                                    .map((eq) => {
+                                      const activo = campeones.subcampeon?.id === eq.id
+                                      return (
+                                        <button
+                                          key={eq.id}
+                                          type="button"
+                                          onClick={() => {
+                                            const eraActivo = campeones.subcampeon?.id === eq.id
+                                            setProvinciaCampeones(prev => ({
+                                              ...prev,
+                                              [distrito]: {
+                                                campeon: prev[distrito]?.campeon ?? null,
+                                                subcampeon: eraActivo ? null : eq,
+                                              },
+                                            }))
+                                          }}
+                                          className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
+                                            activo
+                                              ? "border-blue-500 bg-blue-600 text-white shadow-md"
+                                              : "border-gray-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50"
+                                          }`}
+                                        >
+                                          {eq.nombre}
+                                        </button>
+                                      )
+                                    })}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-slate-500 italic">
+                              {noParticipa ? "Distrito no participante" : "Sin equipos registrados en este distrito."}
+                            </p>
+                          )}
                         </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-500 italic">No hay equipos registrados en este distrito.</p>
-                    ))}
+                      )
+                    })}
                   </CardContent>
                 </Card>
               )
             })}
+          </div>
 
-            {distritosVisiblesProv.length === 0 && (
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-center">
-                <p className="text-sm text-slate-500">No se encontraron distritos ni equipos para "{busquedaProvincial}".</p>
-              </div>
-            )}
+          {/* Botón de avance */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep("provincia")}
+              className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
+            >
+              ← Atrás
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!validarTodasProvinciasCompletas() || !campeonatoSeleccionado) return
 
-            {/* BOTÓN DE AVANCE */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep("provincia")}
-                className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
-              >
-                ← Atrás
-              </Button>
-              {editandoProvincial && validarProvinciasCompletas() && (
-                <Button
-                  variant="outline"
-                  onClick={() => setEditandoProvincial(false)}
-                  className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                >
-                  👀 Ver equipos participantes
-                </Button>
-              )}
-              <Button
-                onClick={async () => {
-                  // Guardar campeones provinciales antes de continuar
-                  if (campeonatoSeleccionado && esCopaPeruActual && etapaSeleccionada === "Etapa Provincial") {
-                    try {
-                      const resultados: any[] = []
-                      Object.entries(provinciaCampeones).forEach(([distrito, campeones]) => {
-                        if (campeones.campeon) {
-                          resultados.push({
-                            campeonatoId: campeonatoSeleccionado.id,
-                            etapa: 'PROVINCIAL',
-                            equipoId: campeones.campeon.id,
-                            posicion: 1
-                          })
-                        }
-                        if (campeones.subcampeon) {
-                          resultados.push({
-                            campeonatoId: campeonatoSeleccionado.id,
-                            etapa: 'PROVINCIAL',
-                            equipoId: campeones.subcampeon.id,
-                            posicion: 2
-                          })
-                        }
-                      })
-                      if (resultados.length > 0) {
-                        await saveCopaPeruResultadosBatch(resultados)
-                        setProvincialCampeonesFinalizados(true)
-                      }
-                    } catch (error) {
-                      console.error("Error guardando campeones provinciales:", error)
-                    }
+                // Guardar en backend antes de continuar
+                const resultados: any[] = []
+                Object.entries(provinciaCampeones).forEach(([distrito, campeones]: [string, any]) => {
+                  if (campeones.campeon && campeones.campeon.id !== undefined) {
+                    resultados.push({
+                      campeonatoId: campeonatoSeleccionado.id,
+                      etapa: 'PROVINCIAL',
+                      equipoId: campeones.campeon.id,
+                      posicion: 1
+                    })
                   }
-                  setCurrentStep("partidos")
-                }}
-                disabled={!validarProvinciasCompletas()}
-                className={`flex-1 ${
-                  validarProvinciasCompletas()
-                    ? "bg-amber-600 hover:bg-amber-700 text-white"
-                    : "bg-slate-300 cursor-not-allowed opacity-50"
-                }`}
-              >
-                ✅ Continuar a Partidos →
-              </Button>
-            </div>
-
-            {!validarProvinciasCompletas() && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in">
-                <p className="text-red-800 text-sm">
-                  ⛔ Debes seleccionar el campeón de <strong>todos los distritos</strong> para continuar.
-                </p>
-              </div>
-            )}
+                  if (campeones.subcampeon && campeones.subcampeon.id !== undefined) {
+                    resultados.push({
+                      campeonatoId: campeonatoSeleccionado.id,
+                      etapa: 'PROVINCIAL',
+                      equipoId: campeones.subcampeon.id,
+                      posicion: 2
+                    })
+                  }
+                })
+                if (resultados.length > 0) {
+                  await saveCopaPeruResultadosBatch(resultados)
+                  setProvincialCampeonesFinalizados(true)
+                }
+                setCurrentStep("partidos")
+              }}
+              disabled={!validarTodasProvinciasCompletas()}
+              className={`flex-1 ${
+                validarTodasProvinciasCompletas()
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-slate-300 cursor-not-allowed opacity-50"
+              }`}
+            >
+              ✅ Continuar a Partidos →
+            </Button>
           </div>
         </div>
       )
