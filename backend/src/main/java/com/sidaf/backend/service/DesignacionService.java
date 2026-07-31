@@ -2,7 +2,9 @@ package com.sidaf.backend.service;
 
 import com.sidaf.backend.model.Designacion;
 import com.sidaf.backend.model.Designacion.EstadoDesignacion;
+import com.sidaf.backend.model.Arbitro;
 import com.sidaf.backend.repository.DesignacionRepository;
+import com.sidaf.backend.repository.ArbitroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +13,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +28,9 @@ public class DesignacionService {
     @Autowired
     private DisponibilidadService disponibilidadService;
 
+    @Autowired
+    private ArbitroRepository arbitroRepository;
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
@@ -32,6 +40,7 @@ public class DesignacionService {
      */
     @Transactional
     public Designacion crearConSincronizacion(Designacion designacion) {
+        validarDesignacion(designacion);
         Designacion guardada = designacionRepository.save(designacion);
         sincronizarDisponibilidad(guardada);
         return guardada;
@@ -42,6 +51,7 @@ public class DesignacionService {
      */
     @Transactional
     public Designacion guardarConSincronizacion(Designacion designacion) {
+        validarDesignacion(designacion);
         Designacion guardada = designacionRepository.save(designacion);
         sincronizarDisponibilidad(guardada);
         return guardada;
@@ -70,6 +80,67 @@ public class DesignacionService {
             disponibilidadService.bloquearPorDesignacion(guardada);
         } else if (estado == EstadoDesignacion.CANCELADA) {
             disponibilidadService.liberarPorDesignacion(guardada.getId());
+        }
+    }
+
+    private void validarDesignacion(Designacion designacion) {
+        String[] roles = {
+            designacion.getArbitroPrincipal(),
+            designacion.getArbitroAsistente1(),
+            designacion.getArbitroAsistente2(),
+            designacion.getCuartoArbitro(),
+            designacion.getAsesor()
+        };
+
+        Map<Long, String> nombres = new HashMap<>();
+        Map<Long, Long> conteo = new HashMap<>();
+
+        for (String rol : roles) {
+            if (rol == null || rol.isBlank()) continue;
+            try {
+                Long id = Long.parseLong(rol.trim());
+                Optional<Arbitro> opt = arbitroRepository.findById(id);
+                if (opt.isEmpty()) {
+                    throw new IllegalArgumentException("Árbitro no encontrado: " + id);
+                }
+                Arbitro arbitro = opt.get();
+                if (arbitro.getEstado() == null || !arbitro.getEstado().equalsIgnoreCase("ACTIVO")) {
+                    throw new IllegalArgumentException(
+                        "Árbitro no activo: " + arbitro.getNombre() + " " + arbitro.getApellido());
+                }
+                nombres.put(id, arbitro.getNombre() + " " + arbitro.getApellido());
+                conteo.put(id, conteo.getOrDefault(id, 0L) + 1);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("ID de árbitro inválido: " + rol);
+            }
+        }
+
+        Optional<Map.Entry<Long, Long>> repetido = conteo.entrySet().stream()
+                .filter(e -> e.getValue() > 1)
+                .findFirst();
+        if (repetido.isPresent()) {
+            throw new IllegalArgumentException(
+                "Árbitro repetido en la designación: " + nombres.get(repetido.get().getKey()));
+        }
+
+        if (designacion.getArbitroPrincipal() != null && !designacion.getArbitroPrincipal().isBlank()) {
+            try {
+                Long idPrincipal = Long.parseLong(designacion.getArbitroPrincipal().trim());
+                Optional<Arbitro> optPrincipal = arbitroRepository.findById(idPrincipal);
+                if (optPrincipal.isPresent()) {
+                    Arbitro principal = optPrincipal.get();
+                    String categoria = principal.getCategoria();
+                    if (categoria == null ||
+                            (!categoria.equalsIgnoreCase("FIFA") && !categoria.equalsIgnoreCase("NACIONAL"))) {
+                        throw new IllegalArgumentException(
+                                "El árbitro principal debe ser de categoría FIFA o Nacional. " +
+                                "Árbitro seleccionado: " + principal.getNombre() + " " + principal.getApellido() +
+                                " (" + categoria + ")");
+                    }
+                }
+            } catch (NumberFormatException e) {
+                // Ya validado arriba
+            }
         }
     }
 

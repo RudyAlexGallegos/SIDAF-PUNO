@@ -366,37 +366,60 @@ export default function NuevaDesignacionPage() {
     })
   }
 
-  // 🔒 Cargar disponibilidad centralizada cuando cambia la fecha de la designación general.
-  // Regla: un árbitro designado (CONFIRMADA) en cualquier campeonato queda "No disponible"
-  // ese día para nuevas designaciones. Aquí reflejamos ese bloqueo en tiempo real.
-  useEffect(() => {
-    let cancelado = false
-    async function cargarDisponibilidad() {
-      const dia = fechaGeneral ? fechaGeneral.substring(0, 10) : ""
-      if (!dia) {
-        setDisponibilidadMap({})
-        return
-      }
-      try {
-        setCargandoDisponibilidad(true)
-        const data = await getDisponibilidadPorFecha(dia)
-        if (cancelado) return
-        const map: Record<number, DisponibilidadArbitro> = {}
-        data.forEach((d) => { if (typeof d.arbitroId === "number") map[d.arbitroId] = d })
-        setDisponibilidadMap(map)
-        // Depurar selección: quitar árbitros que ya no están disponibles en la nueva fecha
-        setArbitrosSeleccionados((prev) =>
-          prev.filter((a) => a.id == null || map[a.id]?.disponible !== false)
-        )
-      } catch (error) {
-        console.error("Error cargando disponibilidad:", error)
-      } finally {
-        if (!cancelado) setCargandoDisponibilidad(false)
-      }
-    }
-    cargarDisponibilidad()
-    return () => { cancelado = true }
-  }, [fechaGeneral])
+   // 🔒 Cargar disponibilidad centralizada cuando cambia la fecha de la designación general.
+   // Regla: un árbitro designado (CONFIRMADA) en cualquier campeonato queda "No disponible"
+   // ese día para nuevas designaciones. Aquí reflejamos ese bloqueo en tiempo real.
+   const fechasDisponibilidad = useMemo(() => {
+     if (esCampeonatoFundamental && fechaGeneral) {
+       return [fechaGeneral.substring(0, 10)]
+     }
+     if (esCopaPeruActual && partidos.length > 0) {
+       return Array.from(
+         new Set(
+           partidos
+             .map((p) => p.fecha?.substring(0, 10))
+             .filter((f): f is string => !!f)
+         )
+       )
+     }
+     return []
+   }, [esCampeonatoFundamental, fechaGeneral, esCopaPeruActual, partidos])
+
+   useEffect(() => {
+     let cancelado = false
+     async function cargarDisponibilidad() {
+       if (fechasDisponibilidad.length === 0) {
+         setDisponibilidadMap({})
+         return
+       }
+       try {
+         setCargandoDisponibilidad(true)
+         const resultados = await Promise.all(
+           fechasDisponibilidad.map((dia) => getDisponibilidadPorFecha(dia))
+         )
+         if (cancelado) return
+         const map: Record<number, DisponibilidadArbitro> = {}
+         for (const data of resultados) {
+           for (const d of data) {
+             if (typeof d.arbitroId === "number") {
+               if (map[d.arbitroId]?.disponible === false) continue
+               map[d.arbitroId] = d
+             }
+           }
+         }
+         setDisponibilidadMap(map)
+         setArbitrosSeleccionados((prev) =>
+           prev.filter((a) => a.id == null || map[a.id]?.disponible !== false)
+         )
+       } catch (error) {
+         console.error("Error cargando disponibilidad:", error)
+       } finally {
+         if (!cancelado) setCargandoDisponibilidad(false)
+       }
+     }
+     cargarDisponibilidad()
+     return () => { cancelado = true }
+   }, [fechasDisponibilidad])
 
   // Detectar si es CAMPEONATO FUNDAMENTAL u OFICIAL
   const esCampeonatoFundamental = campeonatoSeleccionado?.categoria === "CAMPEONATO FUNDAMENTAL" || campeonatoSeleccionado?.categoria === "CAMPEONATO OFICIAL"
@@ -2650,17 +2673,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                               <option key={as.id} value={as.id}>
                                 {as.nombre} {as.apellido}
                               </option>
-                            ))}
-                            </select>
+                              ))}
+                               </select>
+                            </div>
                           </div>
-                        ) : (
-                          <p className="text-sm text-slate-500 italic">No hay equipos registrados en este distrito.</p>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                  </Card>
-                ))}
+                        </CardContent>
+                     </Card>
+                   ))}
 
 {/* Botones finales */}
                 <div className="space-y-4">
