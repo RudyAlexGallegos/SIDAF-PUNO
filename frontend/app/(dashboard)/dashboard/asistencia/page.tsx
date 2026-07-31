@@ -743,16 +743,20 @@ export default function AsistenciaPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Responsable</p>
-                                    <p className="text-sm font-semibold text-sky-900">{responsable || "—"}</p>
+                                    <p className="text-sm font-semibold text-sky-900">
+                                        {registroExistenteInfo?.responsable || registro?.responsable || responsable || "—"}
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Actividad</p>
-                                    <p className="text-sm font-semibold text-sky-900">{getLabelActividad(actividad) || "—"}</p>
+                                    <p className="text-sm font-semibold text-sky-900">
+                                        {getLabelActividad(registroExistenteInfo?.actividad || actividad) || "—"}
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Fecha</p>
                                     <p className="text-sm font-semibold text-sky-900">
-                                        {fechaSeleccionada ? format(parseISO(fechaSeleccionada), "dd/MM/yyyy", { locale: es }) : "—"}
+                                        {registroExistenteInfo?.fecha ? format(parseISO(registroExistenteInfo.fecha), "dd/MM/yyyy", { locale: es }) : fechaSeleccionada ? format(parseISO(fechaSeleccionada), "dd/MM/yyyy", { locale: es }) : "—"}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
@@ -765,11 +769,11 @@ export default function AsistenciaPage() {
                                 </div>
                             </div>
 
-                            {(registro?.horaInicio || registroExistenteInfo?.horaEntrada) && (
+                            {(registro?.horaInicio || registroExistenteInfo?.horaEntrada || registroExistenteInfo?.createdAt) && (
                                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Registro iniciado</p>
                                     <p className="text-sm font-semibold text-sky-900">
-                                        {format(parseISO(registro?.horaInicio || registroExistenteInfo?.horaEntrada || ""), "dd/MM/yyyy HH:mm", { locale: es })}
+                                        {format(parseISO(registro?.horaInicio || registroExistenteInfo?.horaEntrada || registroExistenteInfo?.createdAt || ""), "dd/MM/yyyy HH:mm", { locale: es })}
                                     </p>
                                 </div>
                             )}

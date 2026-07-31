@@ -51,12 +51,24 @@ export function useRegistroAsistencia() {
                     const primerRegistro = registros[0]
                     setExisteRegistroHoy(true)
                     setIdRegistroExistente(primerRegistro.id ?? null)
+
+                    let registroCompleto = primerRegistro
+                    try {
+                        registroCompleto = await getAsistenciaById(primerRegistro.id)
+                    } catch (e) {
+                        console.warn("No se pudo cargar detalle completo del registro existente:", e)
+                    }
+
                     setRegistroExistenteInfo({
-                        id: primerRegistro.id,
-                        responsable: primerRegistro.responsable || 'Sin responsable',
-                        createdAt: primerRegistro.createdAt,
-                        actividad: primerRegistro.actividad,
-                        horaEntrada: primerRegistro.horaEntrada
+                        id: registroCompleto.id ?? primerRegistro.id,
+                        responsable: registroCompleto.responsable || primerRegistro.responsable || 'Sin responsable',
+                        createdAt: registroCompleto.createdAt || primerRegistro.createdAt,
+                        actividad: registroCompleto.actividad || primerRegistro.actividad,
+                        horaEntrada: registroCompleto.horaEntrada || primerRegistro.horaEntrada,
+                        horaSalida: registroCompleto.horaSalida || primerRegistro.horaSalida,
+                        estado: registroCompleto.estado || primerRegistro.estado || 'pendiente',
+                        fecha: registroCompleto.fecha || primerRegistro.fecha || hoy,
+                        evento: registroCompleto.evento || primerRegistro.evento || primerRegistro.descripcion || '',
                     })
                 }
             } catch (e) {
@@ -90,17 +102,41 @@ export function useRegistroAsistencia() {
         try {
             const resultado = await verificarDuplicadoAsistencia(fecha, responsable, actividad)
             if (resultado.existe) {
+                let detalle: any = resultado
+                try {
+                    detalle = await getAsistenciaById(resultado.id)
+                } catch (e) {
+                    console.warn("No se pudo cargar detalle del registro duplicado:", e)
+                }
+
                 const info: DuplicadoInfo = {
                     existe: true,
-                    id: resultado.id,
-                    responsable: resultado.responsable,
-                    fecha: resultado.fecha,
-                    actividad: resultado.actividad,
-                    estado: resultado.estado,
-                    horaEntrada: resultado.horaEntrada,
-                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${resultado.responsable || 'un usuario'}. Solo se puede editar ese registro.`
+                    id: detalle.id ?? resultado.id,
+                    responsable: detalle.responsable || resultado.responsable,
+                    fecha: detalle.fecha || resultado.fecha,
+                    actividad: detalle.actividad || resultado.actividad,
+                    estado: detalle.estado || resultado.estado,
+                    horaEntrada: detalle.horaEntrada || resultado.horaEntrada,
+                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${detalle.responsable || resultado.responsable || 'un usuario'}. Solo se puede editar ese registro.`
                 }
                 setDuplicadoInfo(info)
+
+                if (info.id) {
+                    setIdRegistroExistente(info.id)
+                    setExisteRegistroHoy(true)
+                    setRegistroExistenteInfo({
+                        id: info.id,
+                        responsable: info.responsable || 'Sin responsable',
+                        createdAt: detalle.createdAt,
+                        actividad: info.actividad,
+                        horaEntrada: info.horaEntrada,
+                        horaSalida: detalle.horaSalida,
+                        estado: info.estado || 'pendiente',
+                        fecha: info.fecha,
+                        evento: detalle.evento || '',
+                    })
+                }
+
                 return info
             } else {
                 setDuplicadoInfo(null)
@@ -122,40 +158,54 @@ export function useRegistroAsistencia() {
                 ? new Date(fechaCustom + "T" + now.toTimeString().slice(0, 8)).toISOString()
                 : now.toISOString()
 
-            let arbitrosRegistro: AsistenciaArbitro[] = []
+            let asistenciaCompleta: any = null
             try {
-                const asistenciaCompleta = await getAsistenciaById(idRegistroExistente)
-                if (asistenciaCompleta?.observaciones) {
-                    const obs = typeof asistenciaCompleta.observaciones === 'string'
-                        ? JSON.parse(asistenciaCompleta.observaciones)
-                        : asistenciaCompleta.observaciones
-                    if (Array.isArray(obs)) {
-                        arbitrosRegistro = obs.map((item: any) => ({
-                            arbitroId: String(item.arbitroId ?? item.id ?? item.arbitro ?? ''),
-                            estado: item.estado || 'ausente',
-                            horaRegistro: item.horaRegistro || now.toISOString(),
-                            observaciones: item.observaciones || ''
-                        }))
-                    }
-                }
+                asistenciaCompleta = await getAsistenciaById(idRegistroExistente)
             } catch (e) {
-                console.warn("No se pudo cargar asistencia existente para edición:", e)
+                console.warn("No se pudo cargar asistencia completa para edición:", e)
+            }
+
+            let arbitrosRegistro: AsistenciaArbitro[] = []
+            if (asistenciaCompleta?.observaciones) {
+                const obs = typeof asistenciaCompleta.observaciones === 'string'
+                    ? JSON.parse(asistenciaCompleta.observaciones)
+                    : asistenciaCompleta.observaciones
+                if (Array.isArray(obs)) {
+                    arbitrosRegistro = obs.map((item: any) => ({
+                        arbitroId: String(item.arbitroId ?? item.id ?? item.arbitro ?? ''),
+                        estado: item.estado || 'ausente',
+                        horaRegistro: item.horaRegistro || now.toISOString(),
+                        observaciones: item.observaciones || ''
+                    }))
+                }
             }
 
             const updatedRegistro: RegistroAsistencia = {
                 id: idRegistroExistente.toString(),
                 fecha,
-                horaInicio,
-                horaFin: "",
+                horaInicio: asistenciaCompleta?.horaEntrada || horaInicio,
+                horaFin: asistenciaCompleta?.horaSalida || "",
                 tipoActividad: tipo,
-                descripcion: descripcion || "",
+                descripcion: asistenciaCompleta?.evento || descripcion || "",
                 ubicacion: "",
-                responsable: responsable || "",
+                responsable: asistenciaCompleta?.responsable || responsable || "",
                 arbitros: arbitrosRegistro,
-                createdAt: now.toISOString(),
+                createdAt: asistenciaCompleta?.createdAt || now.toISOString(),
             }
             setRegistro(updatedRegistro)
             persist(updatedRegistro)
+
+            setRegistroExistenteInfo({
+                id: idRegistroExistente,
+                responsable: asistenciaCompleta?.responsable || responsable || updatedRegistro.responsable || 'Sin responsable',
+                createdAt: asistenciaCompleta?.createdAt || updatedRegistro.createdAt,
+                actividad: asistenciaCompleta?.actividad || tipo,
+                horaEntrada: asistenciaCompleta?.horaEntrada || updatedRegistro.horaInicio,
+                horaSalida: asistenciaCompleta?.horaSalida || "",
+                estado: asistenciaCompleta?.estado || 'pendiente',
+                fecha: asistenciaCompleta?.fecha || fecha,
+                evento: asistenciaCompleta?.evento || descripcion || '',
+            })
 
             const asistenciaData = buildAsistenciaData(updatedRegistro)
             const result = await updateAsistencia(idRegistroExistente, asistenciaData)
@@ -188,37 +238,51 @@ export function useRegistroAsistencia() {
                 setIdRegistroExistente(existente.id)
                 setExisteRegistroHoy(true)
 
-                let arbitrosExistentes: AsistenciaArbitro[] = []
+                let asistenciaCompleta: any = existente
                 try {
-                    const asistenciaCompleta = await getAsistenciaById(existente.id)
-                    if (asistenciaCompleta?.observaciones) {
-                        const obs = typeof asistenciaCompleta.observaciones === 'string'
-                            ? JSON.parse(asistenciaCompleta.observaciones)
-                            : asistenciaCompleta.observaciones
-                        if (Array.isArray(obs)) {
-                            arbitrosExistentes = obs.map((item: any) => ({
-                                arbitroId: String(item.arbitroId ?? item.id ?? item.arbitro ?? ''),
-                                estado: item.estado || 'ausente',
-                                horaRegistro: item.horaRegistro || now.toISOString(),
-                                observaciones: item.observaciones || ''
-                            }))
-                        }
-                    }
+                    asistenciaCompleta = await getAsistenciaById(existente.id)
                 } catch (e) {
-                    console.warn("No se pudo cargar asistencia existente para edición:", e)
+                    console.warn("No se pudo cargar detalle completo del registro existente:", e)
                 }
 
+                let arbitrosExistentes: AsistenciaArbitro[] = []
+                if (asistenciaCompleta?.observaciones) {
+                    const obs = typeof asistenciaCompleta.observaciones === 'string'
+                        ? JSON.parse(asistenciaCompleta.observaciones)
+                        : asistenciaCompleta.observaciones
+                    if (Array.isArray(obs)) {
+                        arbitrosExistentes = obs.map((item: any) => ({
+                            arbitroId: String(item.arbitroId ?? item.id ?? item.arbitro ?? ''),
+                            estado: item.estado || 'ausente',
+                            horaRegistro: item.horaRegistro || now.toISOString(),
+                            observaciones: item.observaciones || ''
+                        }))
+                    }
+                }
+
+                setRegistroExistenteInfo({
+                    id: asistenciaCompleta?.id ?? existente.id,
+                    responsable: asistenciaCompleta?.responsable || existente.responsable || responsable || 'Sin responsable',
+                    createdAt: asistenciaCompleta?.createdAt || existente.createdAt || now.toISOString(),
+                    actividad: asistenciaCompleta?.actividad || existente.actividad || tipo,
+                    horaEntrada: asistenciaCompleta?.horaEntrada || existente.horaEntrada || now.toISOString(),
+                    horaSalida: asistenciaCompleta?.horaSalida || existente.horaSalida || "",
+                    estado: asistenciaCompleta?.estado || existente.estado || 'pendiente',
+                    fecha: asistenciaCompleta?.fecha || existente.fecha || fecha,
+                    evento: asistenciaCompleta?.evento || existente.evento || descripcion || '',
+                })
+
                 const local: RegistroAsistencia = {
-                    id: existente.id.toString(),
-                    fecha,
-                    horaInicio: existente.horaEntrada || now.toISOString(),
-                    horaFin: existente.horaSalida || "",
-                    tipoActividad: tipo,
-                    descripcion: existente.evento || descripcion || "",
+                    id: (asistenciaCompleta?.id ?? existente.id).toString(),
+                    fecha: asistenciaCompleta?.fecha || existente.fecha || fecha,
+                    horaInicio: asistenciaCompleta?.horaEntrada || existente.horaEntrada || now.toISOString(),
+                    horaFin: asistenciaCompleta?.horaSalida || existente.horaSalida || "",
+                    tipoActividad: asistenciaCompleta?.actividad || existente.actividad || tipo,
+                    descripcion: asistenciaCompleta?.evento || existente.evento || descripcion || "",
                     ubicacion: "",
-                    responsable: existente.responsable || responsable || "",
+                    responsable: asistenciaCompleta?.responsable || existente.responsable || responsable || "",
                     arbitros: arbitrosExistentes,
-                    createdAt: existente.createdAt || now.toISOString(),
+                    createdAt: asistenciaCompleta?.createdAt || existente.createdAt || now.toISOString(),
                 }
                 setRegistro(local)
                 persist(local)
