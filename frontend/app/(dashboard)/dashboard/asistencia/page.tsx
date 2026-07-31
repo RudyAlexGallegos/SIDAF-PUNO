@@ -740,17 +740,46 @@ export default function AsistenciaPage() {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
-                            {/* Info del responsable */}
-                            <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg border border-sky-200">
-                                <div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Responsable</p>
                                     <p className="text-sm font-semibold text-sky-900">{responsable || "—"}</p>
                                 </div>
-                                <div className="text-right">
+                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                    <p className="text-xs text-sky-500 font-medium">Actividad</p>
+                                    <p className="text-sm font-semibold text-sky-900">{getLabelActividad(actividad) || "—"}</p>
+                                </div>
+                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                    <p className="text-xs text-sky-500 font-medium">Fecha</p>
+                                    <p className="text-sm font-semibold text-sky-900">
+                                        {fechaSeleccionada ? format(parseISO(fechaSeleccionada), "dd/MM/yyyy", { locale: es }) : "—"}
+                                    </p>
+                                </div>
+                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                                     <p className="text-xs text-sky-500 font-medium">Estado</p>
-                                    <Badge className="bg-sky-100 text-sky-800 border-sky-300">En progreso</Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className="bg-sky-100 text-sky-800 border-sky-300">
+                                            {(registro?.estado || registroExistenteInfo?.estado || "En progreso") === "completado" ? "Finalizado" : "En progreso"}
+                                        </Badge>
+                                    </div>
                                 </div>
                             </div>
+
+                            {(registro?.horaInicio || registroExistenteInfo?.horaEntrada) && (
+                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                    <p className="text-xs text-sky-500 font-medium">Registro iniciado</p>
+                                    <p className="text-sm font-semibold text-sky-900">
+                                        {format(parseISO(registro?.horaInicio || registroExistenteInfo?.horaEntrada || ""), "dd/MM/yyyy HH:mm", { locale: es })}
+                                    </p>
+                                </div>
+                            )}
+
+                            {idRegistroExistente && (
+                                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                    <p className="text-xs text-sky-500 font-medium">ID Registro</p>
+                                    <p className="text-sm font-semibold text-sky-900">#{idRegistroExistente}</p>
+                                </div>
+                            )}
 
                             {/* Buscar árbitro */}
                             <div className="flex-1">
