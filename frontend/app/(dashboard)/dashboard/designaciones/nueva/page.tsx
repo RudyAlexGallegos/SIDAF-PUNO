@@ -530,7 +530,6 @@ export default function NuevaDesignacionPage() {
     if (!esCopaPeruActual) return true
 
     // En Etapa Provincial: TODOS los distritos de TODAS las provincias deben tener campeón
-    // (subcampeón es opcional)
     // EXCEPTUANDO los distritos marcados como "no participantes"
     if (etapaSeleccionada === "Etapa Provincial") {
       const distritosPuno = PROVINCIAS_PUNO.flatMap((prov) =>
@@ -538,7 +537,6 @@ export default function NuevaDesignacionPage() {
       )
 
       return distritosPuno.every((distrito) => {
-        // Si el distrito está marcado como no participante, no requiere campeón
         if (distritosNoParticipantes.includes(distrito)) return true
         const campeones = provinciaCampeones[distrito]
         return campeones?.campeon !== null && campeones?.campeon !== undefined
@@ -551,21 +549,21 @@ export default function NuevaDesignacionPage() {
   const validarTodasProvinciasCompletas = (): boolean => {
     if (!esCopaPeruActual) return true
 
-    // TODAS las provincias deben tener campeón y subcampeón definidos
-    const distritosPuno = PROVINCIAS_PUNO.flatMap((prov) =>
-      prov.distritos.map((d) => d.nombre)
-    )
+    // Etapa Departamental: TODAS las provincias deben tener campeón y subcampeón definidos
+    if (etapaSeleccionada === "Etapa Departamental") {
+      return PROVINCIAS_PUNO.every((prov) => {
+        // Para cada provincia, el campeón y subcampeón se guardan usando el nombre de la provincia como clave
+        const campeones = provinciaCampeones[prov.nombre]
+        return (
+          campeones?.campeon !== null &&
+          campeones?.campeon !== undefined &&
+          campeones?.subcampeon !== null &&
+          campeones?.subcampeon !== undefined
+        )
+      })
+    }
 
-    return distritosPuno.every((distrito) => {
-      if (distritosNoParticipantes.includes(distrito)) return true
-      const campeones = provinciaCampeones[distrito]
-      return (
-        campeones?.campeon !== null &&
-        campeones?.campeon !== undefined &&
-        campeones?.subcampeon !== null &&
-        campeones?.subcampeon !== undefined
-      )
-    })
+    return true
   }
 
   const validarTodosPartidosCompletos = (): boolean => {
@@ -657,10 +655,7 @@ const calcularEtapasDesbloqueadas = () => {
      const todasProvinciasCompletas = validarTodasProvinciasCompletas()
      const todosPartidosCompletos = validarTodosPartidosCompletos()
 
-     if (
-       todasProvinciasCompletas &&
-       todosPartidosCompletos
-     ) {
+     if (todasProvinciasCompletas && todosPartidosCompletos) {
        nuevasEtapas["Etapa Provincial"].completada = true
        nuevasEtapas["Etapa Departamental"].desbloqueada = true
      }
@@ -1563,10 +1558,10 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           </div>
 
           {/* 🔍 MENSAJE DE VALIDACIÓN */}
-          {!validarTodasProvinciasCompletas() && (
+          {!validarProvinciasCompletas() && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-amber-800 text-sm">
-                ⚠️ Debes seleccionar <strong>campeón y subcampeón de TODOS los distritos de TODAS las provincias</strong> para habilitar Etapa Departamental.
+                ⚠️ Debes seleccionar el <strong>campeón de todos los distritos</strong> para continuar. El subcampeón es opcional.
               </p>
             </div>
           )}
@@ -1597,29 +1592,29 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     {distritosVisibles.map((distrito) => {
                       const equiposDelDistrito = equiposReales.filter((eq) => eq.distrito === distrito)
                       const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
-                      const tieneCompletado = !!campeones.campeon && !!campeones.subcampeon
-                      const noParticipa = distritosNoParticipantes.includes(distrito)
+                       const tieneCampeon = !!campeones.campeon
+                       const noParticipa = distritosNoParticipantes.includes(distrito)
 
-                      return (
-                        <div
-                          key={distrito}
-                          id={`distrito-${distrito}`}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            noParticipa
-                              ? "border-slate-300 bg-slate-50"
-                              : tieneCompletado
-                                ? "border-emerald-300 bg-emerald-50/30"
-                                : "border-gray-200 bg-white"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <h3 className={`text-base font-bold ${noParticipa ? "text-slate-500 line-through" : "text-slate-900"}`}>
-                                {distrito}
-                              </h3>
-                              {tieneCompletado && !noParticipa && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                              )}
+                       return (
+                         <div
+                           key={distrito}
+                           id={`distrito-${distrito}`}
+                           className={`p-4 rounded-lg border-2 transition-all ${
+                             noParticipa
+                               ? "border-slate-300 bg-slate-50"
+                               : tieneCampeon
+                                 ? "border-emerald-300 bg-emerald-50/30"
+                                 : "border-gray-200 bg-white"
+                           }`}
+                         >
+                           <div className="flex items-center justify-between mb-3">
+                             <div className="flex items-center gap-2">
+                               <h3 className={`text-base font-bold ${noParticipa ? "text-slate-500 line-through" : "text-slate-900"}`}>
+                                 {distrito}
+                               </h3>
+                               {tieneCampeon && !noParticipa && (
+                                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                               )}
                             </div>
                             <Button
                               type="button"
@@ -1739,7 +1734,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
             <Button
               onClick={async () => {
-                if (!validarTodasProvinciasCompletas() || !campeonatoSeleccionado) return
+                if (!validarProvinciasCompletas() || !campeonatoSeleccionado) return
 
                 // Guardar en backend antes de continuar
                 const resultados: any[] = []
@@ -1756,6 +1751,203 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     resultados.push({
                       campeonatoId: campeonatoSeleccionado.id,
                       etapa: 'PROVINCIAL',
+                      equipoId: campeones.subcampeon.id,
+                      posicion: 2
+                    })
+                  }
+                })
+                if (resultados.length > 0) {
+                  await saveCopaPeruResultadosBatch(resultados)
+                  setProvincialCampeonesFinalizados(true)
+                }
+                setCurrentStep("partidos")
+              }}
+              disabled={!validarProvinciasCompletas()}
+              className={`flex-1 ${
+                validarProvinciasCompletas()
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-slate-300 cursor-not-allowed opacity-50"
+              }`}
+            >
+              ✅ Continuar a Partidos →
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    // VISTA POR DEFECTO (ETAPA DISTRITAL - SIN SELECTORES)
+    if (etapaSeleccionada === "Etapa Departamental" && esCopaPeruActual) {
+      const provincias = PROVINCIAS_PUNO
+
+      return (
+        <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto">
+          {/* Header */}
+          <section className="border-b pb-3 md:pb-4">
+            <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+              {campeonatoSeleccionado?.nombre} · Etapa Departamental
+            </p>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
+              Clasificación Departamental
+            </h1>
+            <p className="text-slate-500 mt-2 text-xs md:text-sm">
+              Selecciona campeón y subcampeón de cada provincia • Paso 5 de 7
+            </p>
+          </section>
+
+          {/* Botón de retroceso */}
+          <div className="flex justify-start">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Volver a Provincial
+            </Button>
+          </div>
+
+          {renderCoach()}
+
+          {/* Validación global */}
+          {!validarTodasProvinciasCompletas() && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm">
+                ⚠️ Debes seleccionar <strong>campeón y subcampeón de todas las provincias</strong> para continuar.
+              </p>
+            </div>
+          )}
+
+          {/* Cards por provincia */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {provincias.map((prov) => {
+              const campeones = provinciaCampeones[prov.nombre] ?? { campeon: null, subcampeon: null }
+              const equiposProvincia = equiposReales.filter((eq) => resolverProvincia(eq.distrito, eq.provincia) === prov.nombre)
+
+              return (
+                <Card key={prov.nombre} className={`border-2 ${campeones.campeon && campeones.subcampeon ? "border-emerald-300 bg-emerald-50/30" : "border-gray-200 bg-card"}`}>
+                  <CardHeader>
+                    <CardTitle className="text-slate-900 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-blue-600" />
+                      Provincia de {prov.nombre}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 md:p-6 space-y-4">
+                    {equiposProvincia.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* CAMPEÓN (OBLIGATORIO) */}
+                        <div>
+                          <p className="block text-sm font-semibold text-amber-700 mb-2">
+                            🥇 Campeón *
+                            {campeones.campeon && (
+                              <span className="text-emerald-600 font-bold ml-1">· {campeones.campeon.nombre}</span>
+                            )}
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {equiposProvincia
+                              .filter(eq => eq.id != null)
+                              .map((eq) => {
+                                const activo = campeones.campeon?.id === eq.id
+                                return (
+                                  <button
+                                    key={eq.id}
+                                    type="button"
+                                    onClick={() => {
+                                      const eraActivo = campeones.campeon?.id === eq.id
+                                      setProvinciaCampeones(prev => ({
+                                        ...prev,
+                                        [prov.nombre]: {
+                                          campeon: eraActivo ? null : eq,
+                                          subcampeon: prev[prov.nombre]?.subcampeon ?? null,
+                                        },
+                                      }))
+                                    }}
+                                    className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
+                                      activo
+                                        ? "border-amber-500 bg-amber-600 text-white shadow-md"
+                                        : "border-gray-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50"
+                                    }`}
+                                  >
+                                    {eq.nombre}
+                                  </button>
+                                )
+                              })}
+                          </div>
+                        </div>
+
+                        {/* SUBCAMPEÓN (OBLIGATORIO) */}
+                        <div>
+                          <p className="block text-sm font-semibold text-blue-700 mb-2">
+                            🥈 Subcampeón *
+                            {campeones.subcampeon && (
+                              <span className="text-emerald-600 font-bold ml-1">· {campeones.subcampeon.nombre}</span>
+                            )}
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {equiposProvincia
+                              .filter(eq => eq.id != null && eq.id !== campeones.campeon?.id)
+                              .map((eq) => {
+                                const activo = campeones.subcampeon?.id === eq.id
+                                return (
+                                  <button
+                                    key={eq.id}
+                                    type="button"
+                                    onClick={() => {
+                                      const eraActivo = campeones.subcampeon?.id === eq.id
+                                      setProvinciaCampeones(prev => ({
+                                        ...prev,
+                                        [prov.nombre]: {
+                                          campeon: prev[prov.nombre]?.campeon ?? null,
+                                          subcampeon: eraActivo ? null : eq,
+                                        },
+                                      }))
+                                    }}
+                                    className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
+                                      activo
+                                        ? "border-blue-500 bg-blue-600 text-white shadow-md"
+                                        : "border-gray-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50"
+                                    }`}
+                                  >
+                                    {eq.nombre}
+                                  </button>
+                                )
+                              })}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">Sin equipos registrados en esta provincia.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {/* Botón de avance */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep("provincia")}
+              className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
+            >
+              ← Atrás
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!validarTodasProvinciasCompletas() || !campeonatoSeleccionado) return
+
+                // Guardar en backend antes de continuar
+                const resultados: any[] = []
+                Object.entries(provinciaCampeones).forEach(([provincia, campeones]: [string, any]) => {
+                  if (campeones.campeon && campeones.campeon.id !== undefined) {
+                    resultados.push({
+                      campeonatoId: campeonatoSeleccionado.id,
+                      etapa: 'DEPARTAMENTAL',
+                      equipoId: campeones.campeon.id,
+                      posicion: 1
+                    })
+                  }
+                  if (campeones.subcampeon && campeones.subcampeon.id !== undefined) {
+                    resultados.push({
+                      campeonatoId: campeonatoSeleccionado.id,
+                      etapa: 'DEPARTAMENTAL',
                       equipoId: campeones.subcampeon.id,
                       posicion: 2
                     })
