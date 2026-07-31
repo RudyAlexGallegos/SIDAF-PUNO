@@ -7,6 +7,24 @@ import { esDiaObligatorio, getTipoDia, getNombreDia, getInfoDiaActual } from "@/
 
 const STORAGE_KEY = "sidaf_registro_temp"
 
+function fmtDateTime(iso?: string) {
+    if (!iso) return null
+    try {
+        const d = new Date(iso)
+        if (isNaN(d.getTime())) return null
+        const pad = (n: number) => String(n).padStart(2, '0')
+        const day = pad(d.getDate())
+        const month = pad(d.getMonth() + 1)
+        const year = d.getFullYear()
+        const hours = pad(d.getHours())
+        const minutes = pad(d.getMinutes())
+        const seconds = pad(d.getSeconds())
+        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+    } catch {
+        return null
+    }
+}
+
 export interface DuplicadoInfo {
     existe: boolean
     id?: number
@@ -148,7 +166,7 @@ export function useRegistroAsistencia() {
                     actividad: detalle.actividad || resultado.actividad,
                     estado: detalle.estado || resultado.estado,
                     horaEntrada: detalle.horaEntrada || resultado.horaEntrada,
-                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${detalle.responsable || resultado.responsable || 'un usuario'}. Solo se puede editar ese registro.`
+                    mensaje: `Ya existe un registro de asistencia para el ${fecha}, creado por ${detalle.responsable || resultado.responsable || 'un usuario'} a las ${fmtDateTime(detalle.createdAt || detalle.horaEntrada || resultado.horaEntrada) || '—'}. Solo se puede editar ese registro.`
                 }
                 setDuplicadoInfo(info)
 
@@ -265,16 +283,18 @@ export function useRegistroAsistencia() {
                 return actividadOk && responsableOk
             })
             if (existente?.id) {
-                setNotificacion(`Ya existe un registro para el ${fecha}. Solo se puede editar ese registro.`)
-                setIdRegistroExistente(existente.id)
-                setExisteRegistroHoy(true)
-
                 let asistenciaCompleta: any = existente
                 try {
                     asistenciaCompleta = await getAsistenciaById(existente.id)
                 } catch (e) {
                     console.warn("No se pudo cargar detalle completo del registro existente:", e)
                 }
+
+                const creadoPor = asistenciaCompleta?.responsable || existente.responsable || responsable || 'un usuario'
+                const horaCreacion = fmtDateTime(asistenciaCompleta?.createdAt || asistenciaCompleta?.horaEntrada || existente.createdAt || existente.horaEntrada)
+                setNotificacion(`Ya existe un registro para el ${fecha}, creado por ${creadoPor}${horaCreacion ? ' a las ' + horaCreacion : ''}. Solo se puede editar ese registro.`)
+                setIdRegistroExistente(existente.id)
+                setExisteRegistroHoy(true)
 
                 let arbitrosExistentes: AsistenciaArbitro[] = []
                 if (asistenciaCompleta?.observaciones) {
