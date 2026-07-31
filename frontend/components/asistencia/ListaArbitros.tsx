@@ -17,17 +17,17 @@ export default function ListaArbitros({
             {arbitros.length === 0 ? (
                 <div className="p-6 text-center text-sm text-gray-500">No se encontraron árbitros para la búsqueda.</div>
             ) : (
-                arbitros.map(a => {
-                    const estado = estadosMap?.[a.id] ?? ("ausente" as EstadoAsistencia)
-                    return (
-                        <RegistroCompactoArbitro
-                            key={a.id}
-                            arbitro={a}
-                            estado={estado}
-                            onChange={(e, obs) => onChange(a.id, e, obs)}
-                        />
-                    )
-                })
+        arbitros.map(a => {
+            const estado = estadosMap?.[String(a.id)] ?? ("ausente" as EstadoAsistencia)
+            return (
+                <RegistroCompactoArbitro
+                    key={a.id}
+                    arbitro={a}
+                    estado={estado}
+                    onChange={(e, obs) => onChange(a.id, e, obs)}
+                />
+            )
+        })
             )}
         </div>
     )

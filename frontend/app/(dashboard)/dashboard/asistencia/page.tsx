@@ -93,10 +93,10 @@ export default function AsistenciaPage() {
     const [boletaInfo, setBoletaInfo] = React.useState<{ total: number; asistentes: number; ausentes: number; tardanzas: number; justificados: number } | null>(null)
 
     const estadosMap = React.useMemo(() => {
-        const map: Record<string, any> = {}
+        const map: Record<string, EstadoAsistencia> = {}
         if (registro?.arbitros) {
             for (const a of registro.arbitros) {
-                map[a.arbitroId] = a.estado
+                map[String(a.arbitroId)] = a.estado
             }
         }
         return map
@@ -785,6 +785,17 @@ export default function AsistenciaPage() {
                                 </div>
                             )}
 
+                            {existeRegistroHoy && idRegistroExistente && (
+                                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <p className="text-xs text-amber-700 font-medium">Registro creado por:</p>
+                                    <p className="text-sm font-semibold text-amber-900">{registroExistenteInfo?.responsable || '—'}</p>
+                                    <p className="text-xs text-amber-700 font-medium mt-1">Fecha y hora de creación:</p>
+                                    <p className="text-sm font-semibold text-amber-900">
+                                        {registroExistenteInfo?.createdAt ? format(parseISO(registroExistenteInfo.createdAt), "dd/MM/yyyy HH:mm", { locale: es }) : '—'}
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Buscar árbitro */}
                             <div className="flex-1">
                                 <Input
@@ -796,17 +807,28 @@ export default function AsistenciaPage() {
                             </div>
 
                             {/* Lista de árbitros */}
-                            <Card className="border-sky-200">
-                                <CardContent className="pt-4 pb-4">
-                                    <div className="divide-y divide-sky-100 max-h-[50vh] overflow-y-auto">
-                                        <ListaArbitros
-                                            arbitros={arbitros}
-                                            onChange={marcarAsistencia}
-                                            estadosMap={estadosMap}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            {existeRegistroHoy && !registro && (
+                                <Card className="border-sky-200">
+                                    <CardContent className="pt-4 pb-4">
+                                        <div className="text-center py-8">
+                                            <p className="text-sm text-sky-600">Cargando marcas de asistencia...</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+                            {(registro || !existeRegistroHoy) && (
+                                <Card className="border-sky-200">
+                                    <CardContent className="pt-4 pb-4">
+                                        <div className="divide-y divide-sky-100 max-h-[50vh] overflow-y-auto">
+                                            <ListaArbitros
+                                                arbitros={arbitros}
+                                                onChange={marcarAsistencia}
+                                                estadosMap={estadosMap}
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             {/* Botones */}
                             <div className="flex gap-3 pt-2">

@@ -52,23 +52,54 @@ export function useRegistroAsistencia() {
                     setExisteRegistroHoy(true)
                     setIdRegistroExistente(primerRegistro.id ?? null)
 
-                    let registroCompleto = primerRegistro
+                    let detalle = primerRegistro
                     try {
-                        registroCompleto = await getAsistenciaById(primerRegistro.id)
+                        detalle = await getAsistenciaById(primerRegistro.id)
                     } catch (e) {
                         console.warn("No se pudo cargar detalle completo del registro existente:", e)
                     }
 
+                    const now = new Date()
+                    let arbitrosRegistro: AsistenciaArbitro[] = []
+                    if (detalle?.observaciones) {
+                        const obs = typeof detalle.observaciones === 'string'
+                            ? JSON.parse(detalle.observaciones)
+                            : detalle.observaciones
+                        if (Array.isArray(obs)) {
+                            arbitrosRegistro = obs.map((item: any) => ({
+                                arbitroId: String(item.arbitroId ?? item.id ?? item.arbitro ?? ''),
+                                estado: item.estado || 'ausente',
+                                horaRegistro: item.horaRegistro || now.toISOString(),
+                                observaciones: item.observaciones || ''
+                            }))
+                        }
+                    }
+
+                    const local: RegistroAsistencia = {
+                        id: (detalle.id ?? primerRegistro.id).toString(),
+                        fecha: detalle.fecha || hoy,
+                        horaInicio: detalle.horaEntrada || primerRegistro.horaEntrada || now.toISOString(),
+                        horaFin: detalle.horaSalida || primerRegistro.horaSalida || "",
+                        tipoActividad: detalle.actividad || primerRegistro.actividad || 'analisis_partido',
+                        descripcion: detalle.evento || primerRegistro.evento || primerRegistro.descripcion || "",
+                        ubicacion: "",
+                        responsable: detalle.responsable || primerRegistro.responsable || 'Sin responsable',
+                        arbitros: arbitrosRegistro,
+                        createdAt: detalle.createdAt || primerRegistro.createdAt || now.toISOString(),
+                    }
+                    setRegistro(local)
+                    persist(local)
+
                     setRegistroExistenteInfo({
-                        id: registroCompleto.id ?? primerRegistro.id,
-                        responsable: registroCompleto.responsable || primerRegistro.responsable || 'Sin responsable',
-                        createdAt: registroCompleto.createdAt || primerRegistro.createdAt,
-                        actividad: registroCompleto.actividad || primerRegistro.actividad,
-                        horaEntrada: registroCompleto.horaEntrada || primerRegistro.horaEntrada,
-                        horaSalida: registroCompleto.horaSalida || primerRegistro.horaSalida,
-                        estado: registroCompleto.estado || primerRegistro.estado || 'pendiente',
-                        fecha: registroCompleto.fecha || primerRegistro.fecha || hoy,
-                        evento: registroCompleto.evento || primerRegistro.evento || primerRegistro.descripcion || '',
+                        id: detalle.id ?? primerRegistro.id,
+                        responsable: detalle.responsable || primerRegistro.responsable || 'Sin responsable',
+                        createdAt: detalle.createdAt || primerRegistro.createdAt,
+                        actividad: detalle.actividad || primerRegistro.actividad,
+                        horaEntrada: detalle.horaEntrada || primerRegistro.horaEntrada,
+                        horaSalida: detalle.horaSalida || primerRegistro.horaSalida,
+                        estado: detalle.estado || primerRegistro.estado || 'pendiente',
+                        fecha: detalle.fecha || primerRegistro.fecha || hoy,
+                        evento: detalle.evento || primerRegistro.evento || '',
                     })
                 }
             } catch (e) {
