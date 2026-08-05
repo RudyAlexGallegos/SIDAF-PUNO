@@ -1912,6 +1912,55 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             })}
           </div>
 
+          {/* Resumen de equipos clasificados */}
+          {tieneCampeonEnProv && (
+            <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-slate-900 text-base flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-600" />
+                  Equipos clasificados — {provinciaSeleccionada}
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Solo estos equipos participarán en la etapa provincial
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {distritosProvActual
+                    .filter(d => !distritosNoParticipantes.includes(d) && provinciaCampeones[d]?.campeon)
+                    .map((d) => {
+                      const cams = provinciaCampeones[d]
+                      return (
+                        <div key={d} className="p-3 bg-white border border-amber-200 rounded-xl shadow-sm">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />{d}
+                          </p>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base leading-none">🥇</span>
+                              <p className="text-sm font-bold text-slate-900 leading-tight">{cams!.campeon!.nombre}</p>
+                            </div>
+                            {cams!.subcampeon && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-base leading-none">🥈</span>
+                                <p className="text-sm text-slate-700 leading-tight">{cams!.subcampeon.nombre}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
+                  }
+                </div>
+                <p className="text-[11px] text-slate-500 mt-3">
+                  {distritosProvActual.filter(d => !distritosNoParticipantes.includes(d) && provinciaCampeones[d]?.campeon).length} distrito(s) con campeón
+                  {" · "}
+                  {distritosProvActual.filter(d => !distritosNoParticipantes.includes(d) && provinciaCampeones[d]?.subcampeon).length} con subcampeón
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Historial de designaciones de esta provincia */}
           {designacionesProv.length > 0 && (
             <div>
@@ -2277,9 +2326,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
       // 1. Etapa Distrital: mostrar solo equipos del distrito seleccionado
       equiposDisponibles = equiposReales.filter((eq) => eq.distrito === distritoSeleccionado)
     } else if (esCopaPeruActual && etapaSeleccionada === "Etapa Provincial" && provinciaSeleccionada) {
-      // 2. Etapa Provincial: campeones si existen, si no todos los equipos de la provincia
-      const campeonesList = Object.values(provinciaCampeones)
-        .flatMap((c) => [c.campeon, c.subcampeon].filter(Boolean) as Equipo[])
+      // Solo campeones/subcampeones de los distritos de LA PROVINCIA ACTUAL
+      const provActualPartidos = PROVINCIAS_PUNO.find(p => p.nombre === provinciaSeleccionada)
+      const distritosDeProvActual = provActualPartidos?.distritos.map(d => d.nombre) ?? []
+      const campeonesList = distritosDeProvActual
+        .flatMap(d => {
+          const c = provinciaCampeones[d]
+          return [c?.campeon, c?.subcampeon].filter(Boolean) as Equipo[]
+        })
       equiposDisponibles = campeonesList.length > 0
         ? campeonesList
         : equiposReales.filter((eq) => resolverProvincia(eq.distrito, eq.provincia) === provinciaSeleccionada)
