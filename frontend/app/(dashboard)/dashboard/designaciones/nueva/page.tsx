@@ -226,12 +226,6 @@ export default function NuevaDesignacionPage() {
   const [spRolModal, setSpRolModal] = useState<"principal" | "asistente1" | "asistente2" | "cuarto" | null>(null)
   const [spIntentadoAgregar, setSpIntentadoAgregar] = useState(false)
 
-  // ── MODAL EQUIPOS PARTICIPANTES (Etapa Provincial) ──────────
-  const [showProvincialModal, setShowProvincialModal] = useState(false)
-  const [provModalProvincia, setProvModalProvincia] = useState<string | null>(null)
-  const [provModalFecha, setProvModalFecha] = useState("")
-  const [provModalHora, setProvModalHora] = useState("10:00")
-
    // Lista de asesores
    const [asesores, setAsesores] = useState<Asesor[]>([])
 
@@ -1329,9 +1323,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       setShowDistritialModal(true)
                     } else if (etapa === "Etapa Provincial") {
                       setProvinciaCampeones({})
-                      // Saltar paso 3 (selección de provincia) — la clasificación muestra todas
-                      setProvinciaSeleccionada("_PROVINCIAL_")
-                      setCurrentStep("distrito")
+                      setCurrentStep("provincia")
                     } else {
                       setCurrentStep("provincia")
                     }
@@ -1480,6 +1472,131 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
   // ============================================================
 
   if (currentStep === "provincia" && campeonatoSeleccionado && etapaSeleccionada) {
+
+    // ── ETAPA PROVINCIAL: lista individual de provincias ────────────────────
+    if (esCopaPeruActual && etapaSeleccionada === "Etapa Provincial") {
+      return (
+        <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
+          {renderStepIndicator()}
+          <section className="border-b pb-3 md:pb-4">
+            <p className="text-xs md:text-sm font-medium text-amber-600 uppercase tracking-wide">
+              {campeonatoSeleccionado.nombre} · Etapa Provincial
+            </p>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+              <Trophy className="w-8 h-8 text-amber-600" />
+              Provincias — Etapa Provincial
+            </h1>
+            <p className="text-slate-500 mt-2 text-xs md:text-sm">
+              Paso 3 de 7 · Selecciona una provincia para gestionar sus clasificados
+            </p>
+          </section>
+
+          <div className="flex justify-start">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("etapa")} className="border-gray-200">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Cambiar Etapa
+            </Button>
+          </div>
+
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="p-4 flex items-start gap-3">
+              <Info className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-800">
+                Cada provincia se gestiona de forma independiente con sus propios campeones y fechas.
+                Selecciona una provincia para ver sus equipos clasificados y realizar designaciones.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Leyenda de colores */}
+          <div className="flex flex-wrap gap-2 text-xs">
+            {[
+              { dot: "bg-emerald-500", label: "Lista para designar", text: "text-emerald-700", bg: "bg-emerald-50" },
+              { dot: "bg-amber-500", label: "Clasificación incompleta", text: "text-amber-700", bg: "bg-amber-50" },
+              { dot: "bg-blue-500", label: "Con equipos, sin clasificar", text: "text-blue-700", bg: "bg-blue-50" },
+              { dot: "bg-gray-400", label: "Sin equipos", text: "text-gray-600", bg: "bg-gray-100" },
+            ].map(({ dot, label, text, bg }) => (
+              <span key={label} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${bg} ${text} font-medium`}>
+                <div className={`w-2 h-2 rounded-full ${dot}`} />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {PROVINCIAS_PUNO.map((prov) => {
+              const equiposProv = equiposReales.filter(
+                (eq) => resolverProvincia(eq.distrito, eq.provincia) === prov.nombre
+              )
+              const tieneEquipos = equiposProv.length > 0
+              const totalDistritos = prov.distritos.length
+              const distritosConCampeon = prov.distritos.map(d => d.nombre).filter(
+                d => distritosNoParticipantes.includes(d) || provinciaCampeones[d]?.campeon
+              ).length
+              const completo = tieneEquipos && distritosConCampeon === totalDistritos
+              const parcial = tieneEquipos && distritosConCampeon > 0 && !completo
+
+              const { borderClass, bgClass, dotColor, statusLabel, statusText, statusBg } = !tieneEquipos
+                ? { borderClass: "border-gray-200", bgClass: "bg-gray-50", dotColor: "bg-gray-400", statusLabel: "Sin equipos", statusText: "text-gray-600", statusBg: "bg-gray-100" }
+                : completo
+                  ? { borderClass: "border-emerald-300", bgClass: "bg-emerald-50", dotColor: "bg-emerald-500", statusLabel: "✅ Lista", statusText: "text-emerald-700", statusBg: "bg-emerald-100" }
+                  : parcial
+                    ? { borderClass: "border-amber-300", bgClass: "bg-amber-50", dotColor: "bg-amber-500", statusLabel: "🔄 Incompleta", statusText: "text-amber-700", statusBg: "bg-amber-100" }
+                    : { borderClass: "border-blue-200", bgClass: "bg-blue-50", dotColor: "bg-blue-500", statusLabel: "⚡ Sin clasificar", statusText: "text-blue-700", statusBg: "bg-blue-100" }
+
+              return (
+                <Card
+                  key={prov.nombre}
+                  className={`border-2 ${borderClass} ${bgClass} transition-all duration-200 ${
+                    tieneEquipos ? "cursor-pointer hover:shadow-lg hover:-translate-y-1" : "opacity-50 cursor-not-allowed"
+                  }`}
+                  onClick={() => {
+                    if (!tieneEquipos) return
+                    setProvinciaSeleccionada(prov.nombre)
+                    setCurrentStep("distrito")
+                  }}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-slate-500" />
+                        <h3 className="text-base font-bold text-slate-900">{prov.nombre}</h3>
+                      </div>
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusText} ${statusBg}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-4 text-xs text-slate-500 mb-3">
+                      <span>{totalDistritos} distritos</span>
+                      {tieneEquipos && <span>{equiposProv.length} equipos</span>}
+                    </div>
+
+                    {tieneEquipos && (
+                      <>
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-1">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${dotColor}`}
+                            style={{ width: `${(distritosConCampeon / totalDistritos) * 100}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-500">
+                          <span>{distritosConCampeon}/{totalDistritos} distritos clasificados</span>
+                          <span className="flex items-center gap-0.5 text-blue-600 font-medium">
+                            Ver <ChevronRight className="w-3 h-3" />
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
         {renderStepIndicator()}
@@ -1602,468 +1719,299 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
       ? distritosProvincialesEquipos
       : distritosDeProvinciaSeleccionada
 
-    // VISTA PARA ETAPA PROVINCIAL CON SELECTORES DE CAMPEONES
+    // VISTA PARA ETAPA PROVINCIAL: provincia individual
     if (esEtapaProvincial && esCopaPeruActual) {
-      const todasProvincias = PROVINCIAS_PUNO
+      const provActual = PROVINCIAS_PUNO.find(p => p.nombre === provinciaSeleccionada)
+      const distritosProvActual = provActual?.distritos.map(d => d.nombre) ?? distritosAMostrar
+
+      const designacionesProv = designacionesAnteriores.filter(
+        d => d.provincia === provinciaSeleccionada && d.etapa === "PROVINCIAL"
+      )
+
+      const tieneCampeonEnProv = distritosProvActual.some(
+        d => distritosNoParticipantes.includes(d) || provinciaCampeones[d]?.campeon
+      )
+
+      const guardarYDesignarConPartidos = async () => {
+        if (!campeonatoSeleccionado) return
+        setIsSaving(true)
+        try {
+          const resultados: any[] = []
+          distritosProvActual.forEach((distrito) => {
+            const cams = provinciaCampeones[distrito]
+            if (cams?.campeon?.id !== undefined) {
+              resultados.push({ campeonatoId: campeonatoSeleccionado.id, etapa: "PROVINCIAL", equipoId: cams.campeon.id, posicion: 1 })
+            }
+            if (cams?.subcampeon?.id !== undefined) {
+              resultados.push({ campeonatoId: campeonatoSeleccionado.id, etapa: "PROVINCIAL", equipoId: cams.subcampeon.id, posicion: 2 })
+            }
+          })
+          if (resultados.length > 0) await saveCopaPeruResultadosBatch(resultados)
+          setCurrentStep("partidos")
+        } catch {
+          toast({ title: "Error al guardar clasificación", variant: "destructive" })
+        } finally {
+          setIsSaving(false)
+        }
+      }
 
       return (
-        <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-4 md:space-y-6 max-w-5xl mx-auto">
           {/* Header */}
           <section className="border-b pb-3 md:pb-4">
-            <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-              {campeonatoSeleccionado?.nombre} · Todas las Provincias
+            <p className="text-xs md:text-sm font-medium text-amber-600 uppercase tracking-wide">
+              {campeonatoSeleccionado?.nombre} · Etapa Provincial
             </p>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
-              Clasificación Provincial
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+              <Trophy className="w-7 h-7 text-amber-600" />
+              Provincia de {provinciaSeleccionada}
             </h1>
             <p className="text-slate-500 mt-2 text-xs md:text-sm">
-              Selecciona campeones y subcampeones de CADA provincia • Paso 4 de 7
+              Paso 4 de 7 · Clasificados para la etapa provincial
             </p>
           </section>
 
           {/* Botón de retroceso */}
           <div className="flex justify-start">
-            <Button variant="outline" size="sm" onClick={() => setCurrentStep("etapa")} className="border-gray-200">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
               <ChevronLeft className="w-4 h-4 mr-1" />
-              Cambiar Etapa
+              Volver a Provincias
             </Button>
           </div>
 
           {renderCoach()}
 
-          {/* 📊 RESUMEN DE PROVINCIAS (clickeable si tiene equipos) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {todasProvincias.map((prov) => {
-              const distritos = prov.distritos.map(d => d.nombre)
-              const distritosCompletados = distritos.filter(
-                (d) => distritosNoParticipantes.includes(d) || provinciaCampeones[d]?.campeon
-              ).length
-              const porcentaje = distritos.length > 0 ? Math.round((distritosCompletados / distritos.length) * 100) : 0
-              const completo = porcentaje === 100
-              const tieneEquipos = equiposReales.some(
-                (eq) => resolverProvincia(eq.distrito, eq.provincia) === prov.nombre
-              )
+          {/* Info */}
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="p-4 flex items-start gap-3">
+              <Trophy className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-800">
+                Solo los <strong>campeones y subcampeones</strong> de cada distrito participan en la etapa provincial.
+                Confirma o selecciona los clasificados antes de designar árbitros.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Distritos con selección de campeón/subcampeón */}
+          <div className="space-y-4">
+            {distritosProvActual.map((distrito) => {
+              const equiposDelDistrito = equiposReales.filter(eq => eq.distrito === distrito)
+              const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
+              const tieneCampeon = !!campeones.campeon
+              const noParticipa = distritosNoParticipantes.includes(distrito)
 
               return (
-                <Card
-                  key={prov.nombre}
-                  className={`border-2 transition-all duration-200 ${
-                    completo ? "border-emerald-300 bg-emerald-50" : "border-gray-200 bg-card"
-                  } ${
-                    tieneEquipos
-                      ? "cursor-pointer hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5"
-                      : "opacity-60"
+                <div
+                  key={distrito}
+                  id={`distrito-${distrito}`}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    noParticipa ? "border-slate-200 bg-slate-50" :
+                    tieneCampeon ? "border-emerald-300 bg-emerald-50/30" :
+                    "border-gray-200 bg-white"
                   }`}
-                  onClick={() => {
-                    if (!tieneEquipos) return
-                    setProvModalProvincia(prov.nombre)
-                    setProvModalFecha("")
-                    setProvModalHora("10:00")
-                    setShowProvincialModal(true)
-                  }}
                 >
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between gap-1 mb-1">
-                      <h3 className="text-sm font-bold text-slate-900">{prov.nombre}</h3>
-                      {tieneEquipos && (
-                        <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold shrink-0">
-                          ⚡ Ver
-                        </span>
-                      )}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className={`text-base font-bold ${noParticipa ? "text-slate-400 line-through" : "text-slate-900"}`}>
+                        {distrito}
+                      </h3>
+                      {tieneCampeon && !noParticipa && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                     </div>
-                    <p className="text-xs text-slate-500 mb-2">{distritos.length} distritos</p>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${completo ? "bg-emerald-500" : "bg-amber-500"}`}
-                        style={{ width: `${porcentaje}%` }}
-                      />
+                    <Button
+                      type="button"
+                      variant={noParticipa ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleDistritoParticipa(distrito)}
+                      className={`text-xs ${noParticipa ? "bg-slate-600 text-white hover:bg-slate-700" : "border-slate-300 text-slate-600 hover:bg-slate-100"}`}
+                    >
+                      {noParticipa ? "✓ Participa" : "No Participa"}
+                    </Button>
+                  </div>
+
+                  {!noParticipa && equiposDelDistrito.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* CAMPEÓN */}
+                      <div>
+                        <p className="text-sm font-semibold text-amber-700 mb-2">
+                          🥇 Campeón *
+                          {campeones.campeon && (
+                            <span className="text-emerald-600 font-bold ml-1">· {campeones.campeon.nombre}</span>
+                          )}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {equiposDelDistrito.filter(eq => eq.id != null).map((eq) => {
+                            const activo = campeones.campeon?.id === eq.id
+                            return (
+                              <button
+                                key={eq.id}
+                                type="button"
+                                onClick={() => {
+                                  const eraActivo = campeones.campeon?.id === eq.id
+                                  setProvinciaCampeones(prev => ({
+                                    ...prev,
+                                    [distrito]: { campeon: eraActivo ? null : eq, subcampeon: prev[distrito]?.subcampeon ?? null }
+                                  }))
+                                }}
+                                className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
+                                  activo
+                                    ? "border-amber-500 bg-amber-600 text-white shadow-md"
+                                    : "border-gray-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50"
+                                }`}
+                              >
+                                {eq.nombre}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* SUBCAMPEÓN */}
+                      <div>
+                        <p className="text-sm font-semibold text-blue-700 mb-2">
+                          🥈 Subcampeón (Opcional)
+                          {campeones.subcampeon && (
+                            <span className="text-emerald-600 font-bold ml-1">· {campeones.subcampeon.nombre}</span>
+                          )}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {equiposDelDistrito
+                            .filter(eq => eq.id != null && eq.id !== campeones.campeon?.id)
+                            .map((eq) => {
+                              const activo = campeones.subcampeon?.id === eq.id
+                              return (
+                                <button
+                                  key={eq.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const eraActivo = campeones.subcampeon?.id === eq.id
+                                    setProvinciaCampeones(prev => ({
+                                      ...prev,
+                                      [distrito]: { campeon: prev[distrito]?.campeon ?? null, subcampeon: eraActivo ? null : eq }
+                                    }))
+                                  }}
+                                  className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
+                                    activo
+                                      ? "border-blue-500 bg-blue-600 text-white shadow-md"
+                                      : "border-gray-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50"
+                                  }`}
+                                >
+                                  {eq.nombre}
+                                </button>
+                              )
+                            })}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-slate-600 mt-1">
-                      {completo ? "✅ Completo" : `${distritosCompletados}/${distritos.length}`}
+                  ) : (
+                    <p className="text-sm text-slate-500 italic">
+                      {noParticipa ? "Distrito no participante" : "Sin equipos registrados en este distrito."}
                     </p>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               )
             })}
           </div>
 
-          {/* Modal: Equipos Participantes por Provincia */}
-          {showProvincialModal && provModalProvincia && (() => {
-            const equiposProv = equiposReales.filter(
-              (eq) => resolverProvincia(eq.distrito, eq.provincia) === provModalProvincia
-            )
-            const porDistrito = equiposProv.reduce<Record<string, Equipo[]>>((acc, eq) => {
-              const d = eq.distrito || "Sin distrito"
-              if (!acc[d]) acc[d] = []
-              acc[d].push(eq)
-              return acc
-            }, {})
-            return (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-                onClick={() => setShowProvincialModal(false)}
-              >
-                <div
-                  className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Header modal */}
-                  <div className="flex items-center justify-between shrink-0">
-                    <div>
-                      <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Etapa Provincial · Copa Perú 2026</p>
-                      <h2 className="text-xl font-bold text-slate-900 mt-0.5">{provModalProvincia}</h2>
-                      <p className="text-sm text-slate-500 mt-1">
-                        {equiposProv.length} equipo(s) participante(s)
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowProvincialModal(false)}
-                      className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+          {/* Historial de designaciones de esta provincia */}
+          {designacionesProv.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-blue-600" />
+                Designaciones en {provinciaSeleccionada} ({designacionesProv.length})
+              </h3>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {designacionesProv.map((d, idx) => {
+                  const arbPrincipal = arbitros.find(a => a.id?.toString() === d.arbitroPrincipal?.toString())
+                  return (
+                    <div
+                      key={d.id || idx}
+                      className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between gap-2"
                     >
-                      <X className="w-5 h-5 text-slate-500" />
-                    </button>
-                  </div>
-
-                  {/* Lista de equipos por distrito */}
-                  <div className="overflow-y-auto flex-1 space-y-3 pr-1">
-                    {Object.entries(porDistrito).map(([distrito, equipos]) => (
-                      <div key={distrito}>
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {distrito}
+                      <div>
+                        <p className="text-xs font-semibold text-slate-900">
+                          {arbPrincipal ? `${arbPrincipal.nombre} ${arbPrincipal.apellido}` : "—"}
                         </p>
-                        <div className="grid grid-cols-1 gap-1.5">
-                          {equipos.map((eq) => (
-                            <div key={eq.id} className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                              <p className="text-sm font-semibold text-slate-800">{eq.nombre}</p>
-                            </div>
-                          ))}
-                        </div>
+                        <p className="text-[10px] text-slate-500">
+                          {d.fecha?.substring(0, 10)} · {d.distrito || provinciaSeleccionada}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Fecha y hora */}
-                  <div className="grid grid-cols-2 gap-3 shrink-0 pt-2 border-t">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        📅 Fecha <span className="text-red-500">*</span>
-                      </label>
-                      <DatePicker
-                        value={provModalFecha}
-                        onChange={setProvModalFecha}
-                        minDate={new Date()}
-                      />
+                      <Badge className="bg-amber-100 text-amber-800 border border-amber-200 text-[10px]">
+                        PROVINCIAL
+                      </Badge>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        🕒 Hora <span className="text-red-500">*</span>
-                      </label>
-                      <TimePicker
-                        value={provModalHora}
-                        onChange={setProvModalHora}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Acciones */}
-                  <div className="grid grid-cols-1 gap-2 shrink-0">
-                    <p className="text-xs text-slate-500 text-center">¿Cómo deseas designar para esta provincia?</p>
-                    <button
-                      onClick={() => {
-                        if (!provModalFecha || !provModalHora) {
-                          toast({ title: "Completa la fecha y hora", variant: "destructive" })
-                          return
-                        }
-                        setShowProvincialModal(false)
-                        setProvinciaSeleccionada(provModalProvincia)
-                        setCurrentStep("partidos")
-                      }}
-                      className="p-3 rounded-xl border-2 border-amber-200 bg-amber-50 hover:border-amber-400 hover:bg-amber-100 transition-all text-left"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-                          <ClipboardList className="w-4 h-4 text-amber-600" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900 text-sm">Designar con Partidos</p>
-                          <p className="text-xs text-slate-500 mt-0.5">Crea los partidos de la provincia y asigna árbitros.</p>
-                        </div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!provModalFecha || !provModalHora) {
-                          toast({ title: "Completa la fecha y hora", variant: "destructive" })
-                          return
-                        }
-                        setShowProvincialModal(false)
-                        setDesignacionesSinPartido([])
-                        setSpProvincia(provModalProvincia)
-                        setSpDistrito(null)
-                        setSpFecha(provModalFecha)
-                        setSpHora(provModalHora)
-                        setSpEstadio("")
-                        setSpArbitroPrincipal(null)
-                        setSpAsistente1(null)
-                        setSpAsistente2(null)
-                        setSpCuartoArbitro(null)
-                        setSpBusqueda("")
-                        setSpIntentadoAgregar(false)
-                        setCurrentStep("designarSinPartido")
-                      }}
-                      className="p-3 rounded-xl border-2 border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                          <Users className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900 text-sm">Designar sin Partidos</p>
-                          <p className="text-xs text-slate-500 mt-0.5">Asigna árbitros a la fecha sin definir partidos.</p>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
+                  )
+                })}
               </div>
-            )
-          })()}
-
-          {/* 🔎 BÚSQUEDA Y FILTRO */}
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={busquedaProvincial}
-              onChange={(e) => setBusquedaProvincial(e.target.value)}
-              placeholder="Buscar distrito o equipo..."
-              className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-slate-900 text-sm focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
-            />
-            {busquedaProvincial && (
-              <button
-                onClick={() => setBusquedaProvincial("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                aria-label="Limpiar búsqueda"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* 🔍 MENSAJE DE VALIDACIÓN */}
-          {!validarProvinciasCompletas() && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-amber-800 text-sm">
-                ⚠️ Debes seleccionar el <strong>campeón de todos los distritos</strong> para continuar. El subcampeón es opcional.
-              </p>
             </div>
           )}
 
-          {/* CARDS POR PROVINCIA */}
-          <div className="space-y-6">
-            {todasProvincias.map((prov) => {
-              const distritos = prov.distritos.map(d => d.nombre)
-              const qProv = busquedaProvincial.trim().toLowerCase()
-              const distritosVisibles = qProv
-                ? distritos.filter((d) => {
-                    if (d.toLowerCase().includes(qProv)) return true
-                    return false
-                  })
-                : distritos
+          {/* Acciones de designación */}
+          <div className="pt-4 border-t space-y-3">
+            <p className="text-sm font-semibold text-slate-700">
+              ¿Cómo deseas designar árbitros para {provinciaSeleccionada}?
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={guardarYDesignarConPartidos}
+                disabled={!tieneCampeonEnProv || isSaving}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  tieneCampeonEnProv && !isSaving
+                    ? "border-amber-200 bg-amber-50 hover:border-amber-400 hover:bg-amber-100 cursor-pointer"
+                    : "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                    {isSaving
+                      ? <Loader className="w-4 h-4 text-amber-600 animate-spin" />
+                      : <ClipboardList className="w-4 h-4 text-amber-600" />
+                    }
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">Designar con Partidos</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Crea partidos entre los clasificados y asigna árbitros.
+                    </p>
+                  </div>
+                </div>
+              </button>
 
-              if (distritosVisibles.length === 0) return null
+              <button
+                onClick={() => {
+                  setSpProvincia(provinciaSeleccionada)
+                  setSpDistrito(null)
+                  setSpFecha("")
+                  setSpHora("10:00")
+                  setSpEstadio("")
+                  setSpArbitroPrincipal(null)
+                  setSpAsistente1(null)
+                  setSpAsistente2(null)
+                  setSpCuartoArbitro(null)
+                  setDesignacionesSinPartido([])
+                  setCurrentStep("designarSinPartido")
+                }}
+                className="p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all text-left cursor-pointer"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">Designar sin Partidos</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Asigna árbitros a una fecha sin definir partidos.
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
 
-              return (
-                <Card key={prov.nombre} className="border-2 border-gray-200 bg-card">
-                  <CardHeader className="bg-slate-50">
-                    <CardTitle className="text-slate-900 flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-blue-600" />
-                      Provincia de {prov.nombre}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 md:p-6 space-y-4">
-                    {distritosVisibles.map((distrito) => {
-                      const equiposDelDistrito = equiposReales.filter((eq) => eq.distrito === distrito)
-                      const campeones = provinciaCampeones[distrito] ?? { campeon: null, subcampeon: null }
-                       const tieneCampeon = !!campeones.campeon
-                       const noParticipa = distritosNoParticipantes.includes(distrito)
-
-                       return (
-                         <div
-                           key={distrito}
-                           id={`distrito-${distrito}`}
-                           className={`p-4 rounded-lg border-2 transition-all ${
-                             noParticipa
-                               ? "border-slate-300 bg-slate-50"
-                               : tieneCampeon
-                                 ? "border-emerald-300 bg-emerald-50/30"
-                                 : "border-gray-200 bg-white"
-                           }`}
-                         >
-                           <div className="flex items-center justify-between mb-3">
-                             <div className="flex items-center gap-2">
-                               <h3 className={`text-base font-bold ${noParticipa ? "text-slate-500 line-through" : "text-slate-900"}`}>
-                                 {distrito}
-                               </h3>
-                               {tieneCampeon && !noParticipa && (
-                                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                               )}
-                            </div>
-                            <Button
-                              type="button"
-                              variant={noParticipa ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => toggleDistritoParticipa(distrito)}
-                              className={`text-xs ${noParticipa ? "bg-slate-600 text-white hover:bg-slate-700" : "border-slate-300 text-slate-600 hover:bg-slate-100"}`}
-                            >
-                              {noParticipa ? "✓ Participa" : "No Participa"}
-                            </Button>
-                          </div>
-
-                          {!noParticipa && equiposDelDistrito.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* CAMPEÓN (OBLIGATORIO) */}
-                              <div>
-                                <p className="block text-sm font-semibold text-amber-700 mb-2">
-                                  🥇 Campeón *
-                                  {campeones.campeon && (
-                                    <span className="text-emerald-600 font-bold ml-1">· {campeones.campeon.nombre}</span>
-                                  )}
-                                </p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {equiposDelDistrito
-                                    .filter(eq => eq.id != null)
-                                    .map((eq) => {
-                                      const activo = campeones.campeon?.id === eq.id
-                                      return (
-                                        <button
-                                          key={eq.id}
-                                          type="button"
-                                          onClick={() => {
-                                            const eraActivo = campeones.campeon?.id === eq.id
-                                            setProvinciaCampeones(prev => ({
-                                              ...prev,
-                                              [distrito]: {
-                                                campeon: eraActivo ? null : eq,
-                                                subcampeon: prev[distrito]?.subcampeon ?? null,
-                                              },
-                                            }))
-                                          }}
-                                          className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
-                                            activo
-                                              ? "border-amber-500 bg-amber-600 text-white shadow-md"
-                                              : "border-gray-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50"
-                                          }`}
-                                        >
-                                          {eq.nombre}
-                                        </button>
-                                      )
-                                    })}
-                                </div>
-                              </div>
-
-                              {/* SUBCAMPEÓN (OPCIONAL) */}
-                              <div>
-                                <p className="block text-sm font-semibold text-blue-700 mb-2">
-                                  🥈 Subcampeón (Opcional)
-                                  {campeones.subcampeon && (
-                                    <span className="text-emerald-600 font-bold ml-1">· {campeones.subcampeon.nombre}</span>
-                                  )}
-                                </p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {equiposDelDistrito
-                                    .filter(eq => eq.id != null && eq.id !== campeones.campeon?.id)
-                                    .map((eq) => {
-                                      const activo = campeones.subcampeon?.id === eq.id
-                                      return (
-                                        <button
-                                          key={eq.id}
-                                          type="button"
-                                          onClick={() => {
-                                            const eraActivo = campeones.subcampeon?.id === eq.id
-                                            setProvinciaCampeones(prev => ({
-                                              ...prev,
-                                              [distrito]: {
-                                                campeon: prev[distrito]?.campeon ?? null,
-                                                subcampeon: eraActivo ? null : eq,
-                                              },
-                                            }))
-                                          }}
-                                          className={`p-2 rounded-lg border-2 transition-all text-left text-sm font-semibold ${
-                                            activo
-                                              ? "border-blue-500 bg-blue-600 text-white shadow-md"
-                                              : "border-gray-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50"
-                                          }`}
-                                        >
-                                          {eq.nombre}
-                                        </button>
-                                      )
-                                    })}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-slate-500 italic">
-                              {noParticipa ? "Distrito no participante" : "Sin equipos registrados en este distrito."}
-                            </p>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-
-          {/* Botón de avance */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep("provincia")}
-              className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
-            >
-              ← Atrás
-            </Button>
-            <Button
-              onClick={async () => {
-                if (!validarProvinciasCompletas() || !campeonatoSeleccionado) return
-
-                // Guardar en backend antes de continuar
-                const resultados: any[] = []
-                Object.entries(provinciaCampeones).forEach(([distrito, campeones]: [string, any]) => {
-                  if (campeones.campeon && campeones.campeon.id !== undefined) {
-                    resultados.push({
-                      campeonatoId: campeonatoSeleccionado.id,
-                      etapa: 'PROVINCIAL',
-                      equipoId: campeones.campeon.id,
-                      posicion: 1
-                    })
-                  }
-                  if (campeones.subcampeon && campeones.subcampeon.id !== undefined) {
-                    resultados.push({
-                      campeonatoId: campeonatoSeleccionado.id,
-                      etapa: 'PROVINCIAL',
-                      equipoId: campeones.subcampeon.id,
-                      posicion: 2
-                    })
-                  }
-                })
-                if (resultados.length > 0) {
-                  await saveCopaPeruResultadosBatch(resultados)
-                  setProvincialCampeonesFinalizados(true)
-                }
-                setCurrentStep("partidos")
-              }}
-              disabled={!validarProvinciasCompletas()}
-              className={`flex-1 ${
-                validarProvinciasCompletas()
-                  ? "bg-amber-600 hover:bg-amber-700 text-white"
-                  : "bg-slate-300 cursor-not-allowed opacity-50"
-              }`}
-            >
-              ✅ Continuar a Partidos →
-            </Button>
+            {!tieneCampeonEnProv && (
+              <p className="text-xs text-amber-700 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Selecciona al menos un campeón de distrito para activar "Designar con Partidos".
+              </p>
+            )}
           </div>
         </div>
       )
