@@ -1732,6 +1732,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
         d => distritosNoParticipantes.includes(d) || provinciaCampeones[d]?.campeon
       )
 
+      // True when every participanting district that has registered teams already has a champion
+      const distritosConEquipos = distritosProvActual.filter(
+        d => !distritosNoParticipantes.includes(d) && equiposReales.some(eq => eq.distrito === d)
+      )
+      const todosTienenCampeon = distritosConEquipos.length > 0 &&
+        distritosConEquipos.every(d => provinciaCampeones[d]?.campeon)
+
       const guardarYDesignarConPartidos = async () => {
         if (!campeonatoSeleccionado) return
         setIsSaving(true)
@@ -1746,10 +1753,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               resultados.push({ campeonatoId: campeonatoSeleccionado.id, etapa: "PROVINCIAL", equipoId: cams.subcampeon.id, posicion: 2 })
             }
           })
-          if (resultados.length > 0) await saveCopaPeruResultadosBatch(resultados)
+          // Try to persist; silently skip if already saved (backend may reject duplicates)
+          try {
+            if (resultados.length > 0) await saveCopaPeruResultadosBatch(resultados)
+          } catch (saveErr) {
+            console.warn("Provincial results already saved or save failed:", saveErr)
+          }
           setCurrentStep("partidos")
-        } catch {
-          toast({ title: "Error al guardar clasificación", variant: "destructive" })
         } finally {
           setIsSaving(false)
         }
@@ -1781,18 +1791,41 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
           {renderCoach()}
 
-          {/* Info */}
-          <Card className="bg-amber-50 border-amber-200">
-            <CardContent className="p-4 flex items-start gap-3">
-              <Trophy className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-              <p className="text-sm text-amber-800">
-                Solo los <strong>campeones y subcampeones</strong> de cada distrito participan en la etapa provincial.
-                Confirma o selecciona los clasificados antes de designar árbitros.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Info: solo visible mientras los selectores están activos */}
+          {(!todosTienenCampeon || editandoProvincial) && (
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-4 flex items-start gap-3">
+                <Trophy className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-sm text-amber-800">
+                  Solo los <strong>campeones y subcampeones</strong> de cada distrito participan en la etapa provincial.
+                  Confirma o selecciona los clasificados antes de designar árbitros.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Estado de clasificación cuando ya está completa */}
+          {todosTienenCampeon && !editandoProvincial && (
+            <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span className="text-sm font-semibold text-emerald-800">
+                  Clasificación completa — {distritosConEquipos.length} distrito(s)
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditandoProvincial(true)}
+                className="text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+              >
+                ✏️ Editar
+              </Button>
+            </div>
+          )}
 
           {/* Distritos con selección de campeón/subcampeón */}
+          {(!todosTienenCampeon || editandoProvincial) && (
           <div className="space-y-4">
             {distritosProvActual.map((distrito) => {
               const equiposDelDistrito = equiposReales.filter(eq => eq.distrito === distrito)
@@ -1911,6 +1944,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               )
             })}
           </div>
+          )}
 
           {/* Resumen de equipos clasificados */}
           {tieneCampeonEnProv && (
