@@ -74,7 +74,20 @@ interface EtapaState {
   }
 }
 
-type Step = "campeonato" | "etapa" | "provincia" | "distrito" | "partidos" | "designar" | "resumen" | "confirmacion" | "designacionGeneral" | "resumenGeneral"
+interface DesignacionSinPartidoEntry {
+  id: string
+  provincia: string | null
+  distrito: string | null
+  fecha: string
+  hora: string
+  estadio: string
+  arbitroPrincipal: Arbitro | null
+  asistente1: Arbitro | null
+  asistente2: Arbitro | null
+  cuartoArbitro: Arbitro | null
+}
+
+type Step = "campeonato" | "etapa" | "provincia" | "distrito" | "partidos" | "designar" | "resumen" | "confirmacion" | "designacionGeneral" | "resumenGeneral" | "designarSinPartido"
 
 const ETAPAS = [
   "Etapa Distrital",
@@ -194,6 +207,24 @@ export default function NuevaDesignacionPage() {
 
   // Distritos que no participan (se retiran)
   const [distritosNoParticipantes, setDistritosNoParticipantes] = useState<string[]>([])
+
+  // ── MODAL OPCIONES ETAPA DISTRITAL ──────────────────────────
+  const [showDistritialModal, setShowDistritialModal] = useState(false)
+
+  // ── DESIGNAR SIN PARTIDO (Etapa Distrital) ──────────────────
+  const [designacionesSinPartido, setDesignacionesSinPartido] = useState<DesignacionSinPartidoEntry[]>([])
+  const [spProvincia, setSpProvincia] = useState<string | null>(null)
+  const [spDistrito, setSpDistrito] = useState<string | null>(null)
+  const [spFecha, setSpFecha] = useState("")
+  const [spHora, setSpHora] = useState("10:00")
+  const [spEstadio, setSpEstadio] = useState("")
+  const [spArbitroPrincipal, setSpArbitroPrincipal] = useState<Arbitro | null>(null)
+  const [spAsistente1, setSpAsistente1] = useState<Arbitro | null>(null)
+  const [spAsistente2, setSpAsistente2] = useState<Arbitro | null>(null)
+  const [spCuartoArbitro, setSpCuartoArbitro] = useState<Arbitro | null>(null)
+  const [spBusqueda, setSpBusqueda] = useState("")
+  const [spRolModal, setSpRolModal] = useState<"principal" | "asistente1" | "asistente2" | "cuarto" | null>(null)
+  const [spIntentadoAgregar, setSpIntentadoAgregar] = useState(false)
 
    // Lista de asesores
    const [asesores, setAsesores] = useState<Asesor[]>([])
@@ -1289,10 +1320,13 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     if (etapa === "Etapa Distrital") {
                       setDistritoCampeones({})
                       setProvinciaCampeones({})
+                      setShowDistritialModal(true)
                     } else if (etapa === "Etapa Provincial") {
                       setProvinciaCampeones({})
+                      setCurrentStep("provincia")
+                    } else {
+                      setCurrentStep("provincia")
                     }
-                    setCurrentStep("provincia")
                   } else if (esCopaPeruActual) {
                     toast({
                       title: "🔒 Etapa Bloqueada",
@@ -1346,6 +1380,89 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             )
           })}
         </div>
+
+        {/* Modal: Opciones de Designación - Etapa Distrital */}
+        {showDistritialModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setShowDistritialModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Etapa Distrital</p>
+                  <h2 className="text-xl font-bold text-slate-900 mt-0.5">¿Cómo deseas designar?</h2>
+                  <p className="text-sm text-slate-500 mt-1">Elige el tipo de designación para esta fecha</p>
+                </div>
+                <button
+                  onClick={() => setShowDistritialModal(false)}
+                  className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 pt-1">
+                {/* Opción 1: Con Partidos (flujo existente) */}
+                <button
+                  onClick={() => {
+                    setShowDistritialModal(false)
+                    setCurrentStep("provincia")
+                  }}
+                  className="p-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:border-orange-400 hover:bg-orange-100 transition-all text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                      <ClipboardList className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">Designar con Partidos</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Crea los partidos del distrito y asigna árbitros a cada uno. Flujo estándar.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Opción 2: Sin Partidos (nueva) */}
+                <button
+                  onClick={() => {
+                    setShowDistritialModal(false)
+                    setDesignacionesSinPartido([])
+                    setSpProvincia(null)
+                    setSpDistrito(null)
+                    setSpFecha("")
+                    setSpHora("10:00")
+                    setSpEstadio("")
+                    setSpArbitroPrincipal(null)
+                    setSpAsistente1(null)
+                    setSpAsistente2(null)
+                    setSpCuartoArbitro(null)
+                    setSpBusqueda("")
+                    setSpIntentadoAgregar(false)
+                    setCurrentStep("designarSinPartido")
+                  }}
+                  className="p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">Designar árbitros por fecha</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Asigna árbitros a una fecha sin definir partidos. Los árbitros rotarán en todos los encuentros de esa fecha.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -3653,6 +3770,537 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
        </div>
      )
     }
+
+  // ============================================================
+  // STEP: DESIGNAR SIN PARTIDO (Etapa Distrital)
+  // ============================================================
+
+  if (currentStep === "designarSinPartido" && campeonatoSeleccionado) {
+    const provinciasDisponibles = PROVINCIAS_PUNO.map((p) => p.nombre)
+    const distritosDisponibles = spProvincia
+      ? getDistritosByProvincia(spProvincia).map((d) => d.nombre)
+      : []
+
+    const spArbitrosUsados = [
+      spArbitroPrincipal?.id,
+      spAsistente1?.id,
+      spAsistente2?.id,
+      spCuartoArbitro?.id,
+    ].filter((id): id is number => id != null)
+
+    const arbitrosFiltradosSp = arbitros.filter((a) => {
+      const nombre = `${a.nombre || ""} ${a.apellido || ""}`.toLowerCase()
+      return !spBusqueda || nombre.includes(spBusqueda.trim().toLowerCase())
+    })
+
+    const spFormValido =
+      !!spProvincia && !!spDistrito && !!spFecha && !!spHora &&
+      !!spArbitroPrincipal && !!spAsistente1 && !!spAsistente2 && !!spCuartoArbitro
+
+    const agregarDesignacion = () => {
+      setSpIntentadoAgregar(true)
+      if (!spFormValido) return
+      const nueva: DesignacionSinPartidoEntry = {
+        id: `sp-${Date.now()}`,
+        provincia: spProvincia,
+        distrito: spDistrito,
+        fecha: spFecha,
+        hora: spHora,
+        estadio: spEstadio,
+        arbitroPrincipal: spArbitroPrincipal,
+        asistente1: spAsistente1,
+        asistente2: spAsistente2,
+        cuartoArbitro: spCuartoArbitro,
+      }
+      setDesignacionesSinPartido((prev) => [...prev, nueva])
+      // Limpiar formulario para la siguiente entrada
+      setSpProvincia(null)
+      setSpDistrito(null)
+      setSpFecha("")
+      setSpHora("10:00")
+      setSpEstadio("")
+      setSpArbitroPrincipal(null)
+      setSpAsistente1(null)
+      setSpAsistente2(null)
+      setSpCuartoArbitro(null)
+      setSpBusqueda("")
+      setSpIntentadoAgregar(false)
+    }
+
+    const guardarDesignacionesSinPartido = async () => {
+      if (designacionesSinPartido.length === 0) {
+        toast({
+          title: "Sin designaciones",
+          description: "Agrega al menos una designación antes de guardar",
+          variant: "destructive",
+        })
+        return
+      }
+      setIsSaving(true)
+      try {
+        for (const d of designacionesSinPartido) {
+          await createDesignacion({
+            idCampeonato: campeonatoSeleccionado?.id,
+            nombreCampeonato: campeonatoSeleccionado?.nombre?.toUpperCase(),
+            fecha: `${d.fecha}T${d.hora}:00`,
+            hora: d.hora,
+            estadio: d.estadio || undefined,
+            arbitroPrincipal: d.arbitroPrincipal?.id ? String(d.arbitroPrincipal.id) : null,
+            arbitroAsistente1: d.asistente1?.id ? String(d.asistente1.id) : null,
+            arbitroAsistente2: d.asistente2?.id ? String(d.asistente2.id) : null,
+            cuartoArbitro: d.cuartoArbitro?.id ? String(d.cuartoArbitro.id) : null,
+            estado: "PROGRAMADA",
+            temporada: 2026,
+            etapa: "DISTRITAL",
+            region: "PUNO",
+            provincia: d.provincia ?? undefined,
+            distrito: d.distrito ?? undefined,
+          })
+        }
+        toast({
+          title: "✅ Designaciones guardadas",
+          description: `Se guardaron ${designacionesSinPartido.length} designacion(es) sin partido`,
+        })
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("designaciones-updated"))
+        }
+        setCurrentStep("confirmacion")
+      } catch (error) {
+        toast({
+          title: "❌ Error al guardar",
+          description: error instanceof Error ? error.message : "No se pudieron guardar las designaciones",
+          variant: "destructive",
+        })
+      } finally {
+        setIsSaving(false)
+      }
+    }
+
+    const getNombreArbitro = (arb: Arbitro | null) =>
+      arb ? `${arb.nombre || ""} ${arb.apellido || ""}`.trim() : null
+
+    const rolesForm = [
+      {
+        key: "principal" as const,
+        label: "Árbitro Principal",
+        icon: <Shield className="w-4 h-4 text-blue-600" />,
+        value: spArbitroPrincipal,
+        border: "border-blue-200 bg-blue-50",
+        badgeColor: "bg-blue-600",
+        requerido: true,
+      },
+      {
+        key: "asistente1" as const,
+        label: "Asistente 1",
+        icon: <Users className="w-4 h-4 text-emerald-600" />,
+        value: spAsistente1,
+        border: "border-emerald-200 bg-emerald-50",
+        badgeColor: "bg-emerald-600",
+        requerido: true,
+      },
+      {
+        key: "asistente2" as const,
+        label: "Asistente 2",
+        icon: <Users className="w-4 h-4 text-emerald-600" />,
+        value: spAsistente2,
+        border: "border-emerald-200 bg-emerald-50",
+        badgeColor: "bg-emerald-600",
+        requerido: true,
+      },
+      {
+        key: "cuarto" as const,
+        label: "4to Árbitro",
+        icon: <UserCheck className="w-4 h-4 text-amber-600" />,
+        value: spCuartoArbitro,
+        border: "border-amber-200 bg-amber-50",
+        badgeColor: "bg-amber-600",
+        requerido: true,
+      },
+    ]
+
+    return (
+      <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto">
+        {/* Header */}
+        <section className="border-b pb-3 md:pb-4">
+          <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
+            {campeonatoSeleccionado.nombre} · Etapa Distrital
+          </p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+            <Users className="w-7 h-7 text-blue-600" />
+            Designar árbitros por fecha
+          </h1>
+          <p className="text-slate-500 mt-1.5 text-xs md:text-sm">
+            Los árbitros designados cubrirán todos los partidos de esa fecha, rotando entre sí.
+          </p>
+        </section>
+
+        <div className="flex justify-start">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCurrentStep("etapa")
+              setShowDistritialModal(false)
+            }}
+            className="border-gray-200"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Volver a Etapas
+          </Button>
+        </div>
+
+        {/* Aviso informativo */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+            <p className="text-sm text-blue-800">
+              Completa el formulario y presiona <strong>"Agregar"</strong> para cada grupo de árbitros por fecha/distrito.
+              Cuando termines, presiona <strong>"Guardar todas"</strong>.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Formulario de nueva entrada */}
+        <Card className="border-2 border-gray-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-slate-900 text-base flex items-center gap-2">
+              <Plus className="w-4 h-4 text-blue-600" />
+              Nueva designación sin partido
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Fecha y Hora */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  📅 Fecha <span className="text-red-500">*</span>
+                </label>
+                <DatePicker
+                  value={spFecha}
+                  onChange={setSpFecha}
+                  invalid={spIntentadoAgregar && !spFecha}
+                  minDate={new Date()}
+                />
+                {spIntentadoAgregar && !spFecha && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Requerido
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  🕒 Hora <span className="text-red-500">*</span>
+                </label>
+                <TimePicker
+                  value={spHora}
+                  onChange={setSpHora}
+                  invalid={spIntentadoAgregar && !spHora}
+                />
+              </div>
+            </div>
+
+            {/* Provincia y Distrito */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  📍 Provincia <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={spProvincia ?? ""}
+                  onChange={(e) => {
+                    setSpProvincia(e.target.value || null)
+                    setSpDistrito(null)
+                  }}
+                  className={`w-full h-10 px-3 bg-white border rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500 ${
+                    spIntentadoAgregar && !spProvincia ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
+                >
+                  <option value="">Selecciona una provincia</option>
+                  {provinciasDisponibles.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                {spIntentadoAgregar && !spProvincia && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Requerido
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  🗺️ Distrito <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={spDistrito ?? ""}
+                  onChange={(e) => setSpDistrito(e.target.value || null)}
+                  disabled={!spProvincia}
+                  className={`w-full h-10 px-3 bg-white border rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    spIntentadoAgregar && !spDistrito ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
+                >
+                  <option value="">Selecciona un distrito</option>
+                  {distritosDisponibles.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                {spIntentadoAgregar && !spDistrito && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Requerido
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Estadio */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                🏟️ Estadio
+              </label>
+              <input
+                value={spEstadio}
+                onChange={(e) => setSpEstadio(e.target.value)}
+                placeholder="Nombre del estadio (opcional)"
+                className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Selector de árbitros por rol */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                👨‍⚖️ Árbitros <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {rolesForm.map((rol) => (
+                  <button
+                    key={rol.key}
+                    type="button"
+                    onClick={() => {
+                      setSpBusqueda("")
+                      setSpRolModal(rol.key)
+                    }}
+                    className={`p-3 rounded-xl border-2 text-left transition-all hover:shadow-md ${
+                      rol.value
+                        ? `${rol.border}`
+                        : spIntentadoAgregar && rol.requerido
+                          ? "border-red-300 bg-red-50"
+                          : "border-dashed border-gray-300 bg-white hover:border-blue-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {rol.icon}
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">{rol.label}</span>
+                    </div>
+                    {rol.value ? (
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {getNombreArbitro(rol.value)}
+                        </p>
+                        <Badge className={`text-[10px] mt-0.5 ${rol.badgeColor} text-white`}>
+                          {rol.value.categoria || "—"}
+                        </Badge>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 flex items-center gap-1">
+                        <Plus className="w-3 h-3" /> Toca para seleccionar
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {spIntentadoAgregar && (!spArbitroPrincipal || !spAsistente1 || !spAsistente2 || !spCuartoArbitro) && (
+                <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> Todos los árbitros son requeridos
+                </p>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <Button
+                onClick={agregarDesignacion}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar esta designación
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lista de designaciones agregadas */}
+        {designacionesSinPartido.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-700">
+                Designaciones agregadas ({designacionesSinPartido.length})
+              </h3>
+            </div>
+            {designacionesSinPartido.map((d, idx) => (
+              <Card key={d.id} className="border border-emerald-200 bg-emerald-50/50">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <Badge className="bg-orange-600 text-white text-xs">#{idx + 1}</Badge>
+                        <span className="text-sm font-bold text-slate-800">
+                          {d.provincia} — {d.distrito}
+                        </span>
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {d.fecha}
+                        </span>
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {d.hora}
+                        </span>
+                        {d.estadio && (
+                          <span className="text-xs text-slate-500">🏟️ {d.estadio}</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                          <p className="text-blue-700 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Principal</p>
+                          <p className="text-slate-800 font-medium">{getNombreArbitro(d.arbitroPrincipal)}</p>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                          <p className="text-emerald-700 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Asistente 1</p>
+                          <p className="text-slate-800 font-medium">{getNombreArbitro(d.asistente1)}</p>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                          <p className="text-emerald-700 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Asistente 2</p>
+                          <p className="text-slate-800 font-medium">{getNombreArbitro(d.asistente2)}</p>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                          <p className="text-amber-700 font-semibold uppercase tracking-wide text-[10px] mb-0.5">4to Árbitro</p>
+                          <p className="text-slate-800 font-medium">{getNombreArbitro(d.cuartoArbitro)}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setDesignacionesSinPartido((prev) => prev.filter((x) => x.id !== d.id))}
+                      className="text-red-500 hover:text-red-700 p-1 shrink-0"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Botones de acción */}
+        <div className="flex gap-3 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setCurrentStep("etapa")
+              setShowDistritialModal(false)
+            }}
+            className="flex-1 border-gray-200"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Cancelar
+          </Button>
+          <Button
+            onClick={guardarDesignacionesSinPartido}
+            disabled={isSaving || designacionesSinPartido.length === 0}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {isSaving ? (
+              <><Loader className="w-4 h-4 mr-2 animate-spin" /> Guardando...</>
+            ) : (
+              <><Save className="w-4 h-4 mr-2" /> Guardar todas ({designacionesSinPartido.length})</>
+            )}
+          </Button>
+        </div>
+
+        {/* Modal selector de árbitro */}
+        {spRolModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setSpRolModal(null)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4 max-h-[80vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">
+                  Seleccionar:{" "}
+                  {spRolModal === "principal"
+                    ? "Árbitro Principal"
+                    : spRolModal === "asistente1"
+                      ? "Asistente 1"
+                      : spRolModal === "asistente2"
+                        ? "Asistente 2"
+                        : "4to Árbitro"}
+                </h3>
+                <button
+                  onClick={() => setSpRolModal(null)}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  autoFocus
+                  value={spBusqueda}
+                  onChange={(e) => setSpBusqueda(e.target.value)}
+                  placeholder="Buscar árbitro..."
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+
+              <div className="space-y-2 overflow-y-auto flex-1 pr-1">
+                {arbitrosFiltradosSp.map((arb) => {
+                  const yaUsado = spArbitrosUsados.includes(arb.id!)
+                  return (
+                    <button
+                      key={arb.id}
+                      disabled={yaUsado}
+                      onClick={() => {
+                        if (spRolModal === "principal") setSpArbitroPrincipal(arb)
+                        else if (spRolModal === "asistente1") setSpAsistente1(arb)
+                        else if (spRolModal === "asistente2") setSpAsistente2(arb)
+                        else if (spRolModal === "cuarto") setSpCuartoArbitro(arb)
+                        setSpRolModal(null)
+                        setSpBusqueda("")
+                      }}
+                      className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                        yaUsado
+                          ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
+                          : "border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-900 text-sm">
+                            {arb.nombre} {arb.apellido}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {arb.provincia || "—"}
+                            {yaUsado && <span className="ml-2 text-orange-600 font-medium">· Ya asignado</span>}
+                          </p>
+                        </div>
+                        {arb.categoria && (
+                          <Badge className="text-[10px] bg-slate-600 text-white">{arb.categoria}</Badge>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+                {arbitrosFiltradosSp.length === 0 && (
+                  <p className="text-center text-slate-400 text-sm py-6">No se encontraron árbitros</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return null
 }
