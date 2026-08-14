@@ -28,9 +28,10 @@ import {
   Info,
   RotateCcw,
   Save,
+  Zap,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso, getDisponibilidadPorFecha, type DisponibilidadArbitro } from "@/services/api"
+import { getCampeonatos, type Campeonato, getArbitros, type Arbitro, getEquipos, type Equipo, createDesignacion, getCopaPeruResultados, saveCopaPeruResultadosBatch, getAsesores, type Asesor, getFechasUnicasPorCampeonato, getDesignacionesAnterioresByCampeonato, getCopaPeruProgreso, saveCopaPeruProgresoBatch, deleteCopaPeruProgreso, getDisponibilidadPorFecha, type DisponibilidadArbitro, type Designacion } from "@/services/api"
 import { PROVINCIAS_PUNO, getDistritosByProvincia } from "@/lib/provincias-puno"
 import { DatePicker, TimePicker } from "./components/DateTimePickers"
 
@@ -43,6 +44,41 @@ const resolverProvincia = (distrito?: string | null, provinciaFallback?: string 
     if (provincia) return provincia.nombre
   }
   return provinciaFallback || null
+}
+
+// 📅 Calcula el próximo día de juego válido a partir de `diasJogo` del campeonato.
+// `diasJogo` es una cadena como "Lunes,Martes,Miércoles" (días en español).
+const getNextValidGameDay = (diasJuego: string | undefined, fromDate: Date): string => {
+  if (!diasJuego) {
+    return fromDate.toISOString().split('T')[0]
+  }
+  const diasValidos = diasJuego.split(",").map(d => d.trim().toLowerCase()).filter(Boolean)
+  if (diasValidos.length === 0) {
+    return fromDate.toISOString().split('T')[0]
+  }
+  const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
+  const fecha = new Date(fromDate)
+  for (let i = 0; i < 7; i++) {
+    const nombreDia = diasSemana[fecha.getDay()]
+    if (diasValidos.includes(nombreDia)) {
+      return fecha.toISOString().split('T')[0]
+    }
+    fecha.setDate(fecha.getDate() + 1)
+  }
+  return fromDate.toISOString().split('T')[0]
+}
+
+// 🔍 Verifica si una fecha (YYYY-MM-DD) es un día de juego válido según `diasJogo`
+const esDiaJogoValido = (fecha: string, diasJogo: string | undefined): boolean => {
+  if (!diasJogo) return true
+  const diasValidos = diasJogo.split(",").map(d => d.trim().toLowerCase()).filter(Boolean)
+  if (diasValidos.length === 0) return true
+  const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
+  const partes = fecha.split("-")
+  if (partes.length !== 3) return true
+  const date = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]))
+  const nombreDia = diasSemana[date.getDay()]
+  return diasValidos.includes(nombreDia)
 }
 
 interface Partido {
@@ -210,6 +246,10 @@ export default function NuevaDesignacionPage() {
 
   // ── MODAL OPCIONES ETAPA DISTRITAL ──────────────────────────
   const [showDistritialModal, setShowDistritialModal] = useState(false)
+
+  const [todasProvinciasProvincialesCompletas, setTodasProvinciasProvincialesCompletas] = useState(false)
+  const [cargandoTodasProvinciales, setCargandoTodasProvinciales] = useState(false)
+  const [refreshProvincialTrigger, setRefreshProvincialTrigger] = useState(0)
 
   // ── DESIGNAR SIN PARTIDO (Etapa Distrital) ──────────────────
   const [designacionesSinPartido, setDesignacionesSinPartido] = useState<DesignacionSinPartidoEntry[]>([])
@@ -682,15 +722,19 @@ const calcularEtapasDesbloqueadas = () => {
        nuevasEtapas["Etapa Provincial"].desbloqueada = false
      }
 
-     // Departamental se desbloquea SOLO cuando TODAS las provincias tienen
-     // campeón + subcampeón Y todos los partidos están completos
-     const todasProvinciasCompletas = validarTodasProvinciasCompletas()
-     const todosPartidosCompletos = validarTodosPartidosCompletos()
+      // Departamental se desbloquea SOLO cuando TODAS las provincias tienen
+      // campeón + subcampeón Y todos los partidos están completos
+      const todasProvinciasCompletas = validarTodasProvinciasCompletas()
+      const todosPartidosCompletos = validarTodosPartidosCompletos()
+      const etapaNacionalActivada =
+        etapaSeleccionada === "Etapa Provincial"
+          ? todasProvinciasProvincialesCompletas && todosPartidosCompletos
+          : todasProvinciasCompletas && todosPartidosCompletos
 
-     if (todasProvinciasCompletas && todosPartidosCompletos) {
-       nuevasEtapas["Etapa Provincial"].completada = true
-       nuevasEtapas["Etapa Departamental"].desbloqueada = true
-     }
+      if (etapaNacionalActivada) {
+        nuevasEtapas["Etapa Provincial"].completada = true
+        nuevasEtapas["Etapa Departamental"].desbloqueada = true
+      }
 
      // Nacional se desbloquea si Departamental está completa
      if (
@@ -712,7 +756,7 @@ const calcularEtapasDesbloqueadas = () => {
 // Recalcular desbloqueos cuando cambia el estado
    useEffect(() => {
      calcularEtapasDesbloqueadas()
-   }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado, provincialCampeonesFinalizados, distritosProvincialesEquipos, provinciaSeleccionada])
+    }, [distritoCampeones, provinciaCampeones, partidos, etapaSeleccionada, campeonatoSeleccionado, provincialCampeonesFinalizados, distritosProvincialesEquipos, provinciaSeleccionada, todasProvinciasProvincialesCompletas])
 
 // 🔒 Cargar resultados de etapa provincial guardados desde backend
     useEffect(() => {
@@ -783,6 +827,46 @@ const calcularEtapasDesbloqueadas = () => {
 
       loadProvincial()
     }, [campeonatoSeleccionado, esCopaPeruActual, distritosProvincialesEquipos, provinciaSeleccionada])
+
+    // 🔒 Verificar si TODAS las provincias con equipos tienen campeón PROVINCIAL registrado en backend
+    useEffect(() => {
+      if (!campeonatoSeleccionado || !esCopaPeruActual || etapaSeleccionada !== "Etapa Provincial") return
+      const campId = campeonatoSeleccionado.id
+      if (!campId) return
+      let cancelado = false
+      async function checkAllProvincial() {
+        try {
+          setCargandoTodasProvinciales(true)
+          const resultados = await getCopaPeruResultados(campId as number, 'PROVINCIAL')
+          if (cancelado) return
+
+          // Agrupar campeones por provincia (derivada del distrito del equipo)
+          const provinciasConCampeon = new Set<string>()
+          resultados.forEach((r: any) => {
+            if (r.posicion === 1 && r.equipo) {
+              const prov = resolverProvincia(r.equipo.distrito, r.equipo.provincia)
+              if (prov) provinciasConCampeon.add(prov)
+            }
+          })
+
+          // Provincias con equipos registrados
+          const provinciasConEquipos = PROVINCIAS_PUNO.filter((p) =>
+            equiposReales.some((eq) => resolverProvincia(eq.distrito, eq.provincia) === p.nombre)
+          ).map((p) => p.nombre)
+
+          // ¿Todas las provincias con equipos tienen campeón?
+          const todasCompletas = provinciasConEquipos.every((prov) => provinciasConCampeon.has(prov))
+          setTodasProvinciasProvincialesCompletas(todasCompletas)
+        } catch (e) {
+          console.warn('No se pudieron cargar todos los resultados provinciales', e)
+          setTodasProvinciasProvincialesCompletas(false)
+        } finally {
+          if (!cancelado) setCargandoTodasProvinciales(false)
+        }
+      }
+      checkAllProvincial()
+      return () => { cancelado = true }
+    }, [campeonatoSeleccionado, etapaSeleccionada, equiposReales, refreshProvincialTrigger])
 
    // 🔒 Autocompletar fecha y hora de la designación general desde datos del campeonato
     useEffect(() => {
@@ -1331,6 +1415,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                     } else if (etapa === "Etapa Provincial") {
                       setProvinciaCampeones({})
                       setCurrentStep("provincia")
+                    } else if (etapa === "Etapa Departamental") {
+                      setProvinciaCampeones({})
+                      // Salta paso 3 igual que Provincial: la vista muestra todas las provincias
+                      setProvinciaSeleccionada("_DEPARTAMENTAL_")
+                      setCurrentStep("distrito")
                     } else {
                       setCurrentStep("provincia")
                     }
@@ -1560,6 +1649,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   onClick={() => {
                     if (!tieneEquipos) return
                     setProvinciaSeleccionada(prov.nombre)
+                    setPartidos([])
+                    setEquipoLocal(null)
+                    setEquipoVisitante(null)
                     setCurrentStep("distrito")
                   }}
                 >
@@ -1766,6 +1858,11 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           } catch (saveErr) {
             console.warn("Provincial results already saved or save failed:", saveErr)
           }
+          setRefreshProvincialTrigger(prev => prev + 1)
+          setProvincialCampeonesFinalizados(true)
+          setPartidos([])
+          setEquipoLocal(null)
+          setEquipoVisitante(null)
           setCurrentStep("partidos")
         } finally {
           setIsSaving(false)
@@ -2088,6 +2185,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                   setSpAsistente2(null)
                   setSpCuartoArbitro(null)
                   setDesignacionesSinPartido([])
+                  setPartidos([])
+                  setEquipoLocal(null)
+                  setEquipoVisitante(null)
                   setCurrentStep("designarSinPartido")
                 }}
                 className="p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all text-left cursor-pointer"
@@ -2140,9 +2240,9 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
           {/* Botón de retroceso */}
           <div className="flex justify-start">
-            <Button variant="outline" size="sm" onClick={() => setCurrentStep("provincia")} className="border-gray-200">
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep("etapa")} className="border-gray-200">
               <ChevronLeft className="w-4 h-4 mr-1" />
-              Volver a Provincial
+              Cambiar Etapa
             </Button>
           </div>
 
@@ -2267,7 +2367,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button
               variant="outline"
-              onClick={() => setCurrentStep("provincia")}
+              onClick={() => setCurrentStep("etapa")}
               className="flex-1 border-gray-200 text-slate-700 hover:bg-gray-50"
             >
               ← Atrás
@@ -2390,7 +2490,12 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
       equiposDisponibles = campeonesList.length > 0
         ? campeonesList
         : equiposReales.filter((eq) => resolverProvincia(eq.distrito, eq.provincia) === provinciaSeleccionada)
-    } else if (provinciaSeleccionada) {
+    } else if (esCopaPeruActual && etapaSeleccionada === "Etapa Departamental") {
+      // Campeones de cada provincia (provinciaCampeones con clave = nombre de provincia)
+      const campeonesDept = Object.values(provinciaCampeones)
+        .flatMap((c) => [c.campeon, c.subcampeon].filter(Boolean) as Equipo[])
+      equiposDisponibles = campeonesDept.length > 0 ? campeonesDept : equiposReales
+    } else if (provinciaSeleccionada && !provinciaSeleccionada.startsWith("_")) {
       // 3. Otros campeonatos / etapas: filtrar por provincia seleccionada
       equiposDisponibles = equiposReales.filter((eq) => eq.provincia === provinciaSeleccionada)
     }
@@ -2543,8 +2648,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                         }
 
                         const ahora = new Date()
-                        const fechaHoy = ahora.toISOString().split('T')[0]
-                        const horaHoy = ahora.toTimeString().substring(0, 5)
+                        const fechaHoy = getNextValidGameDay(campeonatoSeleccionado?.diasJuego, ahora)
+                        const horaHoy = campeonatoSeleccionado?.horaInicio || ahora.toTimeString().substring(0, 5)
                         const nuevoPartido: Partido = {
                           id: `partido-${Date.now()}`,
                           equipoLocal,
@@ -2571,7 +2676,7 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
 
                   <Button
                     onClick={() => {
-                      if (partidos.length === 0) {
+                    if (partidos.length === 0) {
                         toast({
                           title: "Sin partidos",
                           description: "Agrega al menos un partido antes de continuar",
@@ -2580,10 +2685,22 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                         return
                       }
 
+                      const partidosConFechaInvalida = partidos.filter(
+                        (p) => p.fecha && !esDiaJogoValido(p.fecha, campeonatoSeleccionado?.diasJuego)
+                      )
+                      if (partidosConFechaInvalida.length > 0 && campeonatoSeleccionado?.diasJuego) {
+                        toast({
+                          title: "Fecha no válida para el campeonato",
+                          description: `El campeonato ${campeonatoSeleccionado.nombre} juega los días: ${campeonatoSeleccionado.diasJuego}. Ajusta las fechas de los partidos.`,
+                          variant: "destructive",
+                        })
+                        return
+                      }
+
                       setCurrentStep("designar")
-                    }}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  >
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
                     Continuar
                     <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
@@ -3049,13 +3166,99 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
                       </div>
                     )}
 
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-gray-200 hover:bg-white text-slate-900"
-                      onClick={() => setCurrentStep("partidos")}
-                    >
-                      ← Volver
+                   {esCopaPeruActual && (partidos.length > 0) && (
+                     <div className="flex items-center gap-3">
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         className="border-cyan-600 text-cyan-700 hover:bg-cyan-50"
+                         onClick={() => {
+                           const arbitrosDisponiblesPrincipales = arbitros.filter(
+                             (a) =>
+                               a.id != null &&
+                               (a.categoria || "").toUpperCase() === "NACIONAL" &&
+                               disponibilidadMap[a.id]?.disponible !== false
+                           )
+                           const arbitrosDisponiblesAsistentes = arbitros.filter(
+                             (a) =>
+                               a.id != null &&
+                               (a.categoria || "").toUpperCase() !== "NACIONAL" &&
+                               disponibilidadMap[a.id]?.disponible !== false
+                           )
+                           const yaAsignados = new Set<number>()
+                           partidos.forEach((p) => {
+                             [p.arbitroPrincipal?.id, p.asistente1?.id, p.asistente2?.id, p.cuartoArbitro?.id].forEach((id) => {
+                               if (id != null) yaAsignados.add(id)
+                             })
+                           })
+
+                           let idxP = 0
+                           let idxA1 = 0
+                           let idxA2 = 0
+
+                           const nuevosPartidos = [...partidos].map((p) => {
+                             const pp = { ...p }
+
+                             if (!pp.arbitroPrincipal) {
+                               while (idxP < arbitrosDisponiblesPrincipales.length) {
+                                 const arb = arbitrosDisponiblesPrincipales[idxP]
+                                 idxP++
+                                 if (!yaAsignados.has(arb.id!)) {
+                                   pp.arbitroPrincipal = arb
+                                   yaAsignados.add(arb.id!)
+                                   break
+                                 }
+                               }
+                             }
+                             if (!pp.asistente1) {
+                               while (idxA1 < arbitrosDisponiblesAsistentes.length) {
+                                 const arb = arbitrosDisponiblesAsistentes[idxA1]
+                                 idxA1++
+                                 if (!yaAsignados.has(arb.id!)) {
+                                   pp.asistente1 = arb
+                                   yaAsignados.add(arb.id!)
+                                   break
+                                 }
+                               }
+                             }
+                             if (!pp.asistente2) {
+                               while (idxA2 < arbitrosDisponiblesAsistentes.length) {
+                                 const arb = arbitrosDisponiblesAsistentes[idxA2]
+                                 idxA2++
+                                 if (!yaAsignados.has(arb.id!)) {
+                                   pp.asistente2 = arb
+                                   yaAsignados.add(arb.id!)
+                                   break
+                                 }
+                               }
+                             }
+                             return pp
+                           })
+
+                           const asignados = nuevosPartidos.filter(
+                             (p) => p.arbitroPrincipal && p.asistente1 && p.asistente2
+                           ).length
+
+                           setPartidos(nuevosPartidos)
+                           toast({
+                             title: "Árbitros asignados",
+                             description: `${asignados} de ${partidos.length} partido(s) completados. Ajusta manualmente si es necesario.`,
+                           })
+                         }}
+                       >
+                         <Zap className="w-4 h-4 mr-1" />
+                         Asignar Todos
+                       </Button>
+                     </div>
+                   )}
+
+                   <div className="flex gap-3">
+                     <Button
+                       variant="outline"
+                       className="flex-1 border-gray-200 hover:bg-white text-slate-900"
+                       onClick={() => setCurrentStep("partidos")}
+                     >
+                       ← Volver
                     </Button>
                     <Button
                       className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -3297,6 +3500,14 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             onClick={async () => {
               setIsSaving(true)
               try {
+                if (esCopaPeruActual && campeonatoSeleccionado?.diasJuego) {
+                  const invalidos = partidos.filter(
+                    (p) => p.fecha && !esDiaJogoValido(p.fecha, campeonatoSeleccionado?.diasJuego)
+                  )
+                  if (invalidos.length > 0) {
+                    throw new Error("Algunas fechas no coinciden con los dias de juego del campeonato: " + campeonatoSeleccionado.diasJuego)
+                  }
+                }
                 const ahora = new Date()
                 const fechaHoy = ahora.toISOString().split('T')[0]
                 const horaHoy = ahora.toTimeString().substring(0, 5)
@@ -4157,29 +4368,33 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
         {/* Header */}
         <section className="border-b pb-3 md:pb-4">
           <p className="text-xs md:text-sm font-medium text-blue-600 uppercase tracking-wide">
-            {campeonatoSeleccionado.nombre} · Etapa Distrital
-          </p>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
-            <Users className="w-7 h-7 text-blue-600" />
-            Designar árbitros por fecha
-          </h1>
-          <p className="text-slate-500 mt-1.5 text-xs md:text-sm">
-            Los árbitros designados cubrirán todos los partidos de esa fecha, rotando entre sí.
-          </p>
-        </section>
+              {campeonatoSeleccionado.nombre} · {etapaSeleccionada ?? "Etapa Distrital"}
+            </p>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+              <Users className="w-7 h-7 text-blue-600" />
+              Designar árbitros por fecha
+            </h1>
+            <p className="text-slate-500 mt-1.5 text-xs md:text-sm">
+              Los árbitros designados cubrirán todos los partidos de esa fecha, rotando entre sí.
+            </p>
+          </section>
 
         <div className="flex justify-start">
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              setCurrentStep("etapa")
-              setShowDistritialModal(false)
+              if (etapaSeleccionada === "Etapa Provincial") {
+                setCurrentStep("distrito")
+              } else {
+                setCurrentStep("etapa")
+                setShowDistritialModal(false)
+              }
             }}
             className="border-gray-200"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Volver a Etapas
+            {etapaSeleccionada === "Etapa Provincial" ? "Volver a Provincia" : "Volver a Etapas"}
           </Button>
         </div>
 
@@ -4426,8 +4641,12 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
           <Button
             variant="outline"
             onClick={() => {
-              setCurrentStep("etapa")
-              setShowDistritialModal(false)
+              if (etapaSeleccionada === "Etapa Provincial") {
+                setCurrentStep("distrito")
+              } else {
+                setCurrentStep("etapa")
+                setShowDistritialModal(false)
+              }
             }}
             className="flex-1 border-gray-200"
           >
