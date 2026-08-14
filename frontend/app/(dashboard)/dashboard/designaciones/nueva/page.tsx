@@ -240,6 +240,7 @@ export default function NuevaDesignacionPage() {
    // 🔒 Disponibilidad centralizada de árbitros para la fecha seleccionada
    const [disponibilidadMap, setDisponibilidadMap] = useState<Record<number, DisponibilidadArbitro>>({})
    const [cargandoDisponibilidad, setCargandoDisponibilidad] = useState(false)
+   const [cargandoProvincial, setCargandoProvincial] = useState(false)
 
     // Designaciones anteriores y fechas del campeonato
     const [designacionesAnteriores, setDesignacionesAnteriores] = useState<Designacion[]>([])
@@ -726,6 +727,10 @@ const calcularEtapasDesbloqueadas = () => {
           // Sin provincia seleccionada aún: no evaluamos finalización ni cargamos campeones
           if (!provinciaSeleccionada) return
 
+          setCargandoProvincial(true)
+          // Limpiar antes de cargar para evitar mostrar datos de la provincia anterior
+          setProvinciaCampeones({})
+
           const resultados = await getCopaPeruResultados(
             campeonatoSeleccionado.id as number,
             'PROVINCIAL',
@@ -771,6 +776,8 @@ const calcularEtapasDesbloqueadas = () => {
 } catch (e) {
             console.warn('No se pudo cargar campeones provinciales desde backend', e)
             // No reseteamos - mantener la selección del usuario
+          } finally {
+            setCargandoProvincial(false)
           }
       }
 
@@ -1789,8 +1796,18 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
             </Button>
           </div>
 
-          {renderCoach()}
+          {/* Cargando clasificación desde backend */}
+          {cargandoProvincial && (
+            <div className="flex items-center justify-center py-16 gap-3 text-amber-700">
+              <Loader className="w-6 h-6 animate-spin" />
+              <span className="text-sm font-medium">Cargando clasificación de {provinciaSeleccionada}…</span>
+            </div>
+          )}
 
+          {!cargandoProvincial && renderCoach()}
+
+          {!cargandoProvincial && (
+          <>
           {/* Info: solo visible mientras los selectores están activos */}
           {(!todosTienenCampeon || editandoProvincial) && (
             <Card className="bg-amber-50 border-amber-200">
@@ -2096,6 +2113,8 @@ if (r.posicion === 1) mapping[distrito].campeon = equipoObj
               </p>
             )}
           </div>
+          </>
+          )}
         </div>
       )
     }
